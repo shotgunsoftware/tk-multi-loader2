@@ -6,20 +6,20 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>921</width>
-    <height>684</height>
+    <width>874</width>
+    <height>562</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Load items into your scene</string>
   </property>
-  <widget class="QTreeView" name="treeView">
+  <widget class="QTreeView" name="entity_view">
    <property name="geometry">
     <rect>
      <x>20</x>
      <y>50</y>
      <width>256</width>
-     <height>192</height>
+     <height>451</height>
     </rect>
    </property>
   </widget>
@@ -31,6 +31,32 @@
      <width>571</width>
      <height>451</height>
     </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>20</y>
+     <width>161</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Entity Treeview</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_2">
+   <property name="geometry">
+    <rect>
+     <x>290</x>
+     <y>20</y>
+     <width>161</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Publishes</string>
    </property>
   </widget>
  </widget>

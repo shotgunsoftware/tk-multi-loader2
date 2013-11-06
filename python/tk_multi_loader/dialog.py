@@ -14,6 +14,9 @@ import sys
 import threading
 
 from tank.platform.qt import QtCore, QtGui
+
+from . import entitymodel
+
 from .ui.dialog import Ui_Dialog
 
 class AppDialog(QtGui.QWidget):
@@ -25,6 +28,11 @@ class AppDialog(QtGui.QWidget):
         # set up the UI
         self.ui = Ui_Dialog() 
         self.ui.setupUi(self)
+        
+        sg_entity_model = entitymodel.SgEntityModel()
+        
+        self.ui.entity_view.setModel(sg_entity_model)
+        print "setup UI"
 
         
     ########################################################################################

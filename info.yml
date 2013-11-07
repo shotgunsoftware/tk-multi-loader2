@@ -12,6 +12,15 @@
 
 # expected fields in the configuration file for this app
 configuration:
+
+    # tank write nodes paths
+    entities:
+        type: list
+        description: "List of entities for the tree view. Each item should have keys caption, entity_type, filters and hierarchy"
+        allows_empty: False
+        values:
+            type: dict
+
             
 # this app works in all engines - it does not contain 
 # any host application specific commands

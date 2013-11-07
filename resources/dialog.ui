@@ -6,59 +6,242 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>874</width>
-    <height>562</height>
+    <width>1039</width>
+    <height>747</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Load items into your scene</string>
   </property>
-  <widget class="QTreeView" name="entity_view">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>50</y>
-     <width>256</width>
-     <height>451</height>
-    </rect>
-   </property>
-  </widget>
   <widget class="QTableView" name="tableView">
    <property name="geometry">
     <rect>
-     <x>280</x>
-     <y>50</y>
-     <width>571</width>
-     <height>451</height>
+     <x>300</x>
+     <y>150</y>
+     <width>351</width>
+     <height>441</height>
     </rect>
    </property>
   </widget>
-  <widget class="QLabel" name="label">
+  <widget class="QSplitter" name="splitter">
    <property name="geometry">
     <rect>
      <x>30</x>
-     <y>20</y>
-     <width>161</width>
-     <height>16</height>
+     <y>150</y>
+     <width>258</width>
+     <height>471</height>
     </rect>
    </property>
-   <property name="text">
-    <string>Entity Treeview</string>
+   <property name="orientation">
+    <enum>Qt::Vertical</enum>
    </property>
+   <widget class="QWidget" name="layoutWidget">
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <widget class="QTreeView" name="entity_view"/>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QWidget" name="layoutWidget">
+    <layout class="QVBoxLayout" name="verticalLayout_2">
+     <item>
+      <widget class="QLabel" name="label_4">
+       <property name="text">
+        <string>Filters</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QListView" name="listView"/>
+     </item>
+    </layout>
+   </widget>
   </widget>
-  <widget class="QLabel" name="label_2">
+  <widget class="QLabel" name="sg_status">
    <property name="geometry">
     <rect>
-     <x>290</x>
-     <y>20</y>
-     <width>161</width>
+     <x>30</x>
+     <y>630</y>
+     <width>341</width>
      <height>16</height>
     </rect>
    </property>
    <property name="text">
-    <string>Publishes</string>
+    <string>Shotgun Status:</string>
    </property>
   </widget>
+  <widget class="QLineEdit" name="lineEdit">
+   <property name="geometry">
+    <rect>
+     <x>730</x>
+     <y>70</y>
+     <width>171</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Search....</string>
+   </property>
+  </widget>
+  <widget class="QGroupBox" name="groupBox">
+   <property name="geometry">
+    <rect>
+     <x>670</x>
+     <y>150</y>
+     <width>231</width>
+     <height>471</height>
+    </rect>
+   </property>
+   <property name="title">
+    <string/>
+   </property>
+   <widget class="QLabel" name="label_2">
+    <property name="geometry">
+     <rect>
+      <x>80</x>
+      <y>220</y>
+      <width>62</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>INFO</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QLabel" name="label_3">
+   <property name="geometry">
+    <rect>
+     <x>300</x>
+     <y>600</y>
+     <width>285</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Breadcrumbs &gt; Breadcrumbs &gt; Breadcrumbs</string>
+   </property>
+  </widget>
+  <widget class="QWidget" name="">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>70</y>
+     <width>388</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <layout class="QHBoxLayout" name="horizontalLayout_3">
+    <item>
+     <widget class="QToolButton" name="toolButton_5">
+      <property name="text">
+       <string>H</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QToolButton" name="toolButton_3">
+      <property name="text">
+       <string>&lt;</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QToolButton" name="toolButton_4">
+      <property name="text">
+       <string>&gt;</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QLabel" name="label">
+      <property name="text">
+       <string>Breadcrumbs &gt; Breadcrumbs &gt; Breadcrumbs</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>110</y>
+     <width>871</width>
+     <height>35</height>
+    </rect>
+   </property>
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <layout class="QHBoxLayout" name="entity_button_layout"/>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <item>
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>68</width>
+          <height>26</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="checkBox">
+        <property name="text">
+         <string>View Files from Sub Folders</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QComboBox" name="comboBox_2">
+        <item>
+         <property name="text">
+          <string>Sort</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item>
+       <widget class="QComboBox" name="comboBox">
+        <item>
+         <property name="text">
+          <string>Group</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="toolButton_2">
+        <property name="text">
+         <string>Info</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <zorder>tableView</zorder>
+  <zorder>splitter</zorder>
+  <zorder>sg_status</zorder>
+  <zorder>horizontalLayoutWidget</zorder>
+  <zorder>checkBox</zorder>
+  <zorder>toolButton_2</zorder>
+  <zorder>comboBox</zorder>
+  <zorder>comboBox_2</zorder>
+  <zorder>toolButton_3</zorder>
+  <zorder>toolButton_4</zorder>
+  <zorder>toolButton_5</zorder>
+  <zorder>label</zorder>
+  <zorder>lineEdit</zorder>
+  <zorder>label</zorder>
+  <zorder>groupBox</zorder>
+  <zorder>label_3</zorder>
  </widget>
  <resources>
   <include location="resources.qrc"/>

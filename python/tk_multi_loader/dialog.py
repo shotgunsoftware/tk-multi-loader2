@@ -102,6 +102,7 @@ class AppDialog(QtGui.QWidget):
         
         # set the model
         self.ui.entity_view.setModel(item["model"])
-        
+        # tell model to refresh its data
+        item["model"].refresh_data()
         
         

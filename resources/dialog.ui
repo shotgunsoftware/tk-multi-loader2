@@ -38,7 +38,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="label">
+      <widget class="QLabel" name="entity_breadcrumbs">
        <property name="text">
         <string>Breadcrumbs &gt; Breadcrumbs &gt; Breadcrumbs</string>
        </property>
@@ -206,9 +206,6 @@
     </widget>
    </item>
   </layout>
-  <zorder>splitter</zorder>
-  <zorder>sg_status</zorder>
-  <zorder>details</zorder>
  </widget>
  <resources>
   <include location="resources.qrc"/>

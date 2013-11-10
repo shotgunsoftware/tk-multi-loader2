@@ -81,6 +81,16 @@ class EntityButtonGroup(QtGui.QWidget):
         
         return actual_button_name
     
+    def get_checked(self):
+        """
+        Returns the caption name of the currently checked item
+        """
+        for b in self._buttons:
+            if b.isChecked():
+                return b.text()
+        # should never come here.
+        raise Exception("No button currently checked!")
+    
     def _entity_button_clicked(self, button_name):
         """
         Internal slot which manages the checked/unchecked logic.

@@ -45,6 +45,7 @@ class AppDialog(QtGui.QWidget):
         self._entity_presets = {} 
         self._load_entity_presets()
         
+                
     
     def closeEvent(self, event):
         # do cleanup, threading etc...
@@ -101,8 +102,8 @@ class AppDialog(QtGui.QWidget):
                                        e["entity_type"], 
                                        e["filters"],
                                        e["hierarchy"])
-            d["selection_model"] = QtGui.QItemSelectionModel( d["model"] )
-
+            
+            
             self._entity_presets[ e["caption"] ] = d
             
         # now create the button group
@@ -130,14 +131,57 @@ class AppDialog(QtGui.QWidget):
         """
         item = self._entity_presets[caption]
         
-        # set the model
+        # hook up this model and its selection model with the view
         self.ui.entity_view.setModel(item["model"])
-        # tell model to refresh its data
+        # the selection model for the view is automatically created 
+        # each time we swap model, so set up callbacks for that too
+        selection_model = self.ui.entity_view.selectionModel()
+        selection_model.currentChanged.connect(self._on_entity_selection)
+        
+        # tell model to call out to shotgun to refresh its data
         item["model"].refresh_data()
+        
+        # populate breadcrumbs
+        self._populate_entity_breadcrumbs()
         
         # and store the selected caption as a preference
         app = tank.platform.current_bundle()
         (settngs_obj, settings_key) = app.get_setting_name("entity_button")
         settngs_obj.setValue(settings_key, caption)
         
+    def _on_entity_selection(self):
+        """
+        Signal triggered when someone changes the selection
+        """
+        self._populate_entity_breadcrumbs()
+    
+    def _populate_entity_breadcrumbs(self):
+        """
+        Computes the current entity breadcrumbs
+        """
+        selection_model = self.ui.entity_view.selectionModel()
+        
+        crumbs = []
+        
+        if selection_model.hasSelection():
+        
+            # get the current index
+            current = selection_model.currentIndex()
+            # get selected item
+            item = current.model().itemFromIndex(current)
+            
+            # figure out the tree view selection, 
+            # walk up to root, list of items will be in bottom-up order...
+            tmp_item = item
+            while tmp_item:
+                crumbs.append(tmp_item.text())
+                tmp_item = tmp_item.parent()
+            
+        # get the main item that was checked
+        current_entity_preset = self._button_group.get_checked()
+        crumbs.append(current_entity_preset)
+        
+        breadcrumbs = " > ".join( crumbs[::-1] )  
+        self.ui.entity_breadcrumbs.setText(breadcrumbs)
+            
         

@@ -17,7 +17,7 @@ import threading
 from tank.platform.qt import QtCore, QtGui
 
 from .entitymodel import SgEntityModel
-from .entity_button_group import EntityButtonGroup
+from .entitybuttongroup import EntityButtonGroup
 from .sgdata import ShotgunAsyncDataRetriever 
 
 from .ui.dialog import Ui_Dialog

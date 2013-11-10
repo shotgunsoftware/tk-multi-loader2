@@ -81,6 +81,7 @@ class AppDialog(QtGui.QWidget):
         app = tank.platform.current_bundle()
         entities = app.get_setting("entities")
         
+        button_captions = []
         for e in entities:
             
             # validate that the settings dict contains all items needed.
@@ -90,6 +91,11 @@ class AppDialog(QtGui.QWidget):
                                     "are missing a '%s' key!" % (entities, k))
         
             # set up a bunch of stuff
+            
+            # maintain a list of captions the way they were defined in the config
+            button_captions.append( e["caption"] )
+            
+            # maintain a dictionary, keyed by caption, holding all objects
             d = {}
             d["model"] = SgEntityModel(self._sg_data_retriever, 
                                        e["entity_type"], 
@@ -100,7 +106,20 @@ class AppDialog(QtGui.QWidget):
             self._entity_presets[ e["caption"] ] = d
             
         # now create the button group
-        self._button_group = EntityButtonGroup(self, self.ui.entity_button_layout, self._entity_presets.keys() )
+        self._button_group = EntityButtonGroup(self, self.ui.entity_button_layout, button_captions)
+        
+        # Load up which button that should be checked at startup:
+        # Try to restore the previous button that we had selected.
+        # if not possible, press the first button
+        app = tank.platform.current_bundle()        
+        (settngs_obj, settings_key) = app.get_setting_name("entity_button")
+        button_caption = str(settngs_obj.value(settings_key, "undefined"))
+                    
+        # ask our widget to check it
+        caption_checked = self._button_group.set_checked(button_caption)
+        
+        # and "click it"
+        self._on_entity_preset_click(caption_checked)
         
         # hook up event handler
         self._button_group.clicked.connect(self._on_entity_preset_click)
@@ -109,11 +128,16 @@ class AppDialog(QtGui.QWidget):
         """
         When user clicks one of the entity preset buttons
         """
-        item = self._entity_presets[ caption ]
+        item = self._entity_presets[caption]
         
         # set the model
         self.ui.entity_view.setModel(item["model"])
         # tell model to refresh its data
         item["model"].refresh_data()
+        
+        # and store the selected caption as a preference
+        app = tank.platform.current_bundle()
+        (settngs_obj, settings_key) = app.get_setting_name("entity_button")
+        settngs_obj.setValue(settings_key, caption)
         
         

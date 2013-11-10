@@ -99,7 +99,7 @@ class SgEntityModel(QtGui.QStandardItemModel):
 
     def _on_worker_signal(self, uid, data):
         """
-        Signalled whenever the worker completes something
+        Signaled whenever the worker completes something
         """
         if self._current_work_id != uid:
             # not our job. ignore

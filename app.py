@@ -12,6 +12,8 @@
 A loader application that lets you add new items to the scene.
 """
 
+from tank.platform.qt import QtCore, QtGui
+
 import tank
 import sys
 import os
@@ -28,3 +30,24 @@ class MultiLoader(tank.platform.Application):
         # add stuff to main menu
         self.engine.register_command("Loader Redux", cb)
 
+    def get_setting_name(self, param_name):
+        """
+        Whenever the app needs to store or retrieve a QSetting value, this method
+        can be called to generate a standardized setting name.
+        
+        The setting will be per environment, per engine and per app instance. 
+        
+        The param_name is the specific setting you want to store, for example
+        width, button_index etc.
+        
+        returns (qsettings_obj_handle, settings_key_name) 
+        """
+        # based on the environment name, engine name and app instance name
+        settings_key = "%s/%s/%s/%s" % (self.engine.environment["name"], 
+                                        self.engine.name, 
+                                        self.instance_name,
+                                        param_name)
+        
+        settings_obj = QtCore.QSettings("Shotgun Software", self.name)
+        
+        return (settings_obj, settings_key)

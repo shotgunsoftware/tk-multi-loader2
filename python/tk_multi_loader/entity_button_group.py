@@ -9,6 +9,7 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 from tank.platform.qt import QtCore, QtGui
+import tank
 
 class EntityButtonGroup(QtGui.QWidget):
     """
@@ -30,6 +31,9 @@ class EntityButtonGroup(QtGui.QWidget):
         
         self.signal_mapper = QtCore.QSignalMapper(self)
         
+        if len(captions) == 0:
+            raise tank.TankError("Need at least one button defined!")
+        
         for c in captions:
             btn = QtGui.QToolButton(self)
             btn.setText(c)
@@ -48,21 +52,39 @@ class EntityButtonGroup(QtGui.QWidget):
             # add it to our data structure to make QC happy
             self._buttons.append(btn)
 
-        self.signal_mapper.mapped.connect( self.clicked )
+        self.signal_mapper.mapped.connect(self.clicked)
         
-        # finally wire up the output signal of this class to 
+        # wire up the output signal of this class to 
         # an internal slot to manage the up/down of the buttons
         self.clicked.connect(self._entity_button_clicked)
     
-    def _entity_button_clicked(self, button_name):
+    def set_checked(self, button_name):
         """
-        Internal slot which manages the checked/unchecked logic
+        Check a button with a given caption.
+        If the button name specified is not found, the first button found will be
+        checked.
+        
+        :returns: the caption of the button that was clicked
         """
+        actual_button_name = None
         for b in self._buttons:
             if b.text() == button_name:
                 b.setChecked(True)
+                actual_button_name = b.text()
             else:
                 b.setChecked(False)
         
+        if actual_button_name is None:
+            # there was no button with that name. Click the first one.
+            self._buttons[0].setChecked(True)
+            actual_button_name = self._buttons[0].text()
+        
+        return actual_button_name
+    
+    def _entity_button_clicked(self, button_name):
+        """
+        Internal slot which manages the checked/unchecked logic.
+        """
+        self.set_checked(button_name)        
         
         

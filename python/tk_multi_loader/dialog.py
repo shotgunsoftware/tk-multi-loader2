@@ -31,6 +31,10 @@ class AppDialog(QtGui.QWidget):
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
         
+        # details pane mockup for now
+        self.ui.details.setVisible(False)
+        self.ui.info.clicked.connect(self._on_info_clicked)
+        
         # set up our background sg data fetcher
         self._sg_data_retriever = ShotgunAsyncDataRetriever(self)
         self._sg_data_retriever.queue_processing.connect(self._on_shotgun_async_processing_begin)
@@ -57,6 +61,13 @@ class AppDialog(QtGui.QWidget):
         
     def _on_shotgun_async_processing_end(self):
         self.ui.sg_status.setText("Shotgun Status: Idle.")
+        
+    ########################################################################################
+    # info bar related
+    
+    def _on_info_clicked(self):
+        self.ui.details.setVisible( not(self.ui.details.isVisible()) )
+        
         
         
     ########################################################################################

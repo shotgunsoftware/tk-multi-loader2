@@ -10,8 +10,6 @@
 
 import tank
 import os
-import sys
-import threading
 import hashlib
 import tempfile
 
@@ -20,12 +18,6 @@ from tank.platform.qt import QtCore, QtGui
 # just so we can do some basic file validation
 FILE_MAGIC_NUMBER = 0xDEADBEEF # so we can validate file format correctness before loading
 FILE_VERSION = 1               # if we ever change the file format structure
-
-# serialization constants
-STATUS_DEFAULT = 0
-STATUS_BEGIN_CHILD = 1
-STATUS_END_CHILD = 2
-
 
 class SgEntityModel(QtGui.QStandardItemModel):
 
@@ -60,7 +52,7 @@ class SgEntityModel(QtGui.QStandardItemModel):
         if os.path.exists(self._full_cache_path):
             self._app.log_debug("Loading cached data %s..." % self._full_cache_path)
             try:
-                #self._load_from_disk(self._full_cache_path)
+                self._load_from_disk(self._full_cache_path)
                 self._app.log_debug("...loading complete!")            
             except Exception, e:
                 self._app.log_warning("Couldn't load cache data from disk. Will proceed with "
@@ -76,7 +68,7 @@ class SgEntityModel(QtGui.QStandardItemModel):
         This call is asynchronous and will return instantly.
         The update will be applied whenever the data from Shotgun is returned.
         """
-        
+        return
         # get data from shotgun
         self._current_work_id = self._sg_data_retriever.execute_find(self._entity_type, 
                                                                      self._filters, 
@@ -116,7 +108,7 @@ class SgEntityModel(QtGui.QStandardItemModel):
             self._save_to_disk(self._full_cache_path)
             self._app.log_debug("...saving complete!")            
         except Exception, e:
-            self._app.log_warning("Couldn't save cache data from disk: %s" % e)
+            self._app.log_warning("Couldn't save cache data to disk: %s" % e)
         
         
     ########################################################################################
@@ -215,9 +207,9 @@ class SgEntityModel(QtGui.QStandardItemModel):
 
         root = self.invisibleRootItem()
         
-        self._save_to_disk_r(out, root)
+        self._save_to_disk_r(out, root, 0)
         
-    def _save_to_disk_r(self, stream, item):
+    def _save_to_disk_r(self, stream, item, depth):
         """
         Recursive tree writer
         """
@@ -226,27 +218,20 @@ class SgEntityModel(QtGui.QStandardItemModel):
             # write this
             child = item.child(row)
             child.write(stream)
+            stream.writeInt32(depth)
             
             if child.hasChildren():
-                stream.writeInt32(STATUS_BEGIN_CHILD)
                 # write children
-                self._save_to_disk_r(stream, child)
-                
-            elif row == num_rows-1:
-                # last row
-                stream.writeInt32(STATUS_END_CHILD)
-                
-            else:
-                stream.writeInt32(STATUS_DEFAULT)
+                self._save_to_disk_r(stream, child, depth+1)                
             
 
     def _load_from_disk(self, filename):
         """
         Load a serialized model from disk
         """
-        file = QtCore.QFile(filename)
-        file.open(QtCore.QIODevice.ReadOnly);
-        file_in = QtCore.QDataStream(file)
+        fh = QtCore.QFile(filename)
+        fh.open(QtCore.QIODevice.ReadOnly);
+        file_in = QtCore.QDataStream(fh)
         
         magic = file_in.readInt64()
         if magic != FILE_MAGIC_NUMBER:
@@ -259,28 +244,40 @@ class SgEntityModel(QtGui.QStandardItemModel):
         # tell which deserialization dialect to use
         file_in.setVersion(QtCore.QDataStream.Qt_4_0)
         
-        root = self.invisibleRootItem()
+        curr_parent = self.invisibleRootItem()
+        prev_node = None
+        curr_depth = 0
+                
+        while not file_in.atEnd():
         
-        self._load_from_disk_r(file_in, root)
-        
-    def _load_from_disk_r(self, stream, parent):
-        """
-        Recursive tree loader
-        """
-        while not stream.atEnd():
-        
-            # create object
+            # read data
             item = QtGui.QStandardItem()
-            item.read(stream)
-            parent.appendRow(item)
+            item.read(file_in)
+            node_depth = file_in.readInt32()
             
-            # get directives for this node
-            status = stream.readInt32()
-            if status == STATUS_BEGIN_CHILD:
-                self._load_from_disk_r(stream, item)
-            elif status == STATUS_END_CHILD:
-                # leave recursion level
-                return
+            if node_depth == curr_depth + 1:
+                # this new node is a child of the previous node
+                curr_parent = prev_node
+                curr_depth = node_depth 
+            
+            elif node_depth > curr_depth + 1:
+                # something's wrong!
+                raise Exception("File integrity issues!") 
+            
+            elif node_depth < curr_depth:
+                # we are going back up to parent level
+                while curr_depth > node_depth:
+                    curr_depth = curr_depth -1
+                    curr_parent = curr_parent.parent()
+                    if curr_parent is None:
+                        # we reached the root. special case
+                        curr_parent = self.invisibleRootItem()
+        
+            # and attach the node
+            curr_parent.appendRow(item)
+            prev_node = item
+            
+            
         
             
              

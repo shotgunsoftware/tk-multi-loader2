@@ -78,6 +78,7 @@ class Ui_Dialog(object):
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout.setObjectName("verticalLayout")
         self.entity_view = QtGui.QTreeView(self.layoutWidget)
+        self.entity_view.setHeaderHidden(True)
         self.entity_view.setObjectName("entity_view")
         self.verticalLayout.addWidget(self.entity_view)
         self.layoutWidget1 = QtGui.QWidget(self.splitter)

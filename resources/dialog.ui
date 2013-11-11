@@ -147,7 +147,11 @@
      <widget class="QWidget" name="layoutWidget">
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
-        <widget class="QTreeView" name="entity_view"/>
+        <widget class="QTreeView" name="entity_view">
+         <property name="headerHidden">
+          <bool>true</bool>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>

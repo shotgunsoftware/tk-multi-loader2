@@ -34,7 +34,7 @@ class SgEntityModel(QtGui.QStandardItemModel):
         self._app = tank.platform.current_bundle()
 
         # model data in alt format
-        self._sg_data = {}
+        self._tree_data = {}
 
         # hook up async notifications plumbing
         self._sg_data_retriever.work_completed.connect( self._on_worker_signal)
@@ -101,19 +101,62 @@ class SgEntityModel(QtGui.QStandardItemModel):
             # not our job. ignore
             return
     
-        if len(self._sg_data) == 0:
+        if len(self._tree_data) == 0:
             # we have an empty tree. Run recursive tree generation
             # for performance.
-            self._app.log_debug("Creating full tree from Shotgun data...")
-            root = self.invisibleRootItem()
-            self._populate_complete_tree_r(data, root, self._hierarchy, {})
-            self._app.log_debug("...tree update complete!")
+            self._app.log_debug("No cached items in tree! Creating full tree from Shotgun data...")
+            self._rebuild_whole_tree_from_sg_data(data)
+            self._app.log_debug("...done!")
         
         else:
-            pass
+            # go through and see if there are any changes we should apply to the tree.
+            # note that there may be items 
+            
+            # check if anything has been deleted or added
+            ids_from_shotgun = set([ d["id"] for d in data ])
+            ids_in_tree = set(self._tree_data.keys())
+            removed_ids = ids_in_tree.difference(ids_from_shotgun)
+            added_ids = ids_from_shotgun.difference(ids_in_tree)
+
+            if len(removed_ids) > 0:
+                self._app.log_debug("Detected deleted items %s. Rebuilding whole tree..." % removed_ids)
+                self._rebuild_whole_tree_from_sg_data(data)
+                self._app.log_debug("...done!")
                 
+            elif len(added_ids) > 0:
+                # wedge in the new items
+                self._app.log_debug("Detected added items. Adding them in-situ to tree...")
+                for d in data:
+                    if d["id"] in added_ids:
+                        self._app.log_debug("Adding %s to tree" % d )
+                        # need to add this one
+                        self._add_sg_item_to_tree(d)
+                self._app.log_debug("...done!")
+
+        # check for modifications. At this point, the number of items in the tree and 
+        # the sg data should match, except for any duplicate items in the tree which would 
+        # effectively shadow each other. These can be safely ignored.
+        self._app.log_debug("Checking for modifications...")
+        detected_changes = False
+        for d in data:
+            # if there are modifications of any kind, we just rebuild the tree at the moment
+            try:
+                existing_sg_data = self._tree_data[ d["id"] ].data(NODE_SG_DATA_ROLE)
+                if not self._sg_unicode_equals(d, existing_sg_data):                    
+                    # shotgun data has changed for this item! Rebuild the tree
+                    self._app.log_debug("SG data change: %s --> %s" % (existing_sg_data, d))
+                    detected_changes = True
+            except KeyError, e:
+                self._app.log_warning("Shotgun item %s not appearing in tree - most likely because "
+                                      "there is another object in Shotgun with the same name." % d)
+                  
+        if detected_changes:
+            self._app.log_debug("Detected modifications. Rebuilding tree...")
+            self._rebuild_whole_tree_from_sg_data(data)
+            self._app.log_debug("...done!")
+        else:
+            self._app.log_debug("...no modifications found.")
                 
-        
         self._app.log_debug("Saving tree to disk %s..." % self._full_cache_path)
         try:
             self._save_to_disk(self._full_cache_path)
@@ -124,6 +167,108 @@ class SgEntityModel(QtGui.QStandardItemModel):
         
     ########################################################################################
     # shotgun data processing and tree building
+    
+    def _sg_unicode_equals(self, a, b):
+        """
+        Compare two sg dicts:
+        - unicode is turned into utf-8
+        - assumes same set of keys in a and b
+        """
+        
+        def _to_utf8(val):
+            """
+            Convert sg val to string.
+            """
+            if isinstance(val, unicode):
+                # u"foo" --> "foo"
+                str_val = val.encode('UTF-8')
+            if isinstance(val, dict):
+                # assume sg link dict - convert name to str
+                # {"id": 123, "name": u"foo"} ==> "foo"
+                str_val = _to_utf8(val["name"])
+            else:
+                # 1 ==> "1"
+                # "foo" ==> "foo"
+                str_val = str(val)
+            
+            return str_val
+            
+        for k in a:
+            a_val = _to_utf8(a[k])
+            b_val = _to_utf8(b[k])
+            
+            if a_val != b_val:
+                return False
+
+        return True
+    
+    def _add_sg_item_to_tree(self, sg_item):
+        """
+        Add a single item to the tree.
+        This is a slow method.
+        """
+        root = self.invisibleRootItem()
+        self._add_sg_item_to_tree_r(sg_item, root, self._hierarchy)
+    
+    def _add_sg_item_to_tree_r(self, sg_item, root, hierarchy):
+        """
+        Add a shotgun item to the tree. Create intermediate nodes if neccessary. 
+        """
+        # get the next field to display in tree view
+        field = hierarchy[0]
+        
+        # get lower levels of values
+        remaining_fields = hierarchy[1:]
+        
+        # are we at leaf level or not?
+        on_leaf_level = len(remaining_fields) == 0
+
+        # get the item we need at this level. Create it if not found.
+        field_display_name = self._sg_field_value_to_str(sg_item[field])
+        found_item = None
+        for row_index in range(root.rowCount()):
+            child = root.child(row_index)
+            if on_leaf_level:
+                # compare shotgun ids
+                sg_data = child.data(NODE_SG_DATA_ROLE)
+                if sg_data.get("id") == sg_item.get("id"):
+                    found_item = child
+                    break
+            else:
+                # not on leaf level. Just compare names            
+                if str(child.text()) == field_display_name:
+                    found_item = child
+                    break
+        
+        if found_item is None:
+            # didn't find item! Create it!
+            found_item = QtGui.QStandardItem(field_display_name)
+            # and add to tree
+            root.appendRow(found_item)
+        
+        if on_leaf_level:
+            
+            # this is the leaf level!
+            # attach the shotgun data so that we can access it later
+            found_item.setData(sg_item, NODE_SG_DATA_ROLE)
+            # and also populate the id association in our lookup dict
+            self._tree_data[ sg_item["id"] ] = found_item
+     
+        else:
+            # there are more levels
+            self._add_sg_item_to_tree_r(sg_item, found_item, remaining_fields)
+        
+    
+    
+    def _rebuild_whole_tree_from_sg_data(self, data):
+        """
+        Clears the tree and rebuilds it from the given shotgun data.
+        Note that any selection and expansion states in the view will be lost.
+        """
+        self.clear()
+        self._tree_data = {}
+        root = self.invisibleRootItem()
+        self._populate_complete_tree_r(data, root, self._hierarchy, {})
         
     def _populate_complete_tree_r(self, sg_data, root, hierarchy, constraints):
         """
@@ -134,7 +279,7 @@ class SgEntityModel(QtGui.QStandardItemModel):
         # get lower levels of values
         remaining_fields = hierarchy[1:] 
         # are we at leaf level or not?
-        recurse_down = len(remaining_fields) > 0
+        on_leaf_level = len(remaining_fields) == 0
         
         # first pass, go through all our data, eliminate by 
         # constraints and get a result set.
@@ -157,6 +302,12 @@ class SgEntityModel(QtGui.QStandardItemModel):
                 # and store it in our unique dictionary
                 field_display_name = self._sg_field_value_to_str(d[field])
                 # and associate the shotgun data so that we can find it later
+                
+                if on_leaf_level and field_display_name in discrete_values:
+                    # if we are on the leaf level, we want to make sure all objects
+                    # are displayed! handle duplicates by appending the sg id to the name.
+                    field_display_name = "%s (id %s)" % (field_display_name, d["id"])
+
                 discrete_values[ field_display_name ] = d
                 
             
@@ -165,24 +316,34 @@ class SgEntityModel(QtGui.QStandardItemModel):
             # construct tree view node object
             item = QtGui.QStandardItem(dv)
             root.appendRow(item)
-            # attach the shotgun data so that we can access it later
-            sg_data = discrete_values[dv]
-            item.setData(sg_data, NODE_SG_DATA_ROLE)
+            
                         
-            if recurse_down:
+            if on_leaf_level:
+                # this is the leaf level
+                # attach the shotgun data so that we can access it later
+                sg_item = discrete_values[dv]
+                item.setData(sg_item, NODE_SG_DATA_ROLE)
+                # and also populate the id association in our lookup dict
+                self._tree_data[ sg_item["id"] ] = item 
+                      
+            else:
+                # not on leaf level yet
                 # now when we recurse down, we need to add our current constrain
                 # to the list of constraints. For this we need the raw sg value
                 # and now the display name that we used when we constructed the
                 # tree node. 
                 new_constraints = {}
                 new_constraints.update(constraints)
-                new_constraints[field] = sg_data[field]
+                new_constraints[field] = discrete_values[dv][field]
                 
                 # and process subtree
                 self._populate_complete_tree_r(filtered_results, 
                                                item, 
                                                remaining_fields, 
                                                new_constraints)
+                
+                
+                
             
     def _check_constraints(self, record, constraints):
         """
@@ -200,8 +361,10 @@ class SgEntityModel(QtGui.QStandardItemModel):
         Turns a shotgun value to a string.
         """
         if isinstance(value, dict) and "name" in value:
+            # linked fields
             return str(value["name"])
         else:
+            # everything else
             return str(value)
             
     ########################################################################################
@@ -271,6 +434,14 @@ class SgEntityModel(QtGui.QStandardItemModel):
             item = QtGui.QStandardItem()
             item.read(file_in)
             node_depth = file_in.readInt32()
+            
+            # all leaf nodes have an sg id stored in their metadata
+            # the role data accessible via item.data() contains the sg id for this item
+            # if there is a sg id associated with this node
+            if item.data(NODE_SG_DATA_ROLE):
+                sg_data = item.data(NODE_SG_DATA_ROLE) 
+                # add the model item to our tree data dict keyed by id
+                self._tree_data[ sg_data["id"] ] = item            
             
             if node_depth == curr_depth + 1:
                 # this new node is a child of the previous node

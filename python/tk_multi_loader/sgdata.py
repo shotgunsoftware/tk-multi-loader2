@@ -39,6 +39,17 @@ class ShotgunAsyncDataRetriever(QtCore.QThread):
         self._queue_mutex = QtCore.QMutex()
         self._queue = []
         
+    def clear(self):
+        """
+        Clear the queue
+        """
+        self._queue_mutex.lock()
+        try:
+            self._app.log_debug("Discarding %s items in sg queue..." % len(self._queue))
+            self._queue = []
+        finally:
+            self._queue_mutex.unlock()
+        
     def stop(self):
         """
         Stops the worker, run this before shutdown

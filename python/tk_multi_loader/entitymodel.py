@@ -31,6 +31,9 @@ class SgEntityModel(QtGui.QStandardItemModel):
         self._current_work_id = 0
         self._app = tank.platform.current_bundle()
 
+        # model data in alt format
+        self._sg_data = {}
+
         # hook up async notifications plumbing
         self._sg_data_retriever.work_completed.connect( self._on_worker_signal)
         self._sg_data_retriever.work_failure.connect( self._on_worker_failure)
@@ -68,7 +71,6 @@ class SgEntityModel(QtGui.QStandardItemModel):
         This call is asynchronous and will return instantly.
         The update will be applied whenever the data from Shotgun is returned.
         """
-        return
         # get data from shotgun
         self._current_work_id = self._sg_data_retriever.execute_find(self._entity_type, 
                                                                      self._filters, 
@@ -97,11 +99,18 @@ class SgEntityModel(QtGui.QStandardItemModel):
             # not our job. ignore
             return
     
-        root = self.invisibleRootItem()
+        if len(self._sg_data) == 0:
+            # we have an empty tree. Run recursive tree generation
+            # for performance.
+            self._app.log_debug("Creating full tree from Shotgun data...")
+            root = self.invisibleRootItem()
+            self._populate_complete_tree_r(data, root, self._hierarchy, {})
+            self._app.log_debug("...tree update complete!")
         
-        self._app.log_debug("Applying %s updates to tree..." % len(data))
-        self._populate_tree_r(data, root, self._hierarchy, {})
-        self._app.log_debug("...tree update complete!")
+        else:
+            pass
+                
+                
         
         self._app.log_debug("Saving tree to disk %s..." % self._full_cache_path)
         try:
@@ -114,7 +123,7 @@ class SgEntityModel(QtGui.QStandardItemModel):
     ########################################################################################
     # shotgun data processing and tree building
         
-    def _populate_tree_r(self, data, root, hierarchy, constraints):
+    def _populate_complete_tree_r(self, data, root, hierarchy, constraints):
         """
         Generate tree model data structure based on Shotgun data 
         """
@@ -164,7 +173,10 @@ class SgEntityModel(QtGui.QStandardItemModel):
                 new_constraints.update(constraints)
                 new_constraints[field] = sg_data_for_display_value
                 # and process subtree
-                self._populate_tree_r(filtered_results, item, remaining_fields, new_constraints)
+                self._populate_complete_tree_r(filtered_results, 
+                                               item, 
+                                               remaining_fields, 
+                                               new_constraints)
             
     def _check_constraints(self, record, constraints):
         """

@@ -27,7 +27,7 @@ class EntityButtonGroup(QtGui.QWidget):
         
         QtGui.QWidget.__init__(self, parent)
         
-        self._buttons = [] # for QC
+        self._buttons = [] # for GC
         
         self.signal_mapper = QtCore.QSignalMapper(self)
         

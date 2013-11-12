@@ -131,6 +131,10 @@ class AppDialog(QtGui.QWidget):
         """
         item = self._entity_presets[caption]
         
+        # clear any outstanding requests in the async queue
+        # these wont be relevant if we switch entity preset
+        self._sg_data_retriever.clear()
+        
         # hook up this model and its selection model with the view
         self.ui.entity_view.setModel(item["model"])
         # the selection model for the view is automatically created 

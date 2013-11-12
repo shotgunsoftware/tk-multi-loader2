@@ -19,6 +19,8 @@ from tank.platform.qt import QtCore, QtGui
 FILE_MAGIC_NUMBER = 0xDEADBEEF # so we can validate file format correctness before loading
 FILE_VERSION = 1               # if we ever change the file format structure
 
+NODE_SG_DATA_ROLE = QtCore.Qt.UserRole + 1
+
 class SgEntityModel(QtGui.QStandardItemModel):
 
     def __init__(self, sg_data_retriever, entity_type, filters, hierarchy):
@@ -123,7 +125,7 @@ class SgEntityModel(QtGui.QStandardItemModel):
     ########################################################################################
     # shotgun data processing and tree building
         
-    def _populate_complete_tree_r(self, data, root, hierarchy, constraints):
+    def _populate_complete_tree_r(self, sg_data, root, hierarchy, constraints):
         """
         Generate tree model data structure based on Shotgun data 
         """
@@ -145,7 +147,7 @@ class SgEntityModel(QtGui.QStandardItemModel):
         # there will be more than one sg record having asset type = vehicle.
         discrete_values = {}
         
-        for d in data:
+        for d in sg_data:
             
             # is this item matching the given constraints?
             if self._check_constraints(d, constraints):
@@ -154,7 +156,8 @@ class SgEntityModel(QtGui.QStandardItemModel):
                 
                 # and store it in our unique dictionary
                 field_display_name = self._sg_field_value_to_str(d[field])
-                discrete_values[ field_display_name ] = d[field]
+                # and associate the shotgun data so that we can find it later
+                discrete_values[ field_display_name ] = d
                 
             
         for dv in sorted(discrete_values.keys()):
@@ -162,16 +165,19 @@ class SgEntityModel(QtGui.QStandardItemModel):
             # construct tree view node object
             item = QtGui.QStandardItem(dv)
             root.appendRow(item)
+            # attach the shotgun data so that we can access it later
+            sg_data = discrete_values[dv]
+            item.setData(sg_data, NODE_SG_DATA_ROLE)
                         
             if recurse_down:
                 # now when we recurse down, we need to add our current constrain
                 # to the list of constraints. For this we need the raw sg value
                 # and now the display name that we used when we constructed the
-                # tree node. This is the value of our dictionary.
-                sg_data_for_display_value = discrete_values[dv]
+                # tree node. 
                 new_constraints = {}
                 new_constraints.update(constraints)
-                new_constraints[field] = sg_data_for_display_value
+                new_constraints[field] = sg_data[field]
+                
                 # and process subtree
                 self._populate_complete_tree_r(filtered_results, 
                                                item, 
@@ -198,7 +204,6 @@ class SgEntityModel(QtGui.QStandardItemModel):
         else:
             return str(value)
             
-            
     ########################################################################################
     # de/serialization of model contents 
             
@@ -206,9 +211,9 @@ class SgEntityModel(QtGui.QStandardItemModel):
         """
         Save the model to disk
         """
-        file = QtCore.QFile(filename)
-        file.open(QtCore.QIODevice.WriteOnly);
-        out = QtCore.QDataStream(file)
+        fh = QtCore.QFile(filename)
+        fh.open(QtCore.QIODevice.WriteOnly);
+        out = QtCore.QDataStream(fh)
         
         # write a header
         out.writeInt64(FILE_MAGIC_NUMBER)
@@ -289,14 +294,3 @@ class SgEntityModel(QtGui.QStandardItemModel):
             curr_parent.appendRow(item)
             prev_node = item
             
-            
-        
-            
-             
-    
-    
-    
-    
-    
-    
-    

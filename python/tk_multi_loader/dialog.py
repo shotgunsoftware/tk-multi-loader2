@@ -41,11 +41,21 @@ class AppDialog(QtGui.QWidget):
         self._sg_data_retriever.queue_complete.connect(self._on_shotgun_async_processing_end)
         self._sg_data_retriever.start()
         
+        # manage history
+        self._history = []
+        self._history_index = 0
+        self._history_navigation_mode = False
+        self.ui.navigation_home.clicked.connect(self._on_home_clicked)
+        self.ui.navigation_prev.clicked.connect(self._on_back_clicked)
+        self.ui.navigation_next.clicked.connect(self._on_forward_clicked)
+        
         # set up our buttons and models based on the configured presets
         self._entity_presets = {} 
+        self._default_entity_preset = None
         self._load_entity_presets()
         
-                
+        # click on the home button to kick things off!
+        self._on_home_clicked()
     
     def closeEvent(self, event):
         # do cleanup, threading etc...
@@ -69,6 +79,118 @@ class AppDialog(QtGui.QWidget):
     def _on_info_clicked(self):
         self.ui.details.setVisible( not(self.ui.details.isVisible()) )
         
+    ########################################################################################
+    # history related
+    
+    def _add_history_record(self, preset_caption, std_item=None):
+        """
+        Adds a record to the history stack
+        """
+        # self._history_index is a one based index that points at the currently displayed
+        # item. If it is not pointing at the last element, it means a user has stepped back
+        # in that case, discard the history after the current item and add this new record
+        # after the current item
+
+        if not self._history_navigation_mode:
+            self._history = self._history[:self._history_index]         
+            self._history.append({"preset": preset_caption, "item": std_item})
+            self._history_index += 1
+
+        # now compute buttons
+        self._compute_button_visibility()
+        
+    
+    def _on_home_clicked(self):
+        """
+        User clicks the home button
+        """
+        
+        found_home_item = False
+        
+        # get entity portion of context
+        ctx = tank.platform.current_bundle().context
+        if ctx.entity:
+
+            # now step through the profiles and find a matching entity
+            for p in self._entity_presets:
+                if self._entity_presets[p]["entity_type"] == ctx.entity["type"]:
+                    # found a matching entity profile.
+                    # try to find the entity in the tree
+                    item = self._entity_presets[p]["model"].item_from_entity(ctx.entity["type"], ctx.entity["id"]) 
+                    
+                    self._focus_on_item(p, item)
+            
+                    # done!
+                    found_home_item = True
+                    self._add_history_record(p, item)
+                    break
+                
+        # lastly, check if we managed to find an item
+        if not found_home_item:
+            # use default preset.
+            self._history_navigation_mode = True
+            try:
+                self._set_entity_preset(self._default_entity_preset)
+                self._button_group.set_checked(self._default_entity_preset)
+                self.ui.entity_view.selectionModel().clear()
+            finally:
+                self._history_navigation_mode = False
+            self._add_history_record(self._default_entity_preset)
+            
+            
+    def _focus_on_item(self, preset, item):
+        """
+        Focus in on an item in the tree view.
+        Item can be none, indicating that no item in the treeview was selected.
+        """
+        self._history_navigation_mode = True
+        try:
+            # select it
+            self._set_entity_preset(preset)
+            self._button_group.set_checked(preset)
+            
+            if item is None:
+                # no item selected
+                selection_model = self.ui.entity_view.selectionModel()
+                selection_model.clear()
+                
+            else:
+                # ensure that the tree view is expanded and that the item we are about 
+                # to selected is in vertically centered in the widget
+                self.ui.entity_view.scrollTo(item.index(), QtGui.QAbstractItemView.PositionAtCenter)
+                
+                # select it and set it to be the current item
+                selection_model = self.ui.entity_view.selectionModel()
+                selection_model.select(item.index(), QtGui.QItemSelectionModel.ClearAndSelect)
+                selection_model.setCurrentIndex(item.index(), QtGui.QItemSelectionModel.ClearAndSelect)
+        finally:
+            self._history_navigation_mode = False
+    
+    def _compute_button_visibility(self):
+        """
+        compute history button visibility
+        """
+        self.ui.navigation_next.setEnabled(True)
+        self.ui.navigation_prev.setEnabled(True)
+        if self._history_index == len(self._history):
+            self.ui.navigation_next.setEnabled(False) 
+        if self._history_index == 1:
+            self.ui.navigation_prev.setEnabled(False) 
+        
+    
+    def _on_back_clicked(self):
+        self._history_index += -1
+        # get the data for this guy (note: index are one based)
+        d = self._history[ self._history_index - 1]
+        self._focus_on_item(d["preset"], d["item"])
+        self._compute_button_visibility()
+        
+    def _on_forward_clicked(self):
+        self._history_index += 1
+        # get the data for this guy (note: index are one based)
+        d = self._history[ self._history_index - 1]
+        self._focus_on_item(d["preset"], d["item"])
+        self._compute_button_visibility()
         
         
     ########################################################################################
@@ -98,6 +220,7 @@ class AppDialog(QtGui.QWidget):
             
             # maintain a dictionary, keyed by caption, holding all objects
             d = {}
+            d["entity_type"] = e["entity_type"]
             d["model"] = SgEntityModel(self._sg_data_retriever, 
                                        e["entity_type"], 
                                        e["filters"],
@@ -109,26 +232,19 @@ class AppDialog(QtGui.QWidget):
         # now create the button group
         self._button_group = EntityButtonGroup(self, self.ui.entity_button_layout, button_captions)
         
-        # Load up which button that should be checked at startup:
-        # Try to restore the previous button that we had selected.
-        # if not possible, press the first button
-        app = tank.platform.current_bundle()        
-        (settngs_obj, settings_key) = app.get_setting_name("entity_button")
-        button_caption = str(settngs_obj.value(settings_key, "undefined"))
-                    
-        # ask our widget to check it
-        caption_checked = self._button_group.set_checked(button_caption)
-        
-        # and "click it"
-        self._on_entity_preset_click(caption_checked)
-        
+        # store our preferred choice if we ever need to revert to default
+        self._default_entity_preset = button_captions[0]
+  
         # hook up event handler
-        self._button_group.clicked.connect(self._on_entity_preset_click)
+        self._button_group.clicked.connect(self._set_entity_preset)
         
-    def _on_entity_preset_click(self, caption):
+        
+    def _set_entity_preset(self, caption):
         """
-        When user clicks one of the entity preset buttons
+        Changes the entity preset, ensures that the right button is pressed
+        and that all things are up to date
         """
+        
         item = self._entity_presets[caption]
         
         # clear any outstanding requests in the async queue
@@ -140,24 +256,43 @@ class AppDialog(QtGui.QWidget):
         # the selection model for the view is automatically created 
         # each time we swap model, so set up callbacks for that too
         selection_model = self.ui.entity_view.selectionModel()
-        selection_model.currentChanged.connect(self._on_entity_selection)
+        selection_model.selectionChanged.connect(self._on_entity_selection)
         
         # tell model to call out to shotgun to refresh its data
-        item["model"].refresh_data()
+        # but not when we are navigating back and forwards through history
+        if not self._history_navigation_mode:
+            item["model"].refresh_data()
         
         # populate breadcrumbs
         self._populate_entity_breadcrumbs()
         
-        # and store the selected caption as a preference
-        app = tank.platform.current_bundle()
-        (settngs_obj, settings_key) = app.get_setting_name("entity_button")
-        settngs_obj.setValue(settings_key, caption)
+        # and store in history
+        self._add_history_record(caption)
         
+        
+    
     def _on_entity_selection(self):
         """
         Signal triggered when someone changes the selection
         """
+        # update breadcrumbs
         self._populate_entity_breadcrumbs()
+        
+        # add item to stack
+        preset = self._button_group.get_checked()
+        
+        selection_model = self.ui.entity_view.selectionModel()
+        if selection_model.hasSelection():
+            # get the current index
+            current = selection_model.selection().indexes()[0]
+            # get selected item
+            item = current.model().itemFromIndex(current)
+            self._add_history_record(preset, item)
+        else:
+            # nothing selected
+            self._add_history_record(preset)
+                    
+        
     
     def _populate_entity_breadcrumbs(self):
         """
@@ -170,7 +305,7 @@ class AppDialog(QtGui.QWidget):
         if selection_model.hasSelection():
         
             # get the current index
-            current = selection_model.currentIndex()
+            current = selection_model.selection().indexes()[0]
             # get selected item
             item = current.model().itemFromIndex(current)
             

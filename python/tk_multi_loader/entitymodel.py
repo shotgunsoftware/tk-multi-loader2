@@ -79,6 +79,18 @@ class SgEntityModel(QtGui.QStandardItemModel):
                                                                      self._hierarchy)
 
         
+    def item_from_entity(self, entity_type, entity_id):
+        """
+        Returns a QStandardItem based on entity type and entity id
+        Returns none if not found.
+        Constant time lookup
+        """
+        if entity_type != self._entity_type:
+            return None
+        if entity_id not in self._tree_data:
+            return None
+        return self._tree_data[entity_id]        
+         
 
     ########################################################################################
     # asynchronous callbacks

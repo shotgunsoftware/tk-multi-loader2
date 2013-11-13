@@ -17,23 +17,23 @@
    <item row="0" column="0" colspan="3">
     <layout class="QHBoxLayout" name="horizontalLayout_3">
      <item>
-      <widget class="QToolButton" name="toolButton_5">
+      <widget class="QToolButton" name="navigation_home">
        <property name="text">
-        <string>H</string>
+        <string>Home</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QToolButton" name="toolButton_3">
+      <widget class="QToolButton" name="navigation_prev">
        <property name="text">
-        <string>&lt;</string>
+        <string>&lt; Back</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QToolButton" name="toolButton_4">
+      <widget class="QToolButton" name="navigation_next">
        <property name="text">
-        <string>&gt;</string>
+        <string>Next &gt;</string>
        </property>
       </widget>
      </item>
@@ -59,6 +59,18 @@
      </item>
      <item>
       <widget class="QLineEdit" name="lineEdit">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>200</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>200</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
         <string>Search....</string>
        </property>

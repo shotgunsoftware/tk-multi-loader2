@@ -57,6 +57,9 @@ class EntityButtonGroup(QtGui.QWidget):
         # wire up the output signal of this class to 
         # an internal slot to manage the up/down of the buttons
         self.clicked.connect(self._entity_button_clicked)
+        
+        # set the first button to be checked by default
+        self.set_checked(captions[0])
     
     def set_checked(self, button_name):
         """

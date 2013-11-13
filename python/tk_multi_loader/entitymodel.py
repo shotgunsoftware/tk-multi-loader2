@@ -91,6 +91,14 @@ class SgEntityModel(QtGui.QStandardItemModel):
             return None
         return self._tree_data[entity_id]        
          
+    def sg_data_from_item(self, item):
+        """
+        Returns a QStandardItem based on entity type and entity id
+        Returns none if not found.
+        Constant time lookup
+        """
+        return item.data(NODE_SG_DATA_ROLE)        
+
 
     ########################################################################################
     # asynchronous callbacks

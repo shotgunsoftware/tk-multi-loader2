@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>976</width>
-    <height>701</height>
+    <width>1005</width>
+    <height>602</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -137,20 +137,6 @@
      </item>
     </layout>
    </item>
-   <item row="2" column="1">
-    <layout class="QVBoxLayout" name="verticalLayout_3">
-     <item>
-      <widget class="QTableView" name="tableView"/>
-     </item>
-     <item>
-      <widget class="QLabel" name="label_3">
-       <property name="text">
-        <string>Breadcrumbs &gt; Breadcrumbs &gt; Breadcrumbs</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
    <item row="2" column="0">
     <widget class="QSplitter" name="splitter">
      <property name="orientation">
@@ -177,17 +163,78 @@
         </widget>
        </item>
        <item>
-        <widget class="QListView" name="listView"/>
+        <widget class="QStackedWidget" name="stackedWidget_2">
+         <property name="currentIndex">
+          <number>1</number>
+         </property>
+         <widget class="QWidget" name="publish_type_spinner_page">
+          <layout class="QVBoxLayout" name="verticalLayout_7">
+           <property name="margin">
+            <number>1</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="publish_type_spinner">
+             <property name="text">
+              <string/>
+             </property>
+             <property name="pixmap">
+              <pixmap resource="resources.qrc">:/res/progress_bar_1.png</pixmap>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="publish_type_list_page">
+          <layout class="QVBoxLayout" name="verticalLayout_6">
+           <property name="margin">
+            <number>1</number>
+           </property>
+           <item>
+            <widget class="QListView" name="publish_type_list"/>
+           </item>
+          </layout>
+         </widget>
+        </widget>
        </item>
       </layout>
      </widget>
     </widget>
    </item>
-   <item row="3" column="0" colspan="2">
-    <widget class="QLabel" name="sg_status">
-     <property name="text">
-      <string>Shotgun Status:</string>
+   <item row="2" column="1">
+    <widget class="QStackedWidget" name="stackedWidget">
+     <property name="currentIndex">
+      <number>0</number>
      </property>
+     <widget class="QWidget" name="publish_list_page">
+      <layout class="QVBoxLayout" name="verticalLayout_5">
+       <property name="margin">
+        <number>1</number>
+       </property>
+       <item>
+        <widget class="QListView" name="publish_list"/>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="publish_spinner_page">
+      <layout class="QVBoxLayout" name="verticalLayout_3">
+       <item>
+        <widget class="QLabel" name="publish_spinner">
+         <property name="text">
+          <string/>
+         </property>
+         <property name="pixmap">
+          <pixmap resource="resources.qrc">:/res/progress_bar_1.png</pixmap>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
     </widget>
    </item>
    <item row="2" column="2">
@@ -196,29 +243,51 @@
       <string/>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_4">
+      <property name="margin">
+       <number>1</number>
+      </property>
       <item>
-       <widget class="QLabel" name="label_2">
-        <property name="minimumSize">
-         <size>
-          <width>200</width>
-          <height>0</height>
-         </size>
+       <widget class="QStackedWidget" name="stackedWidget_3">
+        <property name="currentIndex">
+         <number>0</number>
         </property>
-        <property name="maximumSize">
-         <size>
-          <width>200</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>INFO</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
-        </property>
+        <widget class="QWidget" name="details_list_page">
+         <layout class="QVBoxLayout" name="verticalLayout_8">
+          <property name="margin">
+           <number>1</number>
+          </property>
+          <item>
+           <widget class="QListView" name="details_list"/>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="details_list_spinner_page">
+         <layout class="QVBoxLayout" name="verticalLayout_9">
+          <item>
+           <widget class="QLabel" name="details_list_spinner">
+            <property name="text">
+             <string/>
+            </property>
+            <property name="pixmap">
+             <pixmap resource="resources.qrc">:/res/progress_bar_1.png</pixmap>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
        </widget>
       </item>
      </layout>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <widget class="QLabel" name="sg_status">
+     <property name="text">
+      <string>Shotgun Status:</string>
+     </property>
     </widget>
    </item>
   </layout>

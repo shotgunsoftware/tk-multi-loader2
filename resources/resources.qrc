@@ -1,4 +1,8 @@
 <RCC>
   <qresource prefix="res">
+    <file>progress_bar_1.png</file>
+    <file>progress_bar_2.png</file>
+    <file>progress_bar_3.png</file>
+    <file>progress_bar_4.png</file>
   </qresource>
 </RCC>

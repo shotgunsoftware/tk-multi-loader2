@@ -228,6 +228,26 @@ class AppDialog(QtGui.QWidget):
             # maintain a list of captions the way they were defined in the config
             button_captions.append( e["caption"] )
             
+            # resolve any magic tokens in the filter
+            resolved_filters = []
+            for filter in e["filters"]:
+                resolved_filter = []
+                for field in filter:
+                    if field == "{context.entity}":
+                        field = app.context.entity
+                    elif field == "{context.project}":
+                        field = app.context.project
+                    elif field == "{context.step}":
+                        field = app.context.step
+                    elif field == "{context.task}":
+                        field = app.context.task
+                    elif field == "{context.user}":
+                        field = app.context.user                    
+                    resolved_filter.append(field)
+                resolved_filters.append(resolved_filter)
+            e["filters"] = resolved_filters
+            
+            
             # maintain a dictionary, keyed by caption, holding all objects
             d = {}
             d["entity_type"] = e["entity_type"]

@@ -18,6 +18,18 @@
     <layout class="QHBoxLayout" name="horizontalLayout_3">
      <item>
       <widget class="QToolButton" name="navigation_home">
+       <property name="minimumSize">
+        <size>
+         <width>40</width>
+         <height>40</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>40</width>
+         <height>40</height>
+        </size>
+       </property>
        <property name="text">
         <string>Home</string>
        </property>
@@ -32,6 +44,18 @@
      </item>
      <item>
       <widget class="QToolButton" name="navigation_prev">
+       <property name="minimumSize">
+        <size>
+         <width>40</width>
+         <height>40</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>40</width>
+         <height>40</height>
+        </size>
+       </property>
        <property name="text">
         <string>&lt; Back</string>
        </property>
@@ -46,6 +70,18 @@
      </item>
      <item>
       <widget class="QToolButton" name="navigation_next">
+       <property name="minimumSize">
+        <size>
+         <width>40</width>
+         <height>40</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>40</width>
+         <height>40</height>
+        </size>
+       </property>
        <property name="text">
         <string>Next &gt;</string>
        </property>
@@ -121,6 +157,58 @@
           </size>
          </property>
         </spacer>
+       </item>
+       <item>
+        <widget class="QSlider" name="thumb_scale">
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>100</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QSlider::groove:horizontal {
+     /*border: 1px solid #999999; */
+     height: 2px; /* the groove expands to the size of the slider by default. by giving it a height, it has a fixed size */
+     background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #3F3F3F, stop:1 #545454);
+     margin: 2px 0;
+     border-radius: 1px;
+ }
+
+ QSlider::handle:horizontal {
+     background: #545454;
+     border: 1px solid #B6B6B6;
+     width: 5px;
+     margin: -2px 0; /* handle is placed by default on the contents rect of the groove. Expand outside the groove */
+     border-radius: 3px;
+ }
+</string>
+         </property>
+         <property name="minimum">
+          <number>50</number>
+         </property>
+         <property name="maximum">
+          <number>300</number>
+         </property>
+         <property name="value">
+          <number>100</number>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="invertedAppearance">
+          <bool>false</bool>
+         </property>
+         <property name="invertedControls">
+          <bool>false</bool>
+         </property>
+        </widget>
        </item>
        <item>
         <widget class="QCheckBox" name="checkBox">
@@ -227,11 +315,8 @@
        </property>
        <item>
         <widget class="QListView" name="publish_list">
-         <property name="iconSize">
-          <size>
-           <width>200</width>
-           <height>200</height>
-          </size>
+         <property name="editTriggers">
+          <set>QAbstractItemView::NoEditTriggers</set>
          </property>
          <property name="movement">
           <enum>QListView::Static</enum>

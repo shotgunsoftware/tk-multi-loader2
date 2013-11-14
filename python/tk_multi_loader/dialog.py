@@ -39,6 +39,10 @@ class AppDialog(QtGui.QWidget):
         self.ui.details.setVisible(False)
         self.ui.info.clicked.connect(self._on_info_clicked)
         
+        # thumb scaling
+        self.ui.thumb_scale.valueChanged.connect(self._on_thumb_size_slider_change)
+        self.ui.thumb_scale.setValue(140)
+        
         #################################################
         # set up our background sg data fetcher
         self._sg_data_retriever = ShotgunAsyncDataRetriever(self)
@@ -96,6 +100,9 @@ class AppDialog(QtGui.QWidget):
     
     def _on_info_clicked(self):
         self.ui.details.setVisible( not(self.ui.details.isVisible()) )
+        
+    def _on_thumb_size_slider_change(self, value):
+        self.ui.publish_list.setIconSize( QtCore.QSize(value, value))
         
     ########################################################################################
     # history related

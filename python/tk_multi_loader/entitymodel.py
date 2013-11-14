@@ -447,13 +447,15 @@ class SgEntityModel(QtGui.QStandardItemModel):
         curr_parent = self.invisibleRootItem()
         prev_node = None
         curr_depth = 0
-                
+        
         while not file_in.atEnd():
         
             # read data
             item = QtGui.QStandardItem()
             item.read(file_in)
             node_depth = file_in.readInt32()
+            
+
             
             # all leaf nodes have an sg id stored in their metadata
             # the role data accessible via item.data() contains the sg id for this item
@@ -462,11 +464,14 @@ class SgEntityModel(QtGui.QStandardItemModel):
                 sg_data = item.data(NODE_SG_DATA_ROLE) 
                 # add the model item to our tree data dict keyed by id
                 self._tree_data[ sg_data["id"] ] = item            
-            
+
+                    
             if node_depth == curr_depth + 1:
                 # this new node is a child of the previous node
                 curr_parent = prev_node
-                curr_depth = node_depth 
+                if prev_node is None:
+                    raise Exception("File integrity issues!")
+                curr_depth = node_depth
             
             elif node_depth > curr_depth + 1:
                 # something's wrong!

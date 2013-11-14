@@ -17,6 +17,8 @@ class Ui_Dialog(object):
         self.horizontalLayout_3 = QtGui.QHBoxLayout()
         self.horizontalLayout_3.setObjectName("horizontalLayout_3")
         self.navigation_home = QtGui.QToolButton(Dialog)
+        self.navigation_home.setMinimumSize(QtCore.QSize(40, 40))
+        self.navigation_home.setMaximumSize(QtCore.QSize(40, 40))
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(":/res/home.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.navigation_home.setIcon(icon)
@@ -24,6 +26,8 @@ class Ui_Dialog(object):
         self.navigation_home.setObjectName("navigation_home")
         self.horizontalLayout_3.addWidget(self.navigation_home)
         self.navigation_prev = QtGui.QToolButton(Dialog)
+        self.navigation_prev.setMinimumSize(QtCore.QSize(40, 40))
+        self.navigation_prev.setMaximumSize(QtCore.QSize(40, 40))
         icon1 = QtGui.QIcon()
         icon1.addPixmap(QtGui.QPixmap(":/res/arrow_back.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.navigation_prev.setIcon(icon1)
@@ -31,6 +35,8 @@ class Ui_Dialog(object):
         self.navigation_prev.setObjectName("navigation_prev")
         self.horizontalLayout_3.addWidget(self.navigation_prev)
         self.navigation_next = QtGui.QToolButton(Dialog)
+        self.navigation_next.setMinimumSize(QtCore.QSize(40, 40))
+        self.navigation_next.setMaximumSize(QtCore.QSize(40, 40))
         icon2 = QtGui.QIcon()
         icon2.addPixmap(QtGui.QPixmap(":/res/arrow_forward.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.navigation_next.setIcon(icon2)
@@ -62,6 +68,33 @@ class Ui_Dialog(object):
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
         spacerItem1 = QtGui.QSpacerItem(68, 26, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.horizontalLayout_2.addItem(spacerItem1)
+        self.thumb_scale = QtGui.QSlider(Dialog)
+        self.thumb_scale.setMinimumSize(QtCore.QSize(100, 0))
+        self.thumb_scale.setMaximumSize(QtCore.QSize(100, 16777215))
+        self.thumb_scale.setStyleSheet("QSlider::groove:horizontal {\n"
+"     /*border: 1px solid #999999; */\n"
+"     height: 2px; /* the groove expands to the size of the slider by default. by giving it a height, it has a fixed size */\n"
+"     background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #3F3F3F, stop:1 #545454);\n"
+"     margin: 2px 0;\n"
+"     border-radius: 1px;\n"
+" }\n"
+"\n"
+" QSlider::handle:horizontal {\n"
+"     background: #545454;\n"
+"     border: 1px solid #B6B6B6;\n"
+"     width: 5px;\n"
+"     margin: -2px 0; /* handle is placed by default on the contents rect of the groove. Expand outside the groove */\n"
+"     border-radius: 3px;\n"
+" }\n"
+"")
+        self.thumb_scale.setMinimum(50)
+        self.thumb_scale.setMaximum(300)
+        self.thumb_scale.setProperty("value", 100)
+        self.thumb_scale.setOrientation(QtCore.Qt.Horizontal)
+        self.thumb_scale.setInvertedAppearance(False)
+        self.thumb_scale.setInvertedControls(False)
+        self.thumb_scale.setObjectName("thumb_scale")
+        self.horizontalLayout_2.addWidget(self.thumb_scale)
         self.checkBox = QtGui.QCheckBox(Dialog)
         self.checkBox.setEnabled(False)
         self.checkBox.setObjectName("checkBox")
@@ -118,7 +151,8 @@ class Ui_Dialog(object):
         self.verticalLayout_5.setContentsMargins(1, 1, 1, 1)
         self.verticalLayout_5.setObjectName("verticalLayout_5")
         self.publish_list = QtGui.QListView(self.publish_list_page)
-        self.publish_list.setIconSize(QtCore.QSize(200, 200))
+        self.publish_list.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
+        self.publish_list.setIconSize(QtCore.QSize(400, 400))
         self.publish_list.setMovement(QtGui.QListView.Static)
         self.publish_list.setResizeMode(QtGui.QListView.Adjust)
         self.publish_list.setLayoutMode(QtGui.QListView.Batched)

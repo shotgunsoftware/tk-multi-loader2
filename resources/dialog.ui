@@ -163,7 +163,20 @@
         </widget>
        </item>
        <item>
-        <widget class="QListView" name="publish_type_list"/>
+        <widget class="QListView" name="publish_type_list">
+         <property name="editTriggers">
+          <set>QAbstractItemView::NoEditTriggers</set>
+         </property>
+         <property name="showDropIndicator" stdset="0">
+          <bool>false</bool>
+         </property>
+         <property name="selectionMode">
+          <enum>QAbstractItemView::NoSelection</enum>
+         </property>
+         <property name="uniformItemSizes">
+          <bool>true</bool>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -198,6 +211,9 @@
          </property>
          <property name="viewMode">
           <enum>QListView::IconMode</enum>
+         </property>
+         <property name="uniformItemSizes">
+          <bool>true</bool>
          </property>
          <property name="wordWrap">
           <bool>true</bool>

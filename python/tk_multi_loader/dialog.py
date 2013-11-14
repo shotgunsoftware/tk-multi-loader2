@@ -47,8 +47,9 @@ class AppDialog(QtGui.QWidget):
         self._publish_model = SgPublishModel(self._sg_data_retriever, self.ui.publish_widget)
         self.ui.publish_list.setModel(self._publish_model)
         
+        # load and initialize cached model
         self._publish_type_model = SgPublishTypeModel(self._sg_data_retriever)
-        self.ui.publish_type_list.setModel(self._publish_type_model)        
+        self.ui.publish_type_list.setModel(self._publish_type_model)
         
         # manage history
         self._history = []

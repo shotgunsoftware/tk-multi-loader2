@@ -87,6 +87,10 @@ class Ui_Dialog(object):
         self.label_4.setObjectName("label_4")
         self.verticalLayout_2.addWidget(self.label_4)
         self.publish_type_list = QtGui.QListView(self.layoutWidget1)
+        self.publish_type_list.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
+        self.publish_type_list.setProperty("showDropIndicator", False)
+        self.publish_type_list.setSelectionMode(QtGui.QAbstractItemView.NoSelection)
+        self.publish_type_list.setUniformItemSizes(True)
         self.publish_type_list.setObjectName("publish_type_list")
         self.verticalLayout_2.addWidget(self.publish_type_list)
         self.gridLayout.addWidget(self.splitter, 2, 0, 1, 1)
@@ -103,6 +107,7 @@ class Ui_Dialog(object):
         self.publish_list.setResizeMode(QtGui.QListView.Adjust)
         self.publish_list.setLayoutMode(QtGui.QListView.Batched)
         self.publish_list.setViewMode(QtGui.QListView.IconMode)
+        self.publish_list.setUniformItemSizes(True)
         self.publish_list.setWordWrap(True)
         self.publish_list.setObjectName("publish_list")
         self.verticalLayout_5.addWidget(self.publish_list)
@@ -155,7 +160,7 @@ class Ui_Dialog(object):
 
         self.retranslateUi(Dialog)
         self.publish_widget.setCurrentIndex(0)
-        self.stackedWidget_3.setCurrentIndex(1)
+        self.stackedWidget_3.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
     def retranslateUi(self, Dialog):

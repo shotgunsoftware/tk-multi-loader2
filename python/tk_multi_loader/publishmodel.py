@@ -12,6 +12,7 @@ import tank
 import os
 import hashlib
 import tempfile
+from collections import defaultdict
 
 from tank.platform.qt import QtCore, QtGui
 
@@ -147,8 +148,9 @@ class SgPublishModel(QtGui.QStandardItemModel):
         self._stop_spinner()
         
         # add data to our model and also collect a distinct
-        # list of type ids contained within this data set
-        used_type_ids = set()
+        # list of type ids contained within this data set.
+        # count the number of times each type is used
+        type_id_aggregates = defaultdict(int)
         
         for d in data:
             
@@ -156,7 +158,7 @@ class SgPublishModel(QtGui.QStandardItemModel):
             type_link = d[self._publish_type_field]
             if type_link:
                 type_id = type_link["id"]
-                used_type_ids.add(type_id)
+                type_id_aggregates[type_id] += 1
             
             item = QtGui.QStandardItem(self._default_thumb, d["name"])
             item.setData(type_id, SgPublishModel.TYPE_ID_ROLE)
@@ -164,6 +166,6 @@ class SgPublishModel(QtGui.QStandardItemModel):
             
         # tell the model to reshuffle and reformat itself
         # based on the types contained in this search
-        self._publish_type_model.set_active_types( used_type_ids )
+        self._publish_type_model.set_active_types( type_id_aggregates )
         
         

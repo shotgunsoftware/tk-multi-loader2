@@ -23,8 +23,9 @@ FILE_VERSION = 1               # if we ever change the file format structure
 class SgPublishTypeModel(QtGui.QStandardItemModel):
 
     # define custom roles
-    SG_DATA_ROLE = QtCore.Qt.UserRole + 1  # holds the sg data associated with the node
-    SORT_KEY_ROLE = QtCore.Qt.UserRole + 1      # holds a sortable key
+    SG_DATA_ROLE = QtCore.Qt.UserRole + 1      # holds the sg data associated with the node
+    SORT_KEY_ROLE = QtCore.Qt.UserRole + 2     # holds a sortable key
+    DISPLAY_NAME_ROLE = QtCore.Qt.UserRole + 3 # holds the display name for the node
 
     def __init__(self, sg_data_retriever):
         QtGui.QStandardItemModel.__init__(self)
@@ -64,23 +65,33 @@ class SgPublishTypeModel(QtGui.QStandardItemModel):
     ########################################################################################
     # public methods
     
-    def set_active_types(self, type_id_set):
+    def set_active_types(self, type_aggregates):
         """
         Specifies which types are currently active. Also adjust the sort role,
         so that the view puts enabled items at the top of the list!
         
-        :param type_id_set: set of type ids that should be enabled
+        :param type_aggregates: dict keyed by type id with value being the number of 
+                                of occurances of that type in the currently displayed result
         """
         for sg_type_id in self._tree_data:
-            if sg_type_id in type_id_set:
+            
+            curr_item = self._tree_data[sg_type_id]
+            
+            display_name = curr_item.data(SgPublishTypeModel.DISPLAY_NAME_ROLE)
+            
+            if sg_type_id in type_aggregates:
                 # this type is in the active list
-                self._tree_data[sg_type_id].setEnabled(True)
-                self._tree_data[sg_type_id].setData("a_%s" % self._tree_data[sg_type_id].text(), 
-                                                    SgPublishTypeModel.SORT_KEY_ROLE)
+                curr_item.setEnabled(True)
+                curr_item.setData("a_%s" % display_name, SgPublishTypeModel.SORT_KEY_ROLE)
+                # disply name with aggregate
+                curr_item.setText("%s (%d)" % (display_name, type_aggregates[sg_type_id]))
+                
             else:
-                self._tree_data[sg_type_id].setEnabled(False)
-                self._tree_data[sg_type_id].setData("b_%s" % self._tree_data[sg_type_id].text(), 
-                                                    SgPublishTypeModel.SORT_KEY_ROLE)
+                curr_item.setEnabled(False)
+                curr_item.setData("b_%s" % display_name, SgPublishTypeModel.SORT_KEY_ROLE)
+                # disply name with no aggregate
+                curr_item.setText(display_name)
+                
 
         # and ask the model to resort itself 
         self.sort(0)
@@ -150,10 +161,12 @@ class SgPublishTypeModel(QtGui.QStandardItemModel):
                     # name has changed. update name
                     current_item.setText(sg_name)
                     current_item.setData(sg_item, SgPublishTypeModel.SG_DATA_ROLE)
+                    current_item.setData(sg_name, SgPublishTypeModel.DISPLAY_NAME_ROLE)
             else:
                 # type is not in the list - add it!                
                 item = QtGui.QStandardItem(sg_name)
                 item.setData(sg_item, SgPublishTypeModel.SG_DATA_ROLE)
+                item.setData(sg_name, SgPublishTypeModel.DISPLAY_NAME_ROLE)
                 item.setToolTip(str(sg_desc))
                 item.setCheckable(True)
                 item.setCheckState(QtCore.Qt.Checked)

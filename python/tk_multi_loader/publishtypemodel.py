@@ -23,7 +23,7 @@ FILE_VERSION = 1               # if we ever change the file format structure
 class SgPublishTypeModel(QtGui.QStandardItemModel):
 
     # define custom roles
-    NODE_SG_DATA_ROLE = QtCore.Qt.UserRole + 1  # holds the sg data associated with the node
+    SG_DATA_ROLE = QtCore.Qt.UserRole + 1  # holds the sg data associated with the node
     SORT_KEY_ROLE = QtCore.Qt.UserRole + 1      # holds a sortable key
 
     def __init__(self, sg_data_retriever):
@@ -85,6 +85,17 @@ class SgPublishTypeModel(QtGui.QStandardItemModel):
         # and ask the model to resort itself 
         self.sort(0)
     
+    def get_selected_types(self):
+        """
+        Returns all the sg type ids that are currently selected
+        """
+        type_ids = []
+        for (sg_type_id, item) in self._tree_data.iteritems():
+            if item.checkState() == QtCore.Qt.Checked:
+                type_ids.append(sg_type_id)
+        return type_ids
+        
+    
     ########################################################################################
     # get data from sg
 
@@ -138,13 +149,14 @@ class SgPublishTypeModel(QtGui.QStandardItemModel):
                 if current_item.text() != sg_name:
                     # name has changed. update name
                     current_item.setText(sg_name)
-                    current_item.setData(sg_item, SgPublishTypeModel.NODE_SG_DATA_ROLE)
+                    current_item.setData(sg_item, SgPublishTypeModel.SG_DATA_ROLE)
             else:
                 # type is not in the list - add it!                
                 item = QtGui.QStandardItem(sg_name)
-                item.setData(sg_item, SgPublishTypeModel.NODE_SG_DATA_ROLE)
+                item.setData(sg_item, SgPublishTypeModel.SG_DATA_ROLE)
                 item.setToolTip(str(sg_desc))
                 item.setCheckable(True)
+                item.setCheckState(QtCore.Qt.Checked)
                 self.invisibleRootItem().appendRow(item)
                 self._tree_data[sg_id] = item
                 
@@ -211,7 +223,7 @@ class SgPublishTypeModel(QtGui.QStandardItemModel):
             root.appendRow(item)
             
             # add the model item to our tree data dict keyed by id
-            sg_data = item.data(SgPublishTypeModel.NODE_SG_DATA_ROLE) 
+            sg_data = item.data(SgPublishTypeModel.SG_DATA_ROLE) 
             self._tree_data[ sg_data["id"] ] = item            
             
             

@@ -15,12 +15,16 @@ import tempfile
 
 from tank.platform.qt import QtCore, QtGui
 
-NODE_SG_DATA_ROLE = QtCore.Qt.UserRole + 1
-
+# widget indices for the different UI pages used
+# to hold the results and the spinner, so we can
+# switch between loading and display.
 SPINNER_PAGE_INDEX = 1
 LIST_PAGE_INDEX = 0
 
 class SgPublishModel(QtGui.QStandardItemModel):
+    
+    # custom role where we store the type id for each publish
+    TYPE_ID_ROLE = QtCore.Qt.UserRole + 1
 
     def __init__(self, sg_data_retriever, widget, publish_type_model):
         QtGui.QStandardItemModel.__init__(self)
@@ -34,6 +38,8 @@ class SgPublishModel(QtGui.QStandardItemModel):
         self._sg_data_retriever.work_failure.connect( self._on_worker_failure)
         
         self._current_work_id = None
+        
+        
         
         # spinner
         self._spin_icons = []
@@ -140,18 +146,24 @@ class SgPublishModel(QtGui.QStandardItemModel):
         
         self._stop_spinner()
         
-        # add data to our model
-        for d in data:
-            item = QtGui.QStandardItem(self._default_thumb, d["name"])
-            self.appendRow(item)
-            
-        # now see which types are being used and adjust the publish type model
+        # add data to our model and also collect a distinct
+        # list of type ids contained within this data set
         used_type_ids = set()
+        
         for d in data:
+            
+            type_id = None
             type_link = d[self._publish_type_field]
             if type_link:
-                used_type_ids.add(type_link["id"])
-        
+                type_id = type_link["id"]
+                used_type_ids.add(type_id)
+            
+            item = QtGui.QStandardItem(self._default_thumb, d["name"])
+            item.setData(type_id, SgPublishModel.TYPE_ID_ROLE)
+            self.appendRow(item)
+            
+        # tell the model to reshuffle and reformat itself
+        # based on the types contained in this search
         self._publish_type_model.set_active_types( used_type_ids )
         
         

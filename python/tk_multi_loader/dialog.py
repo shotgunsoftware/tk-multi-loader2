@@ -19,6 +19,7 @@ from tank.platform.qt import QtCore, QtGui
 from .entitymodel import SgEntityModel
 from .publishmodel import SgPublishModel
 from .publishtypemodel import SgPublishTypeModel
+from .publishproxymodel import SgPublishProxyModel
 from .entitybuttongroup import EntityButtonGroup
 from .sgdata import ShotgunAsyncDataRetriever 
 
@@ -47,17 +48,26 @@ class AppDialog(QtGui.QWidget):
         # load and initialize cached publish type model
         self._publish_type_model = SgPublishTypeModel(self._sg_data_retriever)        
         self.ui.publish_type_list.setModel(self._publish_type_model)
+        
+        # whenever the type list is checked, update the publish filters
+        self._publish_type_model.itemChanged.connect(self._apply_type_filters_on_publishes)
+
         # turn off selection to start with
         self._publish_type_model.set_active_types( set() )
+
 
         #################################################
         # setup publish model
         self._publish_model = SgPublishModel(self._sg_data_retriever, 
                                              self.ui.publish_widget,
                                              self._publish_type_model)
-        # todo - add proxy model here!
         
-        self.ui.publish_list.setModel(self._publish_model)
+        # set up a proxy model to cull results based on type selection
+        self._publish_proxy_model = SgPublishProxyModel(self)
+        self._publish_proxy_model.setSourceModel(self._publish_model)
+                
+        # hook up view -> proxy model -> model
+        self.ui.publish_list.setModel(self._publish_proxy_model)
         
         #################################################
         # setup history
@@ -201,6 +211,20 @@ class AppDialog(QtGui.QWidget):
         d = self._history[ self._history_index - 1]
         self._history_focus_on_item(d["preset"], d["item"])
         self._compute_history_button_visibility()
+        
+    ########################################################################################
+    # handling of changes to the type listings
+        
+    def _apply_type_filters_on_publishes(self):
+        """
+        Executed when the type listing changes
+        """         
+        # go through and figure out which checkboxes are clicked and then
+        # update the publish proxy model so that only items of that type 
+        # is displayed
+        sg_type_ids = self._publish_type_model.get_selected_types()
+        self._publish_proxy_model.set_filter_by_type_ids(sg_type_ids)
+        
         
         
     ########################################################################################

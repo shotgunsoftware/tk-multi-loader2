@@ -48,13 +48,6 @@ class AppDialog(QtGui.QWidget):
         # load and initialize cached publish type model
         self._publish_type_model = SgPublishTypeModel(self._sg_data_retriever)        
         self.ui.publish_type_list.setModel(self._publish_type_model)
-        
-        # whenever the type list is checked, update the publish filters
-        self._publish_type_model.itemChanged.connect(self._apply_type_filters_on_publishes)
-
-        # turn off selection to start with
-        self._publish_type_model.set_active_types( set() )
-
 
         #################################################
         # setup publish model
@@ -68,6 +61,9 @@ class AppDialog(QtGui.QWidget):
                 
         # hook up view -> proxy model -> model
         self.ui.publish_list.setModel(self._publish_proxy_model)
+        
+        # whenever the type list is checked, update the publish filters
+        self._publish_type_model.itemChanged.connect(self._apply_type_filters_on_publishes)        
         
         #################################################
         # setup history

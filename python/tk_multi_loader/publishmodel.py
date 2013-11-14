@@ -82,6 +82,7 @@ class SgPublishModel(QtGui.QStandardItemModel):
         
         if sg_data is None:
             # nothing to load!
+            self._publish_type_model.set_active_types( {} )
             return
         
         # get data from shotgun

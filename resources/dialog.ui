@@ -80,6 +80,9 @@
      </item>
      <item>
       <widget class="QLineEdit" name="lineEdit">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>200</horstretch>
@@ -121,6 +124,9 @@
        </item>
        <item>
         <widget class="QCheckBox" name="checkBox">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="text">
           <string>View Files from Sub Folders</string>
          </property>
@@ -128,6 +134,9 @@
        </item>
        <item>
         <widget class="QComboBox" name="comboBox_2">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <item>
           <property name="text">
            <string>Sort</string>
@@ -137,6 +146,9 @@
        </item>
        <item>
         <widget class="QComboBox" name="comboBox">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <item>
           <property name="text">
            <string>Group</string>
@@ -264,6 +276,18 @@
    </item>
    <item row="2" column="2">
     <widget class="QGroupBox" name="details">
+     <property name="minimumSize">
+      <size>
+       <width>300</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>300</width>
+       <height>16777215</height>
+      </size>
+     </property>
      <property name="title">
       <string/>
      </property>
@@ -274,7 +298,7 @@
       <item>
        <widget class="QStackedWidget" name="stackedWidget_3">
         <property name="currentIndex">
-         <number>0</number>
+         <number>1</number>
         </property>
         <widget class="QWidget" name="details_list_page">
          <layout class="QVBoxLayout" name="verticalLayout_8">

@@ -22,11 +22,11 @@ LIST_PAGE_INDEX = 0
 
 class SgPublishModel(QtGui.QStandardItemModel):
 
-    def __init__(self, sg_data_retriever, widget):
+    def __init__(self, sg_data_retriever, widget, publish_type_model):
         QtGui.QStandardItemModel.__init__(self)
         
         self._widget = widget
-        
+        self._publish_type_model = publish_type_model
         self._app = tank.platform.current_bundle()
         
         self._sg_data_retriever = sg_data_retriever
@@ -44,6 +44,18 @@ class SgPublishModel(QtGui.QStandardItemModel):
         self._spin_timer = QtCore.QTimer(self)
         self._spin_timer.timeout.connect( self._update_spinner )
         self._current_spinner_index = 0
+        
+        # sg fields logic
+        self._publish_entity_type = tank.util.get_published_file_entity_type(self._app.sgtk)
+        
+        if self._publish_entity_type == "PublishedFile":
+            self._publish_fields = ["name", "version_number", "image", "published_file_type"]
+            self._publish_type_field = "published_file_type"
+        else:
+            self._publish_fields = ["name", "version_number", "image", "tank_type"]
+            self._publish_type_field = "tank_type"
+        
+        
         
         # thumbnails
         self._default_thumb = QtGui.QPixmap(":/res/thumb_empty.png")
@@ -67,46 +79,12 @@ class SgPublishModel(QtGui.QStandardItemModel):
         
         # get data from shotgun
         self._start_spinner()
-        publish_et = tank.util.get_published_file_entity_type(self._app.sgtk)
         
-        if publish_et == "PublishedFile":
-            fields = ["name", "version_number", "image", "published_file_type"]
-        else:
-            fields = ["name", "version_number", "image", "tank_type"]
-        
-        
-        self._current_work_id = self._sg_data_retriever.execute_find(publish_et, 
+        # line up a request from Shotgun
+        self._current_work_id = self._sg_data_retriever.execute_find(self._publish_entity_type, 
                                                                      [["entity", "is", sg_data]], 
-                                                                     fields)
+                                                                     self._publish_fields)
 
-        
-    ########################################################################################
-    # signals called after sg data load complete
-        
-    def _on_worker_failure(self, uid, msg):
-        """
-        Asynchronous callback - the worker thread errored.
-        """
-        if self._current_work_id != uid:
-            # not our job. ignore
-            return
-        
-        self._stop_spinner()
-        self._app.log_error("Error retrieving data from Shotgun: %s" % msg)
-
-    def _on_worker_signal(self, uid, data):
-        """
-        Signaled whenever the worker completes something
-        """
-        if self._current_work_id != uid:
-            # not our job. ignore
-            return
-        
-        self._stop_spinner()
-        
-        for d in data:
-            item = QtGui.QStandardItem(self._default_thumb, d["name"])
-            self.appendRow(item)
         
     ########################################################################################
     # spinner
@@ -137,3 +115,43 @@ class SgPublishModel(QtGui.QStandardItemModel):
         self._current_spinner_index += 1
         if self._current_spinner_index == 4:
             self._current_spinner_index = 0            
+        
+    ########################################################################################
+    # signals called after sg data load complete
+        
+    def _on_worker_failure(self, uid, msg):
+        """
+        Asynchronous callback - the worker thread errored.
+        """
+        if self._current_work_id != uid:
+            # not our job. ignore
+            return
+        
+        self._stop_spinner()
+        self._app.log_error("Error retrieving data from Shotgun: %s" % msg)
+
+    def _on_worker_signal(self, uid, data):
+        """
+        Signaled whenever the worker completes something
+        """
+        if self._current_work_id != uid:
+            # not our job. ignore
+            return
+        
+        self._stop_spinner()
+        
+        # add data to our model
+        for d in data:
+            item = QtGui.QStandardItem(self._default_thumb, d["name"])
+            self.appendRow(item)
+            
+        # now see which types are being used and adjust the publish type model
+        used_type_ids = set()
+        for d in data:
+            type_link = d[self._publish_type_field]
+            if type_link:
+                used_type_ids.add(type_link["id"])
+        
+        self._publish_type_model.set_active_types( used_type_ids )
+        
+        

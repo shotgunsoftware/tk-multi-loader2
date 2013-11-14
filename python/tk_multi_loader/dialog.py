@@ -41,13 +41,18 @@ class AppDialog(QtGui.QWidget):
         self._sg_data_retriever = ShotgunAsyncDataRetriever(self)
         self._sg_data_retriever.start()
         
-        # create models for publish types and publishes
-        self._publish_model = SgPublishModel(self._sg_data_retriever, self.ui.publish_widget)
-        self.ui.publish_list.setModel(self._publish_model)
         
-        # load and initialize cached model
+        # load and initialize cached publish type model
         self._publish_type_model = SgPublishTypeModel(self._sg_data_retriever)
         self.ui.publish_type_list.setModel(self._publish_type_model)
+
+        # setup publish model
+        self._publish_model = SgPublishModel(self._sg_data_retriever, 
+                                             self.ui.publish_widget,
+                                             self._publish_type_model)
+        # todo - add proxy model here!
+        
+        self.ui.publish_list.setModel(self._publish_model)
         
         # manage history
         self._history = []

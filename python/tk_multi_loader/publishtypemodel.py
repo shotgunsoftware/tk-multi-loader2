@@ -55,6 +55,22 @@ class SgPublishTypeModel(QtGui.QStandardItemModel):
         # now trigger a shotgun refresh to ensure we got the latest stuff
         self._refresh_from_sg()
     
+    ########################################################################################
+    # public methods
+    
+    def set_active_types(self, type_id_set):
+        """
+        Specifies which types are currently active.
+        
+        :param type_id_set: set of type ids that should be enabled
+        """
+        for sg_type_id in self._tree_data:
+            if sg_type_id in type_id_set:
+                # this type is in the active list
+                self._tree_data[sg_type_id].setEnabled(True)
+            else:
+                self._tree_data[sg_type_id].setEnabled(False)
+
     
     ########################################################################################
     # get data from sg
@@ -107,18 +123,18 @@ class SgPublishTypeModel(QtGui.QStandardItemModel):
                 # make sure it is up to date!
                 current_item = self._tree_data[sg_id]
                 if current_item.text() != sg_name:
-                    print "updating %s" % sg_item
                     # name has changed. update name
                     current_item.setText(sg_name)
                     current_item.setData(sg_item, NODE_SG_DATA_ROLE)
             else:
-                # type is not in the list - add it!
-                print "adding %s" % sg_item
+                # type is not in the list - add it!                
                 item = QtGui.QStandardItem(sg_name)
                 item.setData(sg_item, NODE_SG_DATA_ROLE)
+                item.setToolTip(str(sg_desc))
                 item.setCheckable(True)
-                
                 self.invisibleRootItem().appendRow(item)
+                self._tree_data[sg_id] = item
+                
                 
         self._app.log_debug("Saving tree to disk %s..." % self._full_cache_path)
         try:

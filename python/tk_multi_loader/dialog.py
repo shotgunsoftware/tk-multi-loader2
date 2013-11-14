@@ -50,7 +50,8 @@ class AppDialog(QtGui.QWidget):
         
         #################################################
         # load and initialize cached publish type model
-        self._publish_type_model = SgPublishTypeModel(self._sg_data_retriever)        
+        self._publish_type_model = SgPublishTypeModel(self._sg_data_retriever, 
+                                                      self.ui.filters_widget)        
         self.ui.publish_type_list.setModel(self._publish_type_model)
 
         #################################################
@@ -279,6 +280,7 @@ class AppDialog(QtGui.QWidget):
             d = {}
             d["entity_type"] = e["entity_type"]
             d["model"] = SgEntityModel(self._sg_data_retriever, 
+                                       self.ui.entity_widget,
                                        e["entity_type"], 
                                        e["filters"],
                                        e["hierarchy"])

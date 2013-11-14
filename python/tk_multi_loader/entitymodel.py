@@ -12,18 +12,19 @@ import tank
 import os
 import hashlib
 import tempfile
+from .spinner import SpinHandler
 
 from tank.platform.qt import QtCore, QtGui
 
 # just so we can do some basic file validation
 FILE_MAGIC_NUMBER = 0xDEADBEEF # so we can validate file format correctness before loading
-FILE_VERSION = 1               # if we ever change the file format structure
+FILE_VERSION = 2               # if we ever change the file format structure
 
 NODE_SG_DATA_ROLE = QtCore.Qt.UserRole + 1
 
 class SgEntityModel(QtGui.QStandardItemModel):
 
-    def __init__(self, sg_data_retriever, entity_type, filters, hierarchy):
+    def __init__(self, sg_data_retriever, widget, entity_type, filters, hierarchy):
         QtGui.QStandardItemModel.__init__(self)
         
         self._sg_data_retriever = sg_data_retriever
@@ -35,6 +36,12 @@ class SgEntityModel(QtGui.QStandardItemModel):
 
         # model data in alt format
         self._tree_data = {}
+        
+        self._spin_handler = SpinHandler(widget)
+
+        # folder icon
+        self._folder_icon = QtGui.QPixmap(":/res/folder.png")
+
 
         # hook up async notifications plumbing
         self._sg_data_retriever.work_completed.connect( self._on_worker_signal)
@@ -63,6 +70,8 @@ class SgEntityModel(QtGui.QStandardItemModel):
                 self._app.log_warning("Couldn't load cache data from disk. Will proceed with "
                                       "full SG load. Error reported: %s" % e)
         
+        if len(self._tree_data) == 0:
+            self._spin_handler.start_spinner()
     
     ########################################################################################
     # public methods
@@ -110,8 +119,13 @@ class SgEntityModel(QtGui.QStandardItemModel):
         if self._current_work_id != uid:
             # not our job. ignore
             return
-
-        self._app.log_error("Error retrieving data from Shotgun: %s" % msg)
+        
+        full_msg = "Error retrieving data from Shotgun: %s" % msg
+        
+        if len(self._tree_data) == 0:
+            # no data to fall back on. So display error message
+            self._spin_handler.set_error_message(full_msg)
+        self._app.log_warning(full_msg)
 
     def _on_worker_signal(self, uid, data):
         """
@@ -120,6 +134,8 @@ class SgEntityModel(QtGui.QStandardItemModel):
         if self._current_work_id != uid:
             # not our job. ignore
             return
+        
+        self._spin_handler.stop_spinner()
     
         if len(self._tree_data) == 0:
             # we have an empty tree. Run recursive tree generation
@@ -248,6 +264,7 @@ class SgEntityModel(QtGui.QStandardItemModel):
         found_item = None
         for row_index in range(root.rowCount()):
             child = root.child(row_index)
+
             if on_leaf_level:
                 # compare shotgun ids
                 sg_data = child.data(NODE_SG_DATA_ROLE)
@@ -266,16 +283,19 @@ class SgEntityModel(QtGui.QStandardItemModel):
             # and add to tree
             root.appendRow(found_item)
         
-        if on_leaf_level:
-            
-            # this is the leaf level!
-            # attach the shotgun data so that we can access it later
-            found_item.setData(sg_item, NODE_SG_DATA_ROLE)
-            # and also populate the id association in our lookup dict
-            self._tree_data[ sg_item["id"] ] = found_item
-     
-        else:
-            # there are more levels
+            if on_leaf_level:                
+                # this is the leaf level!
+                # attach the shotgun data so that we can access it later
+                found_item.setData(sg_item, NODE_SG_DATA_ROLE)
+                # and also populate the id association in our lookup dict
+                self._tree_data[ sg_item["id"] ] = found_item
+            else:                
+                # attach a folder icon
+                found_item.setIcon(self._folder_icon)
+
+
+        if not on_leaf_level:
+            # there are more levels that we should recurse down into
             self._add_sg_item_to_tree_r(sg_item, found_item, remaining_fields)
         
     
@@ -348,6 +368,8 @@ class SgEntityModel(QtGui.QStandardItemModel):
                       
             else:
                 # not on leaf level yet
+                # add folder icon
+                item.setIcon(self._folder_icon)
                 # now when we recurse down, we need to add our current constrain
                 # to the list of constraints. For this we need the raw sg value
                 # and now the display name that we used when we constructed the
@@ -454,8 +476,6 @@ class SgEntityModel(QtGui.QStandardItemModel):
             item = QtGui.QStandardItem()
             item.read(file_in)
             node_depth = file_in.readInt32()
-            
-
             
             # all leaf nodes have an sg id stored in their metadata
             # the role data accessible via item.data() contains the sg id for this item

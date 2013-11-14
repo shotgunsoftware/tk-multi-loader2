@@ -13,6 +13,8 @@ import os
 import hashlib
 import tempfile
 
+from .spinner import SpinHandler
+
 from tank.platform.qt import QtCore, QtGui
 
 # just so we can do some basic file validation
@@ -27,13 +29,14 @@ class SgPublishTypeModel(QtGui.QStandardItemModel):
     SORT_KEY_ROLE = QtCore.Qt.UserRole + 2     # holds a sortable key
     DISPLAY_NAME_ROLE = QtCore.Qt.UserRole + 3 # holds the display name for the node
 
-    def __init__(self, sg_data_retriever):
+    def __init__(self, sg_data_retriever, widget):
         QtGui.QStandardItemModel.__init__(self)
         
         self._sg_data_retriever = sg_data_retriever
         
         self._current_work_id = 0
         self._app = tank.platform.current_bundle()
+        self._spin_handler = SpinHandler(widget)
         
         # we use a special column for sorting
         self.setSortRole(SgPublishTypeModel.SORT_KEY_ROLE)
@@ -60,6 +63,10 @@ class SgPublishTypeModel(QtGui.QStandardItemModel):
                                       "full SG load. Error reported: %s" % e)
         
         # now trigger a shotgun refresh to ensure we got the latest stuff
+        if len(self._tree_data) == 0:
+            # show spinner since we have no results yet
+            self._spin_handler.start_spinner()
+        
         self._refresh_from_sg()
     
     ########################################################################################
@@ -137,7 +144,7 @@ class SgPublishTypeModel(QtGui.QStandardItemModel):
             # not our job. ignore
             return
 
-        self._app.log_error("Error retrieving data from Shotgun: %s" % msg)
+        self._spin_handler.set_error_message("Error retrieving data from Shotgun: %s" % msg)
 
     def _on_worker_signal(self, uid, data):
         """
@@ -147,6 +154,10 @@ class SgPublishTypeModel(QtGui.QStandardItemModel):
             # not our job. ignore
             return
 
+        # stop any running spinners
+        self._spin_handler.stop_spinner()
+
+        # load data.
         for sg_item in data:
             
             sg_id = sg_item["id"]

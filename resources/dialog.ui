@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1005</width>
+    <width>1000</width>
     <height>602</height>
    </rect>
   </property>
@@ -15,7 +15,7 @@
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0" colspan="3">
-    <layout class="QHBoxLayout" name="horizontalLayout_3">
+    <layout class="QHBoxLayout" name="toolbar_1">
      <item>
       <widget class="QToolButton" name="navigation_home">
        <property name="minimumSize">
@@ -139,7 +139,7 @@
     </layout>
    </item>
    <item row="1" column="0" colspan="3">
-    <layout class="QHBoxLayout" name="horizontalLayout">
+    <layout class="QHBoxLayout" name="toolbar_2">
      <item>
       <layout class="QHBoxLayout" name="entity_button_layout"/>
      </item>
@@ -157,58 +157,6 @@
           </size>
          </property>
         </spacer>
-       </item>
-       <item>
-        <widget class="QSlider" name="thumb_scale">
-         <property name="minimumSize">
-          <size>
-           <width>100</width>
-           <height>0</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>100</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">QSlider::groove:horizontal {
-     /*border: 1px solid #999999; */
-     height: 2px; /* the groove expands to the size of the slider by default. by giving it a height, it has a fixed size */
-     background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #3F3F3F, stop:1 #545454);
-     margin: 2px 0;
-     border-radius: 1px;
- }
-
- QSlider::handle:horizontal {
-     background: #545454;
-     border: 1px solid #B6B6B6;
-     width: 5px;
-     margin: -2px 0; /* handle is placed by default on the contents rect of the groove. Expand outside the groove */
-     border-radius: 3px;
- }
-</string>
-         </property>
-         <property name="minimum">
-          <number>50</number>
-         </property>
-         <property name="maximum">
-          <number>300</number>
-         </property>
-         <property name="value">
-          <number>100</number>
-         </property>
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="invertedAppearance">
-          <bool>false</bool>
-         </property>
-         <property name="invertedControls">
-          <bool>false</bool>
-         </property>
-        </widget>
        </item>
        <item>
         <widget class="QCheckBox" name="checkBox">
@@ -259,17 +207,60 @@
     </layout>
    </item>
    <item row="2" column="0">
-    <widget class="QSplitter" name="splitter">
+    <widget class="QSplitter" name="left_side_splitter">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
      </property>
      <widget class="QWidget" name="layoutWidget">
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
-        <widget class="QTreeView" name="entity_view">
-         <property name="headerHidden">
-          <bool>true</bool>
+        <widget class="QStackedWidget" name="entity_widget">
+         <property name="currentIndex">
+          <number>0</number>
          </property>
+         <widget class="QWidget" name="page">
+          <layout class="QVBoxLayout" name="verticalLayout_7">
+           <property name="margin">
+            <number>1</number>
+           </property>
+           <item>
+            <widget class="QTreeView" name="entity_view">
+             <property name="editTriggers">
+              <set>QAbstractItemView::NoEditTriggers</set>
+             </property>
+             <property name="showDropIndicator" stdset="0">
+              <bool>false</bool>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>16</width>
+               <height>16</height>
+              </size>
+             </property>
+             <property name="headerHidden">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="page_2">
+          <layout class="QVBoxLayout" name="verticalLayout_11">
+           <item>
+            <widget class="QLabel" name="details_list_spinner_3">
+             <property name="text">
+              <string/>
+             </property>
+             <property name="pixmap">
+              <pixmap resource="resources.qrc">:/res/progress_bar_1.png</pixmap>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
         </widget>
        </item>
       </layout>
@@ -284,19 +275,50 @@
         </widget>
        </item>
        <item>
-        <widget class="QListView" name="publish_type_list">
-         <property name="editTriggers">
-          <set>QAbstractItemView::NoEditTriggers</set>
+        <widget class="QStackedWidget" name="filters_widget">
+         <property name="currentIndex">
+          <number>0</number>
          </property>
-         <property name="showDropIndicator" stdset="0">
-          <bool>false</bool>
-         </property>
-         <property name="selectionMode">
-          <enum>QAbstractItemView::NoSelection</enum>
-         </property>
-         <property name="uniformItemSizes">
-          <bool>true</bool>
-         </property>
+         <widget class="QWidget" name="page_3">
+          <layout class="QVBoxLayout" name="verticalLayout_6">
+           <property name="margin">
+            <number>1</number>
+           </property>
+           <item>
+            <widget class="QListView" name="publish_type_list">
+             <property name="editTriggers">
+              <set>QAbstractItemView::NoEditTriggers</set>
+             </property>
+             <property name="showDropIndicator" stdset="0">
+              <bool>false</bool>
+             </property>
+             <property name="selectionMode">
+              <enum>QAbstractItemView::NoSelection</enum>
+             </property>
+             <property name="uniformItemSizes">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="page_4">
+          <layout class="QVBoxLayout" name="verticalLayout_10">
+           <item>
+            <widget class="QLabel" name="details_list_spinner_2">
+             <property name="text">
+              <string/>
+             </property>
+             <property name="pixmap">
+              <pixmap resource="resources.qrc">:/res/progress_bar_1.png</pixmap>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
         </widget>
        </item>
       </layout>
@@ -304,60 +326,139 @@
     </widget>
    </item>
    <item row="2" column="1">
-    <widget class="QStackedWidget" name="publish_widget">
-     <property name="currentIndex">
-      <number>0</number>
-     </property>
-     <widget class="QWidget" name="publish_list_page">
-      <layout class="QVBoxLayout" name="verticalLayout_5">
-       <property name="margin">
-        <number>1</number>
+    <layout class="QVBoxLayout" name="middle_area">
+     <item>
+      <widget class="QStackedWidget" name="publish_widget">
+       <property name="currentIndex">
+        <number>0</number>
        </property>
+       <widget class="QWidget" name="publish_list_page">
+        <layout class="QVBoxLayout" name="verticalLayout_5">
+         <property name="margin">
+          <number>1</number>
+         </property>
+         <item>
+          <widget class="QListView" name="publish_list">
+           <property name="styleSheet">
+            <string notr="true"/>
+           </property>
+           <property name="editTriggers">
+            <set>QAbstractItemView::NoEditTriggers</set>
+           </property>
+           <property name="movement">
+            <enum>QListView::Static</enum>
+           </property>
+           <property name="resizeMode">
+            <enum>QListView::Adjust</enum>
+           </property>
+           <property name="layoutMode">
+            <enum>QListView::Batched</enum>
+           </property>
+           <property name="viewMode">
+            <enum>QListView::IconMode</enum>
+           </property>
+           <property name="uniformItemSizes">
+            <bool>true</bool>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="publish_spinner_page">
+        <layout class="QVBoxLayout" name="verticalLayout_3">
+         <item>
+          <widget class="QLabel" name="publish_spinner">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="pixmap">
+            <pixmap resource="resources.qrc">:/res/progress_bar_1.png</pixmap>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_4">
        <item>
-        <widget class="QListView" name="publish_list">
-         <property name="editTriggers">
-          <set>QAbstractItemView::NoEditTriggers</set>
+        <widget class="QSlider" name="thumb_scale">
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>0</height>
+          </size>
          </property>
-         <property name="movement">
-          <enum>QListView::Static</enum>
+         <property name="maximumSize">
+          <size>
+           <width>100</width>
+           <height>16777215</height>
+          </size>
          </property>
-         <property name="resizeMode">
-          <enum>QListView::Adjust</enum>
+         <property name="toolTip">
+          <string>Thumbnail Size</string>
          </property>
-         <property name="layoutMode">
-          <enum>QListView::Batched</enum>
+         <property name="styleSheet">
+          <string notr="true">QSlider::groove:horizontal {
+     /*border: 1px solid #999999; */
+     height: 2px; /* the groove expands to the size of the slider by default. by giving it a height, it has a fixed size */
+     background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #3F3F3F, stop:1 #545454);
+     margin: 2px 0;
+     border-radius: 1px;
+ }
+
+ QSlider::handle:horizontal {
+     background: #545454;
+     border: 1px solid #B6B6B6;
+     width: 5px;
+     margin: -2px 0; /* handle is placed by default on the contents rect of the groove. Expand outside the groove */
+     border-radius: 3px;
+ }
+</string>
          </property>
-         <property name="viewMode">
-          <enum>QListView::IconMode</enum>
+         <property name="minimum">
+          <number>50</number>
          </property>
-         <property name="uniformItemSizes">
-          <bool>true</bool>
+         <property name="maximum">
+          <number>300</number>
          </property>
-         <property name="wordWrap">
-          <bool>true</bool>
+         <property name="value">
+          <number>100</number>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="invertedAppearance">
+          <bool>false</bool>
+         </property>
+         <property name="invertedControls">
+          <bool>false</bool>
          </property>
         </widget>
        </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="publish_spinner_page">
-      <layout class="QVBoxLayout" name="verticalLayout_3">
        <item>
-        <widget class="QLabel" name="publish_spinner">
-         <property name="text">
-          <string/>
+        <spacer name="horizontalSpacer_3">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
          </property>
-         <property name="pixmap">
-          <pixmap resource="resources.qrc">:/res/progress_bar_1.png</pixmap>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>128</width>
+           <height>20</height>
+          </size>
          </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
+        </spacer>
        </item>
       </layout>
-     </widget>
-    </widget>
+     </item>
+    </layout>
    </item>
    <item row="2" column="2">
     <widget class="QGroupBox" name="details">
@@ -381,9 +482,9 @@
        <number>1</number>
       </property>
       <item>
-       <widget class="QStackedWidget" name="stackedWidget_3">
+       <widget class="QStackedWidget" name="details_widget">
         <property name="currentIndex">
-         <number>1</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="details_list_page">
          <layout class="QVBoxLayout" name="verticalLayout_8">

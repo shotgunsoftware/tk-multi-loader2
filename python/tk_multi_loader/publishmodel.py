@@ -12,6 +12,7 @@ import tank
 import os
 import hashlib
 import tempfile
+from .spinner import SpinHandler
 from collections import defaultdict
 
 from tank.platform.qt import QtCore, QtGui
@@ -30,7 +31,7 @@ class SgPublishModel(QtGui.QStandardItemModel):
     def __init__(self, sg_data_retriever, widget, publish_type_model):
         QtGui.QStandardItemModel.__init__(self)
         
-        self._widget = widget
+        #self._widget = widget
         self._publish_type_model = publish_type_model
         self._app = tank.platform.current_bundle()
         
@@ -39,18 +40,7 @@ class SgPublishModel(QtGui.QStandardItemModel):
         self._sg_data_retriever.work_failure.connect( self._on_worker_failure)
         
         self._current_work_id = None
-        
-        
-        
-        # spinner
-        self._spin_icons = []
-        self._spin_icons.append(QtGui.QPixmap(":/res/progress_bar_1.png"))
-        self._spin_icons.append(QtGui.QPixmap(":/res/progress_bar_2.png"))
-        self._spin_icons.append(QtGui.QPixmap(":/res/progress_bar_3.png"))
-        self._spin_icons.append(QtGui.QPixmap(":/res/progress_bar_4.png")) 
-        self._spin_timer = QtCore.QTimer(self)
-        self._spin_timer.timeout.connect( self._update_spinner )
-        self._current_spinner_index = 0
+        self._spin_handler = SpinHandler(widget)
         
         # sg fields logic
         self._publish_entity_type = tank.util.get_published_file_entity_type(self._app.sgtk)
@@ -76,53 +66,26 @@ class SgPublishModel(QtGui.QStandardItemModel):
         This call is asynchronous and will return instantly.
         The update will be applied whenever the data from Shotgun is returned.
         """
-        print "Load publishes for %s" % sg_data
         
         self.clear()
         
         if sg_data is None:
             # nothing to load!
+            
+            msg = "Please select an item in the tree on the right in order to show its publishes."
+            
+            self._spin_handler.set_info_message(msg)
             self._publish_type_model.set_active_types( {} )
             return
         
         # get data from shotgun
-        self._start_spinner()
+        self._spin_handler.start_spinner()
         
         # line up a request from Shotgun
         self._current_work_id = self._sg_data_retriever.execute_find(self._publish_entity_type, 
                                                                      [["entity", "is", sg_data]], 
                                                                      self._publish_fields)
 
-        
-    ########################################################################################
-    # spinner
-        
-    def _start_spinner(self):
-        """
-        start spinning
-        """
-        self._widget.setCurrentIndex(SPINNER_PAGE_INDEX)
-        self._spin_timer.start(100)
-
-
-    def _stop_spinner(self):
-        """
-        start spinning
-        """
-        self._spin_timer.stop()
-        self._widget.setCurrentIndex(LIST_PAGE_INDEX)
-        
-    def _update_spinner(self):
-        """
-        Animate spinner icon
-        """
-        # assume the spinner label is the first (and only) object that is
-        # a child of the SPINNER_PAGE_INDEX widget page
-        spinner_label = self._widget.widget(SPINNER_PAGE_INDEX).findChild(QtGui.QLabel)
-        spinner_label.setPixmap(self._spin_icons[self._current_spinner_index])
-        self._current_spinner_index += 1
-        if self._current_spinner_index == 4:
-            self._current_spinner_index = 0            
         
     ########################################################################################
     # signals called after sg data load complete
@@ -135,8 +98,8 @@ class SgPublishModel(QtGui.QStandardItemModel):
             # not our job. ignore
             return
         
-        self._stop_spinner()
-        self._app.log_error("Error retrieving data from Shotgun: %s" % msg)
+        self._spin_handler.stop_spinner()
+        self._spin_handler.set_error_message("Error retrieving data from Shotgun: %s" % msg)
 
     def _on_worker_signal(self, uid, data):
         """
@@ -146,7 +109,7 @@ class SgPublishModel(QtGui.QStandardItemModel):
             # not our job. ignore
             return
         
-        self._stop_spinner()
+        self._spin_handler.stop_spinner()
         
         # add data to our model and also collect a distinct
         # list of type ids contained within this data set.
@@ -157,11 +120,15 @@ class SgPublishModel(QtGui.QStandardItemModel):
             
             type_id = None
             type_link = d[self._publish_type_field]
+            type_name = "No Type"
             if type_link:
                 type_id = type_link["id"]
+                type_name = type_link["name"]
                 type_id_aggregates[type_id] += 1
             
-            item = QtGui.QStandardItem(self._default_thumb, d["name"])
+            label = "%s, %s" % (d["name"], type_name)
+            
+            item = QtGui.QStandardItem(self._default_thumb, label)
             item.setData(type_id, SgPublishModel.TYPE_ID_ROLE)
             self.appendRow(item)
             

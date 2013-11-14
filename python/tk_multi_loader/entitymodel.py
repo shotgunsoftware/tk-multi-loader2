@@ -18,17 +18,18 @@ from tank.platform.qt import QtCore, QtGui
 
 # just so we can do some basic file validation
 FILE_MAGIC_NUMBER = 0xDEADBEEF # so we can validate file format correctness before loading
-FILE_VERSION = 2               # if we ever change the file format structure
+FILE_VERSION = 3               # if we ever change the file format structure
 
 NODE_SG_DATA_ROLE = QtCore.Qt.UserRole + 1
 
 class SgEntityModel(QtGui.QStandardItemModel):
 
-    def __init__(self, sg_data_retriever, widget, entity_type, filters, hierarchy):
+    def __init__(self, sg_data_retriever, widget, caption, entity_type, filters, hierarchy):
         QtGui.QStandardItemModel.__init__(self)
         
         self._sg_data_retriever = sg_data_retriever
         self._entity_type = entity_type
+        self._caption = caption
         self._filters = filters
         self._hierarchy = hierarchy
         self._current_work_id = 0
@@ -308,7 +309,12 @@ class SgEntityModel(QtGui.QStandardItemModel):
         self.clear()
         self._tree_data = {}
         root = self.invisibleRootItem()
-        self._populate_complete_tree_r(data, root, self._hierarchy, {})
+        
+        # create a root item that is the name of the caption
+        tk_root = QtGui.QStandardItem(self._caption)
+        tk_root.setIcon(self._folder_icon)
+        root.appendRow(tk_root)
+        self._populate_complete_tree_r(data, tk_root, self._hierarchy, {})
         
     def _populate_complete_tree_r(self, sg_data, root, hierarchy, constraints):
         """

@@ -281,6 +281,7 @@ class AppDialog(QtGui.QWidget):
             d["entity_type"] = e["entity_type"]
             d["model"] = SgEntityModel(self._sg_data_retriever, 
                                        self.ui.entity_widget,
+                                       e["caption"],
                                        e["entity_type"], 
                                        e["filters"],
                                        e["hierarchy"])
@@ -303,7 +304,6 @@ class AppDialog(QtGui.QWidget):
         Changes the entity preset, ensures that the right button is pressed
         and that all things are up to date
         """
-        
         preset = self._entity_presets[caption]
         
         # clear any outstanding requests in the async queue

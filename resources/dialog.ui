@@ -21,6 +21,13 @@
        <property name="text">
         <string>Home</string>
        </property>
+       <property name="icon">
+        <iconset resource="resources.qrc">
+         <normaloff>:/res/home.png</normaloff>:/res/home.png</iconset>
+       </property>
+       <property name="autoRaise">
+        <bool>true</bool>
+       </property>
       </widget>
      </item>
      <item>
@@ -28,12 +35,26 @@
        <property name="text">
         <string>&lt; Back</string>
        </property>
+       <property name="icon">
+        <iconset resource="resources.qrc">
+         <normaloff>:/res/arrow_back.png</normaloff>:/res/arrow_back.png</iconset>
+       </property>
+       <property name="autoRaise">
+        <bool>true</bool>
+       </property>
       </widget>
      </item>
      <item>
       <widget class="QToolButton" name="navigation_next">
        <property name="text">
         <string>Next &gt;</string>
+       </property>
+       <property name="icon">
+        <iconset resource="resources.qrc">
+         <normaloff>:/res/arrow_forward.png</normaloff>:/res/arrow_forward.png</iconset>
+       </property>
+       <property name="autoRaise">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
@@ -285,13 +306,6 @@
        </widget>
       </item>
      </layout>
-    </widget>
-   </item>
-   <item row="3" column="0">
-    <widget class="QLabel" name="sg_status">
-     <property name="text">
-      <string>Shotgun Status:</string>
-     </property>
     </widget>
    </item>
   </layout>

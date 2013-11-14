@@ -116,6 +116,8 @@ class SgPublishTypeModel(QtGui.QStandardItemModel):
                 print "adding %s" % sg_item
                 item = QtGui.QStandardItem(sg_name)
                 item.setData(sg_item, NODE_SG_DATA_ROLE)
+                item.setCheckable(True)
+                
                 self.invisibleRootItem().appendRow(item)
                 
         self._app.log_debug("Saving tree to disk %s..." % self._full_cache_path)

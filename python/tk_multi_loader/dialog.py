@@ -39,8 +39,6 @@ class AppDialog(QtGui.QWidget):
         
         # set up our background sg data fetcher
         self._sg_data_retriever = ShotgunAsyncDataRetriever(self)
-        self._sg_data_retriever.queue_processing.connect(self._on_shotgun_async_processing_begin)
-        self._sg_data_retriever.queue_complete.connect(self._on_shotgun_async_processing_end)
         self._sg_data_retriever.start()
         
         # create models for publish types and publishes
@@ -73,16 +71,7 @@ class AppDialog(QtGui.QWidget):
         
         # okay to close!
         event.accept()
-        
-    ########################################################################################
-    # background activity indication
-        
-    def _on_shotgun_async_processing_begin(self):
-        self.ui.sg_status.setText("Shotgun Status: Fetching data....")
-        
-    def _on_shotgun_async_processing_end(self):
-        self.ui.sg_status.setText("Shotgun Status: Idle.")
-        
+                
     ########################################################################################
     # info bar related
     

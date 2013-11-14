@@ -19,9 +19,12 @@ from tank.platform.qt import QtCore, QtGui
 FILE_MAGIC_NUMBER = 0xCAFEBABE # so we can validate file format correctness before loading
 FILE_VERSION = 1               # if we ever change the file format structure
 
-NODE_SG_DATA_ROLE = QtCore.Qt.UserRole + 1
 
 class SgPublishTypeModel(QtGui.QStandardItemModel):
+
+    # define custom roles
+    NODE_SG_DATA_ROLE = QtCore.Qt.UserRole + 1  # holds the sg data associated with the node
+    SORT_KEY_ROLE = QtCore.Qt.UserRole + 1      # holds a sortable key
 
     def __init__(self, sg_data_retriever):
         QtGui.QStandardItemModel.__init__(self)
@@ -30,6 +33,9 @@ class SgPublishTypeModel(QtGui.QStandardItemModel):
         
         self._current_work_id = 0
         self._app = tank.platform.current_bundle()
+        
+        # we use a special column for sorting
+        self.setSortRole(SgPublishTypeModel.SORT_KEY_ROLE)
         
         # model data in alt format
         self._tree_data = {}
@@ -60,7 +66,8 @@ class SgPublishTypeModel(QtGui.QStandardItemModel):
     
     def set_active_types(self, type_id_set):
         """
-        Specifies which types are currently active.
+        Specifies which types are currently active. Also adjust the sort role,
+        so that the view puts enabled items at the top of the list!
         
         :param type_id_set: set of type ids that should be enabled
         """
@@ -68,9 +75,15 @@ class SgPublishTypeModel(QtGui.QStandardItemModel):
             if sg_type_id in type_id_set:
                 # this type is in the active list
                 self._tree_data[sg_type_id].setEnabled(True)
+                self._tree_data[sg_type_id].setData("a_%s" % self._tree_data[sg_type_id].text(), 
+                                                    SgPublishTypeModel.SORT_KEY_ROLE)
             else:
                 self._tree_data[sg_type_id].setEnabled(False)
+                self._tree_data[sg_type_id].setData("b_%s" % self._tree_data[sg_type_id].text(), 
+                                                    SgPublishTypeModel.SORT_KEY_ROLE)
 
+        # and ask the model to resort itself 
+        self.sort(0)
     
     ########################################################################################
     # get data from sg
@@ -115,8 +128,8 @@ class SgPublishTypeModel(QtGui.QStandardItemModel):
         for sg_item in data:
             
             sg_id = sg_item["id"]
-            sg_desc = sg_item["description"]
-            sg_name = sg_item["code"]
+            sg_desc = sg_item.get("description", "No description available for this type.")
+            sg_name = sg_item.get("code", "Unnamed").capitalize()
 
             if sg_id in self._tree_data:
                 # we have this item already!
@@ -125,11 +138,11 @@ class SgPublishTypeModel(QtGui.QStandardItemModel):
                 if current_item.text() != sg_name:
                     # name has changed. update name
                     current_item.setText(sg_name)
-                    current_item.setData(sg_item, NODE_SG_DATA_ROLE)
+                    current_item.setData(sg_item, SgPublishTypeModel.NODE_SG_DATA_ROLE)
             else:
                 # type is not in the list - add it!                
                 item = QtGui.QStandardItem(sg_name)
-                item.setData(sg_item, NODE_SG_DATA_ROLE)
+                item.setData(sg_item, SgPublishTypeModel.NODE_SG_DATA_ROLE)
                 item.setToolTip(str(sg_desc))
                 item.setCheckable(True)
                 self.invisibleRootItem().appendRow(item)
@@ -198,7 +211,7 @@ class SgPublishTypeModel(QtGui.QStandardItemModel):
             root.appendRow(item)
             
             # add the model item to our tree data dict keyed by id
-            sg_data = item.data(NODE_SG_DATA_ROLE) 
+            sg_data = item.data(SgPublishTypeModel.NODE_SG_DATA_ROLE) 
             self._tree_data[ sg_data["id"] ] = item            
             
             

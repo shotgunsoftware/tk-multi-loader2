@@ -33,19 +33,24 @@ class AppDialog(QtGui.QWidget):
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
         
+        #################################################
         # details pane mockup for now
         self.ui.details.setVisible(False)
         self.ui.info.clicked.connect(self._on_info_clicked)
         
+        #################################################
         # set up our background sg data fetcher
         self._sg_data_retriever = ShotgunAsyncDataRetriever(self)
         self._sg_data_retriever.start()
         
-        
+        #################################################
         # load and initialize cached publish type model
-        self._publish_type_model = SgPublishTypeModel(self._sg_data_retriever)
+        self._publish_type_model = SgPublishTypeModel(self._sg_data_retriever)        
         self.ui.publish_type_list.setModel(self._publish_type_model)
+        # turn off selection to start with
+        self._publish_type_model.set_active_types( set() )
 
+        #################################################
         # setup publish model
         self._publish_model = SgPublishModel(self._sg_data_retriever, 
                                              self.ui.publish_widget,
@@ -54,7 +59,8 @@ class AppDialog(QtGui.QWidget):
         
         self.ui.publish_list.setModel(self._publish_model)
         
-        # manage history
+        #################################################
+        # setup history
         self._history = []
         self._history_index = 0
         self._history_navigation_mode = False
@@ -62,11 +68,13 @@ class AppDialog(QtGui.QWidget):
         self.ui.navigation_prev.clicked.connect(self._on_back_clicked)
         self.ui.navigation_next.clicked.connect(self._on_forward_clicked)
         
-        # set up our buttons and models based on the configured presets
+        #################################################
+        # set up preset tabs
         self._entity_presets = {} 
         self._default_entity_preset = None
         self._load_entity_presets()
         
+        #################################################
         # click on the home button to kick things off!
         self._on_home_clicked()
     

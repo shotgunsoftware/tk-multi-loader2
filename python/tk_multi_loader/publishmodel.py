@@ -42,6 +42,8 @@ class SgPublishModel(QtGui.QStandardItemModel):
         self._current_work_id = None
         self._spin_handler = SpinHandler(widget)
         
+        self._thumb_map = {}
+        
         # sg fields logic
         self._publish_entity_type = tank.util.get_published_file_entity_type(self._app.sgtk)
         
@@ -72,7 +74,7 @@ class SgPublishModel(QtGui.QStandardItemModel):
         if sg_data is None:
             # nothing to load!
             
-            msg = "Please select an item in the tree on the right in order to show its publishes."
+            msg = "Please select an item in the tree <br>on the right in order to show its publishes."
             
             self._spin_handler.set_info_message(msg)
             self._publish_type_model.set_active_types( {} )
@@ -105,35 +107,47 @@ class SgPublishModel(QtGui.QStandardItemModel):
         """
         Signaled whenever the worker completes something
         """
-        if self._current_work_id != uid:
-            # not our job. ignore
-            return
-        
-        self._spin_handler.stop_spinner()
-        
-        # add data to our model and also collect a distinct
-        # list of type ids contained within this data set.
-        # count the number of times each type is used
-        type_id_aggregates = defaultdict(int)
-        
-        for d in data:
+        if self._current_work_id == uid:
+            # shotgun find data returned!
             
-            type_id = None
-            type_link = d[self._publish_type_field]
-            type_name = "No Type"
-            if type_link:
-                type_id = type_link["id"]
-                type_name = type_link["name"]
-                type_id_aggregates[type_id] += 1
+            self._spin_handler.stop_spinner()
             
-            label = "%s, %s" % (d["name"], type_name)
+            # add data to our model and also collect a distinct
+            # list of type ids contained within this data set.
+            # count the number of times each type is used
+            type_id_aggregates = defaultdict(int)
             
-            item = QtGui.QStandardItem(self._default_thumb, label)
-            item.setData(type_id, SgPublishModel.TYPE_ID_ROLE)
-            self.appendRow(item)
-            
-        # tell the model to reshuffle and reformat itself
-        # based on the types contained in this search
-        self._publish_type_model.set_active_types( type_id_aggregates )
+            for d in data["sg"]:
+                
+                type_id = None
+                type_link = d[self._publish_type_field]
+                type_name = "No Type"
+                if type_link:
+                    type_id = type_link["id"]
+                    type_name = type_link["name"]
+                    type_id_aggregates[type_id] += 1
+                
+                label = "%s, %s" % (d["name"], type_name)
+                
+                item = QtGui.QStandardItem(self._default_thumb, label)
+                item.setData(type_id, SgPublishModel.TYPE_ID_ROLE)
+                self.appendRow(item)
+                
+                # get the thumbnail - store the unique id we get back from
+                # the data retrieve in a dict for fast lookup later
+                uid = self._sg_data_retriever.download_thumbnail(d["image"], self._publish_entity_type, d["id"])
+                self._thumb_map[uid] = item            
+                
+                
+            # tell the model to reshuffle and reformat itself
+            # based on the types contained in this search
+            self._publish_type_model.set_active_types( type_id_aggregates )
         
+        elif uid in self._thumb_map:
+            # this is a thumbnail that has been fetched!
+            # update the publish icon based on this.
+            thumbnail_path = data["thumb_path"]
+            pm = QtGui.QPixmap(thumbnail_path)
+            self._thumb_map[uid].setIcon(pm)
+            
         

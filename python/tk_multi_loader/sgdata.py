@@ -13,6 +13,11 @@ import urllib
 import tank
 import uuid
 import sys
+import urlparse
+import os
+import urllib
+import shutil
+
 
 from tank.platform.qt import QtCore, QtGui
 
@@ -60,11 +65,15 @@ class ShotgunAsyncDataRetriever(QtCore.QThread):
         
     def execute_find(self, entity_type, filters, fields):    
         """
-        
+        Run a shotgun find
         """
         uid = uuid.uuid4().hex
         
-        work = {"id": uid, "type": "find", "et": entity_type, "filters": filters, "fields": fields }
+        work = {"id": uid, 
+                "type": "find", 
+                "entity_type": entity_type, 
+                "filters": filters, 
+                "fields": fields }
         self._queue_mutex.lock()
         try:
             # first in the queue
@@ -78,11 +87,34 @@ class ShotgunAsyncDataRetriever(QtCore.QThread):
         return uid
         
         
-    def download_thumbnail(self, url):
+    def download_thumbnail(self, url, entity_type, entity_id):
         """
         Downloads a thumbnail from the internet
         """
-        pass
+
+        uid = uuid.uuid4().hex
+        
+        work = {"id": uid, 
+                "type": "thumbnail", 
+                "url": url,
+                "entity_type": entity_type,
+                "entity_id": entity_id }
+        self._queue_mutex.lock()
+        try:
+            # back of the queue
+            self._queue.append(work)
+        finally:
+            self._queue_mutex.unlock()
+            
+        # wake up execution loop!
+        self._wait_condition.wakeAll()
+        
+        return uid
+
+
+
+
+
 
     ############################################################################################
     #
@@ -121,9 +153,57 @@ class ShotgunAsyncDataRetriever(QtCore.QThread):
             try:
                 # process the item:
                 if item_to_process["type"] == "find":
-                    data = self._app.shotgun.find(item_to_process["et"],
+                    sg = self._app.shotgun.find(item_to_process["entity_type"],
                                                   item_to_process["filters"],
                                                   item_to_process["fields"])
+                    # need to wrap it in a dict not to confuse pyqts signals and type system
+                    data = {"sg": sg}
+                
+                elif item_to_process["type"] == "thumbnail":
+                    
+                    url = item_to_process["url"]
+                    
+                    entity_id = item_to_process["entity_id"]
+                    entity_type = item_to_process["entity_type"]
+                    
+                    cache_path_items = [self._app.cache_location, "thumbnails", entity_type]
+                    
+                    # the S3 urls are not suitable as cache keys so use type/id
+                    # split the number into chunks and preceed with type
+                    # 12345 --> ['1','2','3','4','5']
+                    cache_path_items.extend(list(str(entity_id)))
+                    
+                    # and append a file name. Assume we always get a jpeg back from sg
+                    cache_path_items.append("%s.jpg" % entity_id)
+                    
+                    # join up the path
+                    path_to_cached_thumb = os.path.join(*cache_path_items)
+                    
+                    if os.path.exists(path_to_cached_thumb):
+                        # cached! sweet!
+                        data = {"thumb_path": path_to_cached_thumb }
+                    
+                    else:
+                    
+                        # the thumbnail was not in the cache. Get it.
+                        try:
+                            (temp_file, stuff) = urllib.urlretrieve(url)
+                        except Exception, e:
+                            raise Exception("Could not download data from the url '%s'. Error: %s" % (url, e))
+                
+                        # now try to cache it
+                        try:
+                            self._app.ensure_folder_exists(os.path.dirname(path_to_cached_thumb))
+                            shutil.copy(temp_file, path_to_cached_thumb)
+                            # as a tmp file downloaded by urlretrieve, permissions are super strict
+                            # modify the permissions of the file so it's writeable by others
+                            os.chmod(path_to_cached_thumb, 0666)            
+                        except Exception, e:
+                            raise Exception("Could not cache thumbnail %s in %s. "
+                                            "Error: %s" % (url, path_to_cached_thumb, e))
+                 
+                        data = {"thumb_path": path_to_cached_thumb }
+                    
                 
             except Exception, e:
                 if self._execute_tasks:

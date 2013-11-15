@@ -158,7 +158,7 @@ class SgPublishTypeModel(QtGui.QStandardItemModel):
         self._spin_handler.stop_spinner()
 
         # load data.
-        for sg_item in data:
+        for sg_item in data["sg"]:
             
             sg_id = sg_item["id"]
             sg_desc = sg_item.get("description", "No description available for this type.")

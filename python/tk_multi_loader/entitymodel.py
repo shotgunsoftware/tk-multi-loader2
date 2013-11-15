@@ -136,13 +136,16 @@ class SgEntityModel(QtGui.QStandardItemModel):
             # not our job. ignore
             return
         
+        # get the actual shotgun find() payload
+        sg_data = data["sg"]
+        
         self._spin_handler.stop_spinner()
     
         if len(self._tree_data) == 0:
             # we have an empty tree. Run recursive tree generation
             # for performance.
             self._app.log_debug("No cached items in tree! Creating full tree from Shotgun data...")
-            self._rebuild_whole_tree_from_sg_data(data)
+            self._rebuild_whole_tree_from_sg_data(sg_data)
             self._app.log_debug("...done!")
         
         else:
@@ -150,20 +153,20 @@ class SgEntityModel(QtGui.QStandardItemModel):
             # note that there may be items 
             
             # check if anything has been deleted or added
-            ids_from_shotgun = set([ d["id"] for d in data ])
+            ids_from_shotgun = set([ d["id"] for d in sg_data ])
             ids_in_tree = set(self._tree_data.keys())
             removed_ids = ids_in_tree.difference(ids_from_shotgun)
             added_ids = ids_from_shotgun.difference(ids_in_tree)
 
             if len(removed_ids) > 0:
                 self._app.log_debug("Detected deleted items %s. Rebuilding whole tree..." % removed_ids)
-                self._rebuild_whole_tree_from_sg_data(data)
+                self._rebuild_whole_tree_from_sg_data(sg_data)
                 self._app.log_debug("...done!")
                 
             elif len(added_ids) > 0:
                 # wedge in the new items
                 self._app.log_debug("Detected added items. Adding them in-situ to tree...")
-                for d in data:
+                for d in sg_data:
                     if d["id"] in added_ids:
                         self._app.log_debug("Adding %s to tree" % d )
                         # need to add this one
@@ -175,7 +178,7 @@ class SgEntityModel(QtGui.QStandardItemModel):
         # effectively shadow each other. These can be safely ignored.
         self._app.log_debug("Checking for modifications...")
         detected_changes = False
-        for d in data:
+        for d in sg_data:
             # if there are modifications of any kind, we just rebuild the tree at the moment
             try:
                 existing_sg_data = self._tree_data[ d["id"] ].data(NODE_SG_DATA_ROLE)
@@ -189,7 +192,7 @@ class SgEntityModel(QtGui.QStandardItemModel):
                   
         if detected_changes:
             self._app.log_debug("Detected modifications. Rebuilding tree...")
-            self._rebuild_whole_tree_from_sg_data(data)
+            self._rebuild_whole_tree_from_sg_data(sg_data)
             self._app.log_debug("...done!")
         else:
             self._app.log_debug("...no modifications found.")

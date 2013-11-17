@@ -36,7 +36,11 @@ class SgEntityModel(QtGui.QStandardItemModel):
         self._app = tank.platform.current_bundle()
 
         # model data in alt format
-        self._tree_data = {}
+        self._entity_tree_data = {}
+        
+        # pyside will crash unless we actively hold a reference
+        # to all items that we create.
+        self._all_tree_items = []
         
         self._spin_handler = SpinHandler(widget)
 
@@ -71,7 +75,7 @@ class SgEntityModel(QtGui.QStandardItemModel):
                 self._app.log_warning("Couldn't load cache data from disk. Will proceed with "
                                       "full SG load. Error reported: %s" % e)
         
-        if len(self._tree_data) == 0:
+        if len(self._entity_tree_data) == 0:
             self._spin_handler.start_spinner()
     
     ########################################################################################
@@ -97,9 +101,9 @@ class SgEntityModel(QtGui.QStandardItemModel):
         """
         if entity_type != self._entity_type:
             return None
-        if entity_id not in self._tree_data:
+        if entity_id not in self._entity_tree_data:
             return None
-        return self._tree_data[entity_id]        
+        return self._entity_tree_data[entity_id]        
          
     def sg_data_from_item(self, item):
         """
@@ -123,7 +127,7 @@ class SgEntityModel(QtGui.QStandardItemModel):
         
         full_msg = "Error retrieving data from Shotgun: %s" % msg
         
-        if len(self._tree_data) == 0:
+        if len(self._entity_tree_data) == 0:
             # no data to fall back on. So display error message
             self._spin_handler.set_error_message(full_msg)
         self._app.log_warning(full_msg)
@@ -141,7 +145,7 @@ class SgEntityModel(QtGui.QStandardItemModel):
         
         self._spin_handler.stop_spinner()
     
-        if len(self._tree_data) == 0:
+        if len(self._entity_tree_data) == 0:
             # we have an empty tree. Run recursive tree generation
             # for performance.
             self._app.log_debug("No cached items in tree! Creating full tree from Shotgun data...")
@@ -154,7 +158,7 @@ class SgEntityModel(QtGui.QStandardItemModel):
             
             # check if anything has been deleted or added
             ids_from_shotgun = set([ d["id"] for d in sg_data ])
-            ids_in_tree = set(self._tree_data.keys())
+            ids_in_tree = set(self._entity_tree_data.keys())
             removed_ids = ids_in_tree.difference(ids_from_shotgun)
             added_ids = ids_from_shotgun.difference(ids_in_tree)
 
@@ -181,7 +185,7 @@ class SgEntityModel(QtGui.QStandardItemModel):
         for d in sg_data:
             # if there are modifications of any kind, we just rebuild the tree at the moment
             try:
-                existing_sg_data = self._tree_data[ d["id"] ].data(NODE_SG_DATA_ROLE)
+                existing_sg_data = self._entity_tree_data[ d["id"] ].data(NODE_SG_DATA_ROLE)
                 if not self._sg_unicode_equals(d, existing_sg_data):                    
                     # shotgun data has changed for this item! Rebuild the tree
                     self._app.log_debug("SG data change: %s --> %s" % (existing_sg_data, d))
@@ -248,7 +252,11 @@ class SgEntityModel(QtGui.QStandardItemModel):
         This is a slow method.
         """
         root = self.invisibleRootItem()
-        self._add_sg_item_to_tree_r(sg_item, root, self._hierarchy)
+        # the root always contains exactly one item, which is the name of the preset
+        profile_root = root.child(0)
+        # now drill down recursively, create any missing nodes on the way
+        # and eventually add this as a leaf item
+        self._add_sg_item_to_tree_r(sg_item, profile_root, self._hierarchy)
     
     def _add_sg_item_to_tree_r(self, sg_item, root, hierarchy):
         """
@@ -284,6 +292,9 @@ class SgEntityModel(QtGui.QStandardItemModel):
         if found_item is None:
             # didn't find item! Create it!
             found_item = QtGui.QStandardItem(field_display_name)
+            # keep a reference to this object to make GC happy
+            # (pyside may crash otherwise)
+            self._all_tree_items.append(found_item)
             # and add to tree
             root.appendRow(found_item)
         
@@ -292,7 +303,7 @@ class SgEntityModel(QtGui.QStandardItemModel):
                 # attach the shotgun data so that we can access it later
                 found_item.setData(sg_item, NODE_SG_DATA_ROLE)
                 # and also populate the id association in our lookup dict
-                self._tree_data[ sg_item["id"] ] = found_item
+                self._entity_tree_data[ sg_item["id"] ] = found_item
             else:                
                 # attach a folder icon
                 found_item.setIcon(self._folder_icon)
@@ -310,11 +321,16 @@ class SgEntityModel(QtGui.QStandardItemModel):
         Note that any selection and expansion states in the view will be lost.
         """
         self.clear()
-        self._tree_data = {}
+        self._entity_tree_data = {}
+        self._all_tree_items = []
         root = self.invisibleRootItem()
         
         # create a root item that is the name of the caption
         tk_root = QtGui.QStandardItem(self._caption)
+        # keep a reference to this object to make GC happy
+        # (pyside may crash otherwise)
+        self._all_tree_items.append(tk_root)
+        
         tk_root.setIcon(self._folder_icon)
         root.appendRow(tk_root)
         self._populate_complete_tree_r(data, tk_root, self._hierarchy, {})
@@ -364,6 +380,9 @@ class SgEntityModel(QtGui.QStandardItemModel):
             
             # construct tree view node object
             item = QtGui.QStandardItem(dv)
+            # keep a reference to this object to make GC happy
+            # (pyside may crash otherwise)
+            self._all_tree_items.append(item)            
             root.appendRow(item)
             
                         
@@ -373,7 +392,7 @@ class SgEntityModel(QtGui.QStandardItemModel):
                 sg_item = discrete_values[dv]
                 item.setData(sg_item, NODE_SG_DATA_ROLE)
                 # and also populate the id association in our lookup dict
-                self._tree_data[ sg_item["id"] ] = item 
+                self._entity_tree_data[ sg_item["id"] ] = item 
                       
             else:
                 # not on leaf level yet
@@ -483,6 +502,9 @@ class SgEntityModel(QtGui.QStandardItemModel):
         
             # read data
             item = QtGui.QStandardItem()
+            # keep a reference to this object to make GC happy
+            # (pyside may crash otherwise)
+            self._all_tree_items.append(item)
             item.read(file_in)
             node_depth = file_in.readInt32()
             
@@ -492,7 +514,7 @@ class SgEntityModel(QtGui.QStandardItemModel):
             if item.data(NODE_SG_DATA_ROLE):
                 sg_data = item.data(NODE_SG_DATA_ROLE) 
                 # add the model item to our tree data dict keyed by id
-                self._tree_data[ sg_data["id"] ] = item            
+                self._entity_tree_data[ sg_data["id"] ] = item            
 
                     
             if node_depth == curr_depth + 1:

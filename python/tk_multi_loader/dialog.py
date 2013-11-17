@@ -70,6 +70,10 @@ class AppDialog(QtGui.QWidget):
         # whenever the type list is checked, update the publish filters
         self._publish_type_model.itemChanged.connect(self._apply_type_filters_on_publishes)        
         
+        # if an item in the table is double clicked ensure details are shown
+        self.ui.publish_list.doubleClicked.connect(self._on_publish_double_clicked)
+        
+        
         #################################################
         # setup history
         self._history = []
@@ -217,7 +221,7 @@ class AppDialog(QtGui.QWidget):
         self._compute_history_button_visibility()
         
     ########################################################################################
-    # handling of changes to the type listings
+    # type listing view
         
     def _apply_type_filters_on_publishes(self):
         """
@@ -228,11 +232,21 @@ class AppDialog(QtGui.QWidget):
         # is displayed
         sg_type_ids = self._publish_type_model.get_selected_types()
         self._publish_proxy_model.set_filter_by_type_ids(sg_type_ids)
+
+    ########################################################################################
+    # publish thumbnail view
         
-        
+       
+    def _on_publish_double_clicked(self):
+        """
+        When someone double clicks an item in the publish area,
+        ensure that the details pane is visible
+        """
+        if not self.ui.details.isVisible():
+            self.ui.details.setVisible(True)
         
     ########################################################################################
-    # handling of treeview
+    # entity listing tree view and presets toolbar
         
     def _load_entity_presets(self):
         """
@@ -361,10 +375,6 @@ class AppDialog(QtGui.QWidget):
         self.ui.entity_breadcrumbs.setText(breadcrumbs)
             
 
-    ########################################################################################
-    # handling of clicks in the tree view
-        
-        
     def _on_entity_selection(self):
         """
         Signal triggered when someone changes the selection

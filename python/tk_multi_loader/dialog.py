@@ -356,11 +356,7 @@ class AppDialog(QtGui.QWidget):
             while tmp_item:
                 crumbs.append(tmp_item.text())
                 tmp_item = tmp_item.parent()
-            
-        # get the main item that was checked
-        current_entity_preset = self._button_group.get_checked()
-        crumbs.append(current_entity_preset)
-        
+                    
         breadcrumbs = " > ".join( crumbs[::-1] )  
         self.ui.entity_breadcrumbs.setText(breadcrumbs)
             

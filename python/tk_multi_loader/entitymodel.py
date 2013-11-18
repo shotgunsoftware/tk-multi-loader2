@@ -75,8 +75,6 @@ class SgEntityModel(QtGui.QStandardItemModel):
                 self._app.log_warning("Couldn't load cache data from disk. Will proceed with "
                                       "full SG load. Error reported: %s" % e)
         
-        if len(self._entity_tree_data) == 0:
-            self._spin_handler.set_entity_message("Hang on, loading data...")
     
     ########################################################################################
     # public methods
@@ -87,6 +85,11 @@ class SgEntityModel(QtGui.QStandardItemModel):
         This call is asynchronous and will return instantly.
         The update will be applied whenever the data from Shotgun is returned.
         """
+        
+        if len(self._entity_tree_data) == 0:
+            # we are loading an empty tree
+            self._spin_handler.set_entity_message("Hang on, loading data...")        
+        
         # get data from shotgun
         self._current_work_id = self._sg_data_retriever.execute_find(self._entity_type, 
                                                                      self._filters, 

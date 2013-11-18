@@ -94,7 +94,6 @@ class AppDialog(QtGui.QWidget):
         #################################################
         # set up preset tabs
         self._entity_presets = {} 
-        self._default_entity_preset = None
         self._load_entity_presets()
         
         #################################################
@@ -159,20 +158,22 @@ class AppDialog(QtGui.QWidget):
             self._set_entity_preset(preset)
             self._button_group.set_checked(preset)
             
+            curr_view = self._entity_presets[preset]["view"]
+            selection_model = curr_view.selectionModel()
+            
             if item is None:
-                # no item selected
-                selection_model = self.ui.entity_view.selectionModel()
+                # no item selected        
                 selection_model.clear()
                 
             else:
                 # ensure that the tree view is expanded and that the item we are about 
                 # to selected is in vertically centered in the widget
-                self.ui.entity_view.scrollTo(item.index(), QtGui.QAbstractItemView.PositionAtCenter)
+                curr_view.scrollTo(item.index(), QtGui.QAbstractItemView.PositionAtCenter)
                 
                 # select it and set it to be the current item
-                selection_model = self.ui.entity_view.selectionModel()
                 selection_model.select(item.index(), QtGui.QItemSelectionModel.ClearAndSelect)
                 selection_model.setCurrentIndex(item.index(), QtGui.QItemSelectionModel.ClearAndSelect)
+                
         finally:
             self._history_navigation_mode = False
         
@@ -190,7 +191,7 @@ class AppDialog(QtGui.QWidget):
             # now step through the profiles and find a matching entity
             for p in self._entity_presets:
                 if self._entity_presets[p]["entity_type"] == ctx.entity["type"]:
-                    # found a matching entity profile.
+                    # found a matching entity profile.                    
                     # try to find the entity in the tree
                     item = self._entity_presets[p]["model"].item_from_entity(ctx.entity["type"], 
                                                                              ctx.entity["id"]) 
@@ -207,12 +208,16 @@ class AppDialog(QtGui.QWidget):
             # use default preset.
             self._history_navigation_mode = True
             try:
-                self._set_entity_preset(self._default_entity_preset)
-                self._button_group.set_checked(self._default_entity_preset)
-                self.ui.entity_view.selectionModel().clear()
+                # click the default button in the toolbar
+                profile = self._button_group.check_default()
+                self._set_entity_preset(profile)
+                # clear any previous selection in this view
+                self._entity_presets[profile]["view"].selectionModel().clear()
             finally:
                 self._history_navigation_mode = False
-            self._add_history_record(self._default_entity_preset)
+            
+            self._add_history_record(profile)
+            
                 
     def _on_back_clicked(self):
         self._history_index += -1
@@ -229,7 +234,7 @@ class AppDialog(QtGui.QWidget):
         self._compute_history_button_visibility()
         
     ########################################################################################
-    # type listing view
+    # filter view
         
     def _apply_type_filters_on_publishes(self):
         """
@@ -306,18 +311,46 @@ class AppDialog(QtGui.QWidget):
                                        e["entity_type"], 
                                        e["filters"],
                                        e["hierarchy"])
+                        
+            # now set up a UI group for this object
+            # first a grouping widget that we will stick in the stackedwidget group later
+            d["top_object"] = QtGui.QWidget()
             
+            # layout to receive our treeview
+            d["layout"] = QtGui.QVBoxLayout(d["top_object"])
+            d["layout"].setContentsMargins(1, 1, 1, 1)
+            d["view"] = QtGui.QTreeView(d["top_object"])
+            d["layout"].addWidget(d["view"])
+
+            # finally add it to the QStackedWidget
+            self.ui.entity_grp.addWidget(d["top_object"])
+
+            # configure view            
+            d["view"].setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
+            d["view"].setProperty("showDropIndicator", False)
+            d["view"].setIconSize(QtCore.QSize(16, 16))
+            d["view"].setHeaderHidden(True)
+            d["view"].setModel(d["model"])
+
+            # set up on-select callbacks
+            selection_model = d["view"].selectionModel()
+            selection_model.selectionChanged.connect(self._on_entity_selection)
             
+            # finally store all these objects keyed by the caption
             self._entity_presets[ e["caption"] ] = d
+            
             
         # now create the button group
         self._button_group = EntityButtonGroup(self, self.ui.entity_button_layout, button_captions)
-        
-        # store our preferred choice if we ever need to revert to default
-        self._default_entity_preset = button_captions[0]
-  
+          
         # hook up event handler
         self._button_group.clicked.connect(self._set_entity_preset)
+        
+        # tell the spin handler
+        mappings = {}
+        for x in self._entity_presets:
+            mappings[x] = self._entity_presets[x]["top_object"]
+        self._spin_handler.set_entity_view_mapping(mappings)
         
         
     def _set_entity_preset(self, caption):
@@ -325,26 +358,20 @@ class AppDialog(QtGui.QWidget):
         Changes the entity preset, ensures that the right button is pressed
         and that all things are up to date
         """
-        preset = self._entity_presets[caption]
-        
         # clear any outstanding requests in the async queue
         # these wont be relevant if we switch entity preset
         self._sg_data_retriever.clear()
-        
-        # hook up this model and its selection model with the view
-        self.ui.entity_view.setModel(preset["model"])
-        # the selection model for the view is automatically created 
-        # each time we swap model, so set up callbacks for that too
-        selection_model = self.ui.entity_view.selectionModel()
-        selection_model.selectionChanged.connect(self._on_entity_selection)
-        
+                
+        # ensure we switch to the correct view
+        self._spin_handler.hide_entity_message(caption)
+                
         # tell model to call out to shotgun to refresh its data
         # but not when we are navigating back and forwards through history
         if not self._history_navigation_mode:
-            preset["model"].refresh_data()
+            self._entity_presets[caption]["model"].refresh_data()
         
         # populate breadcrumbs
-        self._populate_entity_breadcrumbs()
+        self._populate_entity_breadcrumbs(caption)
         
         # and store in history
         self._add_history_record(caption)
@@ -353,14 +380,12 @@ class AppDialog(QtGui.QWidget):
         self._publish_model.load_publishes(None)
         
     
-                    
-        
-    
-    def _populate_entity_breadcrumbs(self):
+    def _populate_entity_breadcrumbs(self, profile):
         """
         Computes the current entity breadcrumbs
         """
-        selection_model = self.ui.entity_view.selectionModel()
+        
+        selection_model = self._entity_presets[profile]["view"].selectionModel()
         
         crumbs = []
         
@@ -384,15 +409,15 @@ class AppDialog(QtGui.QWidget):
 
     def _on_entity_selection(self):
         """
-        Signal triggered when someone changes the selection
+        Signal triggered when someone changes the selection in a treeview
         """
-        # update breadcrumbs
-        self._populate_entity_breadcrumbs()
-        
         # add item to stack
         preset = self._button_group.get_checked()
+
+        # update breadcrumbs
+        self._populate_entity_breadcrumbs(preset)
         
-        selection_model = self.ui.entity_view.selectionModel()
+        selection_model = self._entity_presets[preset]["view"].selectionModel()
         
         sg_data = None 
         if selection_model.hasSelection():

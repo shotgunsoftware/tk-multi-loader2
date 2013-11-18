@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1243</width>
-    <height>687</height>
+    <height>754</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -433,36 +433,22 @@
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
         <widget class="QStackedWidget" name="entity_grp">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>400</height>
+          </size>
+         </property>
          <property name="currentIndex">
           <number>0</number>
          </property>
          <widget class="QWidget" name="page">
-          <layout class="QVBoxLayout" name="verticalLayout_7">
-           <property name="margin">
-            <number>1</number>
-           </property>
-           <item>
-            <widget class="QTreeView" name="entity_view">
-             <property name="editTriggers">
-              <set>QAbstractItemView::NoEditTriggers</set>
-             </property>
-             <property name="showDropIndicator" stdset="0">
-              <bool>false</bool>
-             </property>
-             <property name="iconSize">
-              <size>
-               <width>16</width>
-               <height>16</height>
-              </size>
-             </property>
-             <property name="headerHidden">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-         <widget class="QWidget" name="page_2">
           <layout class="QVBoxLayout" name="verticalLayout_11">
            <property name="margin">
             <number>1</number>
@@ -470,7 +456,7 @@
            <item>
             <widget class="QLabel" name="entity_msg">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
+              <sizepolicy hsizetype="Ignored" vsizetype="Expanding">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -513,6 +499,12 @@
            </property>
            <item>
             <widget class="QListView" name="publish_type_list">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>100</height>
+              </size>
+             </property>
              <property name="editTriggers">
               <set>QAbstractItemView::NoEditTriggers</set>
              </property>

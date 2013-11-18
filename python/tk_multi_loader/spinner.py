@@ -39,6 +39,13 @@ class SpinHandler(object):
         self._global_spin_timer.timeout.connect(self._update_global_spinner)
         self._current_global_spinner_index = 0
         
+    def set_entity_view_mapping(self, views):
+        """
+        Specifies a caption/view mapping for the entity views
+        so that the spin handler knows which view to enable
+        for a given caption
+        """
+        self._caption_view_map = views
         
     ####################################################################################
     # global spinner
@@ -68,6 +75,32 @@ class SpinHandler(object):
         if self._current_global_spinner_index == 4:
             self._current_global_spinner_index = 0            
                 
+    
+    ####################################################################################
+    # entity tree view
+    
+    def set_entity_message(self, msg):
+        
+        self._ui.entity_grp.setCurrentWidget(self._ui.entity_msg)
+        self._ui.entity_msg.setText(msg)            
+        
+    
+    def set_entity_error_message(self, msg):
+        
+        self._ui.entity_grp.setCurrentWidget(self._ui.entity_msg)
+        self._ui.entity_msg.setText(msg)            
+
+    
+    def hide_entity_message(self, profile):
+        """
+        Switch back to the specified profile view
+        """
+        print "******* hide message!"
+        view = self._caption_view_map[profile]
+        self._ui.entity_grp.setCurrentWidget(view)
+    
+    
+    
     ####################################################################################
     # specific areas
     

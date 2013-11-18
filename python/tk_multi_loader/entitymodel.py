@@ -76,7 +76,7 @@ class SgEntityModel(QtGui.QStandardItemModel):
                                       "full SG load. Error reported: %s" % e)
         
         if len(self._entity_tree_data) == 0:
-            self._spin_handler.set_message(SpinHandler.ENTITY_TREE_AREA, "Hang on, loading data...")
+            self._spin_handler.set_entity_message("Hang on, loading data...")
     
     ########################################################################################
     # public methods
@@ -129,8 +129,9 @@ class SgEntityModel(QtGui.QStandardItemModel):
         
         if len(self._entity_tree_data) == 0:
             # no data laoded yet. So display error message
-            self._spin_handler.set_error_message(SpinHandler.ENTITY_TREE_AREA, full_msg)
+            self._spin_handler.set_entity_error_message(full_msg)
         self._app.log_warning(full_msg)
+
 
     def _on_worker_signal(self, uid, data):
         """
@@ -142,9 +143,9 @@ class SgEntityModel(QtGui.QStandardItemModel):
         
         # get the actual shotgun find() payload
         sg_data = data["sg"]
-        
+
         # make sure no messages are displayed
-        self._spin_handler.hide_message(SpinHandler.ENTITY_TREE_AREA)
+        self._spin_handler.hide_entity_message(self._caption)
     
         if len(self._entity_tree_data) == 0:
             # we have an empty tree. Run recursive tree generation

@@ -40,6 +40,10 @@ class EntityButtonGroup(QtGui.QWidget):
             btn.setCheckable(True)
             self._buttons.append(btn)
             
+            # make sure first button is checked
+            if len(self._buttons) == 1:
+                btn.setChecked(True)
+            
             # map caption to button
             self.signal_mapper.setMapping(btn, c)
     
@@ -60,6 +64,13 @@ class EntityButtonGroup(QtGui.QWidget):
         
         # set the first button to be checked by default
         self.set_checked(captions[0])
+    
+    def check_default(self):
+        """
+        Checks the default button, which is typically the first one
+        Returns the name of the default button
+        """
+        return self.set_checked(None)
     
     def set_checked(self, button_name):
         """

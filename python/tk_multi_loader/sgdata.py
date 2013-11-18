@@ -63,7 +63,7 @@ class ShotgunAsyncDataRetriever(QtCore.QThread):
         self._wait_condition.wakeAll()
         self.wait()        
         
-    def execute_find(self, entity_type, filters, fields):    
+    def execute_find(self, entity_type, filters, fields, order = None):    
         """
         Run a shotgun find
         """
@@ -73,7 +73,8 @@ class ShotgunAsyncDataRetriever(QtCore.QThread):
                 "type": "find", 
                 "entity_type": entity_type, 
                 "filters": filters, 
-                "fields": fields }
+                "fields": fields,
+                "order": order }
         self._queue_mutex.lock()
         try:
             # first in the queue
@@ -155,7 +156,8 @@ class ShotgunAsyncDataRetriever(QtCore.QThread):
                 if item_to_process["type"] == "find":
                     sg = self._app.shotgun.find(item_to_process["entity_type"],
                                                   item_to_process["filters"],
-                                                  item_to_process["fields"])
+                                                  item_to_process["fields"],
+                                                  item_to_process["order"])
                     # need to wrap it in a dict not to confuse pyqts signals and type system
                     data = {"sg": sg}
                 

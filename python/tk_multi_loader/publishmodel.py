@@ -84,7 +84,8 @@ class SgPublishModel(QtGui.QStandardItemModel):
         # line up a request from Shotgun
         self._current_work_id = self._sg_data_retriever.execute_find(self._publish_entity_type, 
                                                                      [["entity", "is", sg_data]], 
-                                                                     self._publish_fields)
+                                                                     self._publish_fields,
+                                                                     [{"field_name":"version_number", "direction":"asc"}])
 
         
     ########################################################################################
@@ -124,6 +125,11 @@ class SgPublishModel(QtGui.QStandardItemModel):
                 # count the number of times each type is used
                 type_id_aggregates = defaultdict(int)
                 
+                # get a dict with only the latest versions
+                # rely on the fact that versions are returned in asc order from sg.
+                # (see filter query above)
+                unique_data = {}
+                
                 for d in sg_data:
                     
                     type_id = None
@@ -134,15 +140,25 @@ class SgPublishModel(QtGui.QStandardItemModel):
                         type_name = type_link["name"]
                         type_id_aggregates[type_id] += 1
                     
+                    
                     label = "%s, %s" % (d["name"], type_name)
+
+                    # key publishes in dict by type and name
+                    unique_data[ label ] = {"sg_data": d, "type_id": type_id}
+                    
+                # in a second pass, we now have the latest versions only
+                for (label, d) in unique_data.iteritems():
                     
                     item = QtGui.QStandardItem(self._default_thumb, label)
-                    item.setData(type_id, SgPublishModel.TYPE_ID_ROLE)
+                    item.setData(d["type_id"], SgPublishModel.TYPE_ID_ROLE)
+                    item.setToolTip(str(d["sg_data"]))
                     self.appendRow(item)
                     
                     # get the thumbnail - store the unique id we get back from
                     # the data retrieve in a dict for fast lookup later
-                    uid = self._sg_data_retriever.download_thumbnail(d["image"], self._publish_entity_type, d["id"])
+                    uid = self._sg_data_retriever.download_thumbnail(d["sg_data"]["image"], 
+                                                                     self._publish_entity_type, 
+                                                                     d["sg_data"]["id"])
                     self._thumb_map[uid] = item            
                     
                     

@@ -80,14 +80,14 @@ class SpinHandler(object):
     # entity tree view
     
     def set_entity_message(self, msg):
-        
-        self._ui.entity_grp.setCurrentWidget(self._ui.entity_msg)
+        print "ENTITY MESSAGE %s" % msg
+        self._ui.entity_grp.setCurrentWidget(self._ui.entity_msg_page)
         self._ui.entity_msg.setText(msg)            
         
     
     def set_entity_error_message(self, msg):
-        
-        self._ui.entity_grp.setCurrentWidget(self._ui.entity_msg)
+        print "ENTITY ERROR MESSAGE %s" % msg
+        self._ui.entity_grp.setCurrentWidget(self._ui.entity_msg_page)
         self._ui.entity_msg.setText(msg)            
 
     
@@ -95,68 +95,54 @@ class SpinHandler(object):
         """
         Switch back to the specified profile view
         """
-        print "******* hide message!"
+        print "******* hide entity message!"
         view = self._caption_view_map[profile]
         self._ui.entity_grp.setCurrentWidget(view)
     
-    
-    
+
     ####################################################################################
-    # specific areas
+    # filter view
     
-    def set_message(self, section, msg):
-        
-        print "set message %s %s" % (section, msg)
-        
-        if section == SpinHandler.FILTER_AREA:
-            self._ui.publish_type_grp.setCurrentWidget(self._ui.publish_type_msg)
-            self._ui.publish_type_msg.setText(msg)
-            
-        elif section == SpinHandler.ENTITY_TREE_AREA:
-            self._ui.entity_grp.setCurrentWidget(self._ui.entity_msg)
-            self._ui.entity_msg.setText(msg)
-            
-        elif section == SpinHandler.PUBLISH_AREA:
-            pass
-        
-        elif section == SpinHandler.DETAIL_AREA:
-            pass
-        
-        else:
-            raise Exception("Unknown area for message '%s'" % msg)
+    def set_filter_message(self, msg):
+        print "FILTER MESSAGE %s" % msg
+        self._ui.publish_type_grp.setCurrentWidget(self._ui.publish_type_msg_page)
+        self._ui.publish_type_msg.setText(msg)
         
     
-    def set_error_message(self, section, msg):
-        
-        if section == SpinHandler.FILTER_AREA:
-            self._ui.publish_type_grp.setCurrentWidget(self._ui.publish_type_msg)
-            self._ui.publish_type_msg.setText(msg)            
-            
-        elif section == SpinHandler.ENTITY_TREE_AREA:
-            self._ui.entity_grp.setCurrentWidget(self._ui.entity_msg)
-            self._ui.entity_msg.setText(msg)
-            
-        elif section == SpinHandler.PUBLISH_AREA:
-            pass
-        
-        elif section == SpinHandler.DETAIL_AREA:
-            pass
-        else:
-            raise Exception("Unknown area for error '%s'" % msg)
+    def set_filter_error_message(self, msg):
+        print "ENTITY ERROR MESSAGE %s" % msg
+        self._ui.publish_type_grp.setCurrentWidget(self._ui.publish_type_msg_page)
+        self._ui.publish_type_msg.setText(msg)
 
     
-    def hide_message(self, section):
+    def hide_filter_message(self):
+        """
+        Switch back to the specified profile view
+        """
+        print "******* hide filter message!"
+        self._ui.publish_type_grp.setCurrentWidget(self._ui.publish_type_list_page)
+    
 
-        if section == SpinHandler.FILTER_AREA:
-            self._ui.publish_type_grp.setCurrentWidget(self._ui.publish_type_list)
-            
-        elif section == SpinHandler.ENTITY_TREE_AREA:
-            self._ui.entity_grp.setCurrentWidget(self._ui.entity_view)
-            
-        elif section == SpinHandler.PUBLISH_AREA:
-            pass
+    ####################################################################################
+    # publish view
+    
+    def set_publish_message(self, msg):
+        print "PUBLISH MESSAGE %s" % msg
+        self._ui.publish_grp.setCurrentWidget(self._ui.publish_msg_page)
+        self._ui.publish_msg.setText(msg)
         
-        elif section == SpinHandler.DETAIL_AREA:
-            pass
-        else:
-            raise Exception("Unknown area!")
+    
+    def set_publish_error_message(self, msg):
+        print "PUBLISH ERROR MESSAGE %s" % msg
+        self._ui.publish_grp.setCurrentWidget(self._ui.publish_msg_page)
+        self._ui.publish_msg.setText(msg)
+
+    
+    def hide_publish_message(self):
+        """
+        Switch back to the specified profile view
+        """
+        print "******* hide PUBLISH message!"
+        self._ui.publish_grp.setCurrentWidget(self._ui.publish_list_page)
+
+    

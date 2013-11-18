@@ -74,12 +74,12 @@ class SgPublishModel(QtGui.QStandardItemModel):
         if sg_data is None:
             # nothing to load!
             
-            self._spin_handler.set_message(SpinHandler.PUBLISH_AREA, "No publishes to load!")
+            self._spin_handler.set_publish_message("No publishes to load!")
             self._publish_type_model.set_active_types( {} )
             return
         
         # get data from shotgun
-        self._spin_handler.set_message(SpinHandler.PUBLISH_AREA, "Hang on, loading data...")
+        self._spin_handler.set_publish_message("Hang on, loading data...")
         
         # line up a request from Shotgun
         self._current_work_id = self._sg_data_retriever.execute_find(self._publish_entity_type, 
@@ -98,8 +98,7 @@ class SgPublishModel(QtGui.QStandardItemModel):
             # not our job. ignore
             return
         
-        self._spin_handler.set_error_message(SpinHandler.PUBLISH_AREA, 
-                                             "Error retrieving data from Shotgun: %s" % msg)
+        self._spin_handler.set_publish_error_message("Error retrieving data from Shotgun: %s" % msg)
         
 
     def _on_worker_signal(self, uid, data):
@@ -109,7 +108,7 @@ class SgPublishModel(QtGui.QStandardItemModel):
         if self._current_work_id == uid:
             
             # shotgun find data returned!
-            self._spin_handler.hide_message(SpinHandler.PUBLISH_AREA)
+            self._spin_handler.hide_publish_message()
             
             # add data to our model and also collect a distinct
             # list of type ids contained within this data set.

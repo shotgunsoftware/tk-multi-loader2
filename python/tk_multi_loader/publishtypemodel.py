@@ -65,7 +65,7 @@ class SgPublishTypeModel(QtGui.QStandardItemModel):
         # now trigger a shotgun refresh to ensure we got the latest stuff
         if len(self._tree_data) == 0:
             # show spinner since we have no results yet
-            self._spin_handler.set_message(SpinHandler.FILTER_AREA, "Hang on, loading data...")
+            self._spin_handler.set_filter_message("Hang on, loading data...")
         
         self._refresh_from_sg()
     
@@ -144,8 +144,7 @@ class SgPublishTypeModel(QtGui.QStandardItemModel):
             # not our job. ignore
             return
 
-        self._spin_handler.set_error_message(SpinHandler.FILTER_AREA, 
-                                             "Error retrieving data from Shotgun: %s" % msg)
+        self._spin_handler.set_filter_error_message("Error retrieving data from Shotgun: %s" % msg)
 
     def _on_worker_signal(self, uid, data):
         """
@@ -156,7 +155,7 @@ class SgPublishTypeModel(QtGui.QStandardItemModel):
             return
 
         # make sure no messages are displayed
-        self._spin_handler.hide_message(SpinHandler.FILTER_AREA)
+        self._spin_handler.hide_filter_message()
 
         # load data.
         for sg_item in data["sg"]:

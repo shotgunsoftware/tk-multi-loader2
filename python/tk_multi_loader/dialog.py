@@ -208,6 +208,9 @@ class AppDialog(QtGui.QWidget):
         # now click our item and store in the history tracker
         self._history_focus_on_item(found_profile, found_item)
         self._add_history_record(found_profile, found_item)
+        
+        # force an async refresh of the data
+        self._entity_presets[found_profile]["model"].refresh_data()
 
             
                 
@@ -351,6 +354,9 @@ class AppDialog(QtGui.QWidget):
         
     def _set_entity_preset(self, caption):
         """
+        Called when one of the preset buttons have been pressed or when
+        navigating through the history.
+        
         Changes the entity preset, ensures that the right button is pressed
         and that all things are up to date
         """
@@ -361,10 +367,25 @@ class AppDialog(QtGui.QWidget):
         # ensure we switch to the correct view
         self._spin_handler.hide_entity_message(caption)
                 
-        # tell model to call out to shotgun to refresh its data
-        # but not when we are navigating back and forwards through history
+        # stuff to do when we are NOT navigating through history but
+        # just clicking the preset buttons    
         if not self._history_navigation_mode:
-            self._entity_presets[caption]["model"].refresh_data()
+            
+            model = self._entity_presets[caption]["model"]
+            view = self._entity_presets[caption]["view"]
+            
+            # tell model to call out to shotgun to refresh its data
+            model.refresh_data()
+            # if the view we are jumping to does not have a selection,
+            # select the top node!
+            selection_model = view.selectionModel()
+            if not selection_model.hasSelection():
+                entity_root = model.invisibleRootItem().child(0)
+                if entity_root:
+                    selection_model.select(entity_root.index(), QtGui.QItemSelectionModel.ClearAndSelect)
+                    selection_model.setCurrentIndex(entity_root.index(), QtGui.QItemSelectionModel.ClearAndSelect)
+            
+            
         
         # populate breadcrumbs
         self._populate_entity_breadcrumbs(caption)

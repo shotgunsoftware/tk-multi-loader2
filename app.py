@@ -28,7 +28,7 @@ class MultiLoader(tank.platform.Application):
         cb = lambda : tk_multi_loader.show_dialog(self)
         
         # add stuff to main menu
-        self.engine.register_command("Loader Redux", cb)
+        self.engine.register_command("Show me the new Loader!", cb)
 
     def get_setting_name(self, param_name):
         """

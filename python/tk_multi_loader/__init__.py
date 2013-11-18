@@ -12,5 +12,5 @@ def show_dialog(app):
     # defer imports so that the app works gracefully in batch modes
     from .dialog import AppDialog
     print "show dialog3"
-    app.engine.show_dialog("Loader Redux", app, AppDialog)
+    app.engine.show_dialog("Loader", app, AppDialog)
     

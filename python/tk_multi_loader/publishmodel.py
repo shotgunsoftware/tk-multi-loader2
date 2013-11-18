@@ -151,7 +151,6 @@ class SgPublishModel(QtGui.QStandardItemModel):
                     
                     item = QtGui.QStandardItem(self._default_thumb, label)
                     item.setData(d["type_id"], SgPublishModel.TYPE_ID_ROLE)
-                    item.setToolTip(str(d["sg_data"]))
                     self.appendRow(item)
                     
                     # get the thumbnail - store the unique id we get back from

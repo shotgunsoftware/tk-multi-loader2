@@ -92,13 +92,10 @@ class AppDialog(QtGui.QWidget):
         self.ui.navigation_next.clicked.connect(self._on_forward_clicked)
         
         #################################################
-        # set up preset tabs
+        # set up preset tabs and load and init tree views
         self._entity_presets = {} 
         self._load_entity_presets()
         
-        #################################################
-        # click on the home button to kick things off!
-        self._on_home_clicked()
     
     def closeEvent(self, event):
         # do cleanup, threading etc...
@@ -128,7 +125,7 @@ class AppDialog(QtGui.QWidget):
         # in that case, discard the history after the current item and add this new record
         # after the current item
 
-        if not self._history_navigation_mode:
+        if not self._history_navigation_mode: # do not add to history when browsing the history :)
             self._history = self._history[:self._history_index]         
             self._history.append({"preset": preset_caption, "item": std_item})
             self._history_index += 1
@@ -147,7 +144,7 @@ class AppDialog(QtGui.QWidget):
         if self._history_index == 1:
             self.ui.navigation_prev.setEnabled(False)         
         
-    def _history_focus_on_item(self, preset, item):
+    def _history_focus_on_item(self, preset, item=None):
         """
         Focus in on an item in the tree view.
         Item can be none, indicating that no item in the treeview was selected.
@@ -182,7 +179,9 @@ class AppDialog(QtGui.QWidget):
         User clicks the home button
         """
         
-        found_home_item = False
+        # first, try to find the "home" item by looking at the context.
+        found_profile = None
+        found_item = None
         
         # get entity portion of context
         ctx = tank.platform.current_bundle().context
@@ -191,32 +190,25 @@ class AppDialog(QtGui.QWidget):
             # now step through the profiles and find a matching entity
             for p in self._entity_presets:
                 if self._entity_presets[p]["entity_type"] == ctx.entity["type"]:
-                    # found a matching entity profile.                    
-                    # try to find the entity in the tree
-                    item = self._entity_presets[p]["model"].item_from_entity(ctx.entity["type"], 
-                                                                             ctx.entity["id"]) 
+                    # found an at least partially matching entity profile.
+                    found_profile = p
+                                        
+                    # now see if our context object also exists in the tree of this profile
+                    model = self._entity_presets[p]["model"]
+                    item = model.item_from_entity(ctx.entity["type"], ctx.entity["id"]) 
                     
-                    self._history_focus_on_item(p, item)
-            
-                    # done!
-                    found_home_item = True
-                    self._add_history_record(p, item)
-                    break
+                    if item is not None:
+                        # find an absolute match! Break the search.
+                        found_item = item
+                        break
                 
-        # lastly, check if we managed to find an item
-        if not found_home_item:
-            # use default preset.
-            self._history_navigation_mode = True
-            try:
-                # click the default button in the toolbar
-                profile = self._button_group.check_default()
-                self._set_entity_preset(profile)
-                # clear any previous selection in this view
-                self._entity_presets[profile]["view"].selectionModel().clear()
-            finally:
-                self._history_navigation_mode = False
-            
-            self._add_history_record(profile)
+        if found_profile is None:
+            found_profile = self._button_group.check_default()
+
+        # now click our item and store in the history tracker
+        self._history_focus_on_item(found_profile, found_item)
+        self._add_history_record(found_profile, found_item)
+
             
                 
     def _on_back_clicked(self):
@@ -341,18 +333,20 @@ class AppDialog(QtGui.QWidget):
             # finally store all these objects keyed by the caption
             self._entity_presets[ e["caption"] ] = d
             
-            
         # now create the button group
         self._button_group = EntityButtonGroup(self, self.ui.entity_button_layout, button_captions)
           
         # hook up event handler
         self._button_group.clicked.connect(self._set_entity_preset)
         
-        # tell the spin handler
+        # tell the spin handler about our views so that it can flip correctly
         mappings = {}
         for x in self._entity_presets:
             mappings[x] = self._entity_presets[x]["top_object"]
         self._spin_handler.set_entity_view_mapping(mappings)
+        
+        # finalize initialization by clicking the home button
+        self._on_home_clicked()
         
         
     def _set_entity_preset(self, caption):

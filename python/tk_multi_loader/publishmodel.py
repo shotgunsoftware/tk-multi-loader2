@@ -107,39 +107,48 @@ class SgPublishModel(QtGui.QStandardItemModel):
         """
         if self._current_work_id == uid:
             
-            # shotgun find data returned!
-            self._spin_handler.hide_publish_message()
+            sg_data = data["sg"]
             
-            # add data to our model and also collect a distinct
-            # list of type ids contained within this data set.
-            # count the number of times each type is used
-            type_id_aggregates = defaultdict(int)
+            if len(sg_data) == 0:
+                # no publishes found!
+                self._spin_handler.set_publish_message("Sorry, no publishes found for this item!")
+                self._publish_type_model.set_active_types({})
+                
+            else:
             
-            for d in data["sg"]:
+                # shotgun find data returned!
+                self._spin_handler.hide_publish_message()
                 
-                type_id = None
-                type_link = d[self._publish_type_field]
-                type_name = "No Type"
-                if type_link:
-                    type_id = type_link["id"]
-                    type_name = type_link["name"]
-                    type_id_aggregates[type_id] += 1
+                # add data to our model and also collect a distinct
+                # list of type ids contained within this data set.
+                # count the number of times each type is used
+                type_id_aggregates = defaultdict(int)
                 
-                label = "%s, %s" % (d["name"], type_name)
-                
-                item = QtGui.QStandardItem(self._default_thumb, label)
-                item.setData(type_id, SgPublishModel.TYPE_ID_ROLE)
-                self.appendRow(item)
-                
-                # get the thumbnail - store the unique id we get back from
-                # the data retrieve in a dict for fast lookup later
-                uid = self._sg_data_retriever.download_thumbnail(d["image"], self._publish_entity_type, d["id"])
-                self._thumb_map[uid] = item            
-                
-                
-            # tell the model to reshuffle and reformat itself
-            # based on the types contained in this search
-            self._publish_type_model.set_active_types( type_id_aggregates )
+                for d in sg_data:
+                    
+                    type_id = None
+                    type_link = d[self._publish_type_field]
+                    type_name = "No Type"
+                    if type_link:
+                        type_id = type_link["id"]
+                        type_name = type_link["name"]
+                        type_id_aggregates[type_id] += 1
+                    
+                    label = "%s, %s" % (d["name"], type_name)
+                    
+                    item = QtGui.QStandardItem(self._default_thumb, label)
+                    item.setData(type_id, SgPublishModel.TYPE_ID_ROLE)
+                    self.appendRow(item)
+                    
+                    # get the thumbnail - store the unique id we get back from
+                    # the data retrieve in a dict for fast lookup later
+                    uid = self._sg_data_retriever.download_thumbnail(d["image"], self._publish_entity_type, d["id"])
+                    self._thumb_map[uid] = item            
+                    
+                    
+                # tell the model to reshuffle and reformat itself
+                # based on the types contained in this search
+                self._publish_type_model.set_active_types( type_id_aggregates )
         
         elif uid in self._thumb_map:
             # this is a thumbnail that has been fetched!

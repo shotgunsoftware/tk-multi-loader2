@@ -15,6 +15,21 @@ configuration:
 
     # tank write nodes paths
     entities:
+        default_value: 
+            - caption: Assets in this Project
+              entity_type: Asset
+              filters: [["project", "is", "{context.project}"]]
+              hierarchy: [sg_asset_type, code]
+            
+            - caption: Shots
+              entity_type: Shot
+              filters: [["project", "is", "{context.project}"]]
+              hierarchy: [sg_sequence, code]
+    
+            - caption: All Assets from all Projects
+              entity_type: Asset
+              filters: []
+              hierarchy: [project, sg_asset_type, code]        
         type: list
         description: "List of entities for the tree view. Each item should have keys caption, entity_type, filters and hierarchy"
         allows_empty: False

@@ -16,67 +16,114 @@ from collections import defaultdict
 
 from tank.platform.qt import QtCore, QtGui
 
-# widget indices for the different UI pages used
-# to hold the results and the spinner, so we can
-# switch between loading and display.
-SPINNER_PAGE_INDEX = 1
-LIST_PAGE_INDEX = 0
 
 class SpinHandler(object):
     
+    FILTER_AREA = 1
+    ENTITY_TREE_AREA = 2
+    PUBLISH_AREA = 3
+    DETAIL_AREA = 4
 
-    def __init__(self, widget):
+    def __init__(self, ui):
 
-        self._widget = widget        
-        
         self._spin_icons = []
         self._spin_icons.append(QtGui.QPixmap(":/res/progress_bar_1.png"))
         self._spin_icons.append(QtGui.QPixmap(":/res/progress_bar_2.png"))
         self._spin_icons.append(QtGui.QPixmap(":/res/progress_bar_3.png"))
         self._spin_icons.append(QtGui.QPixmap(":/res/progress_bar_4.png")) 
         
-        self._spin_timer = QtCore.QTimer(self._widget)
-        self._spin_timer.timeout.connect( self._update_spinner )
-        self._current_spinner_index = 0
+        self._ui = ui
         
-        self._label = self._widget.widget(SPINNER_PAGE_INDEX).findChild(QtGui.QLabel)
+        # main spinner
+        self._global_spin_timer = QtCore.QTimer(self._ui.global_progress)
+        self._global_spin_timer.timeout.connect(self._update_global_spinner)
+        self._current_global_spinner_index = 0
         
-    def set_info_message(self, msg):
-        """
-        Display a message
-        """
-        self._widget.setCurrentIndex(SPINNER_PAGE_INDEX)
-        self._label.setText(msg)
         
-    def set_error_message(self, msg):
-        """
-        Display a message
-        """
-        self._widget.setCurrentIndex(SPINNER_PAGE_INDEX)
-        self._label.setText("<img src=':/res/sg_logo.png' width=40>&nbsp;%s" % msg)
+    ####################################################################################
+    # global spinner
 
-    def start_spinner(self):
+    def start_global_spinner(self):
         """
         start spinning
         """
-        self._widget.setCurrentIndex(SPINNER_PAGE_INDEX)
-        self._spin_timer.start(100)
+        self._global_spin_timer.start(100)
+        self._ui.global_progress.setVisible(True)
 
-    def stop_spinner(self):
+    def stop_global_spinner(self):
         """
         start spinning
         """
-        self._spin_timer.stop()
-        self._widget.setCurrentIndex(LIST_PAGE_INDEX)
+        self._global_spin_timer.stop()
+        self._ui.global_progress.setVisible(False)
         
-    def _update_spinner(self):
+    def _update_global_spinner(self):
         """
         Animate spinner icon
         """
         # assume the spinner label is the first (and only) object that is
         # a child of the SPINNER_PAGE_INDEX widget page
-        self._label.setPixmap(self._spin_icons[self._current_spinner_index])
-        self._current_spinner_index += 1
-        if self._current_spinner_index == 4:
-            self._current_spinner_index = 0            
+        self._ui.global_progress.setPixmap(self._spin_icons[self._current_global_spinner_index])
+        self._current_global_spinner_index += 1
+        if self._current_global_spinner_index == 4:
+            self._current_global_spinner_index = 0            
                 
+    ####################################################################################
+    # specific areas
+    
+    def set_message(self, section, msg):
+        
+        print "set message %s %s" % (section, msg)
+        
+        if section == SpinHandler.FILTER_AREA:
+            self._ui.publish_type_grp.setCurrentWidget(self._ui.publish_type_msg)
+            self._ui.publish_type_msg.setText(msg)
+            
+        elif section == SpinHandler.ENTITY_TREE_AREA:
+            self._ui.entity_grp.setCurrentWidget(self._ui.entity_msg)
+            self._ui.entity_msg.setText(msg)
+            
+        elif section == SpinHandler.PUBLISH_AREA:
+            pass
+        
+        elif section == SpinHandler.DETAIL_AREA:
+            pass
+        
+        else:
+            raise Exception("Unknown area for message '%s'" % msg)
+        
+    
+    def set_error_message(self, section, msg):
+        
+        if section == SpinHandler.FILTER_AREA:
+            self._ui.publish_type_grp.setCurrentWidget(self._ui.publish_type_msg)
+            self._ui.publish_type_msg.setText(msg)            
+            
+        elif section == SpinHandler.ENTITY_TREE_AREA:
+            self._ui.entity_grp.setCurrentWidget(self._ui.entity_msg)
+            self._ui.entity_msg.setText(msg)
+            
+        elif section == SpinHandler.PUBLISH_AREA:
+            pass
+        
+        elif section == SpinHandler.DETAIL_AREA:
+            pass
+        else:
+            raise Exception("Unknown area for error '%s'" % msg)
+
+    
+    def hide_message(self, section):
+
+        if section == SpinHandler.FILTER_AREA:
+            self._ui.publish_type_grp.setCurrentWidget(self._ui.publish_type_list)
+            
+        elif section == SpinHandler.ENTITY_TREE_AREA:
+            self._ui.entity_grp.setCurrentWidget(self._ui.entity_view)
+            
+        elif section == SpinHandler.PUBLISH_AREA:
+            pass
+        
+        elif section == SpinHandler.DETAIL_AREA:
+            pass
+        else:
+            raise Exception("Unknown area!")

@@ -28,7 +28,7 @@ class SgPublishModel(QtGui.QStandardItemModel):
     # custom role where we store the type id for each publish
     TYPE_ID_ROLE = QtCore.Qt.UserRole + 1
 
-    def __init__(self, sg_data_retriever, widget, publish_type_model):
+    def __init__(self, sg_data_retriever, spin_handler, publish_type_model):
         QtGui.QStandardItemModel.__init__(self)
         
         #self._widget = widget
@@ -40,7 +40,7 @@ class SgPublishModel(QtGui.QStandardItemModel):
         self._sg_data_retriever.work_failure.connect( self._on_worker_failure)
         
         self._current_work_id = None
-        self._spin_handler = SpinHandler(widget)
+        self._spin_handler = spin_handler
         
         self._thumb_map = {}
         
@@ -74,14 +74,12 @@ class SgPublishModel(QtGui.QStandardItemModel):
         if sg_data is None:
             # nothing to load!
             
-            msg = "Please select an item in the tree <br>on the right in order to show its publishes."
-            
-            self._spin_handler.set_info_message(msg)
+            self._spin_handler.set_message(SpinHandler.PUBLISH_AREA, "No publishes to load!")
             self._publish_type_model.set_active_types( {} )
             return
         
         # get data from shotgun
-        self._spin_handler.start_spinner()
+        self._spin_handler.set_message(SpinHandler.PUBLISH_AREA, "Hang on, loading data...")
         
         # line up a request from Shotgun
         self._current_work_id = self._sg_data_retriever.execute_find(self._publish_entity_type, 
@@ -100,17 +98,18 @@ class SgPublishModel(QtGui.QStandardItemModel):
             # not our job. ignore
             return
         
-        self._spin_handler.stop_spinner()
-        self._spin_handler.set_error_message("Error retrieving data from Shotgun: %s" % msg)
+        self._spin_handler.set_error_message(SpinHandler.PUBLISH_AREA, 
+                                             "Error retrieving data from Shotgun: %s" % msg)
+        
 
     def _on_worker_signal(self, uid, data):
         """
         Signaled whenever the worker completes something
         """
         if self._current_work_id == uid:
-            # shotgun find data returned!
             
-            self._spin_handler.stop_spinner()
+            # shotgun find data returned!
+            self._spin_handler.hide_message(SpinHandler.PUBLISH_AREA)
             
             # add data to our model and also collect a distinct
             # list of type ids contained within this data set.

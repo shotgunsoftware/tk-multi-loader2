@@ -149,6 +149,9 @@ class ShotgunAsyncDataRetriever(QtCore.QThread):
                 self._queue_mutex.unlock()
 
             # ok, have something to do so lets do it:
+            
+            print("TASK!!! Running: %s" % item_to_process)
+            
             data = None
             try:
                 # process the item:
@@ -211,4 +214,6 @@ class ShotgunAsyncDataRetriever(QtCore.QThread):
             else:
                 if self._execute_tasks:
                     self.work_completed.emit(item_to_process["id"], data)
+            finally:
+                print ".... task complete!"
                 

@@ -22,6 +22,7 @@ from .publishtypemodel import SgPublishTypeModel
 from .publishproxymodel import SgPublishProxyModel
 from .entitybuttongroup import EntityButtonGroup
 from .sgdata import ShotgunAsyncDataRetriever 
+from .spinner import SpinHandler
 
 from .ui.dialog import Ui_Dialog
 
@@ -44,20 +45,28 @@ class AppDialog(QtGui.QWidget):
         self.ui.thumb_scale.setValue(140)
         
         #################################################
+        # Progress Feedback. This instance wraps around the UI
+        # and forms a singleton which various parts of the app
+        # (models mostly) will access to indicate that they are 
+        # updating themselves.
+        self._spin_handler = SpinHandler(self.ui)
+        
+        #################################################
         # set up our background sg data fetcher
         self._sg_data_retriever = ShotgunAsyncDataRetriever(self)
+        self._sg_data_retriever.queue_processing.connect(self._spin_handler.start_global_spinner)
+        self._sg_data_retriever.queue_complete.connect(self._spin_handler.stop_global_spinner)
         self._sg_data_retriever.start()
         
         #################################################
         # load and initialize cached publish type model
-        self._publish_type_model = SgPublishTypeModel(self._sg_data_retriever, 
-                                                      self.ui.filters_widget)        
+        self._publish_type_model = SgPublishTypeModel(self._sg_data_retriever, self._spin_handler)        
         self.ui.publish_type_list.setModel(self._publish_type_model)
 
         #################################################
         # setup publish model
         self._publish_model = SgPublishModel(self._sg_data_retriever, 
-                                             self.ui.publish_widget,
+                                             self._spin_handler,
                                              self._publish_type_model)
         
         # set up a proxy model to cull results based on type selection
@@ -72,7 +81,6 @@ class AppDialog(QtGui.QWidget):
         
         # if an item in the table is double clicked ensure details are shown
         self.ui.publish_list.doubleClicked.connect(self._on_publish_double_clicked)
-        
         
         #################################################
         # setup history
@@ -96,7 +104,7 @@ class AppDialog(QtGui.QWidget):
     def closeEvent(self, event):
         # do cleanup, threading etc...
         self._sg_data_retriever.stop()
-        
+                
         # okay to close!
         event.accept()
                 
@@ -234,9 +242,8 @@ class AppDialog(QtGui.QWidget):
         self._publish_proxy_model.set_filter_by_type_ids(sg_type_ids)
 
     ########################################################################################
-    # publish thumbnail view
+    # publish view
         
-       
     def _on_publish_double_clicked(self):
         """
         When someone double clicks an item in the publish area,
@@ -294,7 +301,7 @@ class AppDialog(QtGui.QWidget):
             d = {}
             d["entity_type"] = e["entity_type"]
             d["model"] = SgEntityModel(self._sg_data_retriever, 
-                                       self.ui.entity_widget,
+                                       self._spin_handler,
                                        e["caption"],
                                        e["entity_type"], 
                                        e["filters"],

@@ -29,14 +29,14 @@ class SgPublishTypeModel(QtGui.QStandardItemModel):
     SORT_KEY_ROLE = QtCore.Qt.UserRole + 2     # holds a sortable key
     DISPLAY_NAME_ROLE = QtCore.Qt.UserRole + 3 # holds the display name for the node
 
-    def __init__(self, sg_data_retriever, widget):
+    def __init__(self, sg_data_retriever, spin_handler):
         QtGui.QStandardItemModel.__init__(self)
         
         self._sg_data_retriever = sg_data_retriever
         
         self._current_work_id = 0
         self._app = tank.platform.current_bundle()
-        self._spin_handler = SpinHandler(widget)
+        self._spin_handler = spin_handler
         
         # we use a special column for sorting
         self.setSortRole(SgPublishTypeModel.SORT_KEY_ROLE)
@@ -65,7 +65,7 @@ class SgPublishTypeModel(QtGui.QStandardItemModel):
         # now trigger a shotgun refresh to ensure we got the latest stuff
         if len(self._tree_data) == 0:
             # show spinner since we have no results yet
-            self._spin_handler.start_spinner()
+            self._spin_handler.set_message(SpinHandler.FILTER_AREA, "Hang on, loading data...")
         
         self._refresh_from_sg()
     
@@ -144,7 +144,8 @@ class SgPublishTypeModel(QtGui.QStandardItemModel):
             # not our job. ignore
             return
 
-        self._spin_handler.set_error_message("Error retrieving data from Shotgun: %s" % msg)
+        self._spin_handler.set_error_message(SpinHandler.FILTER_AREA, 
+                                             "Error retrieving data from Shotgun: %s" % msg)
 
     def _on_worker_signal(self, uid, data):
         """
@@ -154,8 +155,8 @@ class SgPublishTypeModel(QtGui.QStandardItemModel):
             # not our job. ignore
             return
 
-        # stop any running spinners
-        self._spin_handler.stop_spinner()
+        # make sure no messages are displayed
+        self._spin_handler.hide_message(SpinHandler.FILTER_AREA)
 
         # load data.
         for sg_item in data["sg"]:

@@ -277,7 +277,7 @@ class Ui_Dialog(object):
         self.gridLayout.addWidget(self.left_side_splitter, 2, 0, 1, 1)
 
         self.retranslateUi(Dialog)
-        self.publish_grp.setCurrentIndex(1)
+        self.publish_grp.setCurrentIndex(0)
         self.details_grp.setCurrentIndex(1)
         self.entity_grp.setCurrentIndex(0)
         self.publish_type_grp.setCurrentIndex(1)

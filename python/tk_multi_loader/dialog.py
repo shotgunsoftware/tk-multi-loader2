@@ -38,7 +38,7 @@ class AppDialog(QtGui.QWidget):
         #################################################
         # details pane mockup for now
         self.ui.details.setVisible(False)
-        self.ui.info.clicked.connect(self._on_info_clicked)
+        self.ui.info.toggled.connect(self._on_info_toggled)
         
         # thumb scaling
         self.ui.thumb_scale.valueChanged.connect(self._on_thumb_size_slider_change)
@@ -107,8 +107,11 @@ class AppDialog(QtGui.QWidget):
     ########################################################################################
     # info bar related
     
-    def _on_info_clicked(self):
-        self.ui.details.setVisible( not(self.ui.details.isVisible()) )
+    def _on_info_toggled(self, checked):
+        if checked:
+            self.ui.details.setVisible(True)
+        else:
+            self.ui.details.setVisible(False)
         
     def _on_thumb_size_slider_change(self, value):
         self.ui.publish_list.setIconSize( QtCore.QSize(value, value))
@@ -283,8 +286,8 @@ class AppDialog(QtGui.QWidget):
             
         else:
             # ensure publish details are visible
-            if not self.ui.details.isVisible():
-                self.ui.details.setVisible(True)
+            if not self.ui.info.isChecked():
+                self.ui.info.setChecked(True)
         
     ########################################################################################
     # entity listing tree view and presets toolbar

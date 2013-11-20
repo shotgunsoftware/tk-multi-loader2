@@ -55,7 +55,12 @@ class SgEntityModel(QtGui.QStandardItemModel):
         # when we cache the data associated with this model, create
         # the file name based on the md5 hash of the filter and other 
         # parameters that will determine the contents that is loaded into the tree
-        hash_base = "%s_%s_%s" % (self._entity_type, str(self._filters), str(self._hierarchy))
+        # note that we add the shotgun host name to support multiple sites being used
+        # on a single machine
+        hash_base = "%s_%s_%s_%s" % (self._app.shotgun.base_url, 
+                                     self._entity_type, 
+                                     str(self._filters), 
+                                     str(self._hierarchy))
         m = hashlib.md5()
         m.update(hash_base)
         cache_filename = "tk_loader_%s.sgcache" % m.hexdigest()

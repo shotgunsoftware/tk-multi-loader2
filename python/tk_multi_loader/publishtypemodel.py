@@ -51,7 +51,15 @@ class SgPublishTypeModel(QtGui.QStandardItemModel):
         # when we cache the data associated with this model, create
         # the file name based on the md5 hash of the filter and other 
         # parameters that will determine the contents that is loaded into the tree
-        cache_filename = "tk_loader_types.sgcache"
+        
+        # when we cache the data associated with this model, create
+        # the file name based on the md5 hash of the hostname 
+        hash_base = self._app.shotgun.base_url
+        
+        m = hashlib.md5()
+        m.update(hash_base)
+        cache_filename = "tk_loader_%s.sgcache" % m.hexdigest()
+        
         self._full_cache_path = os.path.join(tempfile.gettempdir(), cache_filename)                
         if os.path.exists(self._full_cache_path):
             self._app.log_debug("Loading cached data %s..." % self._full_cache_path)

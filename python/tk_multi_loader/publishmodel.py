@@ -13,6 +13,7 @@ import os
 import hashlib
 import tempfile
 from .spinner import SpinHandler
+from .entitymodel import SgEntityModel
 from collections import defaultdict
 
 from tank.platform.qt import QtCore, QtGui
@@ -22,6 +23,13 @@ from tank.platform.qt import QtCore, QtGui
 # switch between loading and display.
 SPINNER_PAGE_INDEX = 1
 LIST_PAGE_INDEX = 0
+
+PUBLISH_THUMB_WIDTH = 160
+ICON_BASE_CANVAS_HEIGHT = 140
+ICON_BASE_CANVAS_WIDTH = 170
+ICON_INLAY_CORNER_RADIUS = 6
+FOLDER_THUMB_WIDTH = 110
+FOLDER_THUMB_HEIGHT = 65
 
 class SgPublishModel(QtGui.QStandardItemModel):
     
@@ -56,8 +64,6 @@ class SgPublishModel(QtGui.QStandardItemModel):
         else:
             self._publish_fields = ["name", "version_number", "image", "tank_type"]
             self._publish_type_field = "tank_type"
-        
-        
         
         # thumbnails
         self._loading_icon = QtGui.QPixmap(":/res/publish_loading.png")
@@ -144,8 +150,54 @@ class SgPublishModel(QtGui.QStandardItemModel):
         """
         # this is a thumbnail that has been fetched!
         # update the publish icon based on this.
-        pm = QtGui.QPixmap(path)
-        self._thumb_map[thumb_uid].setIcon(pm)
+        item = self._thumb_map[thumb_uid] 
+        
+        if item.data(SgPublishModel.IS_FOLDER_ROLE):
+            # this is a thumbnail for a folder coming in!
+            # merge it with the current folder thumbnail image
+            
+            base_image = QtGui.QPixmap(":/res/publish_folder.png")
+            thumb = QtGui.QPixmap(path)
+            vertical_offset = 10
+            thumb_scaled = thumb.scaled(FOLDER_THUMB_WIDTH, 
+                                        FOLDER_THUMB_HEIGHT, 
+                                        QtCore.Qt.KeepAspectRatio, 
+                                        QtCore.Qt.SmoothTransformation)  
+            
+        else:
+            
+            base_image = QtGui.QPixmap(":/res/publish_bg.png")            
+            thumb = QtGui.QPixmap(path)
+            vertical_offset = 0
+            thumb_scaled = thumb.scaledToWidth(PUBLISH_THUMB_WIDTH, QtCore.Qt.SmoothTransformation)  
+        
+        thumb_img = thumb_scaled.toImage()
+        brush = QtGui.QBrush(thumb_img)
+        
+        painter = QtGui.QPainter(base_image)
+        painter.setRenderHint(QtGui.QPainter.Antialiasing)
+        painter.setBrush(brush)
+        
+        # figure out the offset height wise in order to center the thumb
+        height_difference = ICON_BASE_CANVAS_HEIGHT - thumb_scaled.height()
+        width_difference = ICON_BASE_CANVAS_WIDTH - thumb_scaled.width()
+        
+        inlay_offset_w = (width_difference/2)+(ICON_INLAY_CORNER_RADIUS/2)
+        inlay_offset_h = (height_difference/2)+(ICON_INLAY_CORNER_RADIUS/2)+vertical_offset
+        
+        # note how we have to compensate for the corner radius
+        painter.translate(inlay_offset_w, inlay_offset_h)
+        painter.drawRoundedRect(0,  
+                                0, 
+                                thumb_scaled.width()-ICON_INLAY_CORNER_RADIUS, 
+                                thumb_scaled.height()-ICON_INLAY_CORNER_RADIUS, 
+                                ICON_INLAY_CORNER_RADIUS, 
+                                ICON_INLAY_CORNER_RADIUS)
+        
+        painter.end()
+        
+        item.setIcon(base_image)
+        
             
             
     def _build_model_data(self, sg_data, folder_items):
@@ -167,12 +219,26 @@ class SgPublishModel(QtGui.QStandardItemModel):
         self._spin_handler.hide_publish_message()
         
         # now process folder items
-        for x in folder_items:
-            item = QtGui.QStandardItem(self._folder_icon, x.text())
+        for tree_view_item in folder_items:
+            item = QtGui.QStandardItem(self._folder_icon, tree_view_item.text())
             item.setData(None, SgPublishModel.TYPE_ID_ROLE)
             item.setData(True, SgPublishModel.IS_FOLDER_ROLE)
-            item.setData(x, SgPublishModel.ASSOCIATED_TREE_VIEW_ITEM_ROLE)
+            item.setData(tree_view_item, SgPublishModel.ASSOCIATED_TREE_VIEW_ITEM_ROLE)
             self.appendRow(item)
+            
+            # see if there is any shotgun data associated with the tree view item
+            sg_entity_data = tree_view_item.data(SgEntityModel.NODE_SG_DATA_ROLE)
+            print sg_entity_data
+            if sg_entity_data and sg_entity_data.get("image"):
+                # there is a thumbnail for this item!
+
+                # get the thumbnail - store the unique id we get back from
+                # the data retrieve in a dict for fast lookup later
+                uid = self._sg_data_retriever.download_thumbnail(sg_entity_data["image"], 
+                                                                 sg_entity_data["type"], 
+                                                                 sg_entity_data["id"])
+                self._thumb_map[uid] = item
+                
             
         
         # and process sg publish data

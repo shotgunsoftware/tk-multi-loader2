@@ -18,11 +18,12 @@ from tank.platform.qt import QtCore, QtGui
 
 # just so we can do some basic file validation
 FILE_MAGIC_NUMBER = 0xDEADBEEF # so we can validate file format correctness before loading
-FILE_VERSION = 3               # if we ever change the file format structure
+FILE_VERSION = 4               # if we ever change the file format structure
 
-NODE_SG_DATA_ROLE = QtCore.Qt.UserRole + 1
 
 class SgEntityModel(QtGui.QStandardItemModel):
+
+    NODE_SG_DATA_ROLE = QtCore.Qt.UserRole + 1
 
     def __init__(self, sg_data_retriever, spin_handler, caption, entity_type, filters, hierarchy):
         QtGui.QStandardItemModel.__init__(self)
@@ -121,7 +122,7 @@ class SgEntityModel(QtGui.QStandardItemModel):
         Returns none if not found.
         Constant time lookup
         """
-        return item.data(NODE_SG_DATA_ROLE)        
+        return item.data(SgEntityModel.NODE_SG_DATA_ROLE)        
 
 
     ########################################################################################
@@ -197,7 +198,7 @@ class SgEntityModel(QtGui.QStandardItemModel):
         for d in sg_data:
             # if there are modifications of any kind, we just rebuild the tree at the moment
             try:
-                existing_sg_data = self._entity_tree_data[ d["id"] ].data(NODE_SG_DATA_ROLE)
+                existing_sg_data = self._entity_tree_data[ d["id"] ].data(SgEntityModel.NODE_SG_DATA_ROLE)
                 if not self._sg_unicode_equals(d, existing_sg_data):                    
                     # shotgun data has changed for this item! Rebuild the tree
                     self._app.log_debug("SG data change: %s --> %s" % (existing_sg_data, d))
@@ -291,7 +292,7 @@ class SgEntityModel(QtGui.QStandardItemModel):
 
             if on_leaf_level:
                 # compare shotgun ids
-                sg_data = child.data(NODE_SG_DATA_ROLE)
+                sg_data = child.data(SgEntityModel.NODE_SG_DATA_ROLE)
                 if sg_data.get("id") == sg_item.get("id"):
                     found_item = child
                     break
@@ -313,7 +314,7 @@ class SgEntityModel(QtGui.QStandardItemModel):
             if on_leaf_level:                
                 # this is the leaf level!
                 # attach the shotgun data so that we can access it later
-                found_item.setData(sg_item, NODE_SG_DATA_ROLE)
+                found_item.setData(sg_item, SgEntityModel.NODE_SG_DATA_ROLE)
                 # and also populate the id association in our lookup dict
                 self._entity_tree_data[ sg_item["id"] ] = found_item
             else:                
@@ -402,7 +403,7 @@ class SgEntityModel(QtGui.QStandardItemModel):
                 # this is the leaf level
                 # attach the shotgun data so that we can access it later
                 sg_item = discrete_values[dv]
-                item.setData(sg_item, NODE_SG_DATA_ROLE)
+                item.setData(sg_item, SgEntityModel.NODE_SG_DATA_ROLE)
                 # and also populate the id association in our lookup dict
                 self._entity_tree_data[ sg_item["id"] ] = item 
                       
@@ -523,8 +524,8 @@ class SgEntityModel(QtGui.QStandardItemModel):
             # all leaf nodes have an sg id stored in their metadata
             # the role data accessible via item.data() contains the sg id for this item
             # if there is a sg id associated with this node
-            if item.data(NODE_SG_DATA_ROLE):
-                sg_data = item.data(NODE_SG_DATA_ROLE) 
+            if item.data(SgEntityModel.NODE_SG_DATA_ROLE):
+                sg_data = item.data(SgEntityModel.NODE_SG_DATA_ROLE) 
                 # add the model item to our tree data dict keyed by id
                 self._entity_tree_data[ sg_data["id"] ] = item            
 

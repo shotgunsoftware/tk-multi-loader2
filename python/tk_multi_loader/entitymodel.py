@@ -96,9 +96,11 @@ class SgEntityModel(QtGui.QStandardItemModel):
             self._spin_handler.set_entity_message("Hang on, loading data...")        
         
         # get data from shotgun
+        fields = self._hierarchy + ["image"]
+        
         self._current_work_id = self._sg_data_retriever.execute_find(self._entity_type, 
                                                                      self._filters, 
-                                                                     self._hierarchy)
+                                                                     fields)
 
         
     def item_from_entity(self, entity_type, entity_id):

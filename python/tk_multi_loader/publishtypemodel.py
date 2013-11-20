@@ -65,7 +65,7 @@ class SgPublishTypeModel(QtGui.QStandardItemModel):
             self._app.log_debug("Loading cached data %s..." % self._full_cache_path)
             try:
                 self._load_from_disk(self._full_cache_path)
-                self._app.log_debug("...loading complete!")            
+                self._app.log_debug("...loading complete!")          
             except Exception, e:
                 self._app.log_warning("Couldn't load cache data from disk. Will proceed with "
                                       "full SG load. Error reported: %s" % e)

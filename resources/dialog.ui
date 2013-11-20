@@ -211,7 +211,7 @@
      <item>
       <widget class="QStackedWidget" name="publish_grp">
        <property name="currentIndex">
-        <number>0</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="publish_list_page">
         <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -268,7 +268,7 @@
 </string>
            </property>
            <property name="text">
-            <string>Status messages from the Publish Model will show up this this part of the UI.</string>
+            <string/>
            </property>
            <property name="alignment">
             <set>Qt::AlignCenter</set>
@@ -462,7 +462,7 @@
               </sizepolicy>
              </property>
              <property name="text">
-              <string>Status messages coming from the Entity listing tree views will show up here.</string>
+              <string/>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>
@@ -535,7 +535,7 @@
               </sizepolicy>
              </property>
              <property name="text">
-              <string>Status messages coming from the entity type listing model will show up here.</string>
+              <string/>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>

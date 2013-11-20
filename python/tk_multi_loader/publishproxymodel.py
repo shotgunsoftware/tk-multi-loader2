@@ -49,9 +49,21 @@ class SgPublishProxyModel(QtGui.QSortFilterProxyModel):
         model = self.sourceModel()
         
         current_item = model.invisibleRootItem().child(source_row)  # assume non-tree structure
-        sg_type_id = current_item.data(SgPublishModel.TYPE_ID_ROLE) # assume SgPublishModel
         
-        if sg_type_id in self._valid_type_ids:
+        is_folder = current_item.data(SgPublishModel.IS_FOLDER_ROLE)
+        
+        if is_folder:
+            # always show sub folders!
             return True
+            
         else:
-            return False
+            # get the type id
+            sg_type_id = current_item.data(SgPublishModel.TYPE_ID_ROLE) 
+            
+            if sg_type_id is None:
+                # no type. So always show.
+                return True
+            elif sg_type_id in self._valid_type_ids:
+                return True
+            else:
+                return False

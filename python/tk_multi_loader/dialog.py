@@ -244,13 +244,47 @@ class AppDialog(QtGui.QWidget):
     ########################################################################################
     # publish view
         
-    def _on_publish_double_clicked(self):
+    def _on_publish_double_clicked(self, model_index):
         """
         When someone double clicks an item in the publish area,
         ensure that the details pane is visible
         """
-        if not self.ui.details.isVisible():
-            self.ui.details.setVisible(True)
+        
+        # the incoming model index is an index into our proxy model
+        # before continuing, translate it to an index into the 
+        # underlying model
+        proxy_model = model_index.model()
+        source_index = proxy_model.mapToSource(model_index)
+        
+        # now we have arrived at our model derived from StandardItemModel
+        # so let's retrieve the standarditem object associated with the index
+        item = source_index.model().itemFromIndex(source_index)
+        
+        is_folder = item.data(SgPublishModel.IS_FOLDER_ROLE)
+        
+        if is_folder:
+            
+            # get the corresponding tree view item
+            tree_view_item = item.data(SgPublishModel.ASSOCIATED_TREE_VIEW_ITEM_ROLE)
+            
+            # navigate the tree!
+            curr_preset = self._button_group.get_checked()
+            curr_view = self._entity_presets[curr_preset]["view"]
+            selection_model = curr_view.selectionModel()
+            
+            # ensure that the tree view is expanded and that the item we are about 
+            # to selected is in vertically centered in the widget
+            curr_view.scrollTo(tree_view_item.index(), QtGui.QAbstractItemView.PositionAtCenter)
+            
+            # select it and set it to be the current item
+            selection_model.select(tree_view_item.index(), QtGui.QItemSelectionModel.ClearAndSelect)
+            selection_model.setCurrentIndex(tree_view_item.index(), QtGui.QItemSelectionModel.ClearAndSelect)
+            
+            
+        else:
+            # ensure publish details are visible
+            if not self.ui.details.isVisible():
+                self.ui.details.setVisible(True)
         
     ########################################################################################
     # entity listing tree view and presets toolbar
@@ -366,19 +400,20 @@ class AppDialog(QtGui.QWidget):
                 
         # ensure we switch to the correct view
         self._spin_handler.hide_entity_message(caption)
+
+        model = self._entity_presets[caption]["model"]
+        view = self._entity_presets[caption]["view"]
+        selection_model = view.selectionModel()
                 
         # stuff to do when we are NOT navigating through history but
         # just clicking the preset buttons    
         if not self._history_navigation_mode:
             
-            model = self._entity_presets[caption]["model"]
-            view = self._entity_presets[caption]["view"]
-            
             # tell model to call out to shotgun to refresh its data
             model.refresh_data()
+            
             # if the view we are jumping to does not have a selection,
             # select the top node!
-            selection_model = view.selectionModel()
             if not selection_model.hasSelection():
                 entity_root = model.invisibleRootItem().child(0)
                 if entity_root:
@@ -393,8 +428,18 @@ class AppDialog(QtGui.QWidget):
         # and store in history
         self._add_history_record(caption)
         
-        # tell publish window to load empty
-        self._publish_model.load_publishes(None)
+        # tell publish window to load data
+        # in this case, we don't have any publishes to load, but
+        # we need to pass in all the children of the root
+        
+        child_folders = []
+        if selection_model.hasSelection():
+            current = selection_model.selection().indexes()[0]
+            item = current.model().itemFromIndex(current)
+            for child_idx in range(item.rowCount()):
+                child_folders.append(item.child(child_idx))
+ 
+        self._publish_model.load_publishes(None, child_folders)
         
     
     def _populate_entity_breadcrumbs(self, profile):
@@ -434,22 +479,29 @@ class AppDialog(QtGui.QWidget):
         # update breadcrumbs
         self._populate_entity_breadcrumbs(preset)
         
-        selection_model = self._entity_presets[preset]["view"].selectionModel()
+        view = self._entity_presets[preset]["view"]
+        selection_model = view.selectionModel()
         
-        sg_data = None 
+        sg_data = None
+        child_folders = []
         if selection_model.hasSelection():
             # get the current index
             current = selection_model.selection().indexes()[0]
             # get selected item
             item = current.model().itemFromIndex(current)
+            # add it to history
             self._add_history_record(preset, item)
+            # get sg data for this item so we can pass it to the publish model
             sg_data = current.model().sg_data_from_item(item)
+            # get all children
+            for child_idx in range(item.rowCount()):
+                child_folders.append(item.child(child_idx))
             
         else:
-            # nothing selected
+            # nothing selected at all in tree view
             self._add_history_record(preset)
         
         # load publishes
-        self._publish_model.load_publishes(sg_data)
+        self._publish_model.load_publishes(sg_data, child_folders)
             
         

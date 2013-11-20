@@ -124,6 +124,7 @@ class Ui_Dialog(object):
 "\n"
 "\n"
 "")
+        self.publish_msg.setText("")
         self.publish_msg.setAlignment(QtCore.Qt.AlignCenter)
         self.publish_msg.setWordWrap(True)
         self.publish_msg.setObjectName("publish_msg")
@@ -227,6 +228,7 @@ class Ui_Dialog(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.entity_msg.sizePolicy().hasHeightForWidth())
         self.entity_msg.setSizePolicy(sizePolicy)
+        self.entity_msg.setText("")
         self.entity_msg.setAlignment(QtCore.Qt.AlignCenter)
         self.entity_msg.setWordWrap(True)
         self.entity_msg.setObjectName("entity_msg")
@@ -268,6 +270,7 @@ class Ui_Dialog(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.publish_type_msg.sizePolicy().hasHeightForWidth())
         self.publish_type_msg.setSizePolicy(sizePolicy)
+        self.publish_type_msg.setText("")
         self.publish_type_msg.setAlignment(QtCore.Qt.AlignCenter)
         self.publish_type_msg.setWordWrap(True)
         self.publish_type_msg.setObjectName("publish_type_msg")
@@ -277,7 +280,7 @@ class Ui_Dialog(object):
         self.gridLayout.addWidget(self.left_side_splitter, 2, 0, 1, 1)
 
         self.retranslateUi(Dialog)
-        self.publish_grp.setCurrentIndex(0)
+        self.publish_grp.setCurrentIndex(1)
         self.details_grp.setCurrentIndex(1)
         self.entity_grp.setCurrentIndex(0)
         self.publish_type_grp.setCurrentIndex(1)
@@ -294,10 +297,7 @@ class Ui_Dialog(object):
         self.comboBox_2.setItemText(0, QtGui.QApplication.translate("Dialog", "Sort", None, QtGui.QApplication.UnicodeUTF8))
         self.comboBox.setItemText(0, QtGui.QApplication.translate("Dialog", "Group", None, QtGui.QApplication.UnicodeUTF8))
         self.info.setText(QtGui.QApplication.translate("Dialog", "Info", None, QtGui.QApplication.UnicodeUTF8))
-        self.publish_msg.setText(QtGui.QApplication.translate("Dialog", "Status messages from the Publish Model will show up this this part of the UI.", None, QtGui.QApplication.UnicodeUTF8))
         self.thumb_scale.setToolTip(QtGui.QApplication.translate("Dialog", "Thumbnail Size", None, QtGui.QApplication.UnicodeUTF8))
-        self.entity_msg.setText(QtGui.QApplication.translate("Dialog", "Status messages coming from the Entity listing tree views will show up here.", None, QtGui.QApplication.UnicodeUTF8))
         self.label_4.setText(QtGui.QApplication.translate("Dialog", "Filters", None, QtGui.QApplication.UnicodeUTF8))
-        self.publish_type_msg.setText(QtGui.QApplication.translate("Dialog", "Status messages coming from the entity type listing model will show up here.", None, QtGui.QApplication.UnicodeUTF8))
 
 from . import resources_rc

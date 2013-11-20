@@ -60,8 +60,9 @@ class SgPublishModel(QtGui.QStandardItemModel):
         
         
         # thumbnails
-        self._default_thumb = QtGui.QPixmap(":/res/thumb_empty.png")
-        self._folder_icon = QtGui.QPixmap(":/res/folder.png")
+        self._loading_icon = QtGui.QPixmap(":/res/publish_loading.png")
+        self._folder_icon = QtGui.QPixmap(":/res/publish_folder.png")
+        self._bg_icon = QtGui.QPixmap(":/res/publish_bg.png")
     
     ########################################################################################
     # public methods
@@ -203,7 +204,7 @@ class SgPublishModel(QtGui.QStandardItemModel):
         # in a second pass, we now have the latest versions only
         for (label, d) in unique_data.iteritems():
             
-            item = QtGui.QStandardItem(self._default_thumb, label)
+            item = QtGui.QStandardItem(self._loading_icon, label)
             item.setData(d["type_id"], SgPublishModel.TYPE_ID_ROLE)
             item.setData(False, SgPublishModel.IS_FOLDER_ROLE)
             self.appendRow(item)

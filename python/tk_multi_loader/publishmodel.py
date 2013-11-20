@@ -25,6 +25,7 @@ SPINNER_PAGE_INDEX = 1
 LIST_PAGE_INDEX = 0
 
 PUBLISH_THUMB_WIDTH = 160
+PUBLISH_THUMB_HEIGHT = 130
 ICON_BASE_CANVAS_HEIGHT = 140
 ICON_BASE_CANVAS_WIDTH = 170
 ICON_INLAY_CORNER_RADIUS = 6
@@ -169,7 +170,11 @@ class SgPublishModel(QtGui.QStandardItemModel):
             base_image = QtGui.QPixmap(":/res/publish_bg.png")            
             thumb = QtGui.QPixmap(path)
             vertical_offset = 0
-            thumb_scaled = thumb.scaledToWidth(PUBLISH_THUMB_WIDTH, QtCore.Qt.SmoothTransformation)  
+            thumb_scaled = thumb.scaled(PUBLISH_THUMB_WIDTH, 
+                                        PUBLISH_THUMB_HEIGHT, 
+                                        QtCore.Qt.KeepAspectRatio, 
+                                        QtCore.Qt.SmoothTransformation)  
+              
         
         thumb_img = thumb_scaled.toImage()
         brush = QtGui.QBrush(thumb_img)

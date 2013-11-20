@@ -102,8 +102,10 @@ class ShotgunAsyncDataRetriever(QtCore.QThread):
                 "entity_id": entity_id }
         self._queue_mutex.lock()
         try:
-            # back of the queue
-            self._queue.append(work)
+            # first in the queue - this way thumbnails that already exist
+            # cached on disk will load quickly and downloaded thumbs will
+            # always load as a low priority thing
+            self._queue.insert(0, work)
         finally:
             self._queue_mutex.unlock()
             
@@ -115,16 +117,43 @@ class ShotgunAsyncDataRetriever(QtCore.QThread):
 
 
 
+    def _get_thumbnail_path(self, url, entity_id, entity_type):
+        """
+        Returns the location on disk suitable for a thumbnail given its metadata
+        """
+
+        # establish the root path        
+        cache_path_items = [self._app.cache_location, "thumbnails", entity_type]
+        
+        # the S3 urls are not suitable as cache keys so use type/id
+        # split the number into chunks and preceed with type
+        # 12345 --> ['1','2','3','4','5']
+        cache_path_items.extend(list(str(entity_id)))
+        
+        # and append a file name. Assume we always get a jpeg back from sg
+        cache_path_items.append("%s.jpg" % entity_id)
+        
+        # join up the path
+        path_to_cached_thumb = os.path.join(*cache_path_items)
+        
+        return path_to_cached_thumb
+
 
 
     ############################################################################################
-    #
+    # async stuff
+
+
 
     def run(self):
 
+        #############################################
+        # keep running until stop() is being called
         while self._execute_tasks:
             
-            # get the next item to process:
+            
+            #########################################
+            # Step 1. get the next item to process. 
             item_to_process = None
             self._queue_mutex.lock()
             try:
@@ -144,16 +173,21 @@ class ShotgunAsyncDataRetriever(QtCore.QThread):
                     else:
                         # we got stuff to process
                         self.queue_processing.emit()
-                    
+                
+                # take the first item in the queue
                 item_to_process = self._queue.pop(0)
             finally:
                 self._queue_mutex.unlock()
 
-            # ok, have something to do so lets do it:            
+
+
+            ##############################################
+            # Step 2. Process next item and send signals. 
             data = None
             try:
                 # process the item:
                 if item_to_process["type"] == "find":
+                    
                     sg = self._app.shotgun.find(item_to_process["entity_type"],
                                                   item_to_process["filters"],
                                                   item_to_process["fields"],
@@ -163,54 +197,61 @@ class ShotgunAsyncDataRetriever(QtCore.QThread):
                 
                 elif item_to_process["type"] == "thumbnail":
                     
-                    url = item_to_process["url"]
-                    
+                    url = item_to_process["url"]                    
                     entity_id = item_to_process["entity_id"]
                     entity_type = item_to_process["entity_type"]
+                    path_to_cached_thumb = self._get_thumbnail_path(url, entity_id, entity_type)
                     
-                    cache_path_items = [self._app.cache_location, "thumbnails", entity_type]
-                    
-                    # the S3 urls are not suitable as cache keys so use type/id
-                    # split the number into chunks and preceed with type
-                    # 12345 --> ['1','2','3','4','5']
-                    cache_path_items.extend(list(str(entity_id)))
-                    
-                    # and append a file name. Assume we always get a jpeg back from sg
-                    cache_path_items.append("%s.jpg" % entity_id)
-                    
-                    # join up the path
-                    path_to_cached_thumb = os.path.join(*cache_path_items)
-                    
-                    if os.path.exists(path_to_cached_thumb):
-                        # cached! sweet!
-                        data = {"thumb_path": path_to_cached_thumb }
-                    
+                    if not os.path.exists(path_to_cached_thumb):
+                        # no cached thumb yet. Re-queue this task, this time
+                        # at the back of the queue (the slow end of the queue)
+                        # give it a new status to indicate that we should download
+                        item_to_process["type"] = "thumbnail_download"
+                        self._queue_mutex.lock()
+                        try:
+                            # back of the queue
+                            self._queue.append(item_to_process)
+                        finally:
+                            self._queue_mutex.unlock()
+                            
+                        # note that we are not setting the data variable to anything here,
+                        # so no signal will be sent.
+                        
                     else:
-                    
-                        # the thumbnail was not in the cache. Get it.
-                        try:
-                            (temp_file, stuff) = urllib.urlretrieve(url)
-                        except Exception, e:
-                            raise Exception("Could not download data from the url '%s'. Error: %s" % (url, e))
-                
-                        # now try to cache it
-                        try:
-                            self._app.ensure_folder_exists(os.path.dirname(path_to_cached_thumb))
-                            shutil.copy(temp_file, path_to_cached_thumb)
-                            # as a tmp file downloaded by urlretrieve, permissions are super strict
-                            # modify the permissions of the file so it's writeable by others
-                            os.chmod(path_to_cached_thumb, 0666)            
-                        except Exception, e:
-                            raise Exception("Could not cache thumbnail %s in %s. "
-                                            "Error: %s" % (url, path_to_cached_thumb, e))
-                 
+                        # we have a path on disk!
                         data = {"thumb_path": path_to_cached_thumb }
+                
+                
+                elif item_to_process["type"] == "thumbnail_download":
+                    
+                    url = item_to_process["url"]
+                    entity_id = item_to_process["entity_id"]
+                    entity_type = item_to_process["entity_type"]
+                    path_to_cached_thumb = self._get_thumbnail_path(url, entity_id, entity_type)
+                    
+                    try:
+                        (temp_file, _) = urllib.urlretrieve(url)
+                    except Exception, e:
+                        raise Exception("Could not download data from the url '%s'. Error: %s" % (url, e))
+            
+                    # now try to cache it
+                    try:
+                        self._app.ensure_folder_exists(os.path.dirname(path_to_cached_thumb))
+                        shutil.copy(temp_file, path_to_cached_thumb)
+                        # as a tmp file downloaded by urlretrieve, permissions are super strict
+                        # modify the permissions of the file so it's writeable by others
+                        os.chmod(path_to_cached_thumb, 0666)            
+                    except Exception, e:
+                        raise Exception("Could not cache thumbnail %s in %s. "
+                                        "Error: %s" % (url, path_to_cached_thumb, e))
+             
+                    data = {"thumb_path": path_to_cached_thumb }
                     
                 
             except Exception, e:
                 if self._execute_tasks:
                     self.work_failure.emit(item_to_process["id"], "An error occured: %s" % e)
             else:
-                if self._execute_tasks:
+                if self._execute_tasks and data:
                     self.work_completed.emit(item_to_process["id"], data)
                 

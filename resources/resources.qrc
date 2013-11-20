@@ -12,5 +12,6 @@
     <file>publish_folder.png</file>
     <file>publish_bg.png</file>
     <file>publish_loading.png</file>
+    <file>default_user_thumb.png</file>
   </qresource>
 </RCC>

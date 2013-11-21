@@ -38,6 +38,7 @@ class SgPublishModel(QtGui.QStandardItemModel):
     TYPE_ID_ROLE = QtCore.Qt.UserRole + 1
     IS_FOLDER_ROLE = QtCore.Qt.UserRole + 2
     ASSOCIATED_TREE_VIEW_ITEM_ROLE = QtCore.Qt.UserRole + 3
+    SG_DATA_ROLE = QtCore.Qt.UserRole + 4
 
     def __init__(self, sg_data_retriever, spin_handler, publish_type_model):
         QtGui.QStandardItemModel.__init__(self)
@@ -229,19 +230,21 @@ class SgPublishModel(QtGui.QStandardItemModel):
             item.setData(None, SgPublishModel.TYPE_ID_ROLE)
             item.setData(True, SgPublishModel.IS_FOLDER_ROLE)
             item.setData(tree_view_item, SgPublishModel.ASSOCIATED_TREE_VIEW_ITEM_ROLE)
+            # copy the sg data from the tree view item onto this node - after all
+            # this node is also associated with that data!
+            treeview_sg_data = tree_view_item.data(SgEntityModel.SG_DATA_ROLE) 
+            item.setData(treeview_sg_data, SgPublishModel.SG_DATA_ROLE)
             self.appendRow(item)
             
-            # see if there is any shotgun data associated with the tree view item
-            sg_entity_data = tree_view_item.data(SgEntityModel.NODE_SG_DATA_ROLE)
-            print sg_entity_data
-            if sg_entity_data and sg_entity_data.get("image"):
+            # see if we can get a thumbnail for this node!
+            if treeview_sg_data and treeview_sg_data.get("image"):
                 # there is a thumbnail for this item!
 
                 # get the thumbnail - store the unique id we get back from
                 # the data retrieve in a dict for fast lookup later
-                uid = self._sg_data_retriever.download_thumbnail(sg_entity_data["image"], 
-                                                                 sg_entity_data["type"], 
-                                                                 sg_entity_data["id"])
+                uid = self._sg_data_retriever.download_thumbnail(treeview_sg_data["image"], 
+                                                                 treeview_sg_data["type"], 
+                                                                 treeview_sg_data["id"])
                 self._thumb_map[uid] = item
                 
             
@@ -253,38 +256,48 @@ class SgPublishModel(QtGui.QStandardItemModel):
         # count the number of times each type is used
         type_id_aggregates = defaultdict(int)
         
+        # FIRST PASS!
         # get a dict with only the latest versions
         # rely on the fact that versions are returned in asc order from sg.
         # (see filter query above)
         unique_data = {}
         
-        for d in sg_data:
+        for sg_item in sg_data:
             type_id = None
-            type_link = d[self._publish_type_field]
+            type_link = sg_item[self._publish_type_field]
             type_name = "No Type"
             if type_link:
                 type_id = type_link["id"]
                 type_name = type_link["name"]
-                type_id_aggregates[type_id] += 1
             
-            label = "%s, %s" % (d["name"], type_name)
+            label = "%s, %s" % (sg_item["name"], type_name)
 
             # key publishes in dict by type and name
-            unique_data[ label ] = {"sg_data": d, "type_id": type_id}
+            unique_data[ label ] = {"sg_item": sg_item, "type_id": type_id}
             
-        # in a second pass, we now have the latest versions only
-        for (label, d) in unique_data.iteritems():
+        # SECOND PASS
+        # We now have the latest versions only
+        # Go ahead and create model items
+        for (ui_label, second_pass_data) in unique_data.iteritems():
             
-            item = QtGui.QStandardItem(self._loading_icon, label)
-            item.setData(d["type_id"], SgPublishModel.TYPE_ID_ROLE)
+            type_id = second_pass_data["type_id"]
+            sg_item = second_pass_data["sg_item"]
+            
+            item = QtGui.QStandardItem(self._loading_icon, ui_label)
+            item.setData(type_id, SgPublishModel.TYPE_ID_ROLE)
+            
+            # update our aggregate counts for the publish type view
+            type_id_aggregates[type_id] += 1
+            
+            item.setData(sg_item, SgPublishModel.SG_DATA_ROLE)
             item.setData(False, SgPublishModel.IS_FOLDER_ROLE)
             self.appendRow(item)
              
             # get the thumbnail - store the unique id we get back from
             # the data retrieve in a dict for fast lookup later
-            uid = self._sg_data_retriever.download_thumbnail(d["sg_data"]["image"], 
+            uid = self._sg_data_retriever.download_thumbnail(sg_item["image"], 
                                                              self._publish_entity_type, 
-                                                             d["sg_data"]["id"])
+                                                             sg_item["id"])
             self._thumb_map[uid] = item            
             
             

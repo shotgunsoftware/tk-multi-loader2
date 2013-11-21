@@ -23,7 +23,7 @@ from .publishproxymodel import SgPublishProxyModel
 from .entitybuttongroup import EntityButtonGroup
 from .sgdata import ShotgunAsyncDataRetriever 
 from .spinner import SpinHandler
-from .details import DetailsHandler
+from .detailshandler import DetailsHandler
 
 from .ui.dialog import Ui_Dialog
 
@@ -53,15 +53,17 @@ class AppDialog(QtGui.QWidget):
         self._spin_handler = SpinHandler(self.ui)
         
         #################################################
-        # details pane
-        self._details_handler = DetailsHandler(self.ui, self._spin_handler)
-        
-        #################################################
         # set up our background sg data fetcher
         self._sg_data_retriever = ShotgunAsyncDataRetriever(self)
         self._sg_data_retriever.queue_processing.connect(self._spin_handler.start_global_spinner)
         self._sg_data_retriever.queue_complete.connect(self._spin_handler.stop_global_spinner)
         self._sg_data_retriever.start()
+        
+        #################################################
+        # details pane
+        self._details_handler = DetailsHandler(self.ui, 
+                                               self._spin_handler,
+                                               self._sg_data_retriever)
         
         #################################################
         # load and initialize cached publish type model

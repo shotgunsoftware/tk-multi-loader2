@@ -141,4 +141,4 @@ class SpinHandler(object):
 
     
     def hide_details_message(self):
-        self._ui.details_grp.setCurrentWidget(self._ui.details_msg_page)
+        self._ui.details_grp.setCurrentWidget(self._ui.details_list_page)

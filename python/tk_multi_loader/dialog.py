@@ -23,6 +23,7 @@ from .publishproxymodel import SgPublishProxyModel
 from .entitybuttongroup import EntityButtonGroup
 from .sgdata import ShotgunAsyncDataRetriever 
 from .spinner import SpinHandler
+from .details import DetailsHandler
 
 from .ui.dialog import Ui_Dialog
 
@@ -50,6 +51,10 @@ class AppDialog(QtGui.QWidget):
         # (models mostly) will access to indicate that they are 
         # updating themselves.
         self._spin_handler = SpinHandler(self.ui)
+        
+        #################################################
+        # details pane
+        self._details_handler = DetailsHandler(self.ui, self._spin_handler)
         
         #################################################
         # set up our background sg data fetcher
@@ -82,6 +87,9 @@ class AppDialog(QtGui.QWidget):
         # if an item in the table is double clicked ensure details are shown
         self.ui.publish_list.doubleClicked.connect(self._on_publish_double_clicked)
         
+        # event handler for when the selection in the publish view is changing
+        self.ui.publish_list.selectionModel().selectionChanged.connect(self._on_publish_selection)
+        
         #################################################
         # setup history
         self._history = []
@@ -97,6 +105,13 @@ class AppDialog(QtGui.QWidget):
         self._load_entity_presets()
         
     
+    
+    
+    
+    
+    
+    
+    
     def closeEvent(self, event):
         # do cleanup, threading etc...
         self._sg_data_retriever.stop()
@@ -110,6 +125,31 @@ class AppDialog(QtGui.QWidget):
     def _on_info_toggled(self, checked):
         if checked:
             self.ui.details.setVisible(True)
+            
+            # if there is something selected, make sure the detail
+            # section is focused on this 
+            selection_model = self.ui.publish_list.selectionModel()     
+            
+            if selection_model.hasSelection():
+            
+                current_proxy_model_idx = selection_model.selection().indexes()[0]
+                
+                # the incoming model index is an index into our proxy model
+                # before continuing, translate it to an index into the 
+                # underlying model
+                proxy_model = current_proxy_model_idx.model()
+                source_index = proxy_model.mapToSource(current_proxy_model_idx)
+                
+                # now we have arrived at our model derived from StandardItemModel
+                # so let's retrieve the standarditem object associated with the index
+                item = source_index.model().itemFromIndex(source_index)
+            
+                self._details_handler.load_details(item)
+            
+            else:
+                self._details_handler.clear()
+            
+            
         else:
             self.ui.details.setVisible(False)
         
@@ -246,6 +286,39 @@ class AppDialog(QtGui.QWidget):
 
     ########################################################################################
     # publish view
+        
+    def _on_publish_selection(self, selected, deselected):
+        """
+        Signal triggered when someone changes the selection in the main publish area
+        """
+        if self.ui.details.isVisible():
+            # since we are controlling the details view, no need to do anything if
+            # it is not visible
+        
+            selected_indexes = selected.indexes()
+            
+            if len(selected_indexes) == 0:
+                # get
+                self._details_handler.clear()
+                
+            else:
+                # get the currently selected model index
+                model_index = selected_indexes[0]
+        
+                # the incoming model index is an index into our proxy model
+                # before continuing, translate it to an index into the 
+                # underlying model
+                proxy_model = model_index.model()
+                source_index = proxy_model.mapToSource(model_index)
+                
+                # now we have arrived at our model derived from StandardItemModel
+                # so let's retrieve the standarditem object associated with the index
+                item = source_index.model().itemFromIndex(source_index)
+                
+                # tell details pane to load stuff
+                self._details_handler.load_details(item)
+        
+        
         
     def _on_publish_double_clicked(self, model_index):
         """

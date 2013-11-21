@@ -12,6 +12,7 @@ import tank
 import os
 import hashlib
 import tempfile
+from . import utils
 from .spinner import SpinHandler
 from .entitymodel import SgEntityModel
 from collections import defaultdict
@@ -157,57 +158,14 @@ class SgPublishModel(QtGui.QStandardItemModel):
         """
         # this is a thumbnail that has been fetched!
         # update the publish icon based on this.
-        item = self._thumb_map[thumb_uid] 
+        item = self._thumb_map[thumb_uid]
         
-        if item.data(SgPublishModel.IS_FOLDER_ROLE):
-            # this is a thumbnail for a folder coming in!
-            # merge it with the current folder thumbnail image
-            
-            base_image = QtGui.QPixmap(":/res/publish_folder.png")
-            thumb = QtGui.QPixmap(path)
-            vertical_offset = 10
-            thumb_scaled = thumb.scaled(FOLDER_THUMB_WIDTH, 
-                                        FOLDER_THUMB_HEIGHT, 
-                                        QtCore.Qt.KeepAspectRatio, 
-                                        QtCore.Qt.SmoothTransformation)  
-            
-        else:
-            
-            base_image = QtGui.QPixmap(":/res/publish_bg.png")            
-            thumb = QtGui.QPixmap(path)
-            vertical_offset = 0
-            thumb_scaled = thumb.scaled(PUBLISH_THUMB_WIDTH, 
-                                        PUBLISH_THUMB_HEIGHT, 
-                                        QtCore.Qt.KeepAspectRatio, 
-                                        QtCore.Qt.SmoothTransformation)  
-              
+        # composite and process thumb
+        is_folder = item.data(SgPublishModel.IS_FOLDER_ROLE)
+        thumb = utils.create_standard_thumbnail(path, is_folder)
         
-        thumb_img = thumb_scaled.toImage()
-        brush = QtGui.QBrush(thumb_img)
-        
-        painter = QtGui.QPainter(base_image)
-        painter.setRenderHint(QtGui.QPainter.Antialiasing)
-        painter.setBrush(brush)
-        
-        # figure out the offset height wise in order to center the thumb
-        height_difference = ICON_BASE_CANVAS_HEIGHT - thumb_scaled.height()
-        width_difference = ICON_BASE_CANVAS_WIDTH - thumb_scaled.width()
-        
-        inlay_offset_w = (width_difference/2)+(ICON_INLAY_CORNER_RADIUS/2)
-        inlay_offset_h = (height_difference/2)+(ICON_INLAY_CORNER_RADIUS/2)+vertical_offset
-        
-        # note how we have to compensate for the corner radius
-        painter.translate(inlay_offset_w, inlay_offset_h)
-        painter.drawRoundedRect(0,  
-                                0, 
-                                thumb_scaled.width()-ICON_INLAY_CORNER_RADIUS, 
-                                thumb_scaled.height()-ICON_INLAY_CORNER_RADIUS, 
-                                ICON_INLAY_CORNER_RADIUS, 
-                                ICON_INLAY_CORNER_RADIUS)
-        
-        painter.end()
-        
-        item.setIcon(base_image)
+        # associate with item
+        item.setIcon(thumb)
         
             
             

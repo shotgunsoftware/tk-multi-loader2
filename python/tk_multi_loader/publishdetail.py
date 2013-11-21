@@ -19,6 +19,11 @@ import sys
 from tank.platform.qt import QtCore, QtGui
 from .ui.publishdetail import Ui_PublishDetail
 
+from . import utils
+
+TASK_THUMBNAIL_WIDGET_WIDTH = 40
+TASK_THUMBNAIL_WIDGET_HEIGHT = 40
+
 
 class PublishDetail(QtGui.QWidget):
     
@@ -38,7 +43,6 @@ class PublishDetail(QtGui.QWidget):
         else:
             self._publish_type_field = "tank_type"
         
-        
         if simple_mode:
             # turn off some ui elements
             self.ui.artist_thumbnail.setVisible(False)
@@ -48,15 +52,24 @@ class PublishDetail(QtGui.QWidget):
         """
         set the thumbnail
         """
-        image = QtGui.QPixmap(path)
-        self.ui.publish_thumbnail.setPixmap(image)
+        
+        thumb = utils.create_standard_thumbnail(path, is_folder=False)
+        
+        self.ui.publish_thumbnail.setPixmap(thumb)
     
     def set_user_thumbnail(self, path):
         """
-        set the thumbnail
+        Set the little square User thumbnail
         """
-        image = QtGui.QPixmap(path)
-        self.ui.artist_thumbnail.setPixmap(image)
+        thumb = QtGui.QPixmap(path)
+        
+        # scale it to exactly 40px square
+        thumb_scaled = thumb.scaled(TASK_THUMBNAIL_WIDGET_WIDTH, 
+                                    TASK_THUMBNAIL_WIDGET_HEIGHT, 
+                                    QtCore.Qt.KeepAspectRatioByExpanding, 
+                                    QtCore.Qt.SmoothTransformation)  
+        
+        self.ui.artist_thumbnail.setPixmap(thumb_scaled)
 
     def set_publish_details(self, sg_item):
         

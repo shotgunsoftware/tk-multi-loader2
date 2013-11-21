@@ -50,6 +50,10 @@ class DetailsHandler(object):
         self._sg_data_retriever.work_completed.connect( self._on_worker_signal)
         self._sg_data_retriever.work_failure.connect( self._on_worker_failure)
         
+        # keep a list of our current widgets around
+        self._current_version_list_widgets = []
+        self._current_top_item_widget = None
+        
         
         
     def clear(self):
@@ -57,19 +61,25 @@ class DetailsHandler(object):
         Clears the details view.
         """
         
-        print "cont: %s" % self._ui.current_publish_details.count()
-        
-        # clear out top section
-        item = self._ui.current_publish_details.takeAt(0)
-        print item 
-        while item:
-            item = self._ui.current_publish_details.takeAt(0)
-        
-        # clear out version history section
-        item = self._ui.publish_history_layout.takeAt(0) 
-        while item:
-            item = self._ui.publish_history_layout.takeAt(0)
+        def _dispose_widget(x):
+            # remove it from UI layout
+            x.setParent(None)
+            # mark it to be deleted when event processing returns to the main loop
+            x.deleteLater()
 
+        
+        if self._current_top_item_widget:
+            # take it out of the layout and destroy it
+            self._ui.current_publish_details.removeWidget(self._current_top_item_widget)
+            _dispose_widget(self._current_top_item_widget)
+            self._current_top_item_widget = None
+        
+        for x in self._current_version_list_widgets:
+            # take it out of the layout and destroy it
+            self._ui.publish_history_layout.removeWidget(x)
+            _dispose_widget(x)
+        self._current_version_list_widgets = []
+        
         # reset variables tracking async requests
         self._current_work_id = None
         self._thumb_map = {}
@@ -97,8 +107,6 @@ class DetailsHandler(object):
         else:
             # this is a publish!
             self._spin_handler.set_details_message("Hold on, Loading data...")
-        
-            print "---------------> %s" % sg_data
         
             self._current_work_id = self._sg_data_retriever.execute_find(sg_data["type"], 
                                                                          [["entity", "is", sg_data]], 
@@ -148,17 +156,20 @@ class DetailsHandler(object):
         Create ui
         """
         
+        self._current_version_list_widgets = []
+        self._current_top_item_widget = None
         
         
-        pd = PublishDetail(self._parent_widget)
-        self._ui.current_publish_details.addWidget(pd)
+        self._current_top_item_widget = PublishDetail(self._parent_widget)
+        self._ui.current_publish_details.addWidget(self._current_top_item_widget)
         
         pd = PublishDetail(self._parent_widget)
         self._ui.publish_history_layout.addWidget(pd)
+        self._current_version_list_widgets.append(pd)
         
         pd = PublishDetail(self._parent_widget)
         self._ui.publish_history_layout.addWidget(pd)
-        
+        self._current_version_list_widgets.append(pd)
         
         self._spin_handler.hide_details_message()
         

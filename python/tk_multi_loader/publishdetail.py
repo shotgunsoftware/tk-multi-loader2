@@ -44,13 +44,20 @@ class PublishDetail(QtGui.QWidget):
             self.ui.artist_thumbnail.setVisible(False)
             self.ui.task_label.setVisible(False)
 
-    def set_thumbnail(self, path):
+    def set_item_thumbnail(self, path):
         """
         set the thumbnail
         """
         image = QtGui.QPixmap(path)
         self.ui.publish_thumbnail.setPixmap(image)
     
+    def set_user_thumbnail(self, path):
+        """
+        set the thumbnail
+        """
+        image = QtGui.QPixmap(path)
+        self.ui.artist_thumbnail.setPixmap(image)
+
     def set_publish_details(self, sg_item):
         
         # the top text next to the thumbnail should contain

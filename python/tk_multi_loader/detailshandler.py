@@ -169,27 +169,35 @@ class DetailsHandler(object):
             
     
     def _create_publish_details_widget(self, sg_item, pd ):
-    
+
+        # set text etc for the item    
         pd.set_publish_details(sg_item)
     
-        # see if we can get a thumbnail for this node!
+        # see if we can get a thumbnail for the publish
         if sg_item.get("image"):
-            # there is a thumbnail for this item!
-
             # get the thumbnail - store the unique id we get back from
             # the data retrieve in a dict for fast lookup later
             uid = self._sg_data_retriever.download_thumbnail(sg_item["image"], 
                                                              sg_item["type"], 
                                                              sg_item["id"])
-            self._thumb_map[uid] = pd
+            
+            self._thumb_map[uid] = {"widget": pd, "type": "item_thumb"}
+
+        # see if we can get a thumbnail for the user
+        if sg_item.get("created_by.HumanUser.image"):
+            # get the thumbnail - store the unique id we get back from
+            # the data retrieve in a dict for fast lookup later
+            uid = self._sg_data_retriever.download_thumbnail(sg_item["created_by.HumanUser.image"], 
+                                                             sg_item["created_by"]["type"], 
+                                                             sg_item["created_by"]["id"])
+            self._thumb_map[uid] = {"widget": pd, "type": "user_thumb"}
+
     
     
     def _update_publish_list(self, sg_data):
         """
         Create ui
         """
-        
-        print "ASYNC DATA %s" % sg_data
         
         # 
         if len(sg_data) > 0:
@@ -216,8 +224,19 @@ class DetailsHandler(object):
             
     def _update_thumbnail(self, uid, path):
         """
-        
+        Sets one of the thumbnails for a widget
         """
-        pd = self._thumb_map[uid]
-        pd.set_thumbnail(path)
+        
+        # get data associated with this request
+        # e.g {"widget": pd, "type": "user_thumb"}
+        data = self._thumb_map[uid]
+        
+        if data["type"] == "user_thumb":
+            data["widget"].set_user_thumbnail(path)
+        elif data["type"] == "item_thumb":
+            data["widget"].set_item_thumbnail(path)
+        else:
+            raise Exception("Unknown mode!")
+        
+        
             

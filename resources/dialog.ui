@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1168</width>
+    <width>1418</width>
     <height>754</height>
    </rect>
   </property>
@@ -370,13 +370,13 @@
     <widget class="QGroupBox" name="details">
      <property name="minimumSize">
       <size>
-       <width>300</width>
+       <width>400</width>
        <height>0</height>
       </size>
      </property>
      <property name="maximumSize">
       <size>
-       <width>300</width>
+       <width>400</width>
        <height>16777215</height>
       </size>
      </property>
@@ -438,7 +438,7 @@
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>288</width>
+               <width>388</width>
                <height>521</height>
               </rect>
              </property>

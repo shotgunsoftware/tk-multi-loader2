@@ -11,7 +11,7 @@ from tank.platform.qt import QtCore, QtGui
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
-        Dialog.resize(1168, 754)
+        Dialog.resize(1418, 754)
         self.gridLayout = QtGui.QGridLayout(Dialog)
         self.gridLayout.setObjectName("gridLayout")
         self.toolbar_1 = QtGui.QHBoxLayout()
@@ -170,8 +170,8 @@ class Ui_Dialog(object):
         self.middle_area.addLayout(self.horizontalLayout_4)
         self.gridLayout.addLayout(self.middle_area, 2, 1, 1, 1)
         self.details = QtGui.QGroupBox(Dialog)
-        self.details.setMinimumSize(QtCore.QSize(300, 0))
-        self.details.setMaximumSize(QtCore.QSize(300, 16777215))
+        self.details.setMinimumSize(QtCore.QSize(400, 0))
+        self.details.setMaximumSize(QtCore.QSize(400, 16777215))
         self.details.setTitle("")
         self.details.setObjectName("details")
         self.verticalLayout_4 = QtGui.QVBoxLayout(self.details)
@@ -207,7 +207,7 @@ class Ui_Dialog(object):
         self.publish_history_scrollarea.setWidgetResizable(True)
         self.publish_history_scrollarea.setObjectName("publish_history_scrollarea")
         self.scrollAreaWidgetContents = QtGui.QWidget()
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 288, 521))
+        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 388, 521))
         self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
         self.verticalLayout_7 = QtGui.QVBoxLayout(self.scrollAreaWidgetContents)
         self.verticalLayout_7.setObjectName("verticalLayout_7")

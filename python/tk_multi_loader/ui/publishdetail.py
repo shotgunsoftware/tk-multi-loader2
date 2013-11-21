@@ -11,9 +11,13 @@ from tank.platform.qt import QtCore, QtGui
 class Ui_PublishDetail(object):
     def setupUi(self, PublishDetail):
         PublishDetail.setObjectName("PublishDetail")
-        PublishDetail.resize(325, 134)
+        PublishDetail.resize(325, 165)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Maximum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(PublishDetail.sizePolicy().hasHeightForWidth())
+        PublishDetail.setSizePolicy(sizePolicy)
         self.verticalLayout_2 = QtGui.QVBoxLayout(PublishDetail)
-        self.verticalLayout_2.setSpacing(1)
         self.verticalLayout_2.setContentsMargins(1, 1, 1, 1)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.horizontalLayout_2 = QtGui.QHBoxLayout()
@@ -80,6 +84,11 @@ class Ui_PublishDetail(object):
         self.task_label.setWordWrap(True)
         self.task_label.setObjectName("task_label")
         self.verticalLayout_2.addWidget(self.task_label)
+        self.line = QtGui.QFrame(PublishDetail)
+        self.line.setFrameShape(QtGui.QFrame.HLine)
+        self.line.setFrameShadow(QtGui.QFrame.Sunken)
+        self.line.setObjectName("line")
+        self.verticalLayout_2.addWidget(self.line)
 
         self.retranslateUi(PublishDetail)
         QtCore.QMetaObject.connectSlotsByName(PublishDetail)

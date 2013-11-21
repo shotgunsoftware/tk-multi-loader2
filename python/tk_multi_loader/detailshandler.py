@@ -36,11 +36,19 @@ class DetailsHandler(object):
         self._publish_entity_type = tank.util.get_published_file_entity_type(self._app.sgtk)
         
         if self._publish_entity_type == "PublishedFile":
-            self._publish_fields = ["name", "version_number", "image", "published_file_type"]
             self._publish_type_field = "published_file_type"
         else:
-            self._publish_fields = ["name", "version_number", "image", "tank_type"]
             self._publish_type_field = "tank_type"
+
+        # fields to pull down
+        self._publish_fields = [self._publish_type_field,
+                                "name", 
+                                "version_number", 
+                                "image", 
+                                "entity",
+                                "task",
+                                "task.Task.task_assignees",
+                                "description"]
         
         # widget to parent any new widgets to
         self._parent_widget = self._ui.details_list_page
@@ -106,15 +114,21 @@ class DetailsHandler(object):
         
         else:
             # this is a publish!
+            print "sg: %s" % sg_data
             self._spin_handler.set_details_message("Hold on, Loading data...")
-        
+            
+            filter = [ ["name", "is", sg_data["name"] ],
+                       ["entity", "is", sg_data["entity"] ],
+                       [self._publish_type_field, "is", sg_data[self._publish_type_field] ],
+                      ]
+            
             self._current_work_id = self._sg_data_retriever.execute_find(sg_data["type"], 
-                                                                         [["entity", "is", sg_data]], 
+                                                                         filter, 
                                                                          self._publish_fields,
-                                                                         [{"field_name":"version_number", "direction":"asc"}])
+                                                                         [{"field_name":"version_number", "direction":"desc"}])
         
-        
-
+            
+            
         
         
         
@@ -151,26 +165,50 @@ class DetailsHandler(object):
             thumbnail_path = data["thumb_path"]
             self._update_thumbnail(uid, thumbnail_path)
             
+    
+    def _create_publish_details_widget(self, sg_item, pd ):
+    
+        pd.set_label("%s %s" % (sg_item["name"], sg_item["version_number"] ))
+    
+        # see if we can get a thumbnail for this node!
+        if sg_item.get("image"):
+            # there is a thumbnail for this item!
+
+            # get the thumbnail - store the unique id we get back from
+            # the data retrieve in a dict for fast lookup later
+            uid = self._sg_data_retriever.download_thumbnail(sg_item["image"], 
+                                                             sg_item["type"], 
+                                                             sg_item["id"])
+            self._thumb_map[uid] = pd
+    
+    
     def _update_publish_list(self, sg_data):
         """
         Create ui
         """
         
-        self._current_version_list_widgets = []
-        self._current_top_item_widget = None
+        print "ASYNC DATA %s" % sg_data
         
+        # 
+        if len(sg_data) > 0:
+            # in theory should always have at least one result, but
+            # do the check just in case someone has deleted 
+            # something remotely for example...
         
-        self._current_top_item_widget = PublishDetail(self._parent_widget)
-        self._ui.current_publish_details.addWidget(self._current_top_item_widget)
-        
-        pd = PublishDetail(self._parent_widget)
-        self._ui.publish_history_layout.addWidget(pd)
-        self._current_version_list_widgets.append(pd)
-        
-        pd = PublishDetail(self._parent_widget)
-        self._ui.publish_history_layout.addWidget(pd)
-        self._current_version_list_widgets.append(pd)
-        
+            latest_item = sg_data[0]
+            pd = PublishDetail(self._parent_widget)
+            self._ui.current_publish_details.addWidget(pd)
+            self._create_publish_details_widget(latest_item, pd)
+            self._current_top_item_widget = pd
+            
+            # and process the rest
+            for d in sg_data[1:]:
+                pd = PublishDetail(self._parent_widget)
+                self._ui.publish_history_layout.addWidget(pd)
+                self._create_publish_details_widget(d, pd)
+                self._current_version_list_widgets.append(pd)
+
+        # lastly, switch to this ui
         self._spin_handler.hide_details_message()
         
             
@@ -178,5 +216,6 @@ class DetailsHandler(object):
         """
         
         """
-        print "update thumbnail!"
-        
+        pd = self._thumb_map[uid]
+        pd.set_thumbnail(path)
+            

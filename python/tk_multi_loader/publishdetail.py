@@ -27,3 +27,13 @@ class PublishDetail(QtGui.QWidget):
         self.ui = Ui_PublishDetail() 
         self.ui.setupUi(self)
 
+    def set_thumbnail(self, path):
+        """
+        set the thumbnail
+        """
+        image = QtGui.QPixmap(path)
+        self.ui.publish_thumbnail.setPixmap(image)
+    
+    
+    def set_label(self, msg):
+        self.ui.publish_label.setText(msg)

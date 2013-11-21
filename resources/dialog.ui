@@ -417,7 +417,7 @@
           <item>
            <widget class="QLabel" name="label_3">
             <property name="text">
-             <string>Version HIstory</string>
+             <string>Version History</string>
             </property>
            </widget>
           </item>

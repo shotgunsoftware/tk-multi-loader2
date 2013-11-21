@@ -47,7 +47,9 @@ class DetailsHandler(object):
                                 "image", 
                                 "entity",
                                 "task",
-                                "task.Task.task_assignees",
+                                "created_by",
+                                "created_at",
+                                "created_by.HumanUser.image",
                                 "description"]
         
         # widget to parent any new widgets to
@@ -168,7 +170,7 @@ class DetailsHandler(object):
     
     def _create_publish_details_widget(self, sg_item, pd ):
     
-        pd.set_label("%s %s" % (sg_item["name"], sg_item["version_number"] ))
+        pd.set_publish_details(sg_item)
     
         # see if we can get a thumbnail for this node!
         if sg_item.get("image"):
@@ -196,14 +198,14 @@ class DetailsHandler(object):
             # something remotely for example...
         
             latest_item = sg_data[0]
-            pd = PublishDetail(self._parent_widget)
+            pd = PublishDetail(simple_mode=False, parent=self._parent_widget)
             self._ui.current_publish_details.addWidget(pd)
             self._create_publish_details_widget(latest_item, pd)
             self._current_top_item_widget = pd
             
             # and process the rest
             for d in sg_data[1:]:
-                pd = PublishDetail(self._parent_widget)
+                pd = PublishDetail(simple_mode=True, parent=self._parent_widget)
                 self._ui.publish_history_layout.addWidget(pd)
                 self._create_publish_details_widget(d, pd)
                 self._current_version_list_widgets.append(pd)

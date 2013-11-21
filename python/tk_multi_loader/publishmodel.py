@@ -61,11 +61,16 @@ class SgPublishModel(QtGui.QStandardItemModel):
         self._publish_entity_type = tank.util.get_published_file_entity_type(self._app.sgtk)
         
         if self._publish_entity_type == "PublishedFile":
-            self._publish_fields = ["name", "entity", "version_number", "image", "published_file_type"]
             self._publish_type_field = "published_file_type"
+
         else:
-            self._publish_fields = ["name", "entity", "version_number", "image", "tank_type"]
             self._publish_type_field = "tank_type"
+        
+        self._publish_fields = ["name", 
+                                "entity", 
+                                "version_number", 
+                                "image", 
+                                self._publish_type_field]
         
         # thumbnails
         self._loading_icon = QtGui.QPixmap(":/res/publish_loading.png")

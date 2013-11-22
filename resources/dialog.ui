@@ -400,14 +400,7 @@
           <item>
            <widget class="QLabel" name="label">
             <property name="text">
-             <string>Current Version</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="Line" name="line">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
+             <string>&lt;big&gt;Current Version&lt;/big&gt;</string>
             </property>
            </widget>
           </item>
@@ -417,14 +410,7 @@
           <item>
            <widget class="QLabel" name="label_3">
             <property name="text">
-             <string>Version History</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="Line" name="line_3">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
+             <string>&lt;big&gt;Previous Versions&lt;/big&gt;</string>
             </property>
            </widget>
           </item>
@@ -439,7 +425,7 @@
                <x>0</x>
                <y>0</y>
                <width>388</width>
-               <height>521</height>
+               <height>549</height>
               </rect>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_7">

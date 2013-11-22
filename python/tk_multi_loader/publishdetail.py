@@ -79,6 +79,8 @@ class PublishDetail(QtGui.QWidget):
         # Type
         # Version and Date
         
+        print "detail sg item %s" % sg_item
+        
         if sg_item.get("entity") is None:
             entity_str = "Unlinked Publish"
         else:
@@ -126,8 +128,27 @@ class PublishDetail(QtGui.QWidget):
         
         self.ui.artist_label.setText("<small><b>%s</b>&nbsp;&mdash;&nbsp;%s" % (author_str, desc_str) )
         
-        
-        
+        # sort out the task label
+        if sg_item.get("task") is None:
+            # no task info available.
+            self.ui.task_label.setVisible(False)
+        else:
+            if sg_item.get("task.Task.content") is None:
+                task_name_str = "Unnamed"
+            else:
+                task_name_str = sg_item.get("task.Task.content")
+            
+            if sg_item.get("task.Task.sg_status_list") is None:
+                task_status_str = "No Status"
+            else:
+                task_status_str = sg_item.get("task.Task.sg_status_list")
+            
+            if sg_item.get("task.Task.due_date") is None:
+                task_date_str = ""
+            else:
+                task_date_str = "| Due %s" % sg_item.get("task.Task.due_date")
+                
+            self.ui.task_label.setText("Task Info: %s | %s %s" % (task_name_str, task_status_str, task_date_str))
         
         
         

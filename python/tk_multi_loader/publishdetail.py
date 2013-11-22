@@ -98,7 +98,7 @@ class PublishDetail(QtGui.QWidget):
 
         
         if sg_item.get("version_number") is None:
-            version_str = "No Version Number" 
+            version_str = "No Version"
         else:
             version_str = "v%03d" % sg_item.get("version_number")
             

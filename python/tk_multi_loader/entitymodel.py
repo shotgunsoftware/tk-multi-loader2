@@ -18,7 +18,7 @@ from tank.platform.qt import QtCore, QtGui
 
 # just so we can do some basic file validation
 FILE_MAGIC_NUMBER = 0xDEADBEEF # so we can validate file format correctness before loading
-FILE_VERSION = 5               # if we ever change the file format structure
+FILE_VERSION = 7               # if we ever change the file format structure
 
 
 class SgEntityModel(QtGui.QStandardItemModel):
@@ -78,8 +78,8 @@ class SgEntityModel(QtGui.QStandardItemModel):
                 self._load_from_disk(self._full_cache_path)
                 self._app.log_debug("...loading complete!")            
             except Exception, e:
-                self._app.log_warning("Couldn't load cache data from disk. Will proceed with "
-                                      "full SG load. Error reported: %s" % e)
+                self._app.log_debug("Couldn't load cache data from disk. Will proceed with "
+                                    "full SG load. Error reported: %s" % e)
         
     
     ########################################################################################
@@ -193,13 +193,17 @@ class SgEntityModel(QtGui.QStandardItemModel):
         # check for modifications. At this point, the number of items in the tree and 
         # the sg data should match, except for any duplicate items in the tree which would 
         # effectively shadow each other. These can be safely ignored.
+        #
+        # Also note that we need to exclude any S3 urls from the comparison as these change
+        # all the time
+        #
         self._app.log_debug("Checking for modifications...")
         detected_changes = False
         for d in sg_data:
             # if there are modifications of any kind, we just rebuild the tree at the moment
             try:
                 existing_sg_data = self._entity_tree_data[ d["id"] ].data(SgEntityModel.SG_DATA_ROLE)
-                if not self._sg_unicode_equals(d, existing_sg_data):                    
+                if not self._sg_compare_data(d, existing_sg_data):                    
                     # shotgun data has changed for this item! Rebuild the tree
                     self._app.log_debug("SG data change: %s --> %s" % (existing_sg_data, d))
                     detected_changes = True
@@ -225,11 +229,12 @@ class SgEntityModel(QtGui.QStandardItemModel):
     ########################################################################################
     # shotgun data processing and tree building
     
-    def _sg_unicode_equals(self, a, b):
+    def _sg_compare_data(self, a, b):
         """
         Compare two sg dicts:
         - unicode is turned into utf-8
         - assumes same set of keys in a and b
+        - omits thumbnail fields because these change all the time (S3)
         """
         
         def _to_utf8(val):
@@ -251,6 +256,13 @@ class SgEntityModel(QtGui.QStandardItemModel):
             return str_val
             
         for k in a:
+            
+            if k == "image":
+                # skip thumbnail fields in the comparison - these 
+                # change all the time!
+                continue
+            
+            # now convert field values to strings and then comapre
             a_val = _to_utf8(a[k])
             b_val = _to_utf8(b[k])
             

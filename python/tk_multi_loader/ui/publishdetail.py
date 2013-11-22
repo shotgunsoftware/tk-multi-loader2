@@ -45,6 +45,7 @@ class Ui_PublishDetail(object):
         self.verticalLayout = QtGui.QVBoxLayout()
         self.verticalLayout.setObjectName("verticalLayout")
         self.load_button = QtGui.QToolButton(PublishDetail)
+        self.load_button.setPopupMode(QtGui.QToolButton.MenuButtonPopup)
         self.load_button.setObjectName("load_button")
         self.verticalLayout.addWidget(self.load_button)
         spacerItem = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
@@ -99,12 +100,8 @@ class Ui_PublishDetail(object):
 "Animation\n"
 "Type foo\n"
 "Version 21", None, QtGui.QApplication.UnicodeUTF8))
-        self.load_button.setText(QtGui.QApplication.translate("PublishDetail", "Load", None, QtGui.QApplication.UnicodeUTF8))
-        self.artist_label.setText(QtGui.QApplication.translate("PublishDetail", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
-"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
-"p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'Lucida Grande\'; font-size:13pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:small;\">Astrid Artist: Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. </span></p></body></html>", None, QtGui.QApplication.UnicodeUTF8))
+        self.load_button.setText(QtGui.QApplication.translate("PublishDetail", "  Load  ", None, QtGui.QApplication.UnicodeUTF8))
+        self.artist_label.setText(QtGui.QApplication.translate("PublishDetail", "Astrid Artist: Lorem Ipsum", None, QtGui.QApplication.UnicodeUTF8))
         self.task_label.setText(QtGui.QApplication.translate("PublishDetail", "Task Info: foo bar baz", None, QtGui.QApplication.UnicodeUTF8))
 
 from . import resources_rc

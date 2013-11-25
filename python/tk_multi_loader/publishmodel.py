@@ -90,6 +90,7 @@ class SgPublishModel(QtGui.QStandardItemModel):
         Call this method prior to destroying this object.
         This will ensure all worker threads etc are stopped
         """
+        print "PUBLISH MODEL DESTRIYT"
         self._sg_data_retriever.stop()
     
     def load_publishes(self, sg_data, folder_items):
@@ -121,7 +122,7 @@ class SgPublishModel(QtGui.QStandardItemModel):
             self._current_folder_items = folder_items
 
             # get data from shotgun
-            self._overlay.start_spin("Hang on, loading data...")
+            self._overlay.start_spin()
             
             # line up a request from Shotgun
             self._current_work_id = self._sg_data_retriever.execute_find(self._publish_entity_type, 

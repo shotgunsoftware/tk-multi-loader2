@@ -81,6 +81,7 @@ class SgPublishModel(QtGui.QStandardItemModel):
         self._loading_icon = QtGui.QPixmap(":/res/publish_loading.png")
         self._folder_icon = QtGui.QPixmap(":/res/publish_folder.png")
         self._bg_icon = QtGui.QPixmap(":/res/publish_bg.png")
+        self._no_pubs_found_icon = QtGui.QPixmap(":/res/no_publishes_found.png")
     
     ########################################################################################
     # public methods
@@ -192,7 +193,7 @@ class SgPublishModel(QtGui.QStandardItemModel):
 
         if len(sg_data) == 0 and len(folder_items) == 0:
             # no publishes or folders found!
-            self._overlay.show_message("Sorry, no publishes found for this item!")
+            self._overlay.show_message_pixmap(self._no_pubs_found_icon)
             self._publish_type_model.set_active_types({})
             return
 

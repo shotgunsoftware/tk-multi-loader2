@@ -97,10 +97,10 @@ class OverlayWidget(QtGui.QWidget):
         try:
             # set up semi transparent backdrop
             painter.setRenderHint(QtGui.QPainter.Antialiasing)
-            overlay_color = QtGui.QColor(0,0,0,140)
+            overlay_color = QtGui.QColor("#1B1B1B")
             painter.setBrush( QtGui.QBrush(overlay_color))
             painter.setPen(QtGui.QPen(overlay_color))
-            painter.drawRect( 0, 0, painter.device().width(), painter.device().height())
+            painter.drawRect(0, 0, painter.device().width(), painter.device().height())
 
             # now draw different things depending on mode
             if self._mode == OverlayWidget.MODE_SPIN:
@@ -132,10 +132,9 @@ class OverlayWidget(QtGui.QWidget):
                 # show error text in the center
                 pen = QtGui.QPen(QtGui.QColor("#C8534A"))
                 painter.setPen(pen)            
-                msg = "An error occurred: %s" % self._message
                 text_rect = QtCore.QRect(0, 0, painter.device().width(), painter.device().height())
                 text_flags = QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter | QtCore.Qt.TextWordWrap
-                painter.drawText(text_rect, text_flags, msg)            
+                painter.drawText(text_rect, text_flags, self._message)            
 
             elif self._mode == OverlayWidget.MODE_INFO_PIXMAP:
                 # draw image

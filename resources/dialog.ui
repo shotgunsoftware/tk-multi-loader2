@@ -148,57 +148,6 @@
      </item>
     </layout>
    </item>
-   <item row="1" column="0">
-    <widget class="QSplitter" name="left_side_splitter">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <widget class="QWidget" name="layoutWidget">
-      <layout class="QVBoxLayout" name="verticalLayout">
-       <item>
-        <widget class="QTabWidget" name="entity_preset_tabs">
-         <property name="currentIndex">
-          <number>-1</number>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="layoutWidget">
-      <layout class="QVBoxLayout" name="verticalLayout_2">
-       <item>
-        <widget class="QLabel" name="label_4">
-         <property name="text">
-          <string>Filters</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QListView" name="publish_type_list">
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>100</height>
-          </size>
-         </property>
-         <property name="editTriggers">
-          <set>QAbstractItemView::NoEditTriggers</set>
-         </property>
-         <property name="showDropIndicator" stdset="0">
-          <bool>false</bool>
-         </property>
-         <property name="selectionMode">
-          <enum>QAbstractItemView::NoSelection</enum>
-         </property>
-         <property name="uniformItemSizes">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-    </widget>
-   </item>
    <item row="1" column="1">
     <layout class="QVBoxLayout" name="middle_area">
      <item>
@@ -231,16 +180,6 @@
      </item>
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout_4">
-       <item>
-        <widget class="QLabel" name="global_progress">
-         <property name="text">
-          <string/>
-         </property>
-         <property name="pixmap">
-          <pixmap resource="resources.qrc">:/res/progress_bar_1.png</pixmap>
-         </property>
-        </widget>
-       </item>
        <item>
         <spacer name="horizontalSpacer_3">
          <property name="orientation">
@@ -312,6 +251,57 @@
       </layout>
      </item>
     </layout>
+   </item>
+   <item row="1" column="0">
+    <widget class="QSplitter" name="left_side_splitter">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <widget class="QWidget" name="layoutWidget">
+      <layout class="QVBoxLayout" name="verticalLayout">
+       <item>
+        <widget class="QTabWidget" name="entity_preset_tabs">
+         <property name="currentIndex">
+          <number>-1</number>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="layoutWidget">
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <item>
+        <widget class="QLabel" name="label_4">
+         <property name="text">
+          <string>Filters</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QListView" name="publish_type_list">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>100</height>
+          </size>
+         </property>
+         <property name="editTriggers">
+          <set>QAbstractItemView::NoEditTriggers</set>
+         </property>
+         <property name="showDropIndicator" stdset="0">
+          <bool>false</bool>
+         </property>
+         <property name="selectionMode">
+          <enum>QAbstractItemView::NoSelection</enum>
+         </property>
+         <property name="uniformItemSizes">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
    </item>
    <item row="1" column="2">
     <widget class="QGroupBox" name="details">
@@ -390,9 +380,6 @@
     </widget>
    </item>
   </layout>
-  <zorder>left_side_splitter</zorder>
-  <zorder>details_grp</zorder>
-  <zorder>details</zorder>
  </widget>
  <resources>
   <include location="resources.qrc"/>

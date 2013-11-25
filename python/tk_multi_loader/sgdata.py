@@ -24,13 +24,9 @@ from tank.platform.qt import QtCore, QtGui
 class ShotgunAsyncDataRetriever(QtCore.QThread):
     """
     Background worker class
-    """
-    
+    """    
     work_completed = QtCore.Signal(str, dict)
     work_failure = QtCore.Signal(str, str)
-    
-    queue_processing = QtCore.Signal()
-    queue_complete = QtCore.Signal()
     
     def __init__(self, parent=None):
         """
@@ -156,9 +152,6 @@ class ShotgunAsyncDataRetriever(QtCore.QThread):
             try:
                 if len(self._queue) == 0:
                     
-                    # nothing to do. Pausing.
-                    self.queue_complete.emit()
-                    
                     # wait for some more work - this unlocks the mutex
                     # until the wait condition is signalled where it
                     # will then attempt to obtain a lock before returning
@@ -167,9 +160,6 @@ class ShotgunAsyncDataRetriever(QtCore.QThread):
                     if len(self._queue) == 0:
                         # still nothing in the queue!
                         continue
-                    else:
-                        # we got stuff to process
-                        self.queue_processing.emit()
                 
                 # take the first item in the queue
                 item_to_process = self._queue.pop(0)

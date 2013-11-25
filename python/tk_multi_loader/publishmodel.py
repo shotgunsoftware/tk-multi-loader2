@@ -45,7 +45,6 @@ class SgPublishModel(QtGui.QStandardItemModel):
     def __init__(self, overlay_parent_widget, publish_type_model):
         QtGui.QStandardItemModel.__init__(self)
         
-        #self._widget = widget
         self._publish_type_model = publish_type_model
         self._app = tank.platform.current_bundle()
         

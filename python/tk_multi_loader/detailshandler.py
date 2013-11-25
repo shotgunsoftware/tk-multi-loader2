@@ -13,18 +13,21 @@ import os
 import hashlib
 import tempfile
 from collections import defaultdict
+from .sgdata import ShotgunAsyncDataRetriever
+from .overlaywidget import OverlayWidget
 from .publishdetail import PublishDetail
 from .publishmodel import SgPublishModel
 
 from tank.platform.qt import QtCore, QtGui
 
 
-class DetailsHandler(object):
+class DetailsHandler(QtCore.QObject):
     
-    def __init__(self, ui, spin_handler, sg_data_retriever):
+    def __init__(self, ui):
+
+        QtCore.QObject.__init__(self)
 
         self._ui = ui
-        self._spin_handler = spin_handler
         self._app = tank.platform.current_bundle()
         
         
@@ -59,9 +62,13 @@ class DetailsHandler(object):
         self._parent_widget = self._ui.details
 
         # set up async calls        
-        self._sg_data_retriever = sg_data_retriever
+        self._sg_data_retriever = ShotgunAsyncDataRetriever(self)
         self._sg_data_retriever.work_completed.connect( self._on_worker_signal)
         self._sg_data_retriever.work_failure.connect( self._on_worker_failure)
+        # start worker
+        self._sg_data_retriever.start()        
+        
+        self._overlay = OverlayWidget(self._parent_widget)
         
         # keep a list of our current widgets around
         self._current_version_list_widgets = []
@@ -98,8 +105,7 @@ class DetailsHandler(object):
         self._thumb_map = {}
         
         # set message
-        self._spin_handler.set_details_message("Please select an item to see detailed information.")
-            
+        self._overlay.show_message("")
         
         
     def load_details(self, publish_item):
@@ -119,8 +125,7 @@ class DetailsHandler(object):
         
         else:
             # this is a publish!
-            print "sg: %s" % sg_data
-            self._spin_handler.set_details_message("Hold on, Loading data...")
+            self._overlay.start_spin()
             
             filter = [ ["name", "is", sg_data["name"] ],
                        ["entity", "is", sg_data["entity"] ],
@@ -151,7 +156,7 @@ class DetailsHandler(object):
             # not our job. ignore
             return
         
-        self._spin_handler.set_detail_error_message("Error retrieving data from Shotgun: %s" % msg)
+        self._overlay.show_error_message("Error retrieving data from Shotgun: %s" % msg)
         
 
     def _on_worker_signal(self, uid, data):
@@ -222,7 +227,7 @@ class DetailsHandler(object):
                 self._current_version_list_widgets.append(pd)
 
         # lastly, switch to this ui
-        self._spin_handler.hide_details_message()
+        self._overlay.hide()
         
             
     def _update_thumbnail(self, uid, path):

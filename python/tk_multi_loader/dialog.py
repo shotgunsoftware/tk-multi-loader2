@@ -19,9 +19,7 @@ from tank.platform.qt import QtCore, QtGui
 from .entitymodel import SgEntityModel
 from .publishmodel import SgPublishModel
 from .publishtypemodel import SgPublishTypeModel
-from .publishproxymodel import SgPublishProxyModel
-from .sgdata import ShotgunAsyncDataRetriever 
-from .spinner import SpinHandler
+from .publishproxymodel import SgPublishProxyModel 
 from .detailshandler import DetailsHandler
 
 from .ui.dialog import Ui_Dialog
@@ -66,28 +64,12 @@ class AppDialog(QtGui.QWidget):
         self.ui.thumb_scale.setValue(140)
         
         #################################################
-        # Progress Feedback. This instance wraps around the UI
-        # and forms a singleton which various parts of the app
-        # (models mostly) will access to indicate that they are 
-        # updating themselves.
-        self._spin_handler = SpinHandler(self.ui)
-        
-        #################################################
-        # set up our background sg data fetcher
-        self._sg_data_retriever = ShotgunAsyncDataRetriever(self)
-        self._sg_data_retriever.queue_processing.connect(self._spin_handler.start_global_spinner)
-        self._sg_data_retriever.queue_complete.connect(self._spin_handler.stop_global_spinner)
-        self._sg_data_retriever.start()
-        
-        #################################################
         # details pane
-        self._details_handler = DetailsHandler(self.ui, 
-                                               self._spin_handler,
-                                               self._sg_data_retriever)
+        self._details_handler = DetailsHandler(self.ui)
         
         #################################################
         # load and initialize cached publish type model
-        self._publish_type_model = SgPublishTypeModel(self._sg_data_retriever, self._spin_handler)        
+        self._publish_type_model = SgPublishTypeModel(self.ui.publish_type_list)        
         self.ui.publish_type_list.setModel(self._publish_type_model)
 
         #################################################
@@ -135,9 +117,7 @@ class AppDialog(QtGui.QWidget):
     def closeEvent(self, event):
         
         self._publish_model.destroy()
-        # do cleanup, threading etc...
-        self._sg_data_retriever.stop()
-                
+        
         # okay to close!
         event.accept()
                 
@@ -452,12 +432,6 @@ class AppDialog(QtGui.QWidget):
             preset_name = e["caption"]
             sg_entity_type = e["entity_type"]
             
-            model = SgEntityModel(self._sg_data_retriever, 
-                                  self._spin_handler,
-                                  preset_name,
-                                  sg_entity_type, 
-                                  e["filters"],
-                                  e["hierarchy"])
                         
             # now set up a new tab
             tab = QtGui.QWidget()
@@ -474,6 +448,9 @@ class AppDialog(QtGui.QWidget):
             # make sure we keep a handle to all the new objects
             # otherwise the GC may not work
             self._dynamic_widgets.extend( [tab, layout, view] )
+
+            # set up data backend
+            model = SgEntityModel(view, preset_name, sg_entity_type, e["filters"], e["hierarchy"])
 
             # configure the view
             view.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
@@ -514,11 +491,7 @@ class AppDialog(QtGui.QWidget):
 
         # and set up which our currently visible preset is
         self._current_entity_preset = curr_tab_name 
-        
-        # clear any outstanding requests in the async queue
-        # these wont be relevant if we switch entity preset
-        self._sg_data_retriever.clear()
-        
+                
         if self._history_navigation_mode == False:
             # when we are not navigating back and forth as part of 
             # history navigation, ask the currently visible

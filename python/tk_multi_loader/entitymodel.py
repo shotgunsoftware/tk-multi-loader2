@@ -12,7 +12,8 @@ import tank
 import os
 import hashlib
 import tempfile
-from .spinner import SpinHandler
+from .overlaywidget import OverlayWidget
+from .sgdata import ShotgunAsyncDataRetriever
 
 from tank.platform.qt import QtCore, QtGui
 
@@ -25,10 +26,17 @@ class SgEntityModel(QtGui.QStandardItemModel):
 
     SG_DATA_ROLE = QtCore.Qt.UserRole + 1
 
-    def __init__(self, sg_data_retriever, spin_handler, caption, entity_type, filters, hierarchy):
+    def __init__(self, overlay_parent_widget, caption, entity_type, filters, hierarchy):
         QtGui.QStandardItemModel.__init__(self)
         
-        self._sg_data_retriever = sg_data_retriever
+        # set up data fetcher
+        self._sg_data_retriever = ShotgunAsyncDataRetriever(self)
+        self._sg_data_retriever.work_completed.connect( self._on_worker_signal)
+        self._sg_data_retriever.work_failure.connect( self._on_worker_failure)
+        # start worker
+        self._sg_data_retriever.start()
+        
+        
         self._entity_type = entity_type
         self._caption = caption
         self._filters = filters
@@ -43,15 +51,12 @@ class SgEntityModel(QtGui.QStandardItemModel):
         # to all items that we create.
         self._all_tree_items = []
         
-        self._spin_handler = spin_handler
+        self._overlay = OverlayWidget(overlay_parent_widget)
 
         # folder icon
         self._folder_icon = QtGui.QPixmap(":/res/folder.png")
 
 
-        # hook up async notifications plumbing
-        self._sg_data_retriever.work_completed.connect( self._on_worker_signal)
-        self._sg_data_retriever.work_failure.connect( self._on_worker_failure)
 
         # when we cache the data associated with this model, create
         # the file name based on the md5 hash of the filter and other 
@@ -94,7 +99,7 @@ class SgEntityModel(QtGui.QStandardItemModel):
         
         if len(self._entity_tree_data) == 0:
             # we are loading an empty tree
-            self._spin_handler.set_entity_message("Hang on, loading data...")        
+            self._overlay.start_spin()        
         
         # get data from shotgun
         fields = self._hierarchy + ["image"]
@@ -139,7 +144,8 @@ class SgEntityModel(QtGui.QStandardItemModel):
         
         if len(self._entity_tree_data) == 0:
             # no data laoded yet. So display error message
-            self._spin_handler.set_entity_error_message(full_msg)
+            self._overlay.show_error_message(full_msg)
+            
         self._app.log_warning(full_msg)
 
 
@@ -155,7 +161,7 @@ class SgEntityModel(QtGui.QStandardItemModel):
         sg_data = data["sg"]
 
         # make sure no messages are displayed
-        self._spin_handler.hide_entity_message()
+        self._overlay.hide()
     
         if len(self._entity_tree_data) == 0:
             # we have an empty tree. Run recursive tree generation

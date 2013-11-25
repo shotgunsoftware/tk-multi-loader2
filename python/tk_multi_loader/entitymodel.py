@@ -76,7 +76,7 @@ class SgEntityModel(QtGui.QStandardItemModel):
             self._app.log_debug("Loading cached data %s..." % self._full_cache_path)
             try:
                 self._load_from_disk(self._full_cache_path)
-                self._app.log_debug("...loading complete!")            
+                self._app.log_debug("...loading complete!")
             except Exception, e:
                 self._app.log_debug("Couldn't load cache data from disk. Will proceed with "
                                     "full SG load. Error reported: %s" % e)
@@ -108,7 +108,6 @@ class SgEntityModel(QtGui.QStandardItemModel):
         """
         Returns a QStandardItem based on entity type and entity id
         Returns none if not found.
-        Constant time lookup
         """
         if entity_type != self._entity_type:
             return None
@@ -156,7 +155,7 @@ class SgEntityModel(QtGui.QStandardItemModel):
         sg_data = data["sg"]
 
         # make sure no messages are displayed
-        self._spin_handler.hide_entity_message(self._caption)
+        self._spin_handler.hide_entity_message()
     
         if len(self._entity_tree_data) == 0:
             # we have an empty tree. Run recursive tree generation
@@ -190,34 +189,35 @@ class SgEntityModel(QtGui.QStandardItemModel):
                         self._add_sg_item_to_tree(d)
                 self._app.log_debug("...done!")
 
-        # check for modifications. At this point, the number of items in the tree and 
-        # the sg data should match, except for any duplicate items in the tree which would 
-        # effectively shadow each other. These can be safely ignored.
-        #
-        # Also note that we need to exclude any S3 urls from the comparison as these change
-        # all the time
-        #
-        self._app.log_debug("Checking for modifications...")
-        detected_changes = False
-        for d in sg_data:
-            # if there are modifications of any kind, we just rebuild the tree at the moment
-            try:
-                existing_sg_data = self._entity_tree_data[ d["id"] ].data(SgEntityModel.SG_DATA_ROLE)
-                if not self._sg_compare_data(d, existing_sg_data):                    
-                    # shotgun data has changed for this item! Rebuild the tree
-                    self._app.log_debug("SG data change: %s --> %s" % (existing_sg_data, d))
-                    detected_changes = True
-            except KeyError, e:
-                self._app.log_warning("Shotgun item %s not appearing in tree - most likely because "
-                                      "there is another object in Shotgun with the same name." % d)
-                  
-        if detected_changes:
-            self._app.log_debug("Detected modifications. Rebuilding tree...")
-            self._rebuild_whole_tree_from_sg_data(sg_data)
-            self._app.log_debug("...done!")
-        else:
-            self._app.log_debug("...no modifications found.")
+            # check for modifications. At this point, the number of items in the tree and 
+            # the sg data should match, except for any duplicate items in the tree which would 
+            # effectively shadow each other. These can be safely ignored.
+            #
+            # Also note that we need to exclude any S3 urls from the comparison as these change
+            # all the time
+            #
+            self._app.log_debug("Checking for modifications...")
+            detected_changes = False
+            for d in sg_data:
+                # if there are modifications of any kind, we just rebuild the tree at the moment
+                try:
+                    existing_sg_data = self._entity_tree_data[ d["id"] ].data(SgEntityModel.SG_DATA_ROLE)
+                    if not self._sg_compare_data(d, existing_sg_data):                    
+                        # shotgun data has changed for this item! Rebuild the tree
+                        self._app.log_debug("SG data change: %s --> %s" % (existing_sg_data, d))
+                        detected_changes = True
+                except KeyError, e:
+                    self._app.log_warning("Shotgun item %s not appearing in tree - most likely because "
+                                          "there is another object in Shotgun with the same name." % d)
+                      
+            if detected_changes:
+                self._app.log_debug("Detected modifications. Rebuilding tree...")
+                self._rebuild_whole_tree_from_sg_data(sg_data)
+                self._app.log_debug("...done!")
+            else:
+                self._app.log_debug("...no modifications found.")
                 
+        # last step - save our tree to disk for fast caching next time!
         self._app.log_debug("Saving tree to disk %s..." % self._full_cache_path)
         try:
             self._save_to_disk(self._full_cache_path)

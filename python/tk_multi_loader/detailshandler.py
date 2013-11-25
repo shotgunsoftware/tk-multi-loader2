@@ -56,7 +56,7 @@ class DetailsHandler(object):
                                 "description"]
         
         # widget to parent any new widgets to
-        self._parent_widget = self._ui.details_list_page
+        self._parent_widget = self._ui.details
 
         # set up async calls        
         self._sg_data_retriever = sg_data_retriever

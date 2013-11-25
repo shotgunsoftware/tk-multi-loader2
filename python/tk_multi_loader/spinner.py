@@ -80,65 +80,50 @@ class SpinHandler(object):
     # entity tree view
     
     def set_entity_message(self, msg):
-        self._ui.entity_grp.setCurrentWidget(self._ui.entity_msg_page)
-        self._ui.entity_msg.setText(msg)            
-        
+        print "entity message: %s" % msg
     
     def set_entity_error_message(self, msg):
-        self._ui.entity_grp.setCurrentWidget(self._ui.entity_msg_page)
-        self._ui.entity_msg.setText(msg)            
-
+        print "entity error message: %s" % msg
     
-    def hide_entity_message(self, profile):
-        view = self._caption_view_map[profile]
-        self._ui.entity_grp.setCurrentWidget(view)
+    def hide_entity_message(self):
+        print "hide entity message - TODO fix group"
     
 
     ####################################################################################
     # filter view
     
     def set_filter_message(self, msg):
-        self._ui.publish_type_grp.setCurrentWidget(self._ui.publish_type_msg_page)
-        self._ui.publish_type_msg.setText(msg)
-        
+        print "filter message: %s" % msg
     
     def set_filter_error_message(self, msg):
-        self._ui.publish_type_grp.setCurrentWidget(self._ui.publish_type_msg_page)
-        self._ui.publish_type_msg.setText(msg)
-
+        print "entity error message: %s" % msg
     
     def hide_filter_message(self):
-        self._ui.publish_type_grp.setCurrentWidget(self._ui.publish_type_list_page)
-    
+        print "hide filter message"
+        
 
     ####################################################################################
     # publish view
     
     def set_publish_message(self, msg):
-        self._ui.publish_grp.setCurrentWidget(self._ui.publish_msg_page)
-        self._ui.publish_msg.setText(msg)
-        
+        print "publish message: %s" % msg
     
     def set_publish_error_message(self, msg):
-        self._ui.publish_grp.setCurrentWidget(self._ui.publish_msg_page)
-        self._ui.publish_msg.setText(msg)
+        print "publish error: %s" % msg
 
     def hide_publish_message(self):
-        self._ui.publish_grp.setCurrentWidget(self._ui.publish_list_page)
+        print "hide publish message"
 
     
     ####################################################################################
     # details view
     
     def set_details_message(self, msg):
-        self._ui.details_grp.setCurrentWidget(self._ui.details_msg_page)
-        self._ui.details_msg.setText(msg)
-        
+        print "details message: %s" % msg
     
     def set_details_error_message(self, msg):
-        self._ui.details_grp.setCurrentWidget(self._ui.details_msg_page)
-        self._ui.details_msg.setText(msg)
-
+        print "details error: %s" % msg
     
     def hide_details_message(self):
-        self._ui.details_grp.setCurrentWidget(self._ui.details_list_page)
+        print "hide details message"
+

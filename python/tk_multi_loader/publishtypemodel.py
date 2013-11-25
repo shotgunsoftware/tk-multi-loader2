@@ -80,6 +80,13 @@ class SgPublishTypeModel(QtGui.QStandardItemModel):
         
         self._refresh_from_sg()
     
+    def destroy(self):
+        """
+        Call this method prior to destroying this object.
+        This will ensure all worker threads etc are stopped
+        """
+        self._sg_data_retriever.stop()
+    
     ########################################################################################
     # public methods
     

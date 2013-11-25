@@ -87,6 +87,13 @@ class SgEntityModel(QtGui.QStandardItemModel):
                                     "full SG load. Error reported: %s" % e)
         
     
+    def destroy(self):
+        """
+        Call this method prior to destroying this object.
+        This will ensure all worker threads etc are stopped
+        """
+        self._sg_data_retriever.stop()
+    
     ########################################################################################
     # public methods
     

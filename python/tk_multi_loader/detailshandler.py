@@ -74,7 +74,14 @@ class DetailsHandler(QtCore.QObject):
         self._current_version_list_widgets = []
         self._current_top_item_widget = None
         
-        
+    
+    def destroy(self):
+        """
+        Call this method prior to destroying this object.
+        This will ensure all worker threads etc are stopped
+        """
+        self._sg_data_retriever.stop()
+    
         
     def clear(self):
         """

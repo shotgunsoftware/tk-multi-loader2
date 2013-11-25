@@ -117,6 +117,10 @@ class AppDialog(QtGui.QWidget):
     def closeEvent(self, event):
         
         self._publish_model.destroy()
+        self._details_handler.destroy()
+        self._publish_type_model.destroy()
+        for p in self._entity_presets:
+            self._entity_presets[p].model.destroy()
         
         # okay to close!
         event.accept()

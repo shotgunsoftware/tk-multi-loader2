@@ -90,7 +90,6 @@ class SgPublishModel(QtGui.QStandardItemModel):
         Call this method prior to destroying this object.
         This will ensure all worker threads etc are stopped
         """
-        print "PUBLISH MODEL DESTRIYT"
         self._sg_data_retriever.stop()
     
     def load_publishes(self, sg_data, folder_items):

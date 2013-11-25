@@ -92,8 +92,8 @@ class AppDialog(QtGui.QWidget):
 
         #################################################
         # setup publish model
-        self._publish_model = SgPublishModel(self._sg_data_retriever, 
-                                             self._spin_handler,
+        self._publish_model = SgPublishModel(self.ui.publish_list, 
+                                             self._sg_data_retriever, 
                                              self._publish_type_model)
         
         # set up a proxy model to cull results based on type selection

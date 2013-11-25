@@ -13,7 +13,7 @@ import os
 import hashlib
 import tempfile
 from . import utils
-from .spinner import SpinHandler
+from .overlaywidget import OverlayWidget
 from .entitymodel import SgEntityModel
 from collections import defaultdict
 
@@ -41,7 +41,7 @@ class SgPublishModel(QtGui.QStandardItemModel):
     ASSOCIATED_TREE_VIEW_ITEM_ROLE = QtCore.Qt.UserRole + 3
     SG_DATA_ROLE = QtCore.Qt.UserRole + 4
 
-    def __init__(self, sg_data_retriever, spin_handler, publish_type_model):
+    def __init__(self, overlay_parent_widget, sg_data_retriever, publish_type_model):
         QtGui.QStandardItemModel.__init__(self)
         
         #self._widget = widget
@@ -54,7 +54,8 @@ class SgPublishModel(QtGui.QStandardItemModel):
         
         self._current_work_id = None
         self._current_folder_items = None
-        self._spin_handler = spin_handler
+        
+        self._overlay = OverlayWidget(overlay_parent_widget)
         
         self._thumb_map = {}
         
@@ -110,7 +111,7 @@ class SgPublishModel(QtGui.QStandardItemModel):
             self._current_folder_items = folder_items
 
             # get data from shotgun
-            self._spin_handler.set_publish_message("Hang on, loading data...")
+            self._overlay.start_spin("Hang on, loading data...")
             
             # line up a request from Shotgun
             self._current_work_id = self._sg_data_retriever.execute_find(self._publish_entity_type, 
@@ -130,7 +131,7 @@ class SgPublishModel(QtGui.QStandardItemModel):
             # not our job. ignore
             return
         
-        self._spin_handler.set_publish_error_message("Error retrieving data from Shotgun: %s" % msg)
+        self._overlay.show_error_message("Error retrieving data from Shotgun: %s" % msg)
         
 
     def _on_worker_signal(self, uid, data):
@@ -180,12 +181,12 @@ class SgPublishModel(QtGui.QStandardItemModel):
 
         if len(sg_data) == 0 and len(folder_items) == 0:
             # no publishes or folders found!
-            self._spin_handler.set_publish_message("Sorry, no publishes found for this item!")
+            self._overlay.show_message("Sorry, no publishes found for this item!")
             self._publish_type_model.set_active_types({})
             return
 
         # we have some data to display. So hide our wait message..
-        self._spin_handler.hide_publish_message()
+        self._overlay.hide()
         
         # now process folder items
         for tree_view_item in folder_items:

@@ -114,9 +114,6 @@ class ShotgunAsyncDataRetriever(QtCore.QThread):
         
         return uid
 
-
-
-
     def _get_thumbnail_path(self, url, entity_id, entity_type):
         """
         Returns the location on disk suitable for a thumbnail given its metadata

@@ -14,6 +14,7 @@ import hashlib
 import tempfile
 from . import utils
 from .overlaywidget import OverlayWidget
+from .sgdata import ShotgunAsyncDataRetriever
 from .entitymodel import SgEntityModel
 from collections import defaultdict
 
@@ -41,16 +42,18 @@ class SgPublishModel(QtGui.QStandardItemModel):
     ASSOCIATED_TREE_VIEW_ITEM_ROLE = QtCore.Qt.UserRole + 3
     SG_DATA_ROLE = QtCore.Qt.UserRole + 4
 
-    def __init__(self, overlay_parent_widget, sg_data_retriever, publish_type_model):
+    def __init__(self, overlay_parent_widget, publish_type_model):
         QtGui.QStandardItemModel.__init__(self)
         
         #self._widget = widget
         self._publish_type_model = publish_type_model
         self._app = tank.platform.current_bundle()
         
-        self._sg_data_retriever = sg_data_retriever
+        self._sg_data_retriever = ShotgunAsyncDataRetriever(self)
         self._sg_data_retriever.work_completed.connect( self._on_worker_signal)
         self._sg_data_retriever.work_failure.connect( self._on_worker_failure)
+        # start worker
+        self._sg_data_retriever.start()
         
         self._current_work_id = None
         self._current_folder_items = None
@@ -81,6 +84,13 @@ class SgPublishModel(QtGui.QStandardItemModel):
     
     ########################################################################################
     # public methods
+    
+    def destroy(self):
+        """
+        Call this method prior to destroying this object.
+        This will ensure all worker threads etc are stopped
+        """
+        self._sg_data_retriever.stop()
     
     def load_publishes(self, sg_data, folder_items):
         """

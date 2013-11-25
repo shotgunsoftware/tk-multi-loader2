@@ -92,9 +92,7 @@ class AppDialog(QtGui.QWidget):
 
         #################################################
         # setup publish model
-        self._publish_model = SgPublishModel(self.ui.publish_list, 
-                                             self._sg_data_retriever, 
-                                             self._publish_type_model)
+        self._publish_model = SgPublishModel(self.ui.publish_list, self._publish_type_model)
         
         # set up a proxy model to cull results based on type selection
         self._publish_proxy_model = SgPublishProxyModel(self)
@@ -135,6 +133,8 @@ class AppDialog(QtGui.QWidget):
         
     
     def closeEvent(self, event):
+        
+        self._publish_model.destroy()
         # do cleanup, threading etc...
         self._sg_data_retriever.stop()
                 

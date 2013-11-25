@@ -111,6 +111,8 @@ class AppDialog(QtGui.QWidget):
         self._current_entity_preset = None
         self._load_entity_presets()
         
+        # lastly, set the splitter ratio roughly. QT will do fine adjustments.
+        self.ui.left_side_splitter.setSizes( [400, 200] )
         
         
     

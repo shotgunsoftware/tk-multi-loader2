@@ -48,6 +48,7 @@ class SgPublishModel(ShotgunModel):
         self._publish_type_model = publish_type_model
         self._no_pubs_found_icon = QtGui.QPixmap(":/res/no_publishes_found.png")
         self._folder_icon = QtGui.QPixmap(":/res/publish_folder.png")
+        self._loading_icon = QtGui.QPixmap(":/res/publish_loading.png")
                 
         # init base class
         ShotgunModel.__init__(self, overlay_parent_widget, download_thumbs=True)
@@ -97,6 +98,7 @@ class SgPublishModel(ShotgunModel):
         
 
         for tree_view_item in treeview_folder_items:
+            print "created %s" % tree_view_item.text()
             item = QtGui.QStandardItem(self._folder_icon, tree_view_item.text())
             item.setData(None, SgPublishModel.TYPE_ID_ROLE)
             item.setData(True, SgPublishModel.IS_FOLDER_ROLE)
@@ -122,6 +124,7 @@ class SgPublishModel(ShotgunModel):
         Given a shotgun data dictionary, generate a QStandardItem
         """
         item.setData(False, SgPublishModel.IS_FOLDER_ROLE)
+        item.setIcon(self._loading_icon)
         
         type_link = sg_data.get(self._publish_type_field)
         if type_link:

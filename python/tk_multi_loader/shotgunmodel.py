@@ -47,9 +47,6 @@ class ShotgunModel(QtGui.QStandardItemModel):
         
         self.__app = tank.platform.current_bundle()
         
-        self._loading_icon = QtGui.QPixmap(":/res/publish_loading.png")
-        
-        
         
     
     
@@ -155,7 +152,7 @@ class ShotgunModel(QtGui.QStandardItemModel):
         """
         Show an overlay status message in the form of a pixmap
         """
-        self._overlay.show_message_pixmap(pixmap)        
+        self.__overlay.show_message_pixmap(pixmap)        
 
     def _request_thumbnail_download(self, item, url, entity_type, entity_id):
         """
@@ -427,7 +424,7 @@ class ShotgunModel(QtGui.QStandardItemModel):
         
         if found_item is None:
             # didn't find item! Create it!
-            found_item = QtGui.QStandardItem(self._loading_icon, field_display_name)
+            found_item = QtGui.QStandardItem(field_display_name)
             # keep a reference to this object to make GC happy
             # (pyside may crash otherwise)
             self.__all_tree_items.append(found_item)
@@ -464,7 +461,7 @@ class ShotgunModel(QtGui.QStandardItemModel):
         Clears the tree and rebuilds it from the given shotgun data.
         Note that any selection and expansion states in the view will be lost.
         """
-        self.clear()
+        #self.clear()
         self.__entity_tree_data = {}
         self.__all_tree_items = []
         root = self.invisibleRootItem()
@@ -514,7 +511,7 @@ class ShotgunModel(QtGui.QStandardItemModel):
         for dv in sorted(discrete_values.keys()):
             
             # construct tree view node object
-            item = QtGui.QStandardItem(self._loading_icon, dv)
+            item = QtGui.QStandardItem(dv)
             # keep a reference to this object to make GC happy
             # (pyside may crash otherwise)
             self.__all_tree_items.append(item)            

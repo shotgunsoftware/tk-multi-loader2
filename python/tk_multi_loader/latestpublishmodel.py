@@ -14,7 +14,7 @@ from tank.platform.qt import QtCore, QtGui
 import tank
 from . import utils
 
-from .shotgunmodel import ShotgunModel
+from .shotgun_model import ShotgunModel
 
 class SgLatestPublishModel(ShotgunModel):
     

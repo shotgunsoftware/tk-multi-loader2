@@ -22,7 +22,7 @@ from .publishtypemodel import SgPublishTypeModel
 from .publishproxymodel import SgPublishProxyModel 
 from .publishdelegate import SgPublishDelegate
 from .detailshandler import DetailsHandler
-from .shotgunmodel import ShotgunModel
+from .shotgun_model import ShotgunModel
 
 from .ui.dialog import Ui_Dialog
 

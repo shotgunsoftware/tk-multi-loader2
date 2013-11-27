@@ -16,7 +16,7 @@ from collections import defaultdict
 from .sgdata import ShotgunAsyncDataRetriever
 from .overlaywidget import OverlayWidget
 from .publishdetail import PublishDetail
-from .publishmodel import SgPublishModel
+from .publishmodel import SgLatestPublishModel
 
 from tank.platform.qt import QtCore, QtGui
 
@@ -124,8 +124,8 @@ class DetailsHandler(QtCore.QObject):
         self.clear()
 
         # get data from our publish item
-        is_folder = publish_item.data(SgPublishModel.IS_FOLDER_ROLE)
-        sg_data = publish_item.data(SgPublishModel.SG_DATA_ROLE)
+        is_folder = publish_item.data(SgLatestPublishModel.IS_FOLDER_ROLE)
+        sg_data = publish_item.data(SgLatestPublishModel.SG_DATA_ROLE)
     
         if is_folder:
             pass

@@ -8,24 +8,19 @@
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights 
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
-import tank
-import os
-import hashlib
-import tempfile
-from . import utils
-from .overlaywidget import OverlayWidget
-from .sgdata import ShotgunAsyncDataRetriever
-from .entitymodel import SgEntityModel
 from collections import defaultdict
-
 from tank.platform.qt import QtCore, QtGui
+
+import tank
+from . import utils
 
 from .shotgunmodel import ShotgunModel
 
-class SgPublishModel(ShotgunModel):
+class SgLatestPublishModel(ShotgunModel):
     
     """
-    Handles the publish data set
+    Model which handles the main spreadsheet view which displays the latest version of all 
+    publishes.
     """
     
     TYPE_ID_ROLE = QtCore.Qt.UserRole + 101
@@ -56,7 +51,22 @@ class SgPublishModel(ShotgunModel):
 
 
     def load_data(self, sg_entity_link, treeview_folder_items):        
-
+        """
+        Clears the model and sets it up for a particular entity.
+        Loads any cached data that exists.
+        
+        This call should be followed by a call to refresh_data() to 
+        asynchronously update the model in the background with new
+        Shotgun data.
+                
+        :param sg_data: shotgun data for an entity for which we should display
+                        associated publishes. If None then there is no entity 
+                        present for which to load publishes.
+                        
+        :param folder_items: list of QStandardItem representing items in the tree view.
+                             these are the sub folders for the currently selected item
+                             in the tree view.
+        """
 
         # first figure out which fields to get from shotgun
         app = tank.platform.current_bundle()
@@ -92,16 +102,25 @@ class SgPublishModel(ShotgunModel):
 
 
     def _load_external_data(self):
+        """
+        Called whenever the model needs to be rebuilt from scratch. This is called prior 
+        to any shotgun data is added to the model. This makes it possible for deriving classes
+        to add custom data to the model in a very flexible fashion. Such data will not be 
+        cached by the ShotgunModel framework.
+        """
+        
+        # process the folder data and add that to the model. Keep local references to the 
+        # items to keep the GC happy.
         
         self._folder_items = []
         
         for tree_view_item in self._treeview_folder_items:
-            print "created %s" % tree_view_item.text()
-            item = QtGui.QStandardItem(self._folder_icon, tree_view_item.text())
-            item.setData(None, SgPublishModel.TYPE_ID_ROLE)
-            item.setData(True, SgPublishModel.IS_FOLDER_ROLE)
-            item.setData(tree_view_item, SgPublishModel.ASSOCIATED_TREE_VIEW_ITEM_ROLE)
 
+            # all of the items created in this class get special role data assigned.
+            item = QtGui.QStandardItem(self._folder_icon, tree_view_item.text())
+            item.setData(None, SgLatestPublishModel.TYPE_ID_ROLE)
+            item.setData(True, SgLatestPublishModel.IS_FOLDER_ROLE)
+            item.setData(tree_view_item, SgLatestPublishModel.ASSOCIATED_TREE_VIEW_ITEM_ROLE)
             # copy the sg data from the tree view item onto this node - after all
             # this node is also associated with that data!
             treeview_sg_data = tree_view_item.data(ShotgunModel.SG_DATA_ROLE) 
@@ -119,35 +138,74 @@ class SgPublishModel(ShotgunModel):
 
     def _populate_item(self, item, sg_data):
         """
-        Given a shotgun data dictionary, generate a QStandardItem
+        Whenever an item is constructed, this methods is called. It allows subclasses to intercept
+        the construction of a QStandardItem and add additional metadata or make other changes
+        that may be useful. Nothing needs to be returned.
+        
+        :param item: QStandardItem that is about to be added to the model. This has been primed
+                     with the standard settings that the ShotgunModel handles.
+        :param sg_data: Shotgun data dictionary that was received from Shotgun given the fields
+                        and other settings specified in load_data()
         """
-        item.setData(False, SgPublishModel.IS_FOLDER_ROLE)
+        
+        # indicate that shotgun data is NOT folder data
+        item.setData(False, SgLatestPublishModel.IS_FOLDER_ROLE)
+        
+        # set up publishes with a "thumbnail loading" icon
         item.setIcon(self._loading_icon)
         
+        # add the publish type id as a special field
         type_link = sg_data.get(self._publish_type_field)
         if type_link:
             type_id = type_link["id"]
         else:
             type_id = None
-        item.setData(type_id, SgPublishModel.TYPE_ID_ROLE)
+        item.setData(type_id, SgLatestPublishModel.TYPE_ID_ROLE)
 
 
     def _populate_thumbnail(self, item, path):
         """
-        Called when a thumbnail for an item exists on disk
-        """
-        # composite and process thumb
-        is_folder = item.data(SgPublishModel.IS_FOLDER_ROLE)
-        thumb = utils.create_standard_thumbnail(path, is_folder)
+        Called whenever a thumbnail for an item has arrived on disk. In the case of 
+        an already cached thumbnail, this may be called very soon after data has been 
+        loaded, in cases when the thumbs are downloaded from Shotgun, it may happen later.
         
-        # associate with item
+        This method will be called only if the model has been instantiated with the 
+        download_thumbs flag set to be true. It will be called for items which are
+        associated with shotgun entities (in a tree data layout, this is typically 
+        leaf nodes).
+        
+        This method makes it possible to control how the thumbnail is applied and associated
+        with the item. The default implementation will simply set the thumbnail to be icon
+        of the item, but this can be altered by subclassing this method.
+        
+        Any thumbnails requested via the _request_thumbnail_download() method will also 
+        resurface via this callback method.
+        
+        :param item: QStandardItem which is associated with the given thumbnail
+        :param path: A path on disk to the thumbnail. This is a file in jpeg format.
+        """
+        # pass the thumbnail through out special image compositing methods
+        # before associating it with the model
+        is_folder = item.data(SgLatestPublishModel.IS_FOLDER_ROLE)
+        thumb = utils.create_standard_thumbnail(path, is_folder)
         item.setIcon(thumb)
 
 
     def _before_data_processing(self, sg_data_list):
         """
-        Filter the data when it has arrived from Shotgun
+        Called just after data has been retrieved from Shotgun but before any processing
+        takes place. This makes it possible for deriving classes to perform summaries, 
+        calculations and other manipulations of the data before it is passed on to the model
+        class. 
+        
+        :param sg_data_list: list of shotgun dictionaries, as retunrned by the find() call.
+        :returns: should return a list of shotgun dictionaries, on the same form as the input.
         """
+
+        # filter the shotgun data so that we only return the latest publish for each file.
+        # also perform aggregate computations and push those summaries into the associated
+        # publish type model. 
+
         
         if len(sg_data_list) == 0 and len(self._treeview_folder_items) == 0:
             # no publishes or folders found!

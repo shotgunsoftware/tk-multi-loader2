@@ -87,7 +87,9 @@ class ShotgunModel(QtGui.QStandardItemModel):
                           are broken down by asset type, you could instead specify
                           ["sg_asset_type", "code"]
         :param fields:    Fields to retrieve from Shotgun (in addition to the ones specified
-                          in the hierarchy parameter). Standard Shotgun API syntax.
+                          in the hierarchy parameter). Standard Shotgun API syntax. If you 
+                          specify None for this parameter, Shotgun will not be called when
+                          the refresh_data() method is being executed.
         :param order:     Order clause for the Shotgun data. Standard Shotgun API syntax.
         """
         self.clear()

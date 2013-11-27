@@ -15,11 +15,11 @@ import tempfile
 
 from tank.platform.qt import QtCore, QtGui
 
-from .publishmodel import SgPublishModel
+from .publishmodel import SgLatestPublishModel
 
 class SgPublishProxyModel(QtGui.QSortFilterProxyModel):
     """
-    Filter model to be used in conjunction with SgPublishModel
+    Filter model to be used in conjunction with SgLatestPublishModel
     """
     
     def __init__(self, parent):
@@ -50,7 +50,7 @@ class SgPublishProxyModel(QtGui.QSortFilterProxyModel):
         
         current_item = model.invisibleRootItem().child(source_row)  # assume non-tree structure
         
-        is_folder = current_item.data(SgPublishModel.IS_FOLDER_ROLE)
+        is_folder = current_item.data(SgLatestPublishModel.IS_FOLDER_ROLE)
         
         if is_folder:
             # always show sub folders!
@@ -58,7 +58,7 @@ class SgPublishProxyModel(QtGui.QSortFilterProxyModel):
             
         else:
             # get the type id
-            sg_type_id = current_item.data(SgPublishModel.TYPE_ID_ROLE) 
+            sg_type_id = current_item.data(SgLatestPublishModel.TYPE_ID_ROLE) 
             
             if sg_type_id is None:
                 # no type. So always show.

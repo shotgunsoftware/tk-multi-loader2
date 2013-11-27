@@ -9,27 +9,37 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import tank
-import os
-import hashlib
-import tempfile
-
 from tank.platform.qt import QtCore, QtGui
 
 from .shotgunmodel import ShotgunModel
 
 class SgEntityModel(ShotgunModel):
-
+    """
+    This model represents the data which is displayed inside one of the treeview tabs
+    on the left hand side.
+    """
+    
     def __init__(self, overlay_parent_widget):
-
+        """
+        Constructor
+        """
         # folder icon
-        self._folder_icon = QtGui.QPixmap(":/res/folder.png")
-        
+        self._folder_icon = QtGui.QPixmap(":/res/folder.png")    
         ShotgunModel.__init__(self, overlay_parent_widget, download_thumbs=False)
     
     def _populate_item(self, item, sg_data):
         """
-        Given a shotgun data dictionary, generate a QStandardItem
+        Whenever an item is constructed, this methods is called. It allows subclasses to intercept
+        the construction of a QStandardItem and add additional metadata or make other changes
+        that may be useful. Nothing needs to be returned.
+        
+        :param item: QStandardItem that is about to be added to the model. This has been primed
+                     with the standard settings that the ShotgunModel handles.
+        :param sg_data: Shotgun data dictionary that was received from Shotgun given the fields
+                        and other settings specified in load_data()
         """
+        # for the tree view, no need to manipulate anything! For non-leaf nodes,
+        # associate a folder icon.
         if sg_data is None:
             # non-leaf node!
             item.setIcon(self._folder_icon)

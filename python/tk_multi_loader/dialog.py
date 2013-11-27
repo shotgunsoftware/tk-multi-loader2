@@ -17,7 +17,7 @@ import threading
 from tank.platform.qt import QtCore, QtGui
 
 from .entitymodel import SgEntityModel
-from .publishmodel import SgPublishModel
+from .publishmodel import SgLatestPublishModel
 from .publishtypemodel import SgPublishTypeModel
 from .publishproxymodel import SgPublishProxyModel 
 from .publishdelegate import SgPublishDelegate
@@ -83,7 +83,7 @@ class AppDialog(QtGui.QWidget):
 
         #################################################
         # setup publish model
-        self._publish_model = SgPublishModel(self.ui.publish_list, self._publish_type_model)
+        self._publish_model = SgLatestPublishModel(self.ui.publish_list, self._publish_type_model)
         
         # set up a proxy model to cull results based on type selection
         self._publish_proxy_model = SgPublishProxyModel(self)
@@ -345,12 +345,12 @@ class AppDialog(QtGui.QWidget):
         # so let's retrieve the standarditem object associated with the index
         item = source_index.model().itemFromIndex(source_index)
         
-        is_folder = item.data(SgPublishModel.IS_FOLDER_ROLE)
+        is_folder = item.data(SgLatestPublishModel.IS_FOLDER_ROLE)
         
         if is_folder:
             
             # get the corresponding tree view item
-            tree_view_item = item.data(SgPublishModel.ASSOCIATED_TREE_VIEW_ITEM_ROLE)
+            tree_view_item = item.data(SgLatestPublishModel.ASSOCIATED_TREE_VIEW_ITEM_ROLE)
             
             # select it in the tree view
             self._select_item_in_entity_tree(self._current_entity_preset, tree_view_item)

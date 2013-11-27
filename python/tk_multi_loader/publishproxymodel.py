@@ -15,7 +15,7 @@ import tempfile
 
 from tank.platform.qt import QtCore, QtGui
 
-from .publishmodel import SgLatestPublishModel
+from .latestpublishmodel import SgLatestPublishModel
 
 class SgPublishProxyModel(QtGui.QSortFilterProxyModel):
     """

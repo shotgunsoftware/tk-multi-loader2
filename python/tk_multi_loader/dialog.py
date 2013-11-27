@@ -17,7 +17,7 @@ import threading
 from tank.platform.qt import QtCore, QtGui
 
 from .entitymodel import SgEntityModel
-from .publishmodel import SgLatestPublishModel
+from .latestpublishmodel import SgLatestPublishModel
 from .publishtypemodel import SgPublishTypeModel
 from .publishproxymodel import SgPublishProxyModel 
 from .publishdelegate import SgPublishDelegate

@@ -16,7 +16,7 @@ from collections import defaultdict
 from .sgdata import ShotgunAsyncDataRetriever
 from .overlaywidget import OverlayWidget
 from .publishdetail import PublishDetail
-from .publishmodel import SgLatestPublishModel
+from .latestpublishmodel import SgLatestPublishModel
 
 from tank.platform.qt import QtCore, QtGui
 

@@ -80,6 +80,8 @@ class AppDialog(QtGui.QWidget):
         # load and initialize cached publish type model
         self._publish_type_model = SgPublishTypeModel(self.ui.publish_type_list)        
         self.ui.publish_type_list.setModel(self._publish_type_model)
+        self._publish_type_model.load_data()
+        self._publish_type_model.refresh_data()
 
         #################################################
         # setup publish model

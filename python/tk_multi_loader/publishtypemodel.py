@@ -12,84 +12,64 @@ import tank
 import os
 import hashlib
 import tempfile
-
-from .overlaywidget import OverlayWidget
-from .sgdata import ShotgunAsyncDataRetriever
-
-
 from tank.platform.qt import QtCore, QtGui
 
-# just so we can do some basic file validation
-FILE_MAGIC_NUMBER = 0xCAFEBABE # so we can validate file format correctness before loading
-FILE_VERSION = 1               # if we ever change the file format structure
 
+from .shotgunmodel import ShotgunModel
 
-class SgPublishTypeModel(QtGui.QStandardItemModel):
-
-    # define custom roles
-    SG_DATA_ROLE = QtCore.Qt.UserRole + 1      # holds the sg data associated with the node
-    SORT_KEY_ROLE = QtCore.Qt.UserRole + 2     # holds a sortable key
-    DISPLAY_NAME_ROLE = QtCore.Qt.UserRole + 3 # holds the display name for the node
-
+class SgPublishTypeModel(ShotgunModel):
+    """
+    This model represents the data which is displayed inside one of the treeview tabs
+    on the left hand side.
+    """
+    
+    SORT_KEY_ROLE = QtCore.Qt.UserRole + 102     # holds a sortable key
+    DISPLAY_NAME_ROLE = QtCore.Qt.UserRole + 103 # holds the display name for the node
+    
+    
     def __init__(self, overlay_parent_widget):
-        QtGui.QStandardItemModel.__init__(self)
+        """
+        Constructor
+        """
+        # folder icon
+        self._folder_icon = QtGui.QPixmap(":/res/folder.png")    
+        ShotgunModel.__init__(self, overlay_parent_widget, download_thumbs=False)
+    
+    def load_data(self):
+        """
+        Sets up the model
+        """
         
-        self._sg_data_retriever = ShotgunAsyncDataRetriever(self)
-        self._sg_data_retriever.work_completed.connect( self._on_worker_signal)
-        self._sg_data_retriever.work_failure.connect( self._on_worker_failure)
-        # start worker
-        self._sg_data_retriever.start()
+        # first figure out which fields to get from shotgun
+        app = tank.platform.current_bundle()
+        publish_entity_type = tank.util.get_published_file_entity_type(app.tank)
         
-        self._overlay = OverlayWidget(overlay_parent_widget)
-        
-        self._current_work_id = 0
-        self._app = tank.platform.current_bundle()
-        
-        # we use a special column for sorting
-        self.setSortRole(SgPublishTypeModel.SORT_KEY_ROLE)
-        
-        # model data in alt format
-        self._tree_data = {}
+        if publish_entity_type == "PublishedFile":
+            publish_type_field = "PublishedFileType"
+        else:
+            publish_type_field = "TankType"
+                
+        ShotgunModel.load_data(self, 
+                               entity_type=publish_type_field, 
+                               filters=[], 
+                               hierarchy=["code"], 
+                               fields=["code","description","id"],
+                               order=[])
 
-        # when we cache the data associated with this model, create
-        # the file name based on the md5 hash of the filter and other 
-        # parameters that will determine the contents that is loaded into the tree
-        
-        # when we cache the data associated with this model, create
-        # the file name based on the md5 hash of the hostname 
-        hash_base = self._app.shotgun.base_url
-        
-        m = hashlib.md5()
-        m.update(hash_base)
-        cache_filename = "tk_loader_%s.sgcache" % m.hexdigest()
-        
-        self._full_cache_path = os.path.join(tempfile.gettempdir(), cache_filename)                
-        if os.path.exists(self._full_cache_path):
-            self._app.log_debug("Loading cached data %s..." % self._full_cache_path)
-            try:
-                self._load_from_disk(self._full_cache_path)
-                self._app.log_debug("...loading complete!")          
-            except Exception, e:
-                self._app.log_warning("Couldn't load cache data from disk. Will proceed with "
-                                      "full SG load. Error reported: %s" % e)
-        
-        # now trigger a shotgun refresh to ensure we got the latest stuff
-        if len(self._tree_data) == 0:
-            # show spinner since we have no results yet
-            self._overlay.start_spin()
-        
-        self._refresh_from_sg()
-    
-    def destroy(self):
+    def get_selected_types(self):
         """
-        Call this method prior to destroying this object.
-        This will ensure all worker threads etc are stopped
+        Returns all the sg type ids that are currently selected
         """
-        self._sg_data_retriever.stop()
-    
-    ########################################################################################
-    # public methods
-    
+        type_ids = []
+        for idx in range(self.rowCount()):
+            item = self.item(idx)
+            if item.checkState() == QtCore.Qt.Checked:
+                # get the shotgun id
+                sg_type_id = item.data(ShotgunModel.SG_DATA_ROLE).get("id")
+                type_ids.append(sg_type_id)
+        return type_ids
+        
+        
     def set_active_types(self, type_aggregates):
         """
         Specifies which types are currently active. Also adjust the sort role,
@@ -98,174 +78,52 @@ class SgPublishTypeModel(QtGui.QStandardItemModel):
         :param type_aggregates: dict keyed by type id with value being the number of 
                                 of occurances of that type in the currently displayed result
         """
-        for sg_type_id in self._tree_data:
+        for idx in range(self.rowCount()):
             
-            curr_item = self._tree_data[sg_type_id]
-            
-            display_name = curr_item.data(SgPublishTypeModel.DISPLAY_NAME_ROLE)
+            item = self.item(idx)
+            sg_type_id = item.data(ShotgunModel.SG_DATA_ROLE).get("id")            
+            display_name = item.data(SgPublishTypeModel.DISPLAY_NAME_ROLE)
             
             if sg_type_id in type_aggregates:
                 # this type is in the active list
-                curr_item.setEnabled(True)
-                curr_item.setData("a_%s" % display_name, SgPublishTypeModel.SORT_KEY_ROLE)
+                item.setEnabled(True)
+                item.setData("a_%s" % display_name, SgPublishTypeModel.SORT_KEY_ROLE)
                 # disply name with aggregate
-                curr_item.setText("%s (%d)" % (display_name, type_aggregates[sg_type_id]))
+                item.setText("%s (%d)" % (display_name, type_aggregates[sg_type_id]))
                 
             else:
-                curr_item.setEnabled(False)
-                curr_item.setData("b_%s" % display_name, SgPublishTypeModel.SORT_KEY_ROLE)
+                item.setEnabled(False)
+                item.setData("b_%s" % display_name, SgPublishTypeModel.SORT_KEY_ROLE)
                 # disply name with no aggregate
-                curr_item.setText(display_name)
+                item.setText(display_name)
                 
-
         # and ask the model to resort itself 
         self.sort(0)
-    
-    def get_selected_types(self):
-        """
-        Returns all the sg type ids that are currently selected
-        """
-        type_ids = []
-        for (sg_type_id, item) in self._tree_data.iteritems():
-            if item.checkState() == QtCore.Qt.Checked:
-                type_ids.append(sg_type_id)
-        return type_ids
         
     
-    ########################################################################################
-    # get data from sg
-
-    def _refresh_from_sg(self):
+    
+    def _populate_item(self, item, sg_data):
         """
-        Rebuilds the data in the model to ensure it is up to date.
-        This call is asynchronous and will return instantly.
-        The update will be applied whenever the data from Shotgun is returned.
-        """
+        Whenever an item is constructed, this methods is called. It allows subclasses to intercept
+        the construction of a QStandardItem and add additional metadata or make other changes
+        that may be useful. Nothing needs to be returned.
         
-        publish_et = tank.util.get_published_file_entity_type(self._app.sgtk)
-        
-        if publish_et == "PublishedFile":
-            et = "PublishedFileType"
-        else:
-            et = "TankType"
-            
-        # get data from shotgun
-        self._current_work_id = self._sg_data_retriever.execute_find(et, 
-                                                                     [], 
-                                                                     ["code", "description", "id"])
-
-    def _on_worker_failure(self, uid, msg):
+        :param item: QStandardItem that is about to be added to the model. This has been primed
+                     with the standard settings that the ShotgunModel handles.
+        :param sg_data: Shotgun data dictionary that was received from Shotgun given the fields
+                        and other settings specified in load_data()
         """
-        Asynchronous callback - the worker thread errored.
-        """
-        if self._current_work_id != uid:
-            # not our job. ignore
-            return
 
-        self._overlay.show_error_message("Error retrieving data from Shotgun: %s" % msg)
-
-    def _on_worker_signal(self, uid, data):
-        """
-        Signaled whenever the worker completes something
-        """
-        if self._current_work_id != uid:
-            # not our job. ignore
-            return
-
-        # make sure no messages are displayed
-        self._overlay.hide()
-
-        # load data.
-        for sg_item in data["sg"]:
-            
-            sg_id = sg_item["id"]
-            sg_desc = sg_item.get("description", "No description available for this type.")
-            sg_name = sg_item.get("code", "Unnamed").capitalize()
-
-            if sg_id in self._tree_data:
-                # we have this item already!
-                # make sure it is up to date!
-                current_item = self._tree_data[sg_id]
-                if current_item.text() != sg_name:
-                    # name has changed. update name
-                    current_item.setText(sg_name)
-                    current_item.setData(sg_item, SgPublishTypeModel.SG_DATA_ROLE)
-                    current_item.setData(sg_name, SgPublishTypeModel.DISPLAY_NAME_ROLE)
-            else:
-                # type is not in the list - add it!                
-                item = QtGui.QStandardItem(sg_name)
-                item.setData(sg_item, SgPublishTypeModel.SG_DATA_ROLE)
-                item.setData(sg_name, SgPublishTypeModel.DISPLAY_NAME_ROLE)
-                item.setToolTip(str(sg_desc))
-                item.setCheckable(True)
-                item.setCheckState(QtCore.Qt.Checked)
-                self.invisibleRootItem().appendRow(item)
-                self._tree_data[sg_id] = item
-                
-                
-        self._app.log_debug("Saving tree to disk %s..." % self._full_cache_path)
-        try:
-            self._save_to_disk(self._full_cache_path)
-            self._app.log_debug("...saving complete!")            
-        except Exception, e:
-            self._app.log_warning("Couldn't save cache data to disk: %s" % e)
-
-
-    ########################################################################################
-    # de/serialization of model contents 
-            
-    def _save_to_disk(self, filename):
-        """
-        Save the model to disk
-        """
-        fh = QtCore.QFile(filename)
-        fh.open(QtCore.QIODevice.WriteOnly);
-        out = QtCore.QDataStream(fh)
+        sg_desc = sg_data.get("description")
+        if sg_desc is None:
+            sg_desc = "No description available for this type."
+        sg_name = sg_data.get("code")
+        if sg_name is None:
+            sg_name = "Unnamed"
+        sg_name = sg_name.capitalize()
         
-        # write a header
-        out.writeInt64(FILE_MAGIC_NUMBER)
-        out.writeInt32(FILE_VERSION)
-
-        # tell which serialization dialect to use
-        out.setVersion(QtCore.QDataStream.Qt_4_0)
-
-        root = self.invisibleRootItem()
-        num_rows = root.rowCount()
-        for row in range(num_rows):
-            # write this
-            child = root.child(row)
-            child.write(out)
+        item.setData(sg_name, SgPublishTypeModel.DISPLAY_NAME_ROLE)
+        item.setToolTip(str(sg_desc))
+        item.setCheckable(True)
+        item.setCheckState(QtCore.Qt.Checked)
         
-    def _load_from_disk(self, filename):
-        """
-        Load a serialized model from disk
-        """
-        fh = QtCore.QFile(filename)
-        fh.open(QtCore.QIODevice.ReadOnly);
-        file_in = QtCore.QDataStream(fh)
-        
-        magic = file_in.readInt64()
-        if magic != FILE_MAGIC_NUMBER:
-            raise Exception("Invalid file magic number!")
-        
-        version = file_in.readInt32()
-        if version != FILE_VERSION:
-            raise Exception("Invalid file version!")
-        
-        # tell which deserialization dialect to use
-        file_in.setVersion(QtCore.QDataStream.Qt_4_0)
-        
-        root = self.invisibleRootItem()
-                
-        while not file_in.atEnd():
-        
-            # read data
-            item = QtGui.QStandardItem()
-            item.read(file_in)
-            root.appendRow(item)
-            
-            # add the model item to our tree data dict keyed by id
-            sg_data = item.data(SgPublishTypeModel.SG_DATA_ROLE) 
-            self._tree_data[ sg_data["id"] ] = item            
-            
-            

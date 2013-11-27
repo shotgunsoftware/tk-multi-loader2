@@ -329,6 +329,9 @@ class ShotgunModel(QtGui.QStandardItemModel):
         """
         Signaled whenever the worker completes something
         """
+        
+        modifications_made = False
+        
         # make sure no messages are displayed
         self.__overlay.hide()
     
@@ -336,11 +339,12 @@ class ShotgunModel(QtGui.QStandardItemModel):
         sg_data = self._before_data_processing(sg_data)
     
         if len(self.__entity_tree_data) == 0:
-            # we have an empty tree. Run recursive tree generation
-            # for performance.
-            self.__app.log_debug("No cached items in tree! Creating full tree from Shotgun data...")
-            self.__rebuild_whole_tree_from_sg_data(sg_data)
-            self.__app.log_debug("...done!")
+            # we have an empty tree. Run recursive tree generation for performance.
+            if len(sg_data) != 0:
+                self.__app.log_debug("No cached items in tree! Creating full tree from Shotgun data...")
+                self.__rebuild_whole_tree_from_sg_data(sg_data)
+                self.__app.log_debug("...done!")
+                modifications_made = True
         
         else:
             # go through and see if there are any changes we should apply to the tree.
@@ -353,9 +357,12 @@ class ShotgunModel(QtGui.QStandardItemModel):
             added_ids = ids_from_shotgun.difference(ids_in_tree)
 
             if len(removed_ids) > 0:
-                self.__app.log_debug("Detected deleted items %s. Rebuilding whole tree..." % removed_ids)
-                self.__rebuild_whole_tree_from_sg_data(sg_data)
+                self.__app.log_debug("Detected deleted items %s. Taking out of tree..." % removed_ids)
+                for removed_id in removed_ids:
+                    item = self.item_from_entity(self.__entity_type, removed_id)                
+                    self.__remove_sg_item_from_tree(item, removed_id)
                 self.__app.log_debug("...done!")
+                modifications_made = True
                 
             elif len(added_ids) > 0:
                 # wedge in the new items
@@ -363,9 +370,9 @@ class ShotgunModel(QtGui.QStandardItemModel):
                 for d in sg_data:
                     if d["id"] in added_ids:
                         self.__app.log_debug("Adding %s to tree" % d )
-                        # need to add this one
-                        self._add_sg_item_to_tree(d)
+                        self.__add_sg_item_to_tree(d)
                 self.__app.log_debug("...done!")
+                modifications_made = True
 
             # check for modifications. At this point, the number of items in the tree and 
             # the sg data should match, except for any duplicate items in the tree which would 
@@ -392,18 +399,20 @@ class ShotgunModel(QtGui.QStandardItemModel):
                 self.__app.log_debug("Detected modifications. Rebuilding tree...")
                 self.__rebuild_whole_tree_from_sg_data(sg_data)
                 self.__app.log_debug("...done!")
+                modifications_made = True
             else:
                 self.__app.log_debug("...no modifications found.")
         
         # now go through the tree and download all thumbs
         
         # last step - save our tree to disk for fast caching next time!
-        self.__app.log_debug("Saving tree to disk %s..." % self.__full_cache_path)
-        try:
-            self.__save_to_disk(self.__full_cache_path)
-            self.__app.log_debug("...saving complete!")            
-        except Exception, e:
-            self.__app.log_warning("Couldn't save cache data to disk: %s" % e)
+        if modifications_made:
+            self.__app.log_debug("Saving tree to disk %s..." % self.__full_cache_path)
+            try:
+                self.__save_to_disk(self.__full_cache_path)
+                self.__app.log_debug("...saving complete!")            
+            except Exception, e:
+                self.__app.log_warning("Couldn't save cache data to disk: %s" % e)
         
         
     ########################################################################################
@@ -450,6 +459,44 @@ class ShotgunModel(QtGui.QStandardItemModel):
                 return False
 
         return True
+
+    def __remove_sg_item_from_tree(self, item, shotgun_id):
+        """
+        Remove a single item from the tree.
+        """
+        print "removing %s %s" % (item, shotgun_id)
+        item_row = item.row()
+        parent = item.parent()
+
+        # make sure we are not letting go of this object just yet
+        # that causes the GC to go crazy...
+        self.__all_tree_items.append(item)
+        
+        # remove from lookup dict
+        del self.__entity_tree_data[ shotgun_id ]
+
+        # remove item from model
+        parent.takeRow(item_row)
+        
+        # now check if parent does not have any children, remove parent
+        curr_node = parent
+        done = False
+        while not done:
+            if curr_node.hasChildren():
+                done = True
+            else:
+                # parent does not have children!
+                # delete parent.
+                row = curr_node.row()
+                print "removing parent %s" % curr_node
+                self.__all_tree_items.append(curr_node)
+                curr_node = curr_node.parent()
+                if curr_node is None:
+                    self.invisibleRootItem().takeRow(row)
+                    done = True
+                else:
+                    curr_node.takeRow(row)
+    
     
     def __add_sg_item_to_tree(self, sg_item):
         """
@@ -457,27 +504,10 @@ class ShotgunModel(QtGui.QStandardItemModel):
         This is a slow method.
         """
         root = self.invisibleRootItem()
-        # the root always contains exactly one item, which is the name of the preset
-        profile_root = root.child(0)
         # now drill down recursively, create any missing nodes on the way
         # and eventually add this as a leaf item
-        self.__add_sg_item_to_tree_r(sg_item, profile_root, self.__hierarchy)
+        self.__add_sg_item_to_tree_r(sg_item, root, self.__hierarchy)
     
-    def __process_thumbnail_for_item(self, item):
-        """
-        Schedule a thumb download for an item
-        """
-        sg_data = item.data(ShotgunModel.SG_DATA_ROLE)
-
-        if sg_data.get("image"):
-            # we have a thumb we are supposed to download!
-            # get the thumbnail - store the unique id we get back from
-            # the data retrieve in a dict for fast lookup later
-            uid = self.__sg_data_retriever.download_thumbnail(sg_data["image"], 
-                                                              sg_data["type"], 
-                                                              sg_data["id"])
-            self.__thumb_map[uid] = item
-        
     
     def __add_sg_item_to_tree_r(self, sg_item, root, hierarchy):
         """
@@ -537,7 +567,7 @@ class ShotgunModel(QtGui.QStandardItemModel):
                 self.__entity_tree_data[ sg_item["id"] ] = found_item
             else:                
                 # call out to class implementation to do its thing
-                self._populate_item(found_item, sg_item=None)
+                self._populate_item(found_item, None)
 
 
         if not on_leaf_level:
@@ -545,6 +575,21 @@ class ShotgunModel(QtGui.QStandardItemModel):
             self.__add_sg_item_to_tree_r(sg_item, found_item, remaining_fields)
         
     
+    def __process_thumbnail_for_item(self, item):
+        """
+        Schedule a thumb download for an item
+        """
+        sg_data = item.data(ShotgunModel.SG_DATA_ROLE)
+
+        if sg_data.get("image"):
+            # we have a thumb we are supposed to download!
+            # get the thumbnail - store the unique id we get back from
+            # the data retrieve in a dict for fast lookup later
+            uid = self.__sg_data_retriever.download_thumbnail(sg_data["image"], 
+                                                              sg_data["type"], 
+                                                              sg_data["id"])
+            self.__thumb_map[uid] = item
+            
     
     def __rebuild_whole_tree_from_sg_data(self, data):
         """
@@ -634,7 +679,7 @@ class ShotgunModel(QtGui.QStandardItemModel):
             else:
                 # not on leaf level yet
                 # call out to class implementation to do its thing
-                self._populate_item(item, sg_data=None)
+                self._populate_item(item, None)
                 
                 # now when we recurse down, we need to add our current constrain
                 # to the list of constraints. For this we need the raw sg value

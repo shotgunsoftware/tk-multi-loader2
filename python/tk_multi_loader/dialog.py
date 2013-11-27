@@ -594,7 +594,6 @@ class AppDialog(QtGui.QWidget):
                 child_folders.append(item.child(child_idx))
             
         # load publishes
-        print "load data"
         self._publish_model.load_data(sg_data, child_folders)
         self._publish_model.refresh_data()
             

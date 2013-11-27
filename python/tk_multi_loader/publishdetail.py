@@ -79,8 +79,6 @@ class PublishDetail(QtGui.QWidget):
         # Type
         # Version and Date
         
-        print "detail sg item %s" % sg_item
-        
         if sg_item.get("entity") is None:
             entity_str = "Unlinked Publish"
         else:

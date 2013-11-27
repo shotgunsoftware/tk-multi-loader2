@@ -29,7 +29,6 @@ class SgPublishDelegate(QtGui.QStyledItemDelegate):
         self._widget = PublishDetail(True, parent)
         
     def paint(self, painter, style_options, model_index):
-        print "paint! %s" % model_index.data()
         
         self._widget.resize(style_options.rect.size())
         

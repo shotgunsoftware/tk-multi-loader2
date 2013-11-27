@@ -31,6 +31,16 @@ class ShotgunModel(QtGui.QStandardItemModel):
     IS_SG_MODEL_ROLE = QtCore.Qt.UserRole + 2
 
     def __init__(self, overlay_parent_widget, download_thumbs):
+        """
+        Constructor. This will create a model which can later be used to load
+        and manage Shotgun data.
+        
+        :param overlay_parent_widget: A QWidget object on top of which any progress
+                                      overlays will be rendered.
+        :param download_thumbs: Boolean to indicate if this model should attempt 
+                                to download and process thumbnails for the downloaded data.
+        
+        """
         QtGui.QStandardItemModel.__init__(self)
         
         # set up data fetcher
@@ -48,16 +58,13 @@ class ShotgunModel(QtGui.QStandardItemModel):
         
         self.__app = tank.platform.current_bundle()
         
-        
-    
-    
     ########################################################################################
     # public methods
 
     def destroy(self):
         """
         Call this method prior to destroying this object.
-        This will ensure all worker threads etc are stopped
+        This will ensure all worker threads etc are stopped.
         """
         self.__sg_data_retriever.stop()
 
@@ -70,6 +77,18 @@ class ShotgunModel(QtGui.QStandardItemModel):
         The separation between the load_data and refresh_data() which actually calls
         out to Shotgun makes it possible to potentially run the model in offline mode.
         
+        :param entity_type: Shotgun entity type to download
+        :param filters: List of Shotgun filters. Standard Shotgun syntax.
+        :param hierarchy: List of grouping fields. These should be names of Shotgun 
+                          fields. If you for example want to create a list of items,
+                          the value ["code"] will be suitable. This will generate a data
+                          model which is flat and where each item's default name is the
+                          Shotgun name field. If you want to generate a tree where assets
+                          are broken down by asset type, you could instead specify
+                          ["sg_asset_type", "code"]
+        :param fields:    Fields to retrieve from Shotgun (in addition to the ones specified
+                          in the hierarchy parameter). Standard Shotgun API syntax.
+        :param order:     Order clause for the Shotgun data. Standard Shotgun API syntax.
         """
         self.clear()
         self.__entity_type = entity_type
@@ -167,28 +186,67 @@ class ShotgunModel(QtGui.QStandardItemModel):
         """
         self.__overlay.show_message_pixmap(pixmap)        
 
+    def _show_overlay_info_message(self, msg):
+        """
+        Show an overlay status message
+        """
+        self.__overlay.show_message(msg)        
+        
+    def _show_overlay_error_message(self, msg):
+        """
+        Show an overlay error message
+        """
+        self.__overlay.show_error_message(msg)        
+
     def _request_thumbnail_download(self, item, url, entity_type, entity_id):
         """
-        Request that a thumbnail is downloaded for an item
+        Request that a thumbnail is downloaded for an item.
+        
+        :param item: QStandardItem which belongs to this model
+        :param url: thumbnail url
+        :param entity_type: Shotgun entity type
+        :param entity_id: Shotgun entity id 
         """
         uid = self._sg_data_retriever.download_thumbnail(url, entity_type, entity_id)
         self.__thumb_map[uid] = item
         
-
-
     ########################################################################################
     # methods to be implemented by subclasses
     
     def _populate_item(self, item, sg_data):
         """
-        Given a shotgun data dictionary, generate a QStandardItem
+        Whenever an item is constructed, this methods is called. It allows subclasses to intercept
+        the construction of a QStandardItem and add additional metadata or make other changes
+        that may be useful. Nothing needs to be returned.
+        
+        :param item: QStandardItem that is about to be added to the model. This has been primed
+                     with the standard settings that the ShotgunModel handles.
+        :param sg_data: Shotgun data dictionary that was received from Shotgun given the fields
+                        and other settings specified in load_data()
         """
         # default implementation does nothing
         
 
     def _populate_thumbnail(self, item, path):
         """
-        Called when a thumbnail for an item exists on disk
+        Called whenever a thumbnail for an item has arrived on disk. In the case of 
+        an already cached thumbnail, this may be called very soon after data has been 
+        loaded, in cases when the thumbs are downloaded from Shotgun, it may happen later.
+        
+        This method will be called only if the model has been instantiated with the 
+        download_thumbs flag set to be true. It will be called for items which are
+        associated with shotgun entities (in a tree data layout, this is typically 
+        leaf nodes).
+        
+        This method makes it possible to control how the thumbnail is applied and associated
+        with the item. The default implementation will simply set the thumbnail to be icon
+        of the item, but this can be altered by subclassing this method.
+        
+        Any thumbnails requested via the _request_thumbnail_download() method will also 
+        resurface via this callback method.
+        
+        :param item: QStandardItem which is associated with the given thumbnail
+        :param path: A path on disk to the thumbnail. This is a file in jpeg format.
         """
         # the default implementation sets the icon
         thumb = QtGui.QPixmap(path)
@@ -196,16 +254,25 @@ class ShotgunModel(QtGui.QStandardItemModel):
         
     def _before_data_processing(self, sg_data_list):
         """
-        Filter the data when it has arrived from Shotgun
+        Called just after data has been retrieved from Shotgun but before any processing
+        takes place. This makes it possible for deriving classes to perform summaries, 
+        calculations and other manipulations of the data before it is passed on to the model
+        class. 
+        
+        :param sg_data_list: list of shotgun dictionaries, as retunrned by the find() call.
+        :returns: should return a list of shotgun dictionaries, on the same form as the input.
         """
         # default implementation is a passthrough
         return sg_data_list
 
     def _load_external_data(self):
         """
-        Loading of extenral data into a model
+        Called whenever the model needs to be rebuilt from scratch. This is called prior 
+        to any shotgun data is added to the model. This makes it possible for deriving classes
+        to add custom data to the model in a very flexible fashion. Such data will not be 
+        cached by the ShotgunModel framework.
         """
-        
+        pass
 
     ########################################################################################
     # private methods 

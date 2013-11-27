@@ -14,6 +14,7 @@
     <file>publish_bg.png</file>
     <file>publish_loading.png</file>
     <file>default_user_thumb.png</file>
+    <file>search.png</file>
     <file>no_publishes_found.png</file>
   </qresource>
 </RCC>

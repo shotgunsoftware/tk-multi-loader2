@@ -114,10 +114,12 @@ class ShotgunModel(QtGui.QStandardItemModel):
         # parameters that will determine the contents that is loaded into the tree
         # note that we add the shotgun host name to support multiple sites being used
         # on a single machine
-        hash_base = "%s_%s_%s_%s" % (self.__app.shotgun.base_url, 
-                                     self.__entity_type, 
-                                     str(self.__filters), 
-                                     str(self.__hierarchy))
+        hash_base = "%s_%s_%s_%s_%s_%s" % (self.__app.shotgun.base_url, 
+                                           self.__entity_type, 
+                                           str(self.__filters), 
+                                           str(self.__fields),
+                                           str(self.__order),
+                                           str(self.__hierarchy))
         m = hashlib.md5()
         m.update(hash_base)
         cache_filename = "tk_sgmodel_%s.sgcache" % m.hexdigest()

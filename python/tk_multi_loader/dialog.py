@@ -483,8 +483,6 @@ class AppDialog(QtGui.QWidget):
             view.setIconSize(QtCore.QSize(16, 16))
             view.setHeaderHidden(True)
             view.setModel(model)
-            # expand first level of items 
-            view.expandToDepth(0)
         
             # set up on-select callbacks
             selection_model = view.selectionModel()

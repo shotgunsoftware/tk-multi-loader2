@@ -57,8 +57,6 @@ class SgPublishModel(ShotgunModel):
 
     def load_data(self, sg_entity_link, treeview_folder_items):        
 
-        # clear model
-        self.clear()
 
         # first figure out which fields to get from shotgun
         app = tank.platform.current_bundle()
@@ -83,8 +81,7 @@ class SgPublishModel(ShotgunModel):
         
         # first add our folders to the model
         # make gc happy by keeping handle to all items
-        self._folder_items = []
-        self._add_folders_to_model(treeview_folder_items)
+        self._treeview_folder_items = treeview_folder_items
         
         ShotgunModel.load_data(self, 
                                entity_type=publish_entity_type, 
@@ -94,10 +91,11 @@ class SgPublishModel(ShotgunModel):
                                order=[{"field_name":"version_number", "direction":"asc"}])
 
 
-    def _add_folders_to_model(self, treeview_folder_items):
+    def _load_external_data(self):
         
-
-        for tree_view_item in treeview_folder_items:
+        self._folder_items = []
+        
+        for tree_view_item in self._treeview_folder_items:
             print "created %s" % tree_view_item.text()
             item = QtGui.QStandardItem(self._folder_icon, tree_view_item.text())
             item.setData(None, SgPublishModel.TYPE_ID_ROLE)
@@ -151,7 +149,7 @@ class SgPublishModel(ShotgunModel):
         Filter the data when it has arrived from Shotgun
         """
         
-        if len(sg_data_list) == 0 and len(self._folder_items) == 0:
+        if len(sg_data_list) == 0 and len(self._treeview_folder_items) == 0:
             # no publishes or folders found!
             self._show_overlay_pixmap(self._no_pubs_found_icon)
             # tell publish type setup that there is nothing to display

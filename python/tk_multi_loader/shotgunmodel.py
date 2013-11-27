@@ -28,6 +28,7 @@ class ShotgunModel(QtGui.QStandardItemModel):
     """
 
     SG_DATA_ROLE = QtCore.Qt.UserRole + 1
+    IS_SG_MODEL_ROLE = QtCore.Qt.UserRole + 2
 
     def __init__(self, overlay_parent_widget, download_thumbs):
         QtGui.QStandardItemModel.__init__(self)
@@ -61,7 +62,16 @@ class ShotgunModel(QtGui.QStandardItemModel):
         self.__sg_data_retriever.stop()
 
     def load_data(self, entity_type, filters, hierarchy, fields, order):
+        """
+        Clears the model of any previous data and prepares for operation with 
+        a new set of shotgun query data. Nothing is retrieved from Shotgun at this point
+        but if cache data is available, this is loaded into the model.
         
+        The separation between the load_data and refresh_data() which actually calls
+        out to Shotgun makes it possible to potentially run the model in offline mode.
+        
+        """
+        self.clear()
         self.__entity_type = entity_type
         self.__filters = filters
         self.__fields = fields
@@ -98,8 +108,11 @@ class ShotgunModel(QtGui.QStandardItemModel):
                                                                        self.__full_cache_path))
                 
         if os.path.exists(self.__full_cache_path):
+            # first see if we need to load in any overlay data from deriving classes
+            self._load_external_data()
             self.__app.log_debug("Loading cached data %s..." % self.__full_cache_path)
             try:
+                
                 self.__load_from_disk(self.__full_cache_path)
                 self.__app.log_debug("...loading complete!")
             except Exception, e:
@@ -187,6 +200,12 @@ class ShotgunModel(QtGui.QStandardItemModel):
         """
         # default implementation is a passthrough
         return sg_data_list
+
+    def _load_external_data(self):
+        """
+        Loading of extenral data into a model
+        """
+        
 
     ########################################################################################
     # private methods 
@@ -425,6 +444,8 @@ class ShotgunModel(QtGui.QStandardItemModel):
         if found_item is None:
             # didn't find item! Create it!
             found_item = QtGui.QStandardItem(field_display_name)
+            # keep tabs of which items we are creating
+            found_item.setData(True, ShotgunModel.IS_SG_MODEL_ROLE)
             # keep a reference to this object to make GC happy
             # (pyside may crash otherwise)
             self.__all_tree_items.append(found_item)
@@ -461,9 +482,14 @@ class ShotgunModel(QtGui.QStandardItemModel):
         Clears the tree and rebuilds it from the given shotgun data.
         Note that any selection and expansion states in the view will be lost.
         """
-        #self.clear()
+        self.clear()
         self.__entity_tree_data = {}
         self.__all_tree_items = []
+        
+        # get any external payload from deriving classes
+        self._load_external_data()
+        
+        # and add the shotgun data
         root = self.invisibleRootItem()
         self.__populate_complete_tree_r(data, root, self.__hierarchy, {})
         
@@ -512,6 +538,8 @@ class ShotgunModel(QtGui.QStandardItemModel):
             
             # construct tree view node object
             item = QtGui.QStandardItem(dv)
+            # keep tabs of which items we are creating
+            item.setData(True, ShotgunModel.IS_SG_MODEL_ROLE)
             # keep a reference to this object to make GC happy
             # (pyside may crash otherwise)
             self.__all_tree_items.append(item)            
@@ -606,8 +634,11 @@ class ShotgunModel(QtGui.QStandardItemModel):
         for row in range(num_rows):
             # write this
             child = item.child(row)
-            child.write(stream)
-            stream.writeInt32(depth)
+            # only write shotgun data!
+            # data from external sources is never serialized
+            if child.data(ShotgunModel.IS_SG_MODEL_ROLE):
+                child.write(stream)
+                stream.writeInt32(depth)
             
             if child.hasChildren():
                 # write children

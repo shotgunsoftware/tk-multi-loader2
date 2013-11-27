@@ -34,6 +34,9 @@ class SgPublishTypeModel(ShotgunModel):
         # folder icon
         self._folder_icon = QtGui.QPixmap(":/res/folder.png")    
         ShotgunModel.__init__(self, overlay_parent_widget, download_thumbs=False)
+        
+        # specify sort key
+        self.setSortRole(SgPublishTypeModel.SORT_KEY_ROLE)
     
     def load_data(self):
         """

@@ -16,11 +16,11 @@ import threading
 
 from tank.platform.qt import QtCore, QtGui
 
-from .entitymodel import SgEntityModel
-from .latestpublishmodel import SgLatestPublishModel
-from .publishtypemodel import SgPublishTypeModel
-from .publishproxymodel import SgPublishProxyModel 
-from .publishdelegate import SgPublishDelegate
+from .model_entity import SgEntityModel
+from .model_latestpublish import SgLatestPublishModel
+from .model_publishtype import SgPublishTypeModel
+from .proxymodel_publish import SgPublishProxyModel 
+from .delegate_publish_thumb import SgPublishDelegate
 from .detailshandler import DetailsHandler
 from .shotgun_model import ShotgunModel
 

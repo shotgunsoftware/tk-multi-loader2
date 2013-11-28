@@ -13,10 +13,10 @@ import os
 import hashlib
 import tempfile
 from collections import defaultdict
-from .sgdata import ShotgunAsyncDataRetriever
-from .overlaywidget import OverlayWidget
+from .shotgun_model.sgdata import ShotgunAsyncDataRetriever
+from .shotgun_model.overlaywidget import OverlayWidget
 from .publishdetail import PublishDetail
-from .latestpublishmodel import SgLatestPublishModel
+from .model_latestpublish import SgLatestPublishModel
 
 from tank.platform.qt import QtCore, QtGui
 

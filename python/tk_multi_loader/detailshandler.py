@@ -15,7 +15,7 @@ import tempfile
 from collections import defaultdict
 from .shotgun_model.sgdata import ShotgunAsyncDataRetriever
 from .shotgun_model.overlaywidget import OverlayWidget
-from .publishdetail import PublishDetail
+from .widget_publishdetail import PublishDetail
 from .model_latestpublish import SgLatestPublishModel
 
 from tank.platform.qt import QtCore, QtGui

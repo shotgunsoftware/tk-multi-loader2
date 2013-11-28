@@ -15,7 +15,7 @@ import tempfile
 from . import utils
 
 from tank.platform.qt import QtCore, QtGui
-from .publishdetail import PublishDetail
+
 
 class SgPublishDelegate(QtGui.QStyledItemDelegate):
     """

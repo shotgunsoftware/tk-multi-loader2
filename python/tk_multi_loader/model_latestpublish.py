@@ -184,6 +184,7 @@ class SgLatestPublishModel(ShotgunModel):
         :param item: QStandardItem which is associated with the given thumbnail
         :param path: A path on disk to the thumbnail. This is a file in jpeg format.
         """
+        print "thumb!!!"
         # pass the thumbnail through out special image compositing methods
         # before associating it with the model
         is_folder = item.data(SgLatestPublishModel.IS_FOLDER_ROLE)

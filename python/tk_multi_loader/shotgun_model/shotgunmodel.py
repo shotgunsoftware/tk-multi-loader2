@@ -129,10 +129,10 @@ class ShotgunModel(QtGui.QStandardItemModel):
                                                                        self.__filters, 
                                                                        self.__hierarchy, 
                                                                        self.__full_cache_path))
-                
+            
+        self._load_external_data()    
         if os.path.exists(self.__full_cache_path):
             # first see if we need to load in any overlay data from deriving classes
-            self._load_external_data()
             self.__app.log_debug("Loading cached data %s..." % self.__full_cache_path)
             try:
                 
@@ -211,7 +211,7 @@ class ShotgunModel(QtGui.QStandardItemModel):
         :param entity_type: Shotgun entity type
         :param entity_id: Shotgun entity id 
         """
-        uid = self._sg_data_retriever.download_thumbnail(url, entity_type, entity_id)
+        uid = self.__sg_data_retriever.download_thumbnail(url, entity_type, entity_id)
         self.__thumb_map[uid] = item
         
     ########################################################################################

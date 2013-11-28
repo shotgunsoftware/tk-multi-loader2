@@ -92,8 +92,8 @@ class AppDialog(QtGui.QWidget):
         self._publish_proxy_model.setSourceModel(self._publish_model)
                 
         # tell our publish view to use a custom delegate to produce widgetry
-        #self._publish_delegate = SgPublishDelegate(self.ui.publish_list, self) 
-        #self.ui.publish_list.setItemDelegate(self._publish_delegate)
+        self._publish_delegate = SgPublishDelegate(self.ui.publish_list, self) 
+        self.ui.publish_list.setItemDelegate(self._publish_delegate)
                 
         # hook up view -> proxy model -> model
         self.ui.publish_list.setModel(self._publish_proxy_model)
@@ -476,7 +476,7 @@ class AppDialog(QtGui.QWidget):
             model.load_data(sg_entity_type, 
                             e["filters"], 
                             e["hierarchy"],
-                            fields=[],
+                            fields=["image"],
                             order=[])
 
             # configure the view

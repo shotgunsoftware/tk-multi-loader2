@@ -42,13 +42,14 @@ class SgLatestPublishModel(ShotgunModel):
         """        
         self._publish_type_model = publish_type_model
         self._no_pubs_found_icon = QtGui.QPixmap(":/res/no_publishes_found.png")
-        self._folder_icon = QtGui.QPixmap(":/res/publish_folder.png")
-        self._loading_icon = QtGui.QPixmap(":/res/publish_loading.png")
-                
+        self._folder_icon = QtGui.QPixmap(":/res/folder.png")
+        self._loading_icon = QtGui.QPixmap(":/res/sg_item_loading.png")
+
         # init base class
         ShotgunModel.__init__(self, overlay_parent_widget, download_thumbs=True)
     
-
+    ############################################################################################
+    # public interface
 
     def load_data(self, sg_entity_link, treeview_folder_items):        
         """
@@ -101,6 +102,9 @@ class SgLatestPublishModel(ShotgunModel):
                                order=[{"field_name":"version_number", "direction":"asc"}])
 
 
+    ############################################################################################
+    # subclassed methods
+
     def _load_external_data(self):
         """
         Called whenever the model needs to be rebuilt from scratch. This is called prior 
@@ -150,10 +154,7 @@ class SgLatestPublishModel(ShotgunModel):
         
         # indicate that shotgun data is NOT folder data
         item.setData(False, SgLatestPublishModel.IS_FOLDER_ROLE)
-        
-        # set up publishes with a "thumbnail loading" icon
-        item.setIcon(self._loading_icon)
-        
+                
         # add the publish type id as a special field
         type_link = sg_data.get(self._publish_type_field)
         if type_link:
@@ -162,6 +163,17 @@ class SgLatestPublishModel(ShotgunModel):
             type_id = None
         item.setData(type_id, SgLatestPublishModel.TYPE_ID_ROLE)
 
+    def _populate_default_thumbnail(self, item):    
+        """
+        Called whenever an item needs to get a default thumbnail attached to a node.
+        When thumbnails are loaded, this will be called first, when an object is
+        either created from scratch or when it has been loaded from a cache, then later
+        on a call to _populate_thumbnail will follow where the subclassing implementation
+        can populate the real image.
+        """
+        
+        # set up publishes with a "thumbnail loading" icon
+        item.setIcon(self._loading_icon)
 
     def _populate_thumbnail(self, item, path):
         """
@@ -184,7 +196,6 @@ class SgLatestPublishModel(ShotgunModel):
         :param item: QStandardItem which is associated with the given thumbnail
         :param path: A path on disk to the thumbnail. This is a file in jpeg format.
         """
-        print "thumb!!!"
         # pass the thumbnail through out special image compositing methods
         # before associating it with the model
         is_folder = item.data(SgLatestPublishModel.IS_FOLDER_ROLE)

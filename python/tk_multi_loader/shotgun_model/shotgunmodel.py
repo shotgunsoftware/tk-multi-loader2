@@ -230,6 +230,16 @@ class ShotgunModel(QtGui.QStandardItemModel):
         """
         # default implementation does nothing
         
+    def _populate_default_thumbnail(self, item):
+        """
+        Called whenever an item needs to get a default thumbnail attached to a node.
+        When thumbnails are loaded, this will be called first, when an object is
+        either created from scratch or when it has been loaded from a cache, then later
+        on a call to _populate_thumbnail will follow where the subclassing implementation
+        can populate the real image.
+        """
+        # the default implementation does nothing
+
 
     def _populate_thumbnail(self, item, path):
         """
@@ -558,6 +568,9 @@ class ShotgunModel(QtGui.QStandardItemModel):
                 # attach the shotgun data so that we can access it later
                 found_item.setData(sg_item, ShotgunModel.SG_DATA_ROLE)
                 
+                # set the default thumbnail
+                self._populate_default_thumbnail(found_item)
+                
                 # call out to class implementation to do its thing
                 self._populate_item(found_item, sg_item)
                 
@@ -568,6 +581,10 @@ class ShotgunModel(QtGui.QStandardItemModel):
                 # and also populate the id association in our lookup dict
                 self.__entity_tree_data[ sg_item["id"] ] = found_item
             else:                
+                
+                # set the default thumbnail
+                self._populate_default_thumbnail(found_item)
+                
                 # call out to class implementation to do its thing
                 self._populate_item(found_item, None)
 
@@ -667,9 +684,12 @@ class ShotgunModel(QtGui.QStandardItemModel):
                 # attach the shotgun data so that we can access it later
                 sg_item = discrete_values[dv]
                 item.setData(sg_item, ShotgunModel.SG_DATA_ROLE)
+
+                # set the default thumbnail
+                self._populate_default_thumbnail(item)
                 
                 # call out to class implementation to do its thing
-                self._populate_item(item, sg_item)
+                self._populate_item(item, sg_item)                
                 
                 # request thumb
                 if self.__download_thumbs:
@@ -680,6 +700,10 @@ class ShotgunModel(QtGui.QStandardItemModel):
                       
             else:
                 # not on leaf level yet
+                
+                # set the default thumbnail
+                self._populate_default_thumbnail(item)
+                
                 # call out to class implementation to do its thing
                 self._populate_item(item, None)
                 
@@ -801,6 +825,10 @@ class ShotgunModel(QtGui.QStandardItemModel):
                 sg_data = item.data(ShotgunModel.SG_DATA_ROLE) 
                 # add the model item to our tree data dict keyed by id
                 self.__entity_tree_data[ sg_data["id"] ] = item            
+
+            # serialized items do not contain a full high rez thumb, so 
+            # re-create that. First, set the default thumbnail
+            self._populate_default_thumbnail(item)
 
             # request thumb
             if self.__download_thumbs:

@@ -27,6 +27,9 @@ class SgEntityModel(ShotgunModel):
         self._folder_icon = QtGui.QPixmap(":/res/folder.png")    
         ShotgunModel.__init__(self, overlay_parent_widget, download_thumbs=False)
     
+    ############################################################################################
+    # subclassed methods
+    
     def _populate_item(self, item, sg_data):
         """
         Whenever an item is constructed, this methods is called. It allows subclasses to intercept

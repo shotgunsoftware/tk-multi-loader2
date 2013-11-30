@@ -37,10 +37,14 @@ class SgPublishTypeModel(ShotgunModel):
         
         # specify sort key
         self.setSortRole(SgPublishTypeModel.SORT_KEY_ROLE)
-    
+                
+    ############################################################################################
+    # public interface
+                
     def load_data(self):
         """
-        Sets up the model
+        Sets up the model. This is overloaded from the ShotgunModel's
+        load_data() call.
         """
         
         # first figure out which fields to get from shotgun
@@ -61,7 +65,9 @@ class SgPublishTypeModel(ShotgunModel):
 
     def get_selected_types(self):
         """
-        Returns all the sg type ids that are currently selected
+        Returns all the sg type ids that are currently selected. 
+        
+        :returns: a list of type ids (ints)
         """
         type_ids = []
         for idx in range(self.rowCount()):
@@ -102,9 +108,10 @@ class SgPublishTypeModel(ShotgunModel):
                 
         # and ask the model to resort itself 
         self.sort(0)
-        
-    
-    
+            
+    ############################################################################################
+    # subclassed methods
+            
     def _populate_item(self, item, sg_data):
         """
         Whenever an item is constructed, this methods is called. It allows subclasses to intercept

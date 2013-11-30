@@ -67,11 +67,7 @@ class AppDialog(QtGui.QWidget):
         # details pane mockup for now
         self.ui.details.setVisible(False)
         self.ui.info.toggled.connect(self._on_info_toggled)
-        
-        # thumb scaling
-        self.ui.thumb_scale.valueChanged.connect(self._on_thumb_size_slider_change)
-        self.ui.thumb_scale.setValue(140)
-        
+                
         #################################################
         # details pane
         self._details_handler = DetailsHandler(self.ui)
@@ -106,6 +102,11 @@ class AppDialog(QtGui.QWidget):
         
         # event handler for when the selection in the publish view is changing
         self.ui.publish_list.selectionModel().selectionChanged.connect(self._on_publish_selection)
+        
+        #################################################
+        # thumb scaling
+        self.ui.thumb_scale.valueChanged.connect(self._on_thumb_size_slider_change)
+        self.ui.thumb_scale.setValue(140)
         
         #################################################
         # setup history
@@ -296,7 +297,7 @@ class AppDialog(QtGui.QWidget):
         """
         When scale slider is manipulated
         """
-        self.ui.publish_list.setIconSize(QtCore.QSize(value, value))
+        self._publish_delegate.set_item_size(value)
         
     def _on_publish_selection(self, selected, deselected):
         """

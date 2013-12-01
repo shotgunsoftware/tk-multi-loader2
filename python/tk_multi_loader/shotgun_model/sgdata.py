@@ -117,16 +117,42 @@ class ShotgunAsyncDataRetriever(QtCore.QThread):
         Returns the location on disk suitable for a thumbnail given its metadata
         """
 
+        url_obj = urlparse.urlparse(url)
+        url_path = url_obj.path
+        path_chunks = url_path.split("/")
+        
+        CHUNK_LEN = 16
+        
+        # post process the path
+        # old style result
+        # [ "", "thumbs", "1", "2", "2.jpg"]
+        # s3 result
+        # [u'', u'9902b5f5f336fae2fb248e8a8748fcd9aedd822e', u'be4236b8f198ae84df2366920e7ee327cc0a567e', u'render_0400_t.jpg']
+
+        def _to_chunks(s):
+            #split the string 'abcdefghxx' into ['abcdefgh', 'xx']
+            chunks = []
+            for start in range(0, len(s), CHUNK_LEN):
+                chunks.append( s[start:start+CHUNK_LEN] )
+            return chunks
+
+        new_chunks = []
+        for folder in path_chunks[:-1]: # skip the file name
+            if folder == "":
+                continue
+            if len(folder) > CHUNK_LEN:
+                # long url path segment like 9902b5f5f336fae2fb248e8a8748fcd9aedd822e
+                # split it into chunks for 4
+                new_chunks.extend( _to_chunks(folder) )
+            else:
+                new_chunks.append(folder)
+
         # establish the root path        
-        cache_path_items = [self._app.cache_location, "thumbnails", entity_type]
-        
-        # the S3 urls are not suitable as cache keys so use type/id
-        # split the number into chunks and preceed with type
-        # 12345 --> ['1','2','3','4','5']
-        cache_path_items.extend(list(str(entity_id)))
-        
-        # and append a file name. Assume we always get a jpeg back from sg
-        cache_path_items.append("%s.jpg" % entity_id)
+        cache_path_items = [self._app.cache_location, "thumbnails", entity_type]        
+        # append the folders
+        cache_path_items.extend(new_chunks)
+        # and append the file name
+        cache_path_items.append(path_chunks[-1])
         
         # join up the path
         path_to_cached_thumb = os.path.join(*cache_path_items)

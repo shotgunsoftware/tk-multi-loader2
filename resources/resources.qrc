@@ -1,12 +1,15 @@
 <RCC>
   <qresource prefix="res">
+    <file>down_arrow.png</file>
     <file>arrow_back.png</file>
     <file>arrow_forward.png</file>
     <file>home.png</file>
+    <file>publish_bg.png</file>
     <file>folder.png</file>
     <file>sg_item_loading.png</file>
     <file>default_user_thumb.png</file>
     <file>search.png</file>
+    <file>sg_logo.png</file>
     <file>no_publishes_found.png</file>
   </qresource>
 </RCC>

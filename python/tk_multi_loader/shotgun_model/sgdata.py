@@ -40,6 +40,8 @@ class ShotgunAsyncDataRetriever(QtCore.QThread):
         self._queue_mutex = QtCore.QMutex()
         self._queue = []
         
+        self._not_found_thumb_path = os.path.join(self._app.disk_location, "resources", "thumb_not_found.png")
+        
     def clear(self):
         """
         Clear the queue
@@ -211,33 +213,45 @@ class ShotgunAsyncDataRetriever(QtCore.QThread):
                 
                 elif item_to_process["type"] == "thumbnail_download":
                     
-                    url = item_to_process["url"]
+                    # download the actual thumbnail. Because of S3, the url
+                    # has most likely expired, so need to re-fetch it.
                     entity_id = item_to_process["entity_id"]
                     entity_type = item_to_process["entity_type"]
-                    path_to_cached_thumb = self._get_thumbnail_path(url, entity_id, entity_type)
                     
-                    try:
-                        (temp_file, _) = urllib.urlretrieve(url)
-                    except Exception, e:
-                        raise Exception("Could not download data from the url '%s'. Error: %s" % (url, e))
-            
-                    # now try to cache it
-                    try:
-                        self._app.ensure_folder_exists(os.path.dirname(path_to_cached_thumb))
-                        shutil.copy(temp_file, path_to_cached_thumb)
-                        # as a tmp file downloaded by urlretrieve, permissions are super strict
-                        # modify the permissions of the file so it's writeable by others
-                        os.chmod(path_to_cached_thumb, 0666)            
-                    except Exception, e:
-                        raise Exception("Could not cache thumbnail %s in %s. "
-                                        "Error: %s" % (url, path_to_cached_thumb, e))
-             
-                    data = {"thumb_path": path_to_cached_thumb }
+                    sg_data = self._app.shotgun.find_one(entity_type, 
+                                                         [["id", "is", entity_id]],
+                                                         ["image"])
+                    print "fresh sg data %s" % sg_data
+                    if sg_data is None or sg_data.get("image") is None:
+                        # no thumbnail!
+                        data = {"thumb_path": self._not_found_thumb_path }
+                    
+                    else:
+                        # download from sg
+                        url = sg_data["image"]
+                        try:
+                            (temp_file, _) = urllib.urlretrieve(url)
+                        except Exception, e:
+                            raise Exception("Could not download data from the url '%s'. Error: %s" % (url, e))
+                
+                        # now try to cache it
+                        try:
+                            path_to_cached_thumb = self._get_thumbnail_path(url, entity_id, entity_type)
+                            self._app.ensure_folder_exists(os.path.dirname(path_to_cached_thumb))
+                            shutil.copy(temp_file, path_to_cached_thumb)
+                            # as a tmp file downloaded by urlretrieve, permissions are super strict
+                            # modify the permissions of the file so it's writeable by others
+                            os.chmod(path_to_cached_thumb, 0666)            
+                        except Exception, e:
+                            raise Exception("Could not cache thumbnail %s in %s. "
+                                            "Error: %s" % (url, path_to_cached_thumb, e))
+                 
+                        data = {"thumb_path": path_to_cached_thumb }
                     
                 
             except Exception, e:
                 if self._execute_tasks:
-                    self.work_failure.emit(item_to_process["id"], "An error occured: %s" % e)
+                    self.work_failure.emit(item_to_process["id"], "An error occurred: %s" % e)
             else:
                 if self._execute_tasks and data:
                     self.work_completed.emit(item_to_process["id"], data)

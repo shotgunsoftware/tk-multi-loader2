@@ -297,7 +297,7 @@ class AppDialog(QtGui.QWidget):
         """
         When scale slider is manipulated
         """
-        self._publish_delegate.set_item_size(value)
+        self.ui.publish_list.setIconSize(QtCore.QSize(value, value))
         
     def _on_publish_selection(self, selected, deselected):
         """

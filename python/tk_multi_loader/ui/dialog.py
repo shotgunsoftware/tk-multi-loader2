@@ -111,8 +111,8 @@ class Ui_Dialog(object):
 "     border-radius: 3px;\n"
 " }\n"
 "")
-        self.thumb_scale.setMinimum(50)
-        self.thumb_scale.setMaximum(300)
+        self.thumb_scale.setMinimum(100)
+        self.thumb_scale.setMaximum(500)
         self.thumb_scale.setProperty("value", 100)
         self.thumb_scale.setOrientation(QtCore.Qt.Horizontal)
         self.thumb_scale.setInvertedAppearance(False)

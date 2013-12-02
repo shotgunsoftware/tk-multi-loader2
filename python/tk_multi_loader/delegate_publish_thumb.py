@@ -17,6 +17,7 @@ from . import utils
 from tank.platform.qt import QtCore, QtGui
 from .shotgun_widgets import WidgetDelegate
 from .shotgun_widgets import ThumbWidget
+from .model_latestpublish import SgLatestPublishModel
 
 
 class SgPublishDelegate(WidgetDelegate):
@@ -50,7 +51,15 @@ class SgPublishDelegate(WidgetDelegate):
         
         model_index.data()
         
-        widget.set_text("foo", "bar", model_index.data())
+        if model_index.data(SgLatestPublishModel.IS_FOLDER_ROLE):
+            # folder. The name is in the main text role.
+            widget.set_text(model_index.data(SgLatestPublishModel.FOLDER_NAME_ROLE),
+                            model_index.data(SgLatestPublishModel.FOLDER_TYPE_ROLE), 
+                            "Status: %s" % model_index.data(SgLatestPublishModel.FOLDER_STATUS_ROLE)) 
+        else:
+            widget.set_text(model_index.data(SgLatestPublishModel.ENTITY_NAME_ROLE),
+                            model_index.data(SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE), 
+                            model_index.data(SgLatestPublishModel.PUBLISH_NAME_ROLE)) 
         
     def _configure_hover_widget(self, widget, model_index, style_options):
         """

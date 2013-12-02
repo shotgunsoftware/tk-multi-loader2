@@ -27,8 +27,13 @@ class SgLatestPublishModel(ShotgunModel):
     IS_FOLDER_ROLE = QtCore.Qt.UserRole + 102
     ASSOCIATED_TREE_VIEW_ITEM_ROLE = QtCore.Qt.UserRole + 103
     
-    ENTITY_NAME_ROLE = QtCore.Qt.UserRole + 103
-    PUBLISH_TYPE_NAME_ROLE = QtCore.Qt.UserRole + 104
+    ENTITY_NAME_ROLE = QtCore.Qt.UserRole + 104
+    PUBLISH_NAME_ROLE = QtCore.Qt.UserRole + 105
+    PUBLISH_TYPE_NAME_ROLE = QtCore.Qt.UserRole + 106
+    
+    FOLDER_NAME_ROLE = QtCore.Qt.UserRole + 107
+    FOLDER_TYPE_ROLE = QtCore.Qt.UserRole + 108
+    FOLDER_STATUS_ROLE = QtCore.Qt.UserRole + 109
     
     
     def __init__(self, overlay_parent_widget, publish_type_model):
@@ -134,6 +139,21 @@ class SgLatestPublishModel(ShotgunModel):
             treeview_sg_data = tree_view_item.data(ShotgunModel.SG_DATA_ROLE) 
             item.setData(treeview_sg_data, ShotgunModel.SG_DATA_ROLE)
             
+            # set advanced data for the delegate
+            item.setData(tree_view_item.text(), SgLatestPublishModel.FOLDER_NAME_ROLE)
+            if treeview_sg_data is None:
+                # intermediate node
+                item.setData("", SgLatestPublishModel.FOLDER_TYPE_ROLE)
+                item.setData("", SgLatestPublishModel.FOLDER_STATUS_ROLE)
+            else:
+                item.setData(treeview_sg_data["type"], SgLatestPublishModel.FOLDER_TYPE_ROLE)
+                status = treeview_sg_data.get("sg_status_list")
+                if status is None:
+                    item.setData("", SgLatestPublishModel.FOLDER_STATUS_ROLE)
+                else:
+                    item.setData(status, SgLatestPublishModel.FOLDER_STATUS_ROLE)
+            
+            
             # see if we can get a thumbnail for this node!
             if treeview_sg_data and treeview_sg_data.get("image"):
                 # there is a thumbnail for this item!
@@ -159,13 +179,29 @@ class SgLatestPublishModel(ShotgunModel):
         # indicate that shotgun data is NOT folder data
         item.setData(False, SgLatestPublishModel.IS_FOLDER_ROLE)
                 
+        # get the name of the associated entity
+        entity_link = sg_data.get("entity")
+        if entity_link is None:
+            item.setData("", SgLatestPublishModel.ENTITY_NAME_ROLE)
+        else:
+            item.setData("%s %s" % (entity_link["type"], entity_link["name"]), SgLatestPublishModel.ENTITY_NAME_ROLE) 
+                        
+        # get the name of the publish entity
+        if sg_data.get("name") is None:
+            item.setData("No Name", SgLatestPublishModel.PUBLISH_NAME_ROLE)
+        else:
+            item.setData(sg_data.get("name"), SgLatestPublishModel.PUBLISH_NAME_ROLE) 
+                        
         # add the publish type id as a special field
         type_link = sg_data.get(self._publish_type_field)
         if type_link:
-            type_id = type_link["id"]
+            item.setData(type_link["id"], SgLatestPublishModel.TYPE_ID_ROLE)
+            item.setData(type_link["name"], SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE)
         else:
-            type_id = None
-        item.setData(type_id, SgLatestPublishModel.TYPE_ID_ROLE)
+            item.setData(None, SgLatestPublishModel.TYPE_ID_ROLE)
+            item.setData("No Type", SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE)
+
+
 
     def _populate_default_thumbnail(self, item):    
         """

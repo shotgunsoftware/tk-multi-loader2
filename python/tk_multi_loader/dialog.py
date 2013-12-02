@@ -106,7 +106,7 @@ class AppDialog(QtGui.QWidget):
         #################################################
         # thumb scaling
         self.ui.thumb_scale.valueChanged.connect(self._on_thumb_size_slider_change)
-        self.ui.thumb_scale.setValue(140)
+        self.ui.thumb_scale.setValue(220)
         
         #################################################
         # setup history
@@ -477,7 +477,7 @@ class AppDialog(QtGui.QWidget):
             model.load_data(sg_entity_type, 
                             e["filters"], 
                             e["hierarchy"],
-                            fields=["image"],
+                            fields=["image", "sg_status_list"],
                             order=[])
 
             # configure the view

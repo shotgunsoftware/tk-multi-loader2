@@ -15,66 +15,121 @@ import tempfile
 from . import utils
 
 from tank.platform.qt import QtCore, QtGui
-
-from .ui.bigpublish import Ui_BigPublish
-
-from . import utils
+from .ui.publish_thumb import Ui_PublishThumb
+from .delegate_widget import WidgetDelegate
 
 
 
-
-class SgPublishDelegate(QtGui.QStyledItemDelegate):
+class PublishThumbWidget(QtGui.QWidget):
     """
-    Custom UI which is displayed for each publish
-    in the spreadsheet view
+    Widget that is used to represent a publish item in the main publish spreadsheet. 
     """
-
-    def __init__(self, view, parent = None):
-        QtGui.QStyledItemDelegate.__init__(self, parent)
-        self._view = view
-        self._widget = BigPublishWidget(parent)
-        
-    def paint(self, painter, style_options, model_index):
-        
-        self._widget.resize(style_options.rect.size())
-        
-        icon = model_index.data(QtCore.Qt.DecorationRole)
-        thumb = icon.pixmap( QtCore.QSize(500, 500) )
-        self._widget.set_thumbnail(thumb)
-        self._widget.set_text(model_index.data())
-        
-        painter.save()
-        
-        self._widget.setVisible(True)
-        painter.translate(style_options.rect.topLeft())
-        self._widget.render(painter, QtCore.QPoint(0,0))
-        self._widget.setVisible(False)
-        
-        painter.restore()
-        
-    
-    def sizeHint(self, style_options, model_index):
-        
-        # base the size of each element off the icon size property of the view
-        return self._view.iconSize()
-        
-
-
-
-
-
-class BigPublishWidget(QtGui.QWidget):
-    
     def __init__(self, parent):
         QtGui.QWidget.__init__(self, parent)
 
+        # make sure this widget isn't shown
         self.setVisible(False)
+        
         # set up the UI
-        self.ui = Ui_BigPublish() 
+        self.ui = Ui_PublishThumb() 
         self.ui.setupUi(self)
         
+        # set up an event filter to ensure that the thumbnails
+        # are scaled in a square fashion.
+        filter = ResizeEventFilter(self.ui.thumbnail)
+        filter.resized.connect(self._on_thumb_resized)
+        self.ui.thumbnail.installEventFilter(filter)
+    
+    def _on_thumb_resized(self):
+        """
+        Called whenever the thumbnail area is being resized
+        """
+        new_size = self.ui.thumbnail.size()
+        if new_size.width() != new_size.height():
+            self.ui.thumbnail.resize( new_size.height(), new_size.height())
+    
+    def set_selected(self, selected):
+        if selected:
+            self.ui.thumbnail.setStyleSheet("* {border-color: red; border-style: solid; border-width: 2px}")
+        else:
+            self.ui.thumbnail.setStyleSheet("")
+    
     def set_thumbnail(self, pixmap):
         self.ui.thumbnail.setPixmap(pixmap)
     
     def set_text(self, msg):
         self.ui.label.setText(msg)        
+
+
+
+
+
+class SgPublishDelegate(WidgetDelegate):
+    """
+    Delegate which 'glues up' the PublishThumbWidget with a QT View.
+    """
+
+    def __init__(self, view, parent):
+        WidgetDelegate.__init__(self, view, parent)
+        
+    def _create_widget(self, parent):
+        """
+        Widget factory as required by base class
+        """
+        return PublishThumbWidget(parent)
+    
+    def _configure_view_widget(self, widget, model_index, style_options):
+        """
+        Called by the base class when the associated widget should be
+        painted in the view.
+        """
+        if style_options.state & QtGui.QStyle.State_Selected:
+            selected = True
+        else:
+            selected = False
+        
+        icon = model_index.data(QtCore.Qt.DecorationRole)
+        thumb = icon.pixmap( 512 )
+        widget.set_thumbnail(thumb)
+        widget.set_selected(selected)
+        widget.set_text("%s\nfoo bar baz\nasdasdasdasdas" % model_index.data())
+        
+    def _configure_hover_widget(self, widget, model_index, style_options):
+        """
+        Called by the base class when the associated widget should be set up
+        for 'hover' mode.
+        """
+        self._configure_view_widget(widget, model_index, style_options)
+        widget.set_text("HAHAHAHA")
+                    
+    def sizeHint(self, style_options, model_index):
+        """
+        Base the size on the icon size property of the view
+        """
+        # base the size of each element off the icon size property of the view
+        scale_factor = self._view.iconSize().width()
+        
+        return QtCore.QSize(scale_factor, scale_factor+40)
+             
+
+
+
+##################################################################################################
+# utility classes
+
+
+class ResizeEventFilter(QtCore.QObject):
+    """
+    Event filter which emits a resized signal whenever
+    the monitored widget resizes
+    """
+    resized = QtCore.Signal()
+
+    def eventFilter(self,  obj,  event):
+        # peek at the message
+        if event.type() == QtCore.QEvent.Resize:
+            # re-broadcast any resize events
+            self.resized.emit()
+        # pass it on!
+        return False
+

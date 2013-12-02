@@ -93,6 +93,7 @@ class ShotgunModel(QtGui.QStandardItemModel):
         :param order:     Order clause for the Shotgun data. Standard Shotgun API syntax.
         """
         self.clear()
+        self.__sg_data_retriever.clear()
         self.__entity_type = entity_type
         self.__filters = filters
         self.__fields = fields

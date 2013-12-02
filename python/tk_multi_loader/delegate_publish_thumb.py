@@ -44,9 +44,15 @@ class PublishThumbWidget(QtGui.QWidget):
         """
         Called whenever the thumbnail area is being resized
         """
+        return
         new_size = self.ui.thumbnail.size()
-        if new_size.width() != new_size.height():
-            self.ui.thumbnail.resize( new_size.height(), new_size.height())
+        print "new size: %s" % new_size
+        # 512/400 = 1.28
+        calc_width = 1.28 * (float)(new_size.height())
+        
+        if abs(calc_width - new_size.width()) > 2:
+            print "adjusting width to %s %s" % (calc_width, new_size.height()) 
+            self.ui.thumbnail.resize(calc_width, new_size.height())
     
     def set_selected(self, selected):
         if selected:
@@ -100,7 +106,7 @@ class SgPublishDelegate(WidgetDelegate):
         for 'hover' mode.
         """
         self._configure_view_widget(widget, model_index, style_options)
-        widget.set_text("HAHAHAHA")
+        
                     
     def sizeHint(self, style_options, model_index):
         """
@@ -109,7 +115,7 @@ class SgPublishDelegate(WidgetDelegate):
         # base the size of each element off the icon size property of the view
         scale_factor = self._view.iconSize().width()
         
-        return QtCore.QSize(scale_factor, scale_factor+40)
+        return QtCore.QSize(scale_factor, scale_factor)
              
 
 

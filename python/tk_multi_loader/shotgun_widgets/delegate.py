@@ -9,10 +9,6 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import tank
-import os
-import hashlib
-import tempfile
-from . import utils
 
 from tank.platform.qt import QtCore, QtGui
 

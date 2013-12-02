@@ -27,6 +27,10 @@ class SgLatestPublishModel(ShotgunModel):
     IS_FOLDER_ROLE = QtCore.Qt.UserRole + 102
     ASSOCIATED_TREE_VIEW_ITEM_ROLE = QtCore.Qt.UserRole + 103
     
+    ENTITY_NAME_ROLE = QtCore.Qt.UserRole + 103
+    PUBLISH_TYPE_NAME_ROLE = QtCore.Qt.UserRole + 104
+    
+    
     def __init__(self, overlay_parent_widget, publish_type_model):
         """
         Model which represents the latest publishes for an entity

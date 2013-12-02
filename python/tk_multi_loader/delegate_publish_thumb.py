@@ -15,64 +15,13 @@ import tempfile
 from . import utils
 
 from tank.platform.qt import QtCore, QtGui
-from .ui.publish_thumb import Ui_PublishThumb
-from .delegate_widget import WidgetDelegate
-
-
-
-class PublishThumbWidget(QtGui.QWidget):
-    """
-    Widget that is used to represent a publish item in the main publish spreadsheet. 
-    """
-    def __init__(self, parent):
-        QtGui.QWidget.__init__(self, parent)
-
-        # make sure this widget isn't shown
-        self.setVisible(False)
-        
-        # set up the UI
-        self.ui = Ui_PublishThumb() 
-        self.ui.setupUi(self)
-        
-        # set up an event filter to ensure that the thumbnails
-        # are scaled in a square fashion.
-        filter = ResizeEventFilter(self.ui.thumbnail)
-        filter.resized.connect(self._on_thumb_resized)
-        self.ui.thumbnail.installEventFilter(filter)
-    
-    def _on_thumb_resized(self):
-        """
-        Called whenever the thumbnail area is being resized
-        """
-        return
-        new_size = self.ui.thumbnail.size()
-        print "new size: %s" % new_size
-        # 512/400 = 1.28
-        calc_width = 1.28 * (float)(new_size.height())
-        
-        if abs(calc_width - new_size.width()) > 2:
-            print "adjusting width to %s %s" % (calc_width, new_size.height()) 
-            self.ui.thumbnail.resize(calc_width, new_size.height())
-    
-    def set_selected(self, selected):
-        if selected:
-            self.ui.thumbnail.setStyleSheet("* {border-color: red; border-style: solid; border-width: 2px}")
-        else:
-            self.ui.thumbnail.setStyleSheet("")
-    
-    def set_thumbnail(self, pixmap):
-        self.ui.thumbnail.setPixmap(pixmap)
-    
-    def set_text(self, msg):
-        self.ui.label.setText(msg)        
-
-
-
+from .shotgun_widgets import WidgetDelegate
+from .shotgun_widgets import ThumbWidget
 
 
 class SgPublishDelegate(WidgetDelegate):
     """
-    Delegate which 'glues up' the PublishThumbWidget with a QT View.
+    Delegate which 'glues up' the ThumbWidget with a QT View.
     """
 
     def __init__(self, view, parent):
@@ -82,7 +31,7 @@ class SgPublishDelegate(WidgetDelegate):
         """
         Widget factory as required by base class
         """
-        return PublishThumbWidget(parent)
+        return ThumbWidget(parent)
     
     def _configure_view_widget(self, widget, model_index, style_options):
         """
@@ -98,7 +47,10 @@ class SgPublishDelegate(WidgetDelegate):
         thumb = icon.pixmap( 512 )
         widget.set_thumbnail(thumb)
         widget.set_selected(selected)
-        widget.set_text("%s\nfoo bar baz\nasdasdasdasdas" % model_index.data())
+        
+        model_index.data()
+        
+        widget.set_text("foo", "bar", model_index.data())
         
     def _configure_hover_widget(self, widget, model_index, style_options):
         """
@@ -106,7 +58,6 @@ class SgPublishDelegate(WidgetDelegate):
         for 'hover' mode.
         """
         self._configure_view_widget(widget, model_index, style_options)
-        
                     
     def sizeHint(self, style_options, model_index):
         """
@@ -114,28 +65,6 @@ class SgPublishDelegate(WidgetDelegate):
         """
         # base the size of each element off the icon size property of the view
         scale_factor = self._view.iconSize().width()
-        
-        return QtCore.QSize(scale_factor, scale_factor)
+        # add another 50px for the height so the text can be rendered.
+        return QtCore.QSize(scale_factor, (scale_factor*0.78125)+50)
              
-
-
-
-##################################################################################################
-# utility classes
-
-
-class ResizeEventFilter(QtCore.QObject):
-    """
-    Event filter which emits a resized signal whenever
-    the monitored widget resizes
-    """
-    resized = QtCore.Signal()
-
-    def eventFilter(self,  obj,  event):
-        # peek at the message
-        if event.type() == QtCore.QEvent.Resize:
-            # re-broadcast any resize events
-            self.resized.emit()
-        # pass it on!
-        return False
-

@@ -38,7 +38,7 @@ function build_res {
 echo "building user interfaces..."
 build_ui dialog
 build_ui publishdetail
-build_ui publish_thumb
+build_ui thumb_widget
 
 # build resources
 echo "building resources..."

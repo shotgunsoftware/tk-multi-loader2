@@ -117,11 +117,11 @@ class SgPublishHistoryModel(ShotgunModel):
         if sg_data.get("created_by.HumanUser.image"):
             # get the thumbnail - store the unique id we get back from
             # the data retrieve in a dict for fast lookup later
-            uid = self._request_thumbnail_download(item, 
-                                                   "created_by.HumanUser.image",
-                                                   sg_data["created_by.HumanUser.image"], 
-                                                   sg_data["created_by"]["type"], 
-                                                   sg_data["created_by"]["id"])
+            self._request_thumbnail_download(item, 
+                                             "created_by.HumanUser.image",
+                                             sg_data["created_by.HumanUser.image"], 
+                                             sg_data["created_by"]["type"], 
+                                             sg_data["created_by"]["id"])
             
         
         
@@ -165,5 +165,5 @@ class SgPublishHistoryModel(ShotgunModel):
             item.setIcon(thumb)
         else:
             thumb = QtGui.QPixmap(path)
-            item.setIcon(thumb)
+            item.setData(thumb, SgPublishHistoryModel.USER_ICON_ROLE)
             

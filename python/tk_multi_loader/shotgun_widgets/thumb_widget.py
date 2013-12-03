@@ -85,6 +85,16 @@ class ThumbWidget(QtGui.QWidget):
         """
         self.ui.label.setText("<b>%s</b><br>%s<br>%s" % (line1, line2, line3))        
 
+    @staticmethod
+    def calculate_size(scale_factor):
+        """
+        Calculates and returns a suitable size for this widget given a scale factor
+        in pixels.
+        """        
+        # the thumbnail proportions are 512x400
+        # add another 50px for the height so the text can be rendered.
+        return QtCore.QSize(scale_factor, (scale_factor*0.78125)+50)
+        
 
 
 ##################################################################################################

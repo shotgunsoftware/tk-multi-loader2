@@ -25,8 +25,8 @@ class SgPublishDelegate(WidgetDelegate):
     Delegate which 'glues up' the ThumbWidget with a QT View.
     """
 
-    def __init__(self, view, parent):
-        WidgetDelegate.__init__(self, view, parent)
+    def __init__(self, view):
+        WidgetDelegate.__init__(self, view)
         
     def _create_widget(self, parent):
         """
@@ -73,7 +73,7 @@ class SgPublishDelegate(WidgetDelegate):
         Base the size on the icon size property of the view
         """
         # base the size of each element off the icon size property of the view
-        scale_factor = self._view.iconSize().width()
-        # add another 50px for the height so the text can be rendered.
-        return QtCore.QSize(scale_factor, (scale_factor*0.78125)+50)
+        scale_factor = self._view.iconSize().width()        
+        return ThumbWidget.calculate_size(scale_factor)
+        
              

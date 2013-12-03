@@ -21,11 +21,11 @@ class WidgetDelegate(QtGui.QStyledItemDelegate):
     widgets inside of delegates.
     """
 
-    def __init__(self, view, parent = None):
+    def __init__(self, view):
         """
         Constructor
         """
-        QtGui.QStyledItemDelegate.__init__(self, parent)
+        QtGui.QStyledItemDelegate.__init__(self, view)
         self._view = view        
         
         # set up the widget instance we will use 

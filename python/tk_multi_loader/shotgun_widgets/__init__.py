@@ -10,3 +10,4 @@
 
 from .delegate import WidgetDelegate
 from .thumb_widget import ThumbWidget
+from .list_widget import ListWidget

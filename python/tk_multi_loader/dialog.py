@@ -22,6 +22,7 @@ from .model_publishtype import SgPublishTypeModel
 from .proxymodel_publish import SgPublishProxyModel 
 from .delegate_publish_thumb import SgPublishDelegate
 from .model_publishhistory import SgPublishHistoryModel
+from .delegate_publish_history import SgPublishHistoryDelegate
 from .shotgun_model import ShotgunModel
 
 from .ui.dialog import Ui_Dialog
@@ -72,6 +73,9 @@ class AppDialog(QtGui.QWidget):
         # details pane
         self._publish_history_model = SgPublishHistoryModel(self.ui.history_view)
         self.ui.history_view.setModel(self._publish_history_model)
+        self._history_delegate = SgPublishHistoryDelegate(self.ui.history_view)
+        self.ui.history_view.setItemDelegate(self._history_delegate)
+        
         
         #################################################
         # load and initialize cached publish type model
@@ -87,7 +91,7 @@ class AppDialog(QtGui.QWidget):
         self._publish_proxy_model.setSourceModel(self._publish_model)
                 
         # tell our publish view to use a custom delegate to produce widgetry
-        self._publish_delegate = SgPublishDelegate(self.ui.publish_view, self) 
+        self._publish_delegate = SgPublishDelegate(self.ui.publish_view) 
         self.ui.publish_view.setItemDelegate(self._publish_delegate)
                 
         # hook up view -> proxy model -> model

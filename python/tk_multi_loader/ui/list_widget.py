@@ -8,15 +8,15 @@
 
 from tank.platform.qt import QtCore, QtGui
 
-class Ui_ThumbWidget(object):
-    def setupUi(self, ThumbWidget):
-        ThumbWidget.setObjectName("ThumbWidget")
-        ThumbWidget.resize(294, 136)
-        self.verticalLayout_2 = QtGui.QVBoxLayout(ThumbWidget)
+class Ui_ListWidget(object):
+    def setupUi(self, ListWidget):
+        ListWidget.setObjectName("ListWidget")
+        ListWidget.resize(384, 168)
+        self.verticalLayout_2 = QtGui.QVBoxLayout(ListWidget)
         self.verticalLayout_2.setSpacing(2)
         self.verticalLayout_2.setContentsMargins(2, 2, 2, 2)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
-        self.box = QtGui.QGroupBox(ThumbWidget)
+        self.box = QtGui.QGroupBox(ListWidget)
         self.box.setTitle("")
         self.box.setObjectName("box")
         self.verticalLayout = QtGui.QVBoxLayout(self.box)
@@ -26,13 +26,15 @@ class Ui_ThumbWidget(object):
         self.horizontalLayout = QtGui.QHBoxLayout()
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.thumbnail = QtGui.QLabel(self.box)
+        self.thumbnail.setMinimumSize(QtCore.QSize(128, 100))
+        self.thumbnail.setMaximumSize(QtCore.QSize(128, 100))
         self.thumbnail.setText("")
         self.thumbnail.setScaledContents(True)
         self.thumbnail.setAlignment(QtCore.Qt.AlignCenter)
         self.thumbnail.setObjectName("thumbnail")
         self.horizontalLayout.addWidget(self.thumbnail)
         self.label = QtGui.QLabel(self.box)
-        self.label.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignTop)
+        self.label.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
         self.label.setObjectName("label")
         self.horizontalLayout.addWidget(self.label)
         self.button = QtGui.QToolButton(self.box)
@@ -68,15 +70,15 @@ class Ui_ThumbWidget(object):
         self.verticalLayout.addLayout(self.horizontalLayout_2)
         self.verticalLayout_2.addWidget(self.box)
 
-        self.retranslateUi(ThumbWidget)
-        QtCore.QMetaObject.connectSlotsByName(ThumbWidget)
+        self.retranslateUi(ListWidget)
+        QtCore.QMetaObject.connectSlotsByName(ListWidget)
 
-    def retranslateUi(self, ThumbWidget):
-        ThumbWidget.setWindowTitle(QtGui.QApplication.translate("ThumbWidget", "Form", None, QtGui.QApplication.UnicodeUTF8))
-        self.label.setText(QtGui.QApplication.translate("ThumbWidget", "TextLabel\n"
+    def retranslateUi(self, ListWidget):
+        ListWidget.setWindowTitle(QtGui.QApplication.translate("ListWidget", "Form", None, QtGui.QApplication.UnicodeUTF8))
+        self.label.setText(QtGui.QApplication.translate("ListWidget", "TextLabel\n"
 "Foo\n"
 "Bar", None, QtGui.QApplication.UnicodeUTF8))
-        self.button.setText(QtGui.QApplication.translate("ThumbWidget", "...", None, QtGui.QApplication.UnicodeUTF8))
-        self.artist_label.setText(QtGui.QApplication.translate("ThumbWidget", "Astrid Artist: Lorem Ipsum", None, QtGui.QApplication.UnicodeUTF8))
+        self.button.setText(QtGui.QApplication.translate("ListWidget", "...", None, QtGui.QApplication.UnicodeUTF8))
+        self.artist_label.setText(QtGui.QApplication.translate("ListWidget", "Astrid Artist: Lorem Ipsum", None, QtGui.QApplication.UnicodeUTF8))
 
 from . import resources_rc

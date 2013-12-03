@@ -64,13 +64,17 @@ class ThumbWidget(QtGui.QWidget):
         highlight_str = "rgb(%s, %s, %s)" % (highlight_col.red(), highlight_col.green(), highlight_col.blue())
         
         if selected:
+            # make a border around the cell
             self.ui.box.setStyleSheet("""QGroupBox {border-width: 2px; 
                                                     border-color: %s; 
                                                     border-style: solid; 
                                                     background-color: %s}
                                       """ % (highlight_str, transp_highlight_str))
+            # expand the button to contain text
+            self.ui.button.setVisible(True)
         else:
             self.ui.box.setStyleSheet("")
+            self.ui.button.setVisible(False)
     
     def set_thumbnail(self, pixmap):
         """

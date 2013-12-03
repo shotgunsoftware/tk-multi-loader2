@@ -42,12 +42,14 @@ class ListWidget(QtGui.QWidget):
         highlight_str = "rgb(%s, %s, %s)" % (highlight_col.red(), highlight_col.green(), highlight_col.blue())
         
         if selected:
+            self.ui.button.setVisible(True)
             self.ui.box.setStyleSheet("""QGroupBox {border-width: 2px; 
                                                     border-color: %s; 
                                                     border-style: solid; 
                                                     background-color: %s}
                                       """ % (highlight_str, transp_highlight_str))
         else:
+            self.ui.button.setVisible(False)
             self.ui.box.setStyleSheet("")
     
     def set_thumbnail(self, pixmap):
@@ -56,17 +58,18 @@ class ListWidget(QtGui.QWidget):
         The pixmap must be 512x400 or it will appear squeezed
         """
         self.ui.thumbnail.setPixmap(pixmap)
-    
-    def set_text(self, line1, line2, line3):
+            
+    def set_text(self, header, body):
         """
         Populate three lines of text in the widget
         """
-        self.ui.label.setText("<b>%s</b><br>%s<br>%s" % (line1, line2, line3))        
+        self.ui.header_label.setText(header)
+        self.ui.body_label.setText(body)
 
     @staticmethod
     def calculate_size():
         """
         Calculates and returns a suitable size for this widget.
         """        
-        return QtCore.QSize(200, 100)
+        return QtCore.QSize(200, 130)
 

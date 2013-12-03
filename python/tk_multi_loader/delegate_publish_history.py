@@ -17,7 +17,8 @@ from . import utils
 from tank.platform.qt import QtCore, QtGui
 from .shotgun_widgets import WidgetDelegate
 from .shotgun_widgets import ListWidget
-from .model_latestpublish import SgLatestPublishModel
+from .model_publishhistory import SgPublishHistoryModel 
+from .shotgun_model import ShotgunModel
 
 
 class SgPublishHistoryDelegate(WidgetDelegate):
@@ -44,22 +45,47 @@ class SgPublishHistoryDelegate(WidgetDelegate):
         else:
             selected = False
         
-        icon = model_index.data(QtCore.Qt.DecorationRole)
-        thumb = icon.pixmap( 512 )
-        widget.set_thumbnail(thumb)
         widget.set_selected(selected)
         
-        model_index.data()
+        icon = model_index.data(QtCore.Qt.DecorationRole)
+        thumb = icon.pixmap(512)
+        widget.set_thumbnail(thumb)
         
-        if model_index.data(SgLatestPublishModel.IS_FOLDER_ROLE):
-            # folder. The name is in the main text role.
-            widget.set_text(model_index.data(SgLatestPublishModel.FOLDER_NAME_ROLE),
-                            model_index.data(SgLatestPublishModel.FOLDER_TYPE_ROLE), 
-                            "Status: %s" % model_index.data(SgLatestPublishModel.FOLDER_STATUS_ROLE)) 
+        # fill in the rest of the widget based on the raw sg data
+        # this is not totally clean separation of concerns, but
+        # introduces a coupling between the delegate and the model.
+        # but I guess that's inevitable here...
+        
+        sg_item = model_index.data(ShotgunModel.SG_DATA_ROLE)
+
+        if sg_item.get("version_number") is None:
+            version_str = "No Version"
         else:
-            widget.set_text(model_index.data(SgLatestPublishModel.ENTITY_NAME_ROLE),
-                            model_index.data(SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE), 
-                            model_index.data(SgLatestPublishModel.PUBLISH_NAME_ROLE)) 
+            version_str = "Version %03d" % sg_item.get("version_number")
+            
+        created_str = sg_item.get("created_at").strftime('%Y-%m-%d %H:%M:%S')
+            
+        # set the little description bit next to the artist icon
+        if sg_item.get("description") is None:
+            desc_str = "No Description Given"
+        else:
+            desc_str = sg_item.get("description")
+        
+        if sg_item.get("created_by") is None:
+            author_str = "Unspecified User"
+        else:
+            author_str = "%s" % sg_item.get("created_by").get("name")
+
+        header_str = "<b>%s</b>" % (version_str)
+        body_str = "%s<br><small><b>%s</b> &mdash; %s</small>" % (created_str, author_str, desc_str)
+        widget.set_text(header_str, body_str)
+        
+        
+                
+        
+        
+        
+        
         
     def _configure_hover_widget(self, widget, model_index, style_options):
         """

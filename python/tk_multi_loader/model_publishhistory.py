@@ -22,7 +22,7 @@ class SgPublishHistoryModel(ShotgunModel):
     This model represents the version history for a publish.
     """
     
-    USER_ICON_ROLE = QtCore.Qt.UserRole + 101     # holds a sortable key
+    USER_ICON_ROLE = QtCore.Qt.UserRole + 101
     
     
     def __init__(self, overlay_parent_widget):
@@ -90,7 +90,7 @@ class SgPublishHistoryModel(ShotgunModel):
                                filters=filters, 
                                hierarchy=["code"], 
                                fields=fields,
-                               order=[{"field_name":"version_number", "direction":"desc"}])
+                               order=[{"field_name":"version_number", "direction":"asc"}])
         
         self._refresh_data()
         

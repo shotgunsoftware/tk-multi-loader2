@@ -57,9 +57,9 @@ class SgPublishDelegate(WidgetDelegate):
                             model_index.data(SgLatestPublishModel.FOLDER_TYPE_ROLE), 
                             "Status: %s" % model_index.data(SgLatestPublishModel.FOLDER_STATUS_ROLE)) 
         else:
-            widget.set_text(model_index.data(SgLatestPublishModel.ENTITY_NAME_ROLE),
+            widget.set_text(model_index.data(SgLatestPublishModel.PUBLISH_NAME_ROLE),
                             model_index.data(SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE), 
-                            model_index.data(SgLatestPublishModel.PUBLISH_NAME_ROLE)) 
+                            model_index.data(SgLatestPublishModel.ENTITY_NAME_ROLE)) 
         
     def _configure_hover_widget(self, widget, model_index, style_options):
         """

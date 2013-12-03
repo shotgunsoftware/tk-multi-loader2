@@ -11,7 +11,7 @@ from tank.platform.qt import QtCore, QtGui
 class Ui_ThumbWidget(object):
     def setupUi(self, ThumbWidget):
         ThumbWidget.setObjectName("ThumbWidget")
-        ThumbWidget.resize(566, 573)
+        ThumbWidget.resize(532, 472)
         self.verticalLayout_2 = QtGui.QVBoxLayout(ThumbWidget)
         self.verticalLayout_2.setSpacing(1)
         self.verticalLayout_2.setContentsMargins(1, 1, 1, 1)
@@ -31,6 +31,7 @@ class Ui_ThumbWidget(object):
         self.thumbnail.setObjectName("thumbnail")
         self.verticalLayout.addWidget(self.thumbnail)
         self.horizontalLayout = QtGui.QHBoxLayout()
+        self.horizontalLayout.setSpacing(10)
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.label = QtGui.QLabel(self.box)
         self.label.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignTop)
@@ -40,7 +41,7 @@ class Ui_ThumbWidget(object):
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(":/res/down_arrow.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.button.setIcon(icon)
-        self.button.setAutoRaise(True)
+        self.button.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
         self.button.setObjectName("button")
         self.horizontalLayout.addWidget(self.button)
         self.verticalLayout.addLayout(self.horizontalLayout)
@@ -54,6 +55,6 @@ class Ui_ThumbWidget(object):
         self.label.setText(QtGui.QApplication.translate("ThumbWidget", "TextLabel\n"
 "Foo\n"
 "Bar", None, QtGui.QApplication.UnicodeUTF8))
-        self.button.setText(QtGui.QApplication.translate("ThumbWidget", "...", None, QtGui.QApplication.UnicodeUTF8))
+        self.button.setText(QtGui.QApplication.translate("ThumbWidget", "Actions", None, QtGui.QApplication.UnicodeUTF8))
 
 from . import resources_rc

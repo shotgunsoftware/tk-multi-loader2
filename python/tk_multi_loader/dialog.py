@@ -76,7 +76,6 @@ class AppDialog(QtGui.QWidget):
         self._history_delegate = SgPublishHistoryDelegate(self.ui.history_view)
         self.ui.history_view.setItemDelegate(self._history_delegate)
         
-        
         #################################################
         # load and initialize cached publish type model
         self._publish_type_model = SgPublishTypeModel(self.ui.publish_type_list)        
@@ -109,7 +108,7 @@ class AppDialog(QtGui.QWidget):
         #################################################
         # thumb scaling
         self.ui.thumb_scale.valueChanged.connect(self._on_thumb_size_slider_change)
-        self.ui.thumb_scale.setValue(220)
+        self.ui.thumb_scale.setValue(180)
         
         #################################################
         # setup history

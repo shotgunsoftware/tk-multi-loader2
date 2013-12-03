@@ -67,14 +67,29 @@ class ShotgunModel(QtGui.QStandardItemModel):
         This will ensure all worker threads etc are stopped.
         """
         self.__sg_data_retriever.stop()
+    
+    def item_from_entity(self, entity_type, entity_id):
+        """
+        Returns a QStandardItem based on entity type and entity id
+        Returns none if not found.
+        """
+        if entity_type != self.__entity_type:
+            return None
+        if entity_id not in self.__entity_tree_data:
+            return None
+        return self.__entity_tree_data[entity_id]        
+         
 
-    def load_data(self, entity_type, filters, hierarchy, fields, order):
+    ########################################################################################
+    # protected methods not meant to be subclassed but meant to be called by subclasses
+    
+    def _load_data(self, entity_type, filters, hierarchy, fields, order):
         """
         Clears the model of any previous data and prepares for operation with 
         a new set of shotgun query data. Nothing is retrieved from Shotgun at this point
         but if cache data is available, this is loaded into the model.
         
-        The separation between the load_data and refresh_data() which actually calls
+        The separation between the _load_data and _refresh_data() which actually calls
         out to Shotgun makes it possible to potentially run the model in offline mode.
         
         :param entity_type: Shotgun entity type to download
@@ -89,7 +104,7 @@ class ShotgunModel(QtGui.QStandardItemModel):
         :param fields:    Fields to retrieve from Shotgun (in addition to the ones specified
                           in the hierarchy parameter). Standard Shotgun API syntax. If you 
                           specify None for this parameter, Shotgun will not be called when
-                          the refresh_data() method is being executed.
+                          the _refresh_data() method is being executed.
         :param order:     Order clause for the Shotgun data. Standard Shotgun API syntax.
         """
         self.clear()
@@ -143,7 +158,7 @@ class ShotgunModel(QtGui.QStandardItemModel):
                 self.__app.log_debug("Couldn't load cache data from disk. Will proceed with "
                                     "full SG load. Error reported: %s" % e)        
     
-    def refresh_data(self):
+    def _refresh_data(self):
         """
         Rebuilds the data in the model to ensure it is up to date.
         This call is asynchronous and will return instantly.
@@ -169,21 +184,7 @@ class ShotgunModel(QtGui.QStandardItemModel):
                                                                            self.__filters, 
                                                                            fields,
                                                                            self.__order)
-
-    def item_from_entity(self, entity_type, entity_id):
-        """
-        Returns a QStandardItem based on entity type and entity id
-        Returns none if not found.
-        """
-        if entity_type != self.__entity_type:
-            return None
-        if entity_id not in self.__entity_tree_data:
-            return None
-        return self.__entity_tree_data[entity_id]        
-         
-
-    ########################################################################################
-    # protected methods not meant to be subclassed but meant to be called by subclasses
+    
     
     def _show_overlay_pixmap(self, pixmap):
         """
@@ -215,8 +216,10 @@ class ShotgunModel(QtGui.QStandardItemModel):
         uid = self.__sg_data_retriever.download_thumbnail(url, entity_type, entity_id)
         self.__thumb_map[uid] = item
         
+        
+        
     ########################################################################################
-    # methods to be implemented by subclasses
+    # methods to be implemented by subclasses    
     
     def _populate_item(self, item, sg_data):
         """
@@ -227,7 +230,7 @@ class ShotgunModel(QtGui.QStandardItemModel):
         :param item: QStandardItem that is about to be added to the model. This has been primed
                      with the standard settings that the ShotgunModel handles.
         :param sg_data: Shotgun data dictionary that was received from Shotgun given the fields
-                        and other settings specified in load_data()
+                        and other settings specified in _load_data()
         """
         # default implementation does nothing
         

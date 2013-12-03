@@ -158,7 +158,7 @@
    <item row="1" column="1">
     <layout class="QVBoxLayout" name="middle_area">
      <item>
-      <widget class="QListView" name="publish_list">
+      <widget class="QListView" name="publish_view">
        <property name="styleSheet">
         <string notr="true"/>
        </property>
@@ -388,56 +388,14 @@
        <number>1</number>
       </property>
       <item>
-       <widget class="QLabel" name="label">
+       <widget class="QLabel" name="label_3">
         <property name="text">
-         <string>&lt;big&gt;Current Version&lt;/big&gt;</string>
+         <string>&lt;big&gt;Version History&lt;/big&gt;</string>
         </property>
        </widget>
       </item>
       <item>
-       <layout class="QVBoxLayout" name="current_publish_details"/>
-      </item>
-      <item>
-       <widget class="QScrollArea" name="publish_history_scrollarea">
-        <property name="widgetResizable">
-         <bool>true</bool>
-        </property>
-        <widget class="QWidget" name="scrollAreaWidgetContents">
-         <property name="geometry">
-          <rect>
-           <x>0</x>
-           <y>0</y>
-           <width>390</width>
-           <height>498</height>
-          </rect>
-         </property>
-         <layout class="QVBoxLayout" name="verticalLayout_7">
-          <item>
-           <widget class="QLabel" name="label_3">
-            <property name="text">
-             <string>&lt;big&gt;Previous Versions&lt;/big&gt;</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <layout class="QVBoxLayout" name="publish_history_layout"/>
-          </item>
-          <item>
-           <spacer name="verticalSpacer">
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>20</width>
-              <height>40</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-         </layout>
-        </widget>
-       </widget>
+       <widget class="QListView" name="history_view"/>
       </item>
      </layout>
     </widget>

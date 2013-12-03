@@ -21,7 +21,7 @@ from .model_latestpublish import SgLatestPublishModel
 from .model_publishtype import SgPublishTypeModel
 from .proxymodel_publish import SgPublishProxyModel 
 from .delegate_publish_thumb import SgPublishDelegate
-from .detailshandler import DetailsHandler
+from .model_publishhistory import SgPublishHistoryModel
 from .shotgun_model import ShotgunModel
 
 from .ui.dialog import Ui_Dialog
@@ -70,38 +70,37 @@ class AppDialog(QtGui.QWidget):
                 
         #################################################
         # details pane
-        self._details_handler = DetailsHandler(self.ui)
+        self._publish_history_model = SgPublishHistoryModel(self.ui.history_view)
+        self.ui.history_view.setModel(self._publish_history_model)
         
         #################################################
         # load and initialize cached publish type model
         self._publish_type_model = SgPublishTypeModel(self.ui.publish_type_list)        
         self.ui.publish_type_list.setModel(self._publish_type_model)
-        self._publish_type_model.load_data()
-        self._publish_type_model.refresh_data()
 
         #################################################
         # setup publish model
-        self._publish_model = SgLatestPublishModel(self.ui.publish_list, self._publish_type_model)
+        self._publish_model = SgLatestPublishModel(self.ui.publish_view, self._publish_type_model)
         
         # set up a proxy model to cull results based on type selection
         self._publish_proxy_model = SgPublishProxyModel(self)
         self._publish_proxy_model.setSourceModel(self._publish_model)
                 
         # tell our publish view to use a custom delegate to produce widgetry
-        self._publish_delegate = SgPublishDelegate(self.ui.publish_list, self) 
-        self.ui.publish_list.setItemDelegate(self._publish_delegate)
+        self._publish_delegate = SgPublishDelegate(self.ui.publish_view, self) 
+        self.ui.publish_view.setItemDelegate(self._publish_delegate)
                 
         # hook up view -> proxy model -> model
-        self.ui.publish_list.setModel(self._publish_proxy_model)
+        self.ui.publish_view.setModel(self._publish_proxy_model)
         
         # whenever the type list is checked, update the publish filters
         self._publish_type_model.itemChanged.connect(self._apply_type_filters_on_publishes)        
         
         # if an item in the table is double clicked ensure details are shown
-        self.ui.publish_list.doubleClicked.connect(self._on_publish_double_clicked)
+        self.ui.publish_view.doubleClicked.connect(self._on_publish_double_clicked)
         
         # event handler for when the selection in the publish view is changing
-        self.ui.publish_list.selectionModel().selectionChanged.connect(self._on_publish_selection)
+        self.ui.publish_view.selectionModel().selectionChanged.connect(self._on_publish_selection)
         
         #################################################
         # thumb scaling
@@ -135,7 +134,7 @@ class AppDialog(QtGui.QWidget):
     def closeEvent(self, event):
         
         self._publish_model.destroy()
-        self._details_handler.destroy()
+        self._publish_history_model.destroy()
         self._publish_type_model.destroy()
         for p in self._entity_presets:
             self._entity_presets[p].model.destroy()
@@ -152,7 +151,7 @@ class AppDialog(QtGui.QWidget):
             
             # if there is something selected, make sure the detail
             # section is focused on this 
-            selection_model = self.ui.publish_list.selectionModel()     
+            selection_model = self.ui.publish_view.selectionModel()     
             
             if selection_model.hasSelection():
             
@@ -168,10 +167,12 @@ class AppDialog(QtGui.QWidget):
                 # so let's retrieve the standarditem object associated with the index
                 item = source_index.model().itemFromIndex(source_index)
             
-                self._details_handler.load_details(item)
+                # get sg publish data
+                sg_data = item.data(ShotgunModel.SG_DATA_ROLE)
+                self._publish_history_model.load_data(sg_data)
             
             else:
-                self._details_handler.clear()
+                self._publish_history_model.show_select_message()
             
             
         else:
@@ -297,7 +298,7 @@ class AppDialog(QtGui.QWidget):
         """
         When scale slider is manipulated
         """
-        self.ui.publish_list.setIconSize(QtCore.QSize(value, value))
+        self.ui.publish_view.setIconSize(QtCore.QSize(value, value))
         
     def _on_publish_selection(self, selected, deselected):
         """
@@ -310,8 +311,7 @@ class AppDialog(QtGui.QWidget):
             selected_indexes = selected.indexes()
             
             if len(selected_indexes) == 0:
-                # get
-                self._details_handler.clear()
+                self._publish_history_model.show_select_message()
                 
             else:
                 # get the currently selected model index
@@ -328,7 +328,8 @@ class AppDialog(QtGui.QWidget):
                 item = source_index.model().itemFromIndex(source_index)
                 
                 # tell details pane to load stuff
-                self._details_handler.load_details(item)
+                sg_data = item.data(ShotgunModel.SG_DATA_ROLE)
+                self._publish_history_model.load_data(sg_data)
         
         
         
@@ -472,13 +473,7 @@ class AppDialog(QtGui.QWidget):
             self._dynamic_widgets.extend( [tab, layout, view] )
 
             # set up data backend
-            model = SgEntityModel(view)
-            # set up and load up from cache if possible
-            model.load_data(sg_entity_type, 
-                            e["filters"], 
-                            e["hierarchy"],
-                            fields=["image", "sg_status_list"],
-                            order=[])
+            model = SgEntityModel(view, sg_entity_type, e["filters"], e["hierarchy"])
 
             # configure the view
             view.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
@@ -523,7 +518,7 @@ class AppDialog(QtGui.QWidget):
             # history navigation, ask the currently visible
             # view to (background async) refresh its data
             model = self._entity_presets[self._current_entity_preset].model
-            model.refresh_data()
+            model.async_refresh()
         
         if self._programmatic_selection_mode == False:
             # this request is because a user clicked a tab
@@ -596,7 +591,6 @@ class AppDialog(QtGui.QWidget):
             
         # load publishes
         self._publish_model.load_data(sg_data, child_folders)
-        self._publish_model.refresh_data()
             
 
     def _populate_entity_breadcrumbs(self):

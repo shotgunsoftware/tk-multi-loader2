@@ -38,15 +38,7 @@ class SgPublishTypeModel(ShotgunModel):
         # specify sort key
         self.setSortRole(SgPublishTypeModel.SORT_KEY_ROLE)
                 
-    ############################################################################################
-    # public interface
-                
-    def load_data(self):
-        """
-        Sets up the model. This is overloaded from the ShotgunModel's
-        load_data() call.
-        """
-        
+        # now set up the model.        
         # first figure out which fields to get from shotgun
         app = tank.platform.current_bundle()
         publish_entity_type = tank.util.get_published_file_entity_type(app.tank)
@@ -56,12 +48,15 @@ class SgPublishTypeModel(ShotgunModel):
         else:
             publish_type_field = "TankType"
                 
-        ShotgunModel.load_data(self, 
+        ShotgunModel._load_data(self, 
                                entity_type=publish_type_field, 
                                filters=[], 
                                hierarchy=["code"], 
                                fields=["code","description","id"],
                                order=[])
+        
+        # and finally ask model to refresh itself
+        self._refresh_data()
 
     def get_selected_types(self):
         """

@@ -103,13 +103,15 @@ class SgLatestPublishModel(ShotgunModel):
         # make gc happy by keeping handle to all items
         self._treeview_folder_items = treeview_folder_items
         
-        ShotgunModel.load_data(self, 
+        ShotgunModel._load_data(self, 
                                entity_type=publish_entity_type, 
                                filters=sg_filters, 
                                hierarchy=["code"], 
                                fields=publish_fields,
                                order=[{"field_name":"version_number", "direction":"asc"}])
 
+        # and now trigger a refresh
+        self._refresh_data()
 
     ############################################################################################
     # subclassed methods

@@ -19,13 +19,25 @@ class SgEntityModel(ShotgunModel):
     on the left hand side.
     """
     
-    def __init__(self, overlay_parent_widget):
+    def __init__(self, overlay_parent_widget, entity_type, filters, hierarchy):
         """
         Constructor
         """
         # folder icon
         self._folder_icon = QtGui.QPixmap(":/res/folder.png")    
         ShotgunModel.__init__(self, overlay_parent_widget, download_thumbs=False)
+        fields=["image", "sg_status_list"]
+        order=[]
+        self._load_data(entity_type, filters, hierarchy, fields, order)
+    
+    ############################################################################################
+    # public methods
+    
+    def async_refresh(self):
+        """
+        Trigger an asynchronous refresh of the model
+        """
+        self._refresh_data()
     
     ############################################################################################
     # subclassed methods

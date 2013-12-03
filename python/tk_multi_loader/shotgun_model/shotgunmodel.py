@@ -204,17 +204,18 @@ class ShotgunModel(QtGui.QStandardItemModel):
         """
         self.__overlay.show_error_message(msg)        
 
-    def _request_thumbnail_download(self, item, url, entity_type, entity_id):
+    def _request_thumbnail_download(self, item, field, url, entity_type, entity_id):
         """
         Request that a thumbnail is downloaded for an item.
         
         :param item: QStandardItem which belongs to this model
+        :param field: Shotgun field where the thumbnail is stored
         :param url: thumbnail url
         :param entity_type: Shotgun entity type
         :param entity_id: Shotgun entity id 
         """
         uid = self.__sg_data_retriever.download_thumbnail(url, entity_type, entity_id)
-        self.__thumb_map[uid] = item
+        self.__thumb_map[uid] = {"item": item, "field": field }
         
         
         
@@ -245,7 +246,7 @@ class ShotgunModel(QtGui.QStandardItemModel):
         # the default implementation does nothing
 
 
-    def _populate_thumbnail(self, item, path):
+    def _populate_thumbnail(self, item, field, path):
         """
         Called whenever a thumbnail for an item has arrived on disk. In the case of 
         an already cached thumbnail, this may be called very soon after data has been 
@@ -264,6 +265,7 @@ class ShotgunModel(QtGui.QStandardItemModel):
         resurface via this callback method.
         
         :param item: QStandardItem which is associated with the given thumbnail
+        :param field: The Shotgun field which the thumbnail is associated with.
         :param path: A path on disk to the thumbnail. This is a file in jpeg format.
         """
         # the default implementation sets the icon
@@ -335,10 +337,11 @@ class ShotgunModel(QtGui.QStandardItemModel):
         """
         # this is a thumbnail that has been fetched!
         # update the publish icon based on this.
-        item = self.__thumb_map[thumb_uid]
+        
+        d = self.__thumb_map[thumb_uid]
         
         # call deriving class implementation
-        self._populate_thumbnail(item, path)        
+        self._populate_thumbnail(d["item"], d["field"], path)        
 
 
     def __on_sg_data_arrived(self, sg_data):
@@ -462,7 +465,7 @@ class ShotgunModel(QtGui.QStandardItemModel):
             
         for k in a:
             
-            if k == "image":
+            if "image" in k or "amazonaws" in _to_utf8(a[k]):
                 # skip thumbnail fields in the comparison - these 
                 # change all the time!
                 continue
@@ -611,7 +614,7 @@ class ShotgunModel(QtGui.QStandardItemModel):
             uid = self.__sg_data_retriever.download_thumbnail(sg_data["image"], 
                                                               sg_data["type"], 
                                                               sg_data["id"])
-            self.__thumb_map[uid] = item
+            self.__thumb_map[uid] = {"item": item, "field": "image" }
             
     
     def __rebuild_whole_tree_from_sg_data(self, data):

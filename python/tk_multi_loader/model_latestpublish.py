@@ -159,9 +159,11 @@ class SgLatestPublishModel(ShotgunModel):
             # see if we can get a thumbnail for this node!
             if treeview_sg_data and treeview_sg_data.get("image"):
                 # there is a thumbnail for this item!
-                self._request_thumbnail_download(item, treeview_sg_data["image"], 
-                                                                 treeview_sg_data["type"], 
-                                                                 treeview_sg_data["id"])
+                self._request_thumbnail_download(item,
+                                                 "image", 
+                                                 treeview_sg_data["image"], 
+                                                 treeview_sg_data["type"], 
+                                                 treeview_sg_data["id"])
             self.appendRow(item)
             self._folder_items.append(item)
         
@@ -217,7 +219,7 @@ class SgLatestPublishModel(ShotgunModel):
         # set up publishes with a "thumbnail loading" icon
         item.setIcon(self._loading_icon)
 
-    def _populate_thumbnail(self, item, path):
+    def _populate_thumbnail(self, item, field, path):
         """
         Called whenever a thumbnail for an item has arrived on disk. In the case of 
         an already cached thumbnail, this may be called very soon after data has been 
@@ -236,6 +238,7 @@ class SgLatestPublishModel(ShotgunModel):
         resurface via this callback method.
         
         :param item: QStandardItem which is associated with the given thumbnail
+        :param field: The Shotgun field which the thumbnail is associated with.
         :param path: A path on disk to the thumbnail. This is a file in jpeg format.
         """
         # pass the thumbnail through out special image compositing methods

@@ -14,7 +14,7 @@ import hashlib
 import tempfile
 from tank.platform.qt import QtCore, QtGui
 
-
+from . import utils
 from .shotgun_model import ShotgunModel
 
 class SgPublishHistoryModel(ShotgunModel):
@@ -22,7 +22,7 @@ class SgPublishHistoryModel(ShotgunModel):
     This model represents the version history for a publish.
     """
     
-    #SORT_KEY_ROLE = QtCore.Qt.UserRole + 102     # holds a sortable key
+    USER_ICON_ROLE = QtCore.Qt.UserRole + 101     # holds a sortable key
     
     
     def __init__(self, overlay_parent_widget):
@@ -30,14 +30,17 @@ class SgPublishHistoryModel(ShotgunModel):
         Constructor
         """
         # folder icon
+        self._loading_icon = QtGui.QPixmap(":/res/sg_item_loading.png")
+        self._default_user_thumb = QtGui.QPixmap(":/res/default_user_thumb.png")
         self._please_select_icon = QtGui.QPixmap(":/res/see_version_history.png")    
         ShotgunModel.__init__(self, overlay_parent_widget, download_thumbs=True)
         
-        self._app = tank.platform.current_bundle()
+        # hot patch shotgun API to allow for pickling
+        from tank_vendor.shotgun_api3.lib import sgtimezone
+        sgtimezone.LocalTimezone = sgtimezone.SgTimezone.LocalTimezone 
+                
         
         
-        # specify sort key
-        #self.setSortRole(SgPublishTypeModel.SORT_KEY_ROLE)
                 
     ############################################################################################
     # public interface
@@ -48,14 +51,14 @@ class SgPublishHistoryModel(ShotgunModel):
         """
         self._show_overlay_pixmap(self._please_select_icon)
                 
-                
     def load_data(self, sg_data):
         """
         Load the details for the shotgun publish entity in sg_data
         """
         
         # sg fields logic
-        publish_entity_type = tank.util.get_published_file_entity_type(self._app.sgtk)
+        app = tank.platform.current_bundle()
+        publish_entity_type = tank.util.get_published_file_entity_type(app.sgtk)
         
         if publish_entity_type == "PublishedFile":
             publish_type_field = "published_file_type"
@@ -82,16 +85,14 @@ class SgPublishHistoryModel(ShotgunModel):
                     [publish_type_field, "is", sg_data[publish_type_field] ],
                   ]
 
-        
         ShotgunModel._load_data(self, 
-                               entity_type=publish_type_field, 
+                               entity_type=publish_entity_type, 
                                filters=filters, 
                                hierarchy=["code"], 
                                fields=fields,
                                order=[{"field_name":"version_number", "direction":"desc"}])
         
-
-        
+        self._refresh_data()
         
         
         
@@ -117,16 +118,13 @@ class SgPublishHistoryModel(ShotgunModel):
             # get the thumbnail - store the unique id we get back from
             # the data retrieve in a dict for fast lookup later
             uid = self._request_thumbnail_download(item, 
+                                                   "created_by.HumanUser.image",
                                                    sg_data["created_by.HumanUser.image"], 
                                                    sg_data["created_by"]["type"], 
                                                    sg_data["created_by"]["id"])
             
         
         
-        item.setData(sg_name, SgPublishTypeModel.DISPLAY_NAME_ROLE)
-        item.setToolTip(str(sg_desc))
-        item.setCheckable(True)
-        item.setCheckState(QtCore.Qt.Checked)
         
     def _populate_default_thumbnail(self, item):    
         """
@@ -136,11 +134,11 @@ class SgPublishHistoryModel(ShotgunModel):
         on a call to _populate_thumbnail will follow where the subclassing implementation
         can populate the real image.
         """
-        
         # set up publishes with a "thumbnail loading" icon
         item.setIcon(self._loading_icon)
+        item.setData(self._default_user_thumb, SgPublishHistoryModel.USER_ICON_ROLE)
 
-    def _populate_thumbnail(self, item, path):
+    def _populate_thumbnail(self, item, field, path):
         """
         Called whenever a thumbnail for an item has arrived on disk. In the case of 
         an already cached thumbnail, this may be called very soon after data has been 
@@ -159,7 +157,13 @@ class SgPublishHistoryModel(ShotgunModel):
         resurface via this callback method.
         
         :param item: QStandardItem which is associated with the given thumbnail
+        :param field: The Shotgun field which the thumbnail is associated with.
         :param path: A path on disk to the thumbnail. This is a file in jpeg format.
         """
-        #thumb = utils.create_overlayed_publish_thumbnail(path)
-        #item.setIcon(thumb)
+        if field == "image":
+            thumb = utils.create_overlayed_publish_thumbnail(path)
+            item.setIcon(thumb)
+        else:
+            thumb = QtGui.QPixmap(path)
+            item.setIcon(thumb)
+            

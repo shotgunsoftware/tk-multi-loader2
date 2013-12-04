@@ -44,6 +44,10 @@ class AppDialog(QtGui.QWidget):
         tank.platform.current_engine().commands["Show me the new Loader!"]["callback"]()
 
     def __init__(self):
+        """
+        Constructor
+        """
+        
         QtGui.QWidget.__init__(self)
         
         # set up the UI
@@ -150,7 +154,11 @@ class AppDialog(QtGui.QWidget):
         
     
     def closeEvent(self, event):
-        
+        """
+        Executed when the main dialog is closed.
+        All worker threads and other things which need a proper shutdown
+        need to be called here.
+        """
         self._publish_model.destroy()
         self._publish_history_model.destroy()
         self._publish_type_model.destroy()
@@ -164,6 +172,9 @@ class AppDialog(QtGui.QWidget):
     # info bar related
     
     def _on_info_toggled(self, checked):
+        """
+        Executed when someone clicks the show/hide details button
+        """
         if checked:
             self.ui.details.setVisible(True)
             
@@ -185,17 +196,32 @@ class AppDialog(QtGui.QWidget):
                 # so let's retrieve the standarditem object associated with the index
                 item = source_index.model().itemFromIndex(source_index)
             
-                # get sg publish data
-                sg_data = item.data(ShotgunModel.SG_DATA_ROLE)
-                self._publish_history_model.load_data(sg_data)
+                self._setup_details_panel(item)
             
             else:
-                self._publish_history_model.show_select_message()
-            
-            
+                self._setup_details_panel(None)
+                
         else:
             self.ui.details.setVisible(False)
         
+        
+        
+    def _setup_details_panel(self, item):
+        """
+        Sets up the details panel with info for a given item.        
+        """
+        if not self.ui.details.isVisible():
+            return
+        
+        if item is None:        
+            self._publish_history_model.show_select_message()
+                
+        else:            
+            
+            # tell details pane to load stuff
+            sg_data = item.data(ShotgunModel.SG_DATA_ROLE)
+            self._publish_history_model.load_data(sg_data)
+                
         
     ########################################################################################
     # history related
@@ -322,33 +348,26 @@ class AppDialog(QtGui.QWidget):
         """
         Signal triggered when someone changes the selection in the main publish area
         """
-        if self.ui.details.isVisible():
-            # since we are controlling the details view, no need to do anything if
-            # it is not visible
         
-            selected_indexes = selected.indexes()
+        selected_indexes = selected.indexes()
+        
+        if len(selected_indexes) == 0:
+            self._setup_details_panel(None)
             
-            if len(selected_indexes) == 0:
-                self._publish_history_model.show_select_message()
-                
-            else:
-                # get the currently selected model index
-                model_index = selected_indexes[0]
-        
-                # the incoming model index is an index into our proxy model
-                # before continuing, translate it to an index into the 
-                # underlying model
-                proxy_model = model_index.model()
-                source_index = proxy_model.mapToSource(model_index)
-                
-                # now we have arrived at our model derived from StandardItemModel
-                # so let's retrieve the standarditem object associated with the index
-                item = source_index.model().itemFromIndex(source_index)
-                
-                # tell details pane to load stuff
-                sg_data = item.data(ShotgunModel.SG_DATA_ROLE)
-                self._publish_history_model.load_data(sg_data)
-        
+        else:
+            # get the currently selected model index
+            model_index = selected_indexes[0]
+    
+            # the incoming model index is an index into our proxy model
+            # before continuing, translate it to an index into the 
+            # underlying model
+            proxy_model = model_index.model()
+            source_index = proxy_model.mapToSource(model_index)
+            
+            # now we have arrived at our model derived from StandardItemModel
+            # so let's retrieve the standarditem object associated with the index
+            item = source_index.model().itemFromIndex(source_index)                
+            self._setup_details_panel(item)
         
         
     def _on_publish_double_clicked(self, model_index):
@@ -558,11 +577,15 @@ class AppDialog(QtGui.QWidget):
                 # get selected item
                 selected_item = current.model().itemFromIndex(current)
             
+            # tell details view to clear
+            self._setup_details_panel(None)
+            
             # add history record
             self._add_history_record(self._current_entity_preset, selected_item)
             
-            # finally, tell the publish view to change 
-            self._load_publishes_for_entity_item(selected_item)
+            # tell the publish view to change 
+            self._load_publishes_for_entity_item(selected_item)            
+
         
         
     def _on_treeview_item_selected(self):
@@ -586,6 +609,9 @@ class AppDialog(QtGui.QWidget):
         # notify history
         self._add_history_record(self._current_entity_preset, item)
         
+        # tell details panel to clear itself
+        self._setup_details_panel(None)
+        
         # tell publish UI to update itself
         self._load_publishes_for_entity_item(item)
             
@@ -607,6 +633,11 @@ class AppDialog(QtGui.QWidget):
             for child_idx in range(item.rowCount()):
                 child_folders.append(item.child(child_idx))
             
+        # clear selection. If we don't clear the model at this point, 
+        # the selection model will attempt to pair up with the model is
+        # data is being loaded in, resulting in many many events
+        self.ui.publish_view.selectionModel().clear()
+        
         # load publishes
         self._publish_model.load_data(sg_data, child_folders)
             
@@ -636,4 +667,5 @@ class AppDialog(QtGui.QWidget):
                     
         breadcrumbs = " > ".join( crumbs[::-1] )  
         self.ui.entity_breadcrumbs.setText("<big>%s</big>" % breadcrumbs)
+        
         

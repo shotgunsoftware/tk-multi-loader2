@@ -248,9 +248,7 @@ class SgLatestPublishModel(ShotgunModel):
             # composite the thumbnail nicely on top of the folder icon
             thumb = utils.create_overlayed_folder_thumbnail(path)
         else:
-            print path
             thumb = utils.create_overlayed_publish_thumbnail(path)
-        print "set item thumb %s" % thumb.width()
         item.setIcon(thumb)
 
 

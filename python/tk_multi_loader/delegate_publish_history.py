@@ -9,21 +9,16 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import tank
-import os
-import hashlib
-import tempfile
-from . import utils
 
 from tank.platform.qt import QtCore, QtGui
 from .shotgun_widgets import WidgetDelegate
-from .shotgun_widgets import ListWidget
-from .model_publishhistory import SgPublishHistoryModel 
+from .shotgun_widgets import ListWidget 
 from .shotgun_model import ShotgunModel
 
 
 class SgPublishHistoryDelegate(WidgetDelegate):
     """
-    Delegate which 'glues up' the ThumbWidget with a QT View.
+    Delegate which 'glues up' the Details Widget with a QT View.
     """
 
     def __init__(self, view):

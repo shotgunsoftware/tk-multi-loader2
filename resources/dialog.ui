@@ -335,7 +335,19 @@
       <string/>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_5">
-      <property name="margin">
+      <property name="spacing">
+       <number>10</number>
+      </property>
+      <property name="leftMargin">
+       <number>1</number>
+      </property>
+      <property name="topMargin">
+       <number>10</number>
+      </property>
+      <property name="rightMargin">
+       <number>1</number>
+      </property>
+      <property name="bottomMargin">
        <number>1</number>
       </property>
       <item>
@@ -344,7 +356,7 @@
          <string>&lt;big&gt;Detailed Information&lt;/big&gt;</string>
         </property>
         <property name="alignment">
-         <set>Qt::AlignHCenter|Qt::AlignTop</set>
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
         </property>
        </widget>
       </item>

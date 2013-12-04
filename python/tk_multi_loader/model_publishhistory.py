@@ -40,12 +40,6 @@ class SgPublishHistoryModel(ShotgunModel):
     ############################################################################################
     # public interface
                 
-    def blank_out(self):
-        """
-        Blanks out the results
-        """
-        self._show_overlay_info_message("")
-                
     def load_data(self, sg_data):
         """
         Load the details for the shotgun publish entity in sg_data

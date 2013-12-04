@@ -79,6 +79,21 @@ class ShotgunModel(QtGui.QStandardItemModel):
             return None
         return self.__entity_tree_data[entity_id]        
          
+         
+    def clear(self):
+        """
+        Overloaded version of clear
+        """
+        QtGui.QStandardItemModel.clear(self)
+        self.__sg_data_retriever.clear()        
+        # model data in alt format
+        self.__entity_tree_data = {}
+        # thumbnail download lookup
+        self.__thumb_map = {}
+        # pyside will crash unless we actively hold a reference
+        # to all items that we create.
+        self.__all_tree_items = []
+        
 
     ########################################################################################
     # protected methods not meant to be subclassed but meant to be called by subclasses
@@ -109,22 +124,11 @@ class ShotgunModel(QtGui.QStandardItemModel):
         """
         self.clear()
         self.__overlay.hide()
-        self.__sg_data_retriever.clear()
         self.__entity_type = entity_type
         self.__filters = filters
         self.__fields = fields
         self.__order = order
         self.__hierarchy = hierarchy
-        
-        # model data in alt format
-        self.__entity_tree_data = {}
-        
-        # thumbnail download lookup
-        self.__thumb_map = {}
-        
-        # pyside will crash unless we actively hold a reference
-        # to all items that we create.
-        self.__all_tree_items = []
         
         # when we cache the data associated with this model, create
         # the file name based on the md5 hash of the filter and other 

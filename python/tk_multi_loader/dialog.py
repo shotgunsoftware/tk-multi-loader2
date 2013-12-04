@@ -95,7 +95,7 @@ class AppDialog(QtGui.QWidget):
         self._history_delegate = SgPublishHistoryDelegate(self.ui.history_view)
         self.ui.history_view.setItemDelegate(self._history_delegate)
         
-        self._no_selection_pixmap = QtGui.QPixmap(":/res/no_item_selected_256x200.png")
+        self._no_selection_pixmap = QtGui.QPixmap(":/res/no_item_selected_512x400.png")
         
         #################################################
         # load and initialize cached publish type model
@@ -217,7 +217,7 @@ class AppDialog(QtGui.QWidget):
         
         if item is None:        
             # display a 'please select something' message in the thumb area
-            self._publish_history_model.blank_out()
+            self._publish_history_model.clear()
             self.ui.details_header.setText("")
             self.ui.details_image.setPixmap(self._no_selection_pixmap)
             
@@ -240,7 +240,7 @@ class AppDialog(QtGui.QWidget):
                 self.ui.details_header.setText(msg)
                 
                 # blank out the version history
-                self._publish_history_model.blank_out()
+                self._publish_history_model.clear()
                 
             
             else:
@@ -477,7 +477,7 @@ class AppDialog(QtGui.QWidget):
                 # ensure that the tree view is expanded and that the item we are about 
                 # to selected is in vertically centered in the widget
                 view.scrollTo(item.index(), QtGui.QAbstractItemView.PositionAtCenter)
-            
+                selection_model.clear()
                 selection_model.select(item.index(), QtGui.QItemSelectionModel.ClearAndSelect)
                 selection_model.setCurrentIndex(item.index(), QtGui.QItemSelectionModel.ClearAndSelect)
                 

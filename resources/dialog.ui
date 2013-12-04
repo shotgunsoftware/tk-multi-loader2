@@ -169,7 +169,7 @@
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout_4">
        <item>
-        <widget class="QCheckBox" name="checkBox">
+        <widget class="QCheckBox" name="show_sub_items">
          <property name="text">
           <string>Show items in subfolders</string>
          </property>

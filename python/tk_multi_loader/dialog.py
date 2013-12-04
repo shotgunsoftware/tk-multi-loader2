@@ -69,12 +69,10 @@ class AppDialog(QtGui.QWidget):
         self.ui.reload.clicked.connect(self._restart)
         
         #################################################
-        # details pane mockup for now
+        # details pane
         self.ui.details.setVisible(False)
         self.ui.info.toggled.connect(self._on_info_toggled)
                 
-        #################################################
-        # details pane
         self._publish_history_model = SgPublishHistoryModel(self.ui.history_view)
         
         self._publish_history_proxy = QtGui.QSortFilterProxyModel(self)
@@ -126,6 +124,8 @@ class AppDialog(QtGui.QWidget):
         # event handler for when the selection in the publish view is changing
         self.ui.publish_view.selectionModel().selectionChanged.connect(self._on_publish_selection)
         
+        self.ui.show_sub_items.toggled.connect(self._on_show_subitems_toggled)
+        
         #################################################
         # thumb scaling
         self.ui.thumb_scale.valueChanged.connect(self._on_thumb_size_slider_change)
@@ -154,7 +154,7 @@ class AppDialog(QtGui.QWidget):
         self.ui.left_side_splitter.setSizes( [400, 200] )
         
         
-    
+        
     def closeEvent(self, event):
         """
         Executed when the main dialog is closed.
@@ -377,6 +377,21 @@ class AppDialog(QtGui.QWidget):
 
     ########################################################################################
     # publish view
+        
+    def _on_show_subitems_toggled(self):
+        """
+        Triggered when the show sub items checkbox is clicked
+        """
+        selection_model = self._entity_presets[self._current_entity_preset].view.selectionModel()        
+        item = None
+        if selection_model.hasSelection():            
+            # get the current index
+            current = selection_model.selection().indexes()[0]
+            # get selected item
+            item = current.model().itemFromIndex(current)        
+        # tell publish UI to update itself
+        self._load_publishes_for_entity_item(item)
+         
         
     def _on_thumb_size_slider_change(self, value):
         """
@@ -661,25 +676,41 @@ class AppDialog(QtGui.QWidget):
         Given an item from the treeview, or None if no item
         is selected, prepare the publish area UI.
         """
-        child_folders = []
-        sg_data = None
         
-        if item:
-            # get sg data for this item so we can pass it to the publish model
-            sg_data = item.data(ShotgunModel.SG_DATA_ROLE)
-            
-            # and get all the folder children - these need to be displayed
-            # by the model as folders
-            for child_idx in range(item.rowCount()):
-                child_folders.append(item.child(child_idx))
-            
         # clear selection. If we don't clear the model at this point, 
         # the selection model will attempt to pair up with the model is
         # data is being loaded in, resulting in many many events
         self.ui.publish_view.selectionModel().clear()
         
-        # load publishes
-        self._publish_model.load_data(sg_data, child_folders)
+        if item is None:
+            self._publish_model.load_data(None, [])
+        
+        else:
+
+            # get all the folder children - these need to be displayed
+            # by the model as folders
+            child_folders = []
+            for child_idx in range(item.rowCount()):
+                child_folders.append(item.child(child_idx))
+
+            sg_data = item.data(ShotgunModel.SG_DATA_ROLE)
+            
+            if sg_data is None:
+                show_sub_items = self.ui.show_sub_items.isChecked()
+                if show_sub_items:
+                    # we are at an intermediary node and the sub items is ticked!
+                    # load up a partial query
+                    partial_filters = item.model().get_filters(item)
+                    entity_type = item.model().get_entity_type()
+                    self._publish_model.load_data_based_on_query(partial_filters, entity_type, child_folders)
+                    
+                else:
+                    # do not include shotgun matches 
+                    self._publish_model.load_data(None, child_folders)
+                    
+            else:
+                # we are at a leaf level. 
+                self._publish_model.load_data(sg_data, child_folders)
             
 
     def _populate_entity_breadcrumbs(self):

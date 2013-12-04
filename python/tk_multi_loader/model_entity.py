@@ -37,7 +37,7 @@ class SgEntityModel(ShotgunModel):
         """
         Trigger an asynchronous refresh of the model
         """
-        self._refresh_data()
+        self._refresh_data()        
     
     ############################################################################################
     # subclassed methods

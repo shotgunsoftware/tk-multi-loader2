@@ -62,6 +62,20 @@ class SgLatestPublishModel(ShotgunModel):
     ############################################################################################
     # public interface
 
+    def load_data_based_on_query(self, partial_filters, entity_type, treeview_folder_items):
+        """
+        Special method which sets up the model based on a query.
+        This method will call shotgun SYNCHRONOUSLY, (something to improve later on)
+        in order to resolve a number of shotgun objects based on a set of filters.
+        These filters will form the basis of the model's source query.
+        """
+        app = tank.platform.current_bundle()
+        
+        # get shotgun data
+        data = app.shotgun.find(entity_type, partial_filters)
+        sg_filters = [["entity", "in", data]]
+        self._do_load_data(sg_filters, treeview_folder_items)
+
     def load_data(self, sg_entity_link, treeview_folder_items):        
         """
         Clears the model and sets it up for a particular entity.
@@ -79,7 +93,15 @@ class SgLatestPublishModel(ShotgunModel):
                              these are the sub folders for the currently selected item
                              in the tree view.
         """
+        if sg_entity_link:
+            sg_filters = [["entity", "is", sg_entity_link]]
+        else:
+            # None indicates that we should not show any publishes
+            sg_filters = None
+        
+        self._do_load_data(sg_filters, treeview_folder_items)
 
+    def _do_load_data(self, sg_filters, treeview_folder_items):
         # first figure out which fields to get from shotgun
         app = tank.platform.current_bundle()
         publish_entity_type = tank.util.get_published_file_entity_type(app.tank)
@@ -95,11 +117,6 @@ class SgLatestPublishModel(ShotgunModel):
                           "image", 
                           self._publish_type_field]
         
-        if sg_entity_link:
-            sg_filters = [["entity", "is", sg_entity_link]]
-        else:
-            # None indicates that we should not show any publishes
-            sg_filters = None
         
         # first add our folders to the model
         # make gc happy by keeping handle to all items

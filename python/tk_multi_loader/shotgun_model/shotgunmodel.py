@@ -9,6 +9,7 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import tank
+import copy
 import os
 import hashlib
 import tempfile
@@ -19,7 +20,7 @@ from tank.platform.qt import QtCore, QtGui
 
 # just so we can do some basic file validation
 FILE_MAGIC_NUMBER = 0xDEADBEEF # so we can validate file format correctness before loading
-FILE_VERSION = 7               # if we ever change the file format structure
+FILE_VERSION = 8               # if we ever change the file format structure
 
 
 class ShotgunModel(QtGui.QStandardItemModel):
@@ -29,6 +30,7 @@ class ShotgunModel(QtGui.QStandardItemModel):
 
     SG_DATA_ROLE = QtCore.Qt.UserRole + 1
     IS_SG_MODEL_ROLE = QtCore.Qt.UserRole + 2
+    SG_ASSOCIATED_FIELD_ROLE = QtCore.Qt.UserRole + 3
 
     def __init__(self, overlay_parent_widget, download_thumbs):
         """
@@ -79,6 +81,26 @@ class ShotgunModel(QtGui.QStandardItemModel):
             return None
         return self.__entity_tree_data[entity_id]        
          
+    def get_filters(self, item):
+        """
+        Returns a list of filters representing the current item
+        """
+        # prime filters with our base query
+        filters = copy.deepcopy(self.__filters)
+        
+        # now walk up the tree and get all fields
+        p = item
+        while p:
+            field_data = p.data(ShotgunModel.SG_ASSOCIATED_FIELD_ROLE) 
+            filters.append( [ field_data["name"], "is", field_data["value"] ] )
+            p = p.parent()
+        return filters  
+         
+    def get_entity_type(self):
+        """
+        Returns the Shotgun Entity type associated with this model
+        """
+        return self.__entity_type
          
     def clear(self):
         """
@@ -577,11 +599,16 @@ class ShotgunModel(QtGui.QStandardItemModel):
             self.__all_tree_items.append(found_item)
             # and add to tree
             root.appendRow(found_item)
+
+            # store the actual value we have
+            found_item.setData({"name": field, "value": sg_item[field] }, 
+                               ShotgunModel.SG_ASSOCIATED_FIELD_ROLE)
         
             if on_leaf_level:                
                 # this is the leaf level!
                 # attach the shotgun data so that we can access it later
                 found_item.setData(sg_item, ShotgunModel.SG_DATA_ROLE)
+                
                 
                 # set the default thumbnail
                 self._populate_default_thumbnail(found_item)
@@ -595,8 +622,8 @@ class ShotgunModel(QtGui.QStandardItemModel):
                                 
                 # and also populate the id association in our lookup dict
                 self.__entity_tree_data[ sg_item["id"] ] = found_item
-            else:                
                 
+            else:
                 # set the default thumbnail
                 self._populate_default_thumbnail(found_item)
                 
@@ -696,11 +723,21 @@ class ShotgunModel(QtGui.QStandardItemModel):
             self.__all_tree_items.append(item)            
             root.appendRow(item)
             
+            # get the full sg data dict that corresponds to this folder item
+            # note that this item may only partially match the sg data
+            # for leaf item, the sg_item completely matches the item
+            # but higher up it will be a subset of the fields only.
+            sg_item = discrete_values[dv]
+            
+            # store the actual field value we have for this item
+            item.setData({"name": field, "value": sg_item[field] }, 
+                         ShotgunModel.SG_ASSOCIATED_FIELD_ROLE)
+            
                         
             if on_leaf_level:
+                
                 # this is the leaf level
                 # attach the shotgun data so that we can access it later
-                sg_item = discrete_values[dv]
                 item.setData(sg_item, ShotgunModel.SG_DATA_ROLE)
 
                 # set the default thumbnail
@@ -714,11 +751,10 @@ class ShotgunModel(QtGui.QStandardItemModel):
                     self.__process_thumbnail_for_item(item)                
                 
                 # and also populate the id association in our lookup dict
-                self.__entity_tree_data[ sg_item["id"] ] = item 
-                      
+                self.__entity_tree_data[ sg_item["id"] ] = item      
             else:
-                # not on leaf level yet
                 
+                # not on leaf level yet
                 # set the default thumbnail
                 self._populate_default_thumbnail(item)
                 

@@ -66,6 +66,7 @@ class ListWidget(QtGui.QWidget):
         """
         self.ui.header_label.setText(header)
         self.ui.body_label.setText(body)
+        self.ui.body_label.setToolTip(body)
 
     @staticmethod
     def calculate_size():

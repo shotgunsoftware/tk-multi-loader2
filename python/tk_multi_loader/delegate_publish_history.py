@@ -77,7 +77,7 @@ class SgPublishHistoryDelegate(WidgetDelegate):
             author_str = "%s" % sg_item.get("created_by").get("name")
 
         header_str = "<b>%s</b>" % (version_str)
-        body_str = "%s<br><small><b>%s</b> &mdash; %s</small>" % (created_str, author_str, desc_str)
+        body_str = "<b>%s</b> &mdash; %s<br><br><small>%s</small>" % (author_str, desc_str, created_str)
         widget.set_text(header_str, body_str)
         
         

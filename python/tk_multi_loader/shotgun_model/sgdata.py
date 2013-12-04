@@ -247,7 +247,6 @@ class ShotgunAsyncDataRetriever(QtCore.QThread):
                     sg_data = self._app.shotgun.find_one(entity_type, 
                                                          [["id", "is", entity_id]],
                                                          ["image"])
-                    print "fresh sg data %s" % sg_data
                     if sg_data is None or sg_data.get("image") is None:
                         # no thumbnail!
                         data = {"thumb_path": self._not_found_thumb_path }

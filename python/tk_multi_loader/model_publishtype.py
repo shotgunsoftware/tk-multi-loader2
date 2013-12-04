@@ -58,6 +58,23 @@ class SgPublishTypeModel(ShotgunModel):
         # and finally ask model to refresh itself
         self._refresh_data()
 
+    def get_show_folders(self):
+        """
+        Returns true if the special Folders
+        entry is ticked, false otherwise
+        """
+        for idx in range(self.rowCount()):
+            item = self.item(idx)
+            
+            # ignore special case folders item
+            if item.text() != "Folders":
+                continue            
+            
+            if item.checkState() == QtCore.Qt.Checked:
+                return True
+        
+        return False
+    
     def get_selected_types(self):
         """
         Returns all the sg type ids that are currently selected. 
@@ -67,6 +84,11 @@ class SgPublishTypeModel(ShotgunModel):
         type_ids = []
         for idx in range(self.rowCount()):
             item = self.item(idx)
+            
+            # ignore special case folders item
+            if item.text() == "Folders":
+                continue            
+            
             if item.checkState() == QtCore.Qt.Checked:
                 # get the shotgun id
                 sg_type_id = item.data(ShotgunModel.SG_DATA_ROLE).get("id")
@@ -85,6 +107,11 @@ class SgPublishTypeModel(ShotgunModel):
         for idx in range(self.rowCount()):
             
             item = self.item(idx)
+            
+            # ignore special folders item
+            if item.text() == "Folders":
+                continue
+            
             sg_type_id = item.data(ShotgunModel.SG_DATA_ROLE).get("id")            
             display_name = item.data(SgPublishTypeModel.DISPLAY_NAME_ROLE)
             
@@ -106,6 +133,25 @@ class SgPublishTypeModel(ShotgunModel):
             
     ############################################################################################
     # subclassed methods
+            
+    def _load_external_data(self):
+        """
+        Called whenever the model needs to be rebuilt from scratch. This is called prior 
+        to any shotgun data is added to the model. This makes it possible for deriving classes
+        to add custom data to the model in a very flexible fashion. Such data will not be 
+        cached by the ShotgunModel framework.
+        """
+        
+        # process the folder data and add that to the model. Keep local references to the 
+        # items to keep the GC happy.
+        
+        self._folder_items = []        
+        item = QtGui.QStandardItem("Folders")
+        item.setCheckable(True)
+        item.setCheckState(QtCore.Qt.Checked)        
+        self.appendRow(item)
+        self._folder_items.append(item)
+            
             
     def _populate_item(self, item, sg_data):
         """

@@ -373,7 +373,8 @@ class AppDialog(QtGui.QWidget):
         # update the publish proxy model so that only items of that type 
         # is displayed
         sg_type_ids = self._publish_type_model.get_selected_types()
-        self._publish_proxy_model.set_filter_by_type_ids(sg_type_ids)
+        show_folders = self._publish_type_model.get_show_folders()
+        self._publish_proxy_model.set_filter_by_type_ids(sg_type_ids, show_folders)
 
     ########################################################################################
     # publish view

@@ -25,12 +25,14 @@ class SgPublishProxyModel(QtGui.QSortFilterProxyModel):
     def __init__(self, parent):
         QtGui.QSortFilterProxyModel.__init__(self, parent)
         self._valid_type_ids = None
+        self._show_folders = True
         
-    def set_filter_by_type_ids(self, type_ids):
+    def set_filter_by_type_ids(self, type_ids, show_folders):
         """
         Specify which type ids the publish model should allow through
         """
         self._valid_type_ids = type_ids
+        self._show_folders = show_folders
         # tell model to repush data
         self.invalidateFilter()
         
@@ -53,8 +55,7 @@ class SgPublishProxyModel(QtGui.QSortFilterProxyModel):
         is_folder = current_item.data(SgLatestPublishModel.IS_FOLDER_ROLE)
         
         if is_folder:
-            # always show sub folders!
-            return True
+            return self._show_folders
             
         else:
             # get the type id

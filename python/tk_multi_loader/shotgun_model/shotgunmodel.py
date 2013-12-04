@@ -484,7 +484,6 @@ class ShotgunModel(QtGui.QStandardItemModel):
         """
         Remove a single item from the tree.
         """
-        print "removing %s %s" % (item, shotgun_id)
         item_row = item.row()
         parent = item.parent()
 
@@ -508,7 +507,6 @@ class ShotgunModel(QtGui.QStandardItemModel):
                 # parent does not have children!
                 # delete parent.
                 row = curr_node.row()
-                print "removing parent %s" % curr_node
                 self.__all_tree_items.append(curr_node)
                 curr_node = curr_node.parent()
                 if curr_node is None:
@@ -607,15 +605,17 @@ class ShotgunModel(QtGui.QStandardItemModel):
         Schedule a thumb download for an item
         """
         sg_data = item.data(ShotgunModel.SG_DATA_ROLE)
-
-        if sg_data.get("image"):
-            # we have a thumb we are supposed to download!
-            # get the thumbnail - store the unique id we get back from
-            # the data retrieve in a dict for fast lookup later
-            uid = self.__sg_data_retriever.download_thumbnail(sg_data["image"], 
-                                                              sg_data["type"], 
-                                                              sg_data["id"])
-            self.__thumb_map[uid] = {"item": item, "field": "image" }
+        
+        for field in sg_data.keys():
+        
+            if "image" in field:
+                # we have a thumb we are supposed to download!
+                # get the thumbnail - store the unique id we get back from
+                # the data retrieve in a dict for fast lookup later
+                uid = self.__sg_data_retriever.download_thumbnail(sg_data[field], 
+                                                                  sg_data["type"], 
+                                                                  sg_data["id"])
+                self.__thumb_map[uid] = {"item": item, "field": field }
             
     
     def __rebuild_whole_tree_from_sg_data(self, data):

@@ -48,6 +48,7 @@ class ListWidget(QtGui.QWidget):
                                                     border-style: solid; 
                                                     background-color: %s}
                                       """ % (highlight_str, transp_highlight_str))
+
         else:
             self.ui.button.setVisible(False)
             self.ui.box.setStyleSheet("")
@@ -55,7 +56,7 @@ class ListWidget(QtGui.QWidget):
     def set_thumbnail(self, pixmap):
         """
         Set a thumbnail given the current pixmap.
-        The pixmap must be 512x400 or it will appear squeezed
+        The pixmap must be 100x100 or it will appear squeezed
         """
         self.ui.thumbnail.setPixmap(pixmap)
             
@@ -71,5 +72,5 @@ class ListWidget(QtGui.QWidget):
         """
         Calculates and returns a suitable size for this widget.
         """        
-        return QtCore.QSize(200, 130)
+        return QtCore.QSize(200, 115)
 

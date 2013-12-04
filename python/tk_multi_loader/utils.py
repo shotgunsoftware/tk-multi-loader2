@@ -16,8 +16,57 @@ import tempfile
 from tank.platform.qt import QtCore, QtGui
 
 
-def create_overlayed_folder_thumbnail(path):
+def create_overlayed_user_publish_thumbnail(publish_pixmap, user_pixmap):
+    """
+    Creates a sqaure 100x100 thumbnail with an optional overlayed pixmap. 
+    """
+    # create a 100x100 base image
+    base_image = QtGui.QPixmap(100, 100)
+    base_image.fill(QtCore.Qt.transparent)
     
+    # scale down the thumb
+    thumb_scaled = publish_pixmap.scaled(95, 95, QtCore.Qt.KeepAspectRatioByExpanding, QtCore.Qt.SmoothTransformation)  
+    
+
+    # now composite the thumbnail on top of the base image
+    # bottom align it to make it look nice
+    thumb_img = thumb_scaled.toImage()
+    brush = QtGui.QBrush(thumb_img)
+    
+    
+    painter = QtGui.QPainter(base_image)
+    painter.setRenderHint(QtGui.QPainter.Antialiasing)
+        
+    painter.save() 
+    painter.setBrush(brush)
+    painter.setPen(QtGui.QPen(QtCore.Qt.NoPen))
+    painter.drawRect(0, 0, 94, 94) 
+    painter.restore()
+    
+    if user_pixmap: 
+    
+        # overlay the user picture on top of the thumbnail
+        user_scaled = user_pixmap.scaled(40, 40, QtCore.Qt.KeepAspectRatioByExpanding, QtCore.Qt.SmoothTransformation)  
+        user_img = user_scaled.toImage()
+        user_brush = QtGui.QBrush(user_img)
+        painter.save() 
+        painter.translate(60, 60)
+        painter.setBrush(user_brush)
+        painter.drawRect(0,0,40,40)
+        painter.restore()
+    
+    painter.end()
+    
+    return base_image
+    
+
+
+def create_overlayed_folder_thumbnail(path):
+    """
+    Given a path to a shotgun thumbnail, create a folder icon
+    with the thumbnail composited on top. This will return a
+    512x400 pixmap object.
+    """
     # folder icon size
     CANVAS_WIDTH = 512
     CANVAS_HEIGHT = 400    
@@ -75,9 +124,11 @@ def create_overlayed_folder_thumbnail(path):
 
 def create_overlayed_publish_thumbnail(path):
     """
-    Composite the thumbnail from a given path
-    onto a 512 square blank canvas, bottom center alignment
+    Given a path to a shotgun thumbnail, create a publish icon
+    with the thumbnail composited onto a centered otherwise empty canvas. 
+    This will return a 512x400 pixmap object.
     """
+
     CANVAS_WIDTH = 512
     CANVAS_HEIGHT = 400
     CORNER_RADIUS = 20
@@ -91,7 +142,8 @@ def create_overlayed_publish_thumbnail(path):
                                 QtCore.Qt.SmoothTransformation)  
 
     # get the 512 base image
-    base_image = QtGui.QPixmap(":/res/publish_bg.png")
+    base_image = QtGui.QPixmap(CANVAS_WIDTH, CANVAS_HEIGHT)
+    base_image.fill(QtCore.Qt.transparent)
 
     # now composite the thumbnail on top of the base image
     # bottom align it to make it look nice

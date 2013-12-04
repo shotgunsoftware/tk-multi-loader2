@@ -22,7 +22,8 @@ class SgPublishHistoryModel(ShotgunModel):
     This model represents the version history for a publish.
     """
     
-    USER_ICON_ROLE = QtCore.Qt.UserRole + 101
+    USER_THUMB_ROLE = QtCore.Qt.UserRole + 101
+    PUBLISH_THUMB_ROLE = QtCore.Qt.UserRole + 102
     
     
     def __init__(self, overlay_parent_widget):
@@ -30,8 +31,7 @@ class SgPublishHistoryModel(ShotgunModel):
         Constructor
         """
         # folder icon
-        self._loading_icon = QtGui.QPixmap(":/res/sg_item_loading.png")
-        self._default_user_thumb = QtGui.QPixmap(":/res/default_user_thumb.png")
+        self._loading_icon = QtGui.QPixmap(":/res/sg_loading_100px.png")
         self._please_select_icon = QtGui.QPixmap(":/res/see_version_history.png")    
         ShotgunModel.__init__(self, overlay_parent_widget, download_thumbs=True)
         
@@ -135,8 +135,8 @@ class SgPublishHistoryModel(ShotgunModel):
         can populate the real image.
         """
         # set up publishes with a "thumbnail loading" icon
+        item.setData(self._loading_icon, SgPublishHistoryModel.PUBLISH_THUMB_ROLE)
         item.setIcon(self._loading_icon)
-        item.setData(self._default_user_thumb, SgPublishHistoryModel.USER_ICON_ROLE)
 
     def _populate_thumbnail(self, item, field, path):
         """
@@ -161,9 +161,15 @@ class SgPublishHistoryModel(ShotgunModel):
         :param path: A path on disk to the thumbnail. This is a file in jpeg format.
         """
         if field == "image":
-            thumb = utils.create_overlayed_publish_thumbnail(path)
-            item.setIcon(thumb)
+            thumb = QtGui.QPixmap(path)
+            item.setData(thumb, SgPublishHistoryModel.PUBLISH_THUMB_ROLE)
         else:
             thumb = QtGui.QPixmap(path)
-            item.setData(thumb, SgPublishHistoryModel.USER_ICON_ROLE)
+            item.setData(thumb, SgPublishHistoryModel.USER_THUMB_ROLE)
+
+        # composit the user thumbnail and the publish thumb into a single image
+        thumb = utils.create_overlayed_user_publish_thumbnail(item.data(SgPublishHistoryModel.PUBLISH_THUMB_ROLE), 
+                                                              item.data(SgPublishHistoryModel.USER_THUMB_ROLE))
+        item.setIcon(thumb)
+            
             

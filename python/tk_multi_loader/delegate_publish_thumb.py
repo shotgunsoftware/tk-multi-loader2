@@ -25,8 +25,9 @@ class SgPublishDelegate(WidgetDelegate):
     Delegate which 'glues up' the ThumbWidget with a QT View.
     """
 
-    def __init__(self, view):
+    def __init__(self, view, status_model):
         WidgetDelegate.__init__(self, view)
+        self._status_model = status_model
         
     def _create_widget(self, parent):
         """
@@ -53,9 +54,16 @@ class SgPublishDelegate(WidgetDelegate):
         
         if model_index.data(SgLatestPublishModel.IS_FOLDER_ROLE):
             # folder. The name is in the main text role.
+            
+            status_code = model_index.data(SgLatestPublishModel.FOLDER_STATUS_ROLE)
+            if status_code is None:
+                status_name = "No Status"
+            else:
+                status_name = self._status_model.get_long_name(status_code)
+                        
             widget.set_text(model_index.data(SgLatestPublishModel.FOLDER_NAME_ROLE),
                             model_index.data(SgLatestPublishModel.FOLDER_TYPE_ROLE), 
-                            "Status: %s" % model_index.data(SgLatestPublishModel.FOLDER_STATUS_ROLE)) 
+                            "Status: %s" % status_name) 
         else:
             widget.set_text(model_index.data(SgLatestPublishModel.PUBLISH_NAME_ROLE),
                             model_index.data(SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE), 

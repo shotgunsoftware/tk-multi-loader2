@@ -19,6 +19,7 @@ from tank.platform.qt import QtCore, QtGui
 from .model_entity import SgEntityModel
 from .model_latestpublish import SgLatestPublishModel
 from .model_publishtype import SgPublishTypeModel
+from .model_status import SgStatusModel
 from .proxymodel_publish import SgPublishProxyModel 
 from .delegate_publish_thumb import SgPublishDelegate
 from .model_publishhistory import SgPublishHistoryModel
@@ -69,6 +70,11 @@ class AppDialog(QtGui.QWidget):
         self.ui.reload.clicked.connect(self._restart)
         
         #################################################
+        # hook a helper model tracking status codes so we
+        # can use those in the UI
+        self._status_model = SgStatusModel(self.ui.publish_type_list)
+        
+        #################################################
         # details pane
         self.ui.details.setVisible(False)
         self.ui.info.toggled.connect(self._on_info_toggled)
@@ -90,7 +96,7 @@ class AppDialog(QtGui.QWidget):
         self._publish_history_proxy.sort(0, QtCore.Qt.DescendingOrder)
         
         self.ui.history_view.setModel(self._publish_history_proxy)
-        self._history_delegate = SgPublishHistoryDelegate(self.ui.history_view)
+        self._history_delegate = SgPublishHistoryDelegate(self.ui.history_view, self._status_model)
         self.ui.history_view.setItemDelegate(self._history_delegate)
         
         self._no_selection_pixmap = QtGui.QPixmap(":/res/no_item_selected_512x400.png")
@@ -109,7 +115,7 @@ class AppDialog(QtGui.QWidget):
         self._publish_proxy_model.setSourceModel(self._publish_model)
                 
         # tell our publish view to use a custom delegate to produce widgetry
-        self._publish_delegate = SgPublishDelegate(self.ui.publish_view) 
+        self._publish_delegate = SgPublishDelegate(self.ui.publish_view, self._status_model) 
         self.ui.publish_view.setItemDelegate(self._publish_delegate)
                 
         # hook up view -> proxy model -> model
@@ -228,6 +234,11 @@ class AppDialog(QtGui.QWidget):
             
             sg_data = item.data(SgEntityModel.SG_DATA_ROLE)
             print sg_data
+            
+            
+#            status_color = self._status_model.get_color_str(status_code)
+#            if status_color:
+#                status_name = "%s&nbsp;<span style='color: rgb(%s)'>&#9608;</span>" % (status_name, status_color)
             
             if item.data(SgLatestPublishModel.IS_FOLDER_ROLE):
                 # folder

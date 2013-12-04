@@ -21,8 +21,9 @@ class SgPublishHistoryDelegate(WidgetDelegate):
     Delegate which 'glues up' the Details Widget with a QT View.
     """
 
-    def __init__(self, view):
+    def __init__(self, view, status_model):
         WidgetDelegate.__init__(self, view)
+        self._status_model = status_model
         
     def _create_widget(self, parent):
         """

@@ -83,7 +83,7 @@ def create_overlayed_folder_thumbnail(path):
     
     # this is a thumbnail for a folder coming in!
     # merge it with the current folder thumbnail image
-    base_image = QtGui.QPixmap(":/res/folder.png")
+    base_image = QtGui.QPixmap(":/res/folder_512x400.png")
     thumb_scaled = thumb.scaled(MAX_THUMB_WIDTH, 
                                 MAX_THUMB_HEIGHT, 
                                 QtCore.Qt.KeepAspectRatio, 

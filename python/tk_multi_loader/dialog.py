@@ -95,6 +95,8 @@ class AppDialog(QtGui.QWidget):
         self._history_delegate = SgPublishHistoryDelegate(self.ui.history_view)
         self.ui.history_view.setItemDelegate(self._history_delegate)
         
+        self._no_selection_pixmap = QtGui.QPixmap(":/res/no_item_selected_256x200.png")
+        
         #################################################
         # load and initialize cached publish type model
         self._publish_type_model = SgPublishTypeModel(self.ui.publish_type_list)        
@@ -214,13 +216,51 @@ class AppDialog(QtGui.QWidget):
             return
         
         if item is None:        
-            self._publish_history_model.show_select_message()
-                
-        else:            
+            # display a 'please select something' message in the thumb area
+            self._publish_history_model.blank_out()
+            self.ui.details_header.setText("")
+            self.ui.details_image.setPixmap(self._no_selection_pixmap)
             
-            # tell details pane to load stuff
-            sg_data = item.data(ShotgunModel.SG_DATA_ROLE)
-            self._publish_history_model.load_data(sg_data)
+        else:            
+            # render out details
+            thumb_pixmap = item.icon().pixmap(512)
+            self.ui.details_image.setPixmap(thumb_pixmap)
+            
+            sg_data = item.data(SgEntityModel.SG_DATA_ROLE)
+            print sg_data
+            
+            if item.data(SgLatestPublishModel.IS_FOLDER_ROLE):
+                # folder
+                
+                msg = ""
+                msg += "<b>Name:</b> %s<br>" % item.data(SgLatestPublishModel.FOLDER_NAME_ROLE)
+                msg += "<b>Type:</b> %s<br>" % item.data(SgLatestPublishModel.FOLDER_TYPE_ROLE)
+                msg += "<b>Latest Version:</b> %s<br>" % sg_data.get("version_number")
+                msg += "<br>"
+                self.ui.details_header.setText(msg)
+                
+                # blank out the version history
+                self._publish_history_model.blank_out()
+                
+            
+            else:
+                # publish
+                msg = ""
+                msg += "<b>Name:</b> %s<br>" % item.data(SgLatestPublishModel.PUBLISH_NAME_ROLE)
+                msg += "<b>Type:</b> %s<br>" % item.data(SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE)
+                msg += "%s<br>" % item.data(SgLatestPublishModel.ENTITY_NAME_ROLE)
+                msg += "<br>"
+                self.ui.details_header.setText(msg)
+                
+                # tell details pane to load stuff
+                sg_data = item.data(ShotgunModel.SG_DATA_ROLE)
+                self._publish_history_model.load_data(sg_data)
+            
+            
+            
+            
+            
+            
                 
         
     ########################################################################################

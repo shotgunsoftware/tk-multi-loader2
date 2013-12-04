@@ -1,16 +1,20 @@
 <RCC>
   <qresource prefix="res">
-    <file>down_arrow.png</file>
+    <file>home.png</file>
     <file>arrow_back.png</file>
     <file>arrow_forward.png</file>
-    <file>home.png</file>
-    <file>publish_bg.png</file>
-    <file>folder.png</file>
-    <file>sg_item_loading.png</file>
-    <file>sg_loading_100px.png</file>
+    <file>down_arrow.png</file>
     <file>search.png</file>
     <file>sg_logo.png</file>
+    
     <file>no_publishes_found.png</file>
-    <file>see_version_history.png</file>
+    <file>no_item_selected_256x200.png</file>
+    
+    
+    <file>folder_512x400.png</file>
+    <file>loading_512x400.png</file>
+    <file>loading_100x100.png</file>
+    
+    
   </qresource>
 </RCC>

@@ -38,7 +38,7 @@
          <string/>
         </property>
         <property name="pixmap">
-         <pixmap resource="resources.qrc">:/res/sg_item_loading.png</pixmap>
+         <pixmap resource="resources.qrc">:/res/loading_512x400.png</pixmap>
         </property>
         <property name="scaledContents">
          <bool>true</bool>

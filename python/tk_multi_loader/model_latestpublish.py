@@ -21,6 +21,8 @@ class SgLatestPublishModel(ShotgunModel):
     """
     Model which handles the main spreadsheet view which displays the latest version of all 
     publishes.
+    
+    All images returned by this model will be 512x400 pixels.
     """
     
     TYPE_ID_ROLE = QtCore.Qt.UserRole + 101
@@ -51,8 +53,8 @@ class SgLatestPublishModel(ShotgunModel):
         """        
         self._publish_type_model = publish_type_model
         self._no_pubs_found_icon = QtGui.QPixmap(":/res/no_publishes_found.png")
-        self._folder_icon = QtGui.QPixmap(":/res/folder.png")
-        self._loading_icon = QtGui.QPixmap(":/res/sg_item_loading.png")
+        self._folder_icon = QtGui.QPixmap(":/res/folder_512x400.png")
+        self._loading_icon = QtGui.QPixmap(":/res/loading_512x400.png")
 
         # init base class
         ShotgunModel.__init__(self, overlay_parent_widget, download_thumbs=True)

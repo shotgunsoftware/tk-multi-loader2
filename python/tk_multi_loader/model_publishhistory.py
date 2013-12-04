@@ -30,8 +30,7 @@ class SgPublishHistoryModel(ShotgunModel):
         Constructor
         """
         # folder icon
-        self._loading_icon = QtGui.QPixmap(":/res/sg_loading_100px.png")
-        self._please_select_icon = QtGui.QPixmap(":/res/see_version_history.png")    
+        self._loading_icon = QtGui.QPixmap(":/res/loading_100x100.png")
         ShotgunModel.__init__(self, overlay_parent_widget, download_thumbs=True)
         
         # hot patch shotgun API to allow for pickling
@@ -41,11 +40,11 @@ class SgPublishHistoryModel(ShotgunModel):
     ############################################################################################
     # public interface
                 
-    def show_select_message(self):
+    def blank_out(self):
         """
-        Display a "please select some stuff" overlay
+        Blanks out the results
         """
-        self._show_overlay_pixmap(self._please_select_icon)
+        self._show_overlay_info_message("")
                 
     def load_data(self, sg_data):
         """
@@ -127,7 +126,9 @@ class SgPublishHistoryModel(ShotgunModel):
         """
         # set up publishes with a "thumbnail loading" icon
         item.setData(self._loading_icon, SgPublishHistoryModel.PUBLISH_THUMB_ROLE)
-        item.setIcon(self._loading_icon)
+        thumb = utils.create_overlayed_user_publish_thumbnail(item.data(SgPublishHistoryModel.PUBLISH_THUMB_ROLE), 
+                                                              None)
+        item.setIcon(thumb)
 
     def _populate_thumbnail(self, item, field, path):
         """

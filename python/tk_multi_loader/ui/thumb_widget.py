@@ -25,7 +25,7 @@ class Ui_ThumbWidget(object):
         self.verticalLayout.setObjectName("verticalLayout")
         self.thumbnail = QtGui.QLabel(self.box)
         self.thumbnail.setText("")
-        self.thumbnail.setPixmap(QtGui.QPixmap(":/res/sg_item_loading.png"))
+        self.thumbnail.setPixmap(QtGui.QPixmap(":/res/loading_512x400.png"))
         self.thumbnail.setScaledContents(True)
         self.thumbnail.setAlignment(QtCore.Qt.AlignCenter)
         self.thumbnail.setObjectName("thumbnail")

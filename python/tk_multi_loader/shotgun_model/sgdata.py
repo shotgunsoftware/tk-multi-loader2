@@ -86,9 +86,11 @@ class ShotgunAsyncDataRetriever(QtCore.QThread):
         return uid
         
         
-    def download_thumbnail(self, url, entity_type, entity_id):
+    def request_thumbnail(self, url, entity_type, entity_id, field):
         """
-        Downloads a thumbnail from the internet
+        Requests a thumbnail. Async call that may return quickly if the 
+        thumbnail is already cached, or may take more time if a download
+        from Shotgun is required.
         """
 
         uid = uuid.uuid4().hex
@@ -96,6 +98,7 @@ class ShotgunAsyncDataRetriever(QtCore.QThread):
         work = {"id": uid, 
                 "type": "thumbnail", 
                 "url": url,
+                "field": field,
                 "entity_type": entity_type,
                 "entity_id": entity_id }
         self._queue_mutex.lock()
@@ -112,7 +115,7 @@ class ShotgunAsyncDataRetriever(QtCore.QThread):
         
         return uid
 
-    def _get_thumbnail_path(self, url, entity_id, entity_type):
+    def _get_thumbnail_path(self, url):
         """
         Returns the location on disk suitable for a thumbnail given its metadata
         """
@@ -148,7 +151,7 @@ class ShotgunAsyncDataRetriever(QtCore.QThread):
                 new_chunks.append(folder)
 
         # establish the root path        
-        cache_path_items = [self._app.cache_location, "thumbnails", entity_type]        
+        cache_path_items = [self._app.cache_location, "thumbnails"]        
         # append the folders
         cache_path_items.extend(new_chunks)
         # and append the file name
@@ -158,6 +161,7 @@ class ShotgunAsyncDataRetriever(QtCore.QThread):
         path_to_cached_thumb = os.path.join(*cache_path_items)
         
         return path_to_cached_thumb
+    
 
 
 
@@ -213,9 +217,7 @@ class ShotgunAsyncDataRetriever(QtCore.QThread):
                 elif item_to_process["type"] == "thumbnail":
                     
                     url = item_to_process["url"]                    
-                    entity_id = item_to_process["entity_id"]
-                    entity_type = item_to_process["entity_type"]
-                    path_to_cached_thumb = self._get_thumbnail_path(url, entity_id, entity_type)
+                    path_to_cached_thumb = self._get_thumbnail_path(url)
                     
                     if not os.path.exists(path_to_cached_thumb):
                         # no cached thumb yet. Re-queue this task, this time
@@ -243,17 +245,21 @@ class ShotgunAsyncDataRetriever(QtCore.QThread):
                     # has most likely expired, so need to re-fetch it.
                     entity_id = item_to_process["entity_id"]
                     entity_type = item_to_process["entity_type"]
+                    field = item_to_process["field"]
                     
                     sg_data = self._app.shotgun.find_one(entity_type, 
                                                          [["id", "is", entity_id]],
-                                                         ["image"])
-                    if sg_data is None or sg_data.get("image") is None:
+                                                         [field])
+                    
+                    print ">>>> got from shotgun %s" % sg_data
+                    
+                    if sg_data is None or sg_data.get(field) is None:
                         # no thumbnail!
                         data = {"thumb_path": self._not_found_thumb_path }
                     
                     else:
                         # download from sg
-                        url = sg_data["image"]
+                        url = sg_data[field]
                         try:
                             (temp_file, _) = urllib.urlretrieve(url)
                         except Exception, e:
@@ -261,7 +267,7 @@ class ShotgunAsyncDataRetriever(QtCore.QThread):
                 
                         # now try to cache it
                         try:
-                            path_to_cached_thumb = self._get_thumbnail_path(url, entity_id, entity_type)
+                            path_to_cached_thumb = self._get_thumbnail_path(url)
                             self._app.ensure_folder_exists(os.path.dirname(path_to_cached_thumb))
                             shutil.copy(temp_file, path_to_cached_thumb)
                             # as a tmp file downloaded by urlretrieve, permissions are super strict

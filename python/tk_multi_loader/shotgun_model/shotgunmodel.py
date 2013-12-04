@@ -215,7 +215,7 @@ class ShotgunModel(QtGui.QStandardItemModel):
         :param entity_type: Shotgun entity type
         :param entity_id: Shotgun entity id 
         """
-        uid = self.__sg_data_retriever.download_thumbnail(url, entity_type, entity_id)
+        uid = self.__sg_data_retriever.request_thumbnail(url, entity_type, entity_id, field)
         self.__thumb_map[uid] = {"item": item, "field": field }
         
         
@@ -612,9 +612,10 @@ class ShotgunModel(QtGui.QStandardItemModel):
                 # we have a thumb we are supposed to download!
                 # get the thumbnail - store the unique id we get back from
                 # the data retrieve in a dict for fast lookup later
-                uid = self.__sg_data_retriever.download_thumbnail(sg_data[field], 
+                uid = self.__sg_data_retriever.request_thumbnail(sg_data[field], 
                                                                   sg_data["type"], 
-                                                                  sg_data["id"])
+                                                                  sg_data["id"],
+                                                                  field)
                 self.__thumb_map[uid] = {"item": item, "field": field }
             
     

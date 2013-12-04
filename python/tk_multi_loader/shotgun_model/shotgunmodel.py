@@ -141,12 +141,17 @@ class ShotgunModel(QtGui.QStandardItemModel):
         m.update(hash_base)
         cache_filename = "tk_sgmodel_%s.sgcache" % m.hexdigest()
         self.__full_cache_path = os.path.join(tempfile.gettempdir(), cache_filename)
-        self.__app.log_debug("Entity Model for type %s, filters %s, hierarchy %s "
-                            "will use the following cache path: %s" % (self.__entity_type, 
-                                                                       self.__filters, 
-                                                                       self.__hierarchy, 
-                                                                       self.__full_cache_path))
-            
+        
+        self.__app.log_debug("-----------------------------------------------------")
+        self.__app.log_debug("LOAD DATA + Model reset for %s" % self)
+        self.__app.log_debug("Entity type: %s" % self.__entity_type)
+        self.__app.log_debug("Cache path: %s" % self.__full_cache_path)
+        self.__app.log_debug("Filters: %s" % self.__filters)
+        self.__app.log_debug("Hierarchy: %s" % self.__hierarchy)
+        self.__app.log_debug("Extra Fields: %s" % self.__fields)
+        self.__app.log_debug("Order: %s" % self.__order)
+        self.__app.log_debug("-----------------------------------------------------")
+        
         self._load_external_data()    
         if os.path.exists(self.__full_cache_path):
             # first see if we need to load in any overlay data from deriving classes

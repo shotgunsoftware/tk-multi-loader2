@@ -53,7 +53,7 @@ class SgPublishTypeModel(ShotgunModel):
                                filters=[], 
                                hierarchy=["code"], 
                                fields=["code","description","id"],
-                               order=[])
+                               order=[{"field_name":"version_number", "direction":"desc"}])
         
         # and finally ask model to refresh itself
         self._refresh_data()

@@ -251,8 +251,6 @@ class ShotgunAsyncDataRetriever(QtCore.QThread):
                                                          [["id", "is", entity_id]],
                                                          [field])
                     
-                    print ">>>> got from shotgun %s" % sg_data
-                    
                     if sg_data is None or sg_data.get(field) is None:
                         # no thumbnail!
                         data = {"thumb_path": self._not_found_thumb_path }

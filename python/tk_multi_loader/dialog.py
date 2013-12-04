@@ -72,7 +72,22 @@ class AppDialog(QtGui.QWidget):
         #################################################
         # details pane
         self._publish_history_model = SgPublishHistoryModel(self.ui.history_view)
-        self.ui.history_view.setModel(self._publish_history_model)
+        
+        self._publish_history_proxy = QtGui.QSortFilterProxyModel(self)
+        self._publish_history_proxy.setSourceModel(self._publish_history_model)
+        
+        # now use the proxy model to sort the data to ensure
+        # higher version numbers appear earlier in the list
+        # the history model is set up so that the default display
+        # role contains the version number field in shotgun.
+        # This field is what the proxy model sorts by default
+        # We set the dynamic filter to true, meaning QT will keep
+        # continously sorting. And then tell it to use column 0
+        # (we only have one column in our models) and descending order.
+        self._publish_history_proxy.setDynamicSortFilter(True)
+        self._publish_history_proxy.sort(0, QtCore.Qt.DescendingOrder)
+        
+        self.ui.history_view.setModel(self._publish_history_proxy)
         self._history_delegate = SgPublishHistoryDelegate(self.ui.history_view)
         self.ui.history_view.setItemDelegate(self._history_delegate)
         

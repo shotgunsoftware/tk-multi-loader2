@@ -81,12 +81,6 @@ class SgPublishHistoryDelegate(WidgetDelegate):
         widget.set_text(header_str, body_str)
         
         
-                
-        
-        
-        
-        
-        
     def _configure_hover_widget(self, widget, model_index, style_options):
         """
         Called by the base class when the associated widget should be set up

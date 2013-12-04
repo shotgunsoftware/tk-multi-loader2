@@ -25,7 +25,6 @@ class SgPublishHistoryModel(ShotgunModel):
     USER_THUMB_ROLE = QtCore.Qt.UserRole + 101
     PUBLISH_THUMB_ROLE = QtCore.Qt.UserRole + 102
     
-    
     def __init__(self, overlay_parent_widget):
         """
         Constructor
@@ -38,9 +37,6 @@ class SgPublishHistoryModel(ShotgunModel):
         # hot patch shotgun API to allow for pickling
         from tank_vendor.shotgun_api3.lib import sgtimezone
         sgtimezone.LocalTimezone = sgtimezone.SgTimezone.LocalTimezone 
-                
-        
-        
                 
     ############################################################################################
     # public interface
@@ -84,9 +80,9 @@ class SgPublishHistoryModel(ShotgunModel):
         ShotgunModel._load_data(self, 
                                entity_type=publish_entity_type, 
                                filters=filters, 
-                               hierarchy=["code"], 
+                               hierarchy=["version_number"], 
                                fields=fields,
-                               order=[{"field_name":"version_number", "direction":"asc"}])
+                               order=[])
         
         self._refresh_data()
         
@@ -107,7 +103,6 @@ class SgPublishHistoryModel(ShotgunModel):
         :param sg_data: Shotgun data dictionary that was received from Shotgun given the fields
                         and other settings specified in load_data()
         """
-
         
         # see if we can get a thumbnail for the user
         if sg_data.get("created_by.HumanUser.image"):
@@ -163,7 +158,7 @@ class SgPublishHistoryModel(ShotgunModel):
             thumb = QtGui.QPixmap(path)
             item.setData(thumb, SgPublishHistoryModel.USER_THUMB_ROLE)
 
-        # composit the user thumbnail and the publish thumb into a single image
+        # composite the user thumbnail and the publish thumb into a single image
         thumb = utils.create_overlayed_user_publish_thumbnail(item.data(SgPublishHistoryModel.PUBLISH_THUMB_ROLE), 
                                                               item.data(SgPublishHistoryModel.USER_THUMB_ROLE))
         item.setIcon(thumb)

@@ -30,10 +30,6 @@ class ThumbWidget(QtGui.QWidget):
         self.ui = Ui_ThumbWidget() 
         self.ui.setupUi(self)
         
-        # make the background groupbox transparent for events so that
-        # the select detection in the base class will work
-        self.ui.box.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents)
-        
         # set up an event filter to ensure that the thumbnails
         # are scaled in a square fashion.
         filter = ResizeEventFilter(self.ui.thumbnail)

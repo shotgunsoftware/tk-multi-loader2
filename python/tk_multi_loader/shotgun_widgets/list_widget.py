@@ -26,11 +26,7 @@ class ListWidget(QtGui.QWidget):
         # set up the UI
         self.ui = Ui_ListWidget() 
         self.ui.setupUi(self)
-        
-        # make the background groupbox transparent for events so that
-        # the select detection in the base class will work
-        self.ui.box.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents)
-            
+                    
     def set_selected(self, selected):
         """
         Adjust the style sheet to indicate selection or not

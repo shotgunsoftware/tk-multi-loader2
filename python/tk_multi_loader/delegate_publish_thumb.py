@@ -18,6 +18,7 @@ from tank.platform.qt import QtCore, QtGui
 from .shotgun_widgets import WidgetDelegate
 from .shotgun_widgets import ThumbWidget
 from .model_latestpublish import SgLatestPublishModel
+from .shotgun_model import ShotgunModel
 
 
 class SgPublishDelegate(WidgetDelegate):
@@ -50,11 +51,14 @@ class SgPublishDelegate(WidgetDelegate):
         widget.set_thumbnail(thumb)
         widget.set_selected(selected)
         
-        model_index.data()
+        sg_data = model_index.data(ShotgunModel.SG_DATA_ROLE)
         
-        if model_index.data(SgLatestPublishModel.IS_FOLDER_ROLE):
+        if sg_data is None:
+            # this is an intermediate node with no metadata on it
+            widget.set_text(model_index.data(SgLatestPublishModel.FOLDER_NAME_ROLE), "", "") 
+        
+        elif model_index.data(SgLatestPublishModel.IS_FOLDER_ROLE):
             # folder. The name is in the main text role.
-            
             status_code = model_index.data(SgLatestPublishModel.FOLDER_STATUS_ROLE)
             if status_code is None:
                 status_name = "No Status"
@@ -65,6 +69,7 @@ class SgPublishDelegate(WidgetDelegate):
                             model_index.data(SgLatestPublishModel.FOLDER_TYPE_ROLE), 
                             "Status: %s" % status_name) 
         else:
+            # this is a publish!
             widget.set_text(model_index.data(SgLatestPublishModel.PUBLISH_NAME_ROLE),
                             model_index.data(SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE), 
                             model_index.data(SgLatestPublishModel.ENTITY_NAME_ROLE)) 

@@ -26,7 +26,7 @@ class SgEntityModel(ShotgunModel):
         # folder icon
         self._folder_icon = QtGui.QPixmap(":/res/folder_512x400.png")    
         ShotgunModel.__init__(self, overlay_parent_widget, download_thumbs=False)
-        fields=["image", "sg_status_list"]
+        fields=["image", "sg_status_list", "description"]
         order=[]
         self._load_data(entity_type, filters, hierarchy, fields, order)
     

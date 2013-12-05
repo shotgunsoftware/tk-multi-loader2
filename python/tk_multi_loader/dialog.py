@@ -233,21 +233,35 @@ class AppDialog(QtGui.QWidget):
             self.ui.details_image.setPixmap(thumb_pixmap)
             
             sg_data = item.data(SgEntityModel.SG_DATA_ROLE)
-            print sg_data
             
+            if sg_data is None:
+                # an item which doesn't have any sg data directly associated
+                # typically an item higher up the tree
+                # just use the default text
+                self.ui.details_header.setText("Folder Name: %s" % item.text())
             
-#            status_color = self._status_model.get_color_str(status_code)
-#            if status_color:
-#                status_name = "%s&nbsp;<span style='color: rgb(%s)'>&#9608;</span>" % (status_name, status_color)
-            
-            if item.data(SgLatestPublishModel.IS_FOLDER_ROLE):
+            elif item.data(SgLatestPublishModel.IS_FOLDER_ROLE):
                 # folder
                 
+                status_code = sg_data.get("sg_status_list")
+                if status_code is None:
+                    status_name = "No Status"
+                else:
+                    status_name = self._status_model.get_long_name(status_code)
+
+                status_color = self._status_model.get_color_str(status_code)
+                if status_color:
+                    status_name = "%s&nbsp;<span style='color: rgb(%s)'>&#9608;</span>" % (status_name, status_color)
+                
+                if sg_data.get("description"):
+                    desc_str = sg_data.get("description")
+                else:
+                    desc_str = "No description entered."
+
                 msg = ""
-                msg += "<b>Name:</b> %s<br>" % item.data(SgLatestPublishModel.FOLDER_NAME_ROLE)
-                msg += "<b>Type:</b> %s<br>" % item.data(SgLatestPublishModel.FOLDER_TYPE_ROLE)
-                msg += "<b>Latest Version:</b> %s<br>" % sg_data.get("version_number")
-                msg += "<br>"
+                msg += "<b>%s %s</b><br>" % (sg_data.get("type"), sg_data.get("code"))
+                msg += "<b>Status: </b>%s<br>" % status_name
+                msg += "<b>Description:</b> %s<br>" % desc_str
                 self.ui.details_header.setText(msg)
                 
                 # blank out the version history
@@ -255,18 +269,52 @@ class AppDialog(QtGui.QWidget):
                 
             
             else:
-                # publish
-                msg = ""
-                msg += "<b>Name:</b> %s<br>" % item.data(SgLatestPublishModel.PUBLISH_NAME_ROLE)
-                msg += "<b>Type:</b> %s<br>" % item.data(SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE)
-                msg += "%s<br>" % item.data(SgLatestPublishModel.ENTITY_NAME_ROLE)
-                msg += "<br>"
-                self.ui.details_header.setText(msg)
+                # this is a publish!
                 
+                sg_item = item.data(SgEntityModel.SG_DATA_ROLE)                
+                
+                if sg_item.get("entity") is None:
+                    entity_str = "Unlinked Publish"
+                else:
+                    entity_str = "%s %s" % (sg_item.get("entity").get("type"),
+                                            sg_item.get("entity").get("name"))
+                
+                if sg_item.get("name") is None:
+                    name_str = "No Name"
+                else:
+                    name_str = sg_item.get("name")
+        
+                type_str = item.data(SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE)
+                                                
+                msg = ""
+                msg += "<b>Name:</b> %s<br>" % name_str
+                msg += "<b>Type:</b> %s<br>" % type_str
+                msg += "<b>Associated with:</b> %s<br>" % entity_str
+
+                # sort out the task label
+                if sg_item.get("task"):
+
+                    if sg_item.get("task.Task.content") is None:
+                        task_name_str = "Unnamed"
+                    else:
+                        task_name_str = sg_item.get("task.Task.content")
+                    
+                    if sg_item.get("task.Task.sg_status_list") is None:
+                        task_status_str = "No Status"
+                    else:
+                        task_status_code = sg_item.get("task.Task.sg_status_list")
+                        task_status_str = self._status_model.get_long_name(task_status_code)
+                    
+                    msg += "<b>Associated Task:</b> %s (%s)<br>" % (task_name_str, task_status_str)    
+                    
+
+                self.ui.details_header.setText(msg)
+                                
                 # tell details pane to load stuff
                 sg_data = item.data(ShotgunModel.SG_DATA_ROLE)
                 self._publish_history_model.load_data(sg_data)
             
+            self.ui.details_header.updateGeometry()
             
             
             

@@ -114,6 +114,10 @@ class SgLatestPublishModel(ShotgunModel):
         publish_fields = ["name", 
                           "entity", 
                           "version_number", 
+                          "task",
+                          "task.Task.sg_status_list",
+                          "task.Task.due_date",
+                          "task.Task.content",                          
                           "image", 
                           self._publish_type_field]
         

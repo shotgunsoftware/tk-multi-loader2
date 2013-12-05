@@ -36,7 +36,7 @@ class SgPublishDelegate(WidgetDelegate):
         """
         return ThumbWidget(parent)
     
-    def _configure_view_widget(self, widget, model_index, style_options):
+    def _configure_widget(self, widget, model_index, style_options):
         """
         Called by the base class when the associated widget should be
         painted in the view.
@@ -74,13 +74,6 @@ class SgPublishDelegate(WidgetDelegate):
                             model_index.data(SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE), 
                             model_index.data(SgLatestPublishModel.ENTITY_NAME_ROLE)) 
         
-    def _configure_hover_widget(self, widget, model_index, style_options):
-        """
-        Called by the base class when the associated widget should be set up
-        for 'hover' mode.
-        """
-        self._configure_view_widget(widget, model_index, style_options)
-                    
     def sizeHint(self, style_options, model_index):
         """
         Base the size on the icon size property of the view

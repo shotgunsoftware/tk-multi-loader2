@@ -31,7 +31,7 @@ class SgPublishHistoryDelegate(WidgetDelegate):
         """
         return ListWidget(parent)
     
-    def _configure_view_widget(self, widget, model_index, style_options):
+    def _configure_widget(self, widget, model_index, style_options):
         """
         Called by the base class when the associated widget should be
         painted in the view.
@@ -77,13 +77,6 @@ class SgPublishHistoryDelegate(WidgetDelegate):
         widget.set_text(header_str, body_str)
         
         
-    def _configure_hover_widget(self, widget, model_index, style_options):
-        """
-        Called by the base class when the associated widget should be set up
-        for 'hover' mode.
-        """
-        self._configure_view_widget(widget, model_index, style_options)
-                    
     def sizeHint(self, style_options, model_index):
         """
         Base the size on the icon size property of the view

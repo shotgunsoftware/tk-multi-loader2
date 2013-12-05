@@ -20,6 +20,7 @@ from .model_entity import SgEntityModel
 from .model_latestpublish import SgLatestPublishModel
 from .model_publishtype import SgPublishTypeModel
 from .model_status import SgStatusModel
+from .action_manager import ActionManager
 from .proxymodel_publish import SgPublishProxyModel 
 from .delegate_publish_thumb import SgPublishDelegate
 from .model_publishhistory import SgPublishHistoryModel
@@ -62,6 +63,8 @@ class AppDialog(QtGui.QWidget):
         # can use those in the UI
         self._status_model = SgStatusModel(self.ui.publish_type_list)
         
+        self._action_manager = ActionManager()
+        
         #################################################
         # details pane
         self.ui.details.setVisible(False)
@@ -84,7 +87,7 @@ class AppDialog(QtGui.QWidget):
         self._publish_history_proxy.sort(0, QtCore.Qt.DescendingOrder)
         
         self.ui.history_view.setModel(self._publish_history_proxy)
-        self._history_delegate = SgPublishHistoryDelegate(self.ui.history_view, self._status_model)
+        self._history_delegate = SgPublishHistoryDelegate(self.ui.history_view, self._status_model, self._action_manager)
         self.ui.history_view.setItemDelegate(self._history_delegate)
         
         self._no_selection_pixmap = QtGui.QPixmap(":/res/no_item_selected_512x400.png")
@@ -103,7 +106,7 @@ class AppDialog(QtGui.QWidget):
         self._publish_proxy_model.setSourceModel(self._publish_model)
                 
         # tell our publish view to use a custom delegate to produce widgetry
-        self._publish_delegate = SgPublishDelegate(self.ui.publish_view, self._status_model) 
+        self._publish_delegate = SgPublishDelegate(self.ui.publish_view, self._status_model, self._action_manager) 
         self.ui.publish_view.setItemDelegate(self._publish_delegate)
                 
         # hook up view -> proxy model -> model

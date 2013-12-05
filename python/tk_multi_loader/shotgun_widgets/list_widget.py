@@ -28,17 +28,21 @@ class ListWidget(QtGui.QWidget):
         self.ui.setupUi(self)
         
         # set up action menu
-        self._menu = QtGui.QMenu()                
+        self._menu = QtGui.QMenu()   
+        self._actions = []             
         self.ui.button.setMenu(self._menu)
         
     def set_actions(self, actions):
         """
         Adds a list of QActions to the actions menu
         """
-        self._actions = actions
-        for a in self._actions:
-            self._menu.addAction(a)
-                    
+        if len(actions) == 0:
+            self.ui.button.setVisible(False)
+        else:
+            self._actions = actions
+            for a in self._actions:
+                self._menu.addAction(a)
+                                    
     def set_selected(self, selected):
         """
         Adjust the style sheet to indicate selection or not

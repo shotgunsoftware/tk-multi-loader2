@@ -21,9 +21,10 @@ class SgPublishHistoryDelegate(WidgetDelegate):
     Delegate which 'glues up' the Details Widget with a QT View.
     """
 
-    def __init__(self, view, status_model):
+    def __init__(self, view, status_model, action_manager):
         WidgetDelegate.__init__(self, view)
         self._status_model = status_model
+        self._action_manager = action_manager
         
     def _create_widget(self, parent):
         """
@@ -32,6 +33,17 @@ class SgPublishHistoryDelegate(WidgetDelegate):
         return ListWidget(parent)
     
     def _configure_widget(self, widget, model_index, style_options):
+        """
+        Called when the associated widget is being set up. Initialize
+        things that shall persist, for example action menu items.
+        """
+        sg_item = model_index.data(ShotgunModel.SG_DATA_ROLE)
+
+        # set up the menu
+        widget.set_actions( self._action_manager.get_actions_for_publish(sg_item) )            
+    
+    
+    def _draw_widget(self, widget, model_index, style_options):
         """
         Called by the base class when the associated widget should be
         painted in the view.

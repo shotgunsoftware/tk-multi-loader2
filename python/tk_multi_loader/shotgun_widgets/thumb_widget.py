@@ -36,6 +36,7 @@ class ThumbWidget(QtGui.QWidget):
         filter.resized.connect(self._on_thumb_resized)
         self.ui.thumbnail.installEventFilter(filter)
         
+        # set up action menu
         self._menu = QtGui.QMenu()
         self._actions = []
         self.ui.button.setMenu(self._menu)
@@ -44,9 +45,12 @@ class ThumbWidget(QtGui.QWidget):
         """
         Adds a list of QActions to the actions menu
         """
-        self._actions = actions
-        for a in self._actions:
-            self._menu.addAction(a)
+        if len(actions) == 0:
+            self.ui.button.setVisible(False)
+        else:
+            self._actions = actions
+            for a in self._actions:
+                self._menu.addAction(a)
     
     def _on_thumb_resized(self):
         """

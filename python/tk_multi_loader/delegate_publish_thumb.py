@@ -26,9 +26,10 @@ class SgPublishDelegate(WidgetDelegate):
     Delegate which 'glues up' the ThumbWidget with a QT View.
     """
 
-    def __init__(self, view, status_model):
+    def __init__(self, view, status_model, action_manager):
         WidgetDelegate.__init__(self, view)
         self._status_model = status_model
+        self._action_manager = action_manager
         
     def _create_widget(self, parent):
         """
@@ -37,6 +38,23 @@ class SgPublishDelegate(WidgetDelegate):
         return ThumbWidget(parent)
     
     def _configure_widget(self, widget, model_index, style_options):
+        """
+        Called when the associated widget is being set up. Initialize
+        things that shall persist, for example action menu items.
+        """
+        sg_item = model_index.data(ShotgunModel.SG_DATA_ROLE)
+        is_folder = model_index.data(SgLatestPublishModel.IS_FOLDER_ROLE)
+        if sg_item is None:
+            # an intermediate folder widget with no shotgun data
+            return
+        elif is_folder:
+            # a folder widget with shotgun data
+            widget.set_actions( self._action_manager.get_actions_for_folder(sg_item) )
+        else:
+            # publish!
+            widget.set_actions( self._action_manager.get_actions_for_publish(sg_item) )                
+    
+    def _draw_widget(self, widget, model_index, style_options):
         """
         Called by the base class when the associated widget should be
         painted in the view.
@@ -59,6 +77,7 @@ class SgPublishDelegate(WidgetDelegate):
         
         elif model_index.data(SgLatestPublishModel.IS_FOLDER_ROLE):
             # folder. The name is in the main text role.
+            
             status_code = model_index.data(SgLatestPublishModel.FOLDER_STATUS_ROLE)
             if status_code is None:
                 status_name = "No Status"
@@ -70,6 +89,7 @@ class SgPublishDelegate(WidgetDelegate):
                             "Status: %s" % status_name) 
         else:
             # this is a publish!
+            
             widget.set_text(model_index.data(SgLatestPublishModel.PUBLISH_NAME_ROLE),
                             model_index.data(SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE), 
                             model_index.data(SgLatestPublishModel.ENTITY_NAME_ROLE)) 

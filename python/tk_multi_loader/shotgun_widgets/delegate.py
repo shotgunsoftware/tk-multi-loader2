@@ -78,12 +78,12 @@ class WidgetDelegate(QtGui.QStyledItemDelegate):
         Paint method to handle all cells that are not being currently edited.
         """        
         if model_index == self._current_editor_index and self._current_widget is not None:
-            self._configure_widget(self._current_widget, model_index, style_options)
+            self._draw_widget(self._current_widget, model_index, style_options)
         
         else:
             # for performance reasons, we are not creating a widget every time
             # but merely moving the same widget around. 
-            self._configure_widget(self._paint_widget, model_index, style_options)
+            self._draw_widget(self._paint_widget, model_index, style_options)
                     
             painter.save()
             self._paint_widget.resize(style_options.rect.size())
@@ -107,12 +107,22 @@ class WidgetDelegate(QtGui.QStyledItemDelegate):
         """
         raise Exception("Needs to be implemented!")
     
+    def _draw_widget(self, widget, model_index, style_options):
+        """
+        This needs to be implemented by any deriving classes.
+        
+        Callback that is called whenever the delegate needs the widget to draw itself
+        with a particular set of model data, in this case for viewing.
+        """
+        raise Exception("Needs to be implemented!")
+            
     def _configure_widget(self, widget, model_index, style_options):
         """
         This needs to be implemented by any deriving classes.
         
-        Callback that is called whenever the delegate needs the widget to update itself
-        with a particular set of model data, in this case for viewing.
+        Callback that is called whenever the delegate needs the widget to configure itself
+        with a particular set of model data. This method is typically called when a widget
+        is initialized for editing.
         """
         raise Exception("Needs to be implemented!")
             

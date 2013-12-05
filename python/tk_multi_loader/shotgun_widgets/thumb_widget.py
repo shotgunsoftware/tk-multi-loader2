@@ -61,10 +61,10 @@ class ThumbWidget(QtGui.QWidget):
         
         if selected:
             # make a border around the cell
-            self.ui.box.setStyleSheet("""QGroupBox {border-width: 2px; 
-                                                    border-color: %s; 
-                                                    border-style: solid; 
-                                                    background-color: %s}
+            self.ui.box.setStyleSheet("""#box {border-width: 2px; 
+                                                 border-color: %s; 
+                                                 border-style: solid; 
+                                                 background-color: %s}
                                       """ % (highlight_str, transp_highlight_str))
             # expand the button to contain text
             self.ui.button.setVisible(True)

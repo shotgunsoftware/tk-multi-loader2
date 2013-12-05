@@ -39,10 +39,10 @@ class ListWidget(QtGui.QWidget):
         
         if selected:
             self.ui.button.setVisible(True)
-            self.ui.box.setStyleSheet("""QGroupBox {border-width: 2px; 
-                                                    border-color: %s; 
-                                                    border-style: solid; 
-                                                    background-color: %s}
+            self.ui.box.setStyleSheet("""#box {border-width: 2px; 
+                                                 border-color: %s; 
+                                                 border-style: solid; 
+                                                 background-color: %s}
                                       """ % (highlight_str, transp_highlight_str))
 
         else:

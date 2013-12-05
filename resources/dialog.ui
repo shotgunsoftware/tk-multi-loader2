@@ -115,13 +115,6 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="reload">
-       <property name="text">
-        <string>TEMP:RELOAD</string>
-       </property>
-      </widget>
-     </item>
-     <item>
       <widget class="QToolButton" name="info">
        <property name="text">
         <string>Show Publish Details</string>

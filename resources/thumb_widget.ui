@@ -78,7 +78,7 @@ Bar</string>
             <normaloff>:/res/down_arrow.png</normaloff>:/res/down_arrow.png</iconset>
           </property>
           <property name="popupMode">
-           <enum>QToolButton::DelayedPopup</enum>
+           <enum>QToolButton::InstantPopup</enum>
           </property>
           <property name="toolButtonStyle">
            <enum>Qt::ToolButtonTextOnly</enum>

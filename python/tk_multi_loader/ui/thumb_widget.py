@@ -42,7 +42,7 @@ class Ui_ThumbWidget(object):
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(":/res/down_arrow.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.button.setIcon(icon)
-        self.button.setPopupMode(QtGui.QToolButton.DelayedPopup)
+        self.button.setPopupMode(QtGui.QToolButton.InstantPopup)
         self.button.setToolButtonStyle(QtCore.Qt.ToolButtonTextOnly)
         self.button.setObjectName("button")
         self.horizontalLayout.addWidget(self.button)

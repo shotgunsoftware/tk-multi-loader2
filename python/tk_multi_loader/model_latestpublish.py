@@ -112,6 +112,7 @@ class SgLatestPublishModel(ShotgunModel):
             self._publish_type_field = "tank_type"
         
         publish_fields = ["name", 
+                          "path",
                           "entity", 
                           "version_number", 
                           "task",

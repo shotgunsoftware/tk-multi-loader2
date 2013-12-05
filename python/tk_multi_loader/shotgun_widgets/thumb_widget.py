@@ -40,14 +40,16 @@ class ThumbWidget(QtGui.QWidget):
         self._menu = QtGui.QMenu()
         self._actions = []
         self.ui.button.setMenu(self._menu)
+        self._button_visible = False
         
     def set_actions(self, actions):
         """
         Adds a list of QActions to the actions menu
         """
         if len(actions) == 0:
-            self.ui.button.setVisible(False)
+            self._button_visible = False
         else:
+            self._button_visible = True
             self._actions = actions
             for a in self._actions:
                 self._menu.addAction(a)
@@ -83,7 +85,7 @@ class ThumbWidget(QtGui.QWidget):
                                                  background-color: %s}
                                       """ % (highlight_str, transp_highlight_str))
             # expand the button to contain text
-            self.ui.button.setVisible(True)
+            self.ui.button.setVisible(self._button_visible)
         else:
             self.ui.box.setStyleSheet("")
             self.ui.button.setVisible(False)

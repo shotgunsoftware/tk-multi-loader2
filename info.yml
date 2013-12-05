@@ -13,6 +13,21 @@
 # expected fields in the configuration file for this app
 configuration:
 
+    # hook
+    hook_list: 
+        type: hook
+        parameters: [publish_type]
+        default_value: "list_actions_{engine_name}"
+        description: The list hook returns a list of suitable load actions given a 
+                     particular publish.
+
+    hook_load: 
+        type: hook
+        parameters: [action_name, shotgun_data]
+        default_value: "load_action_{engine_name}"
+        description: The list hook carries out the actual loading of a given load action.
+
+
     # tank write nodes paths
     entities:
         default_value: 

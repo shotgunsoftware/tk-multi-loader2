@@ -11,18 +11,19 @@
 import tank
 
 from tank.platform.qt import QtCore, QtGui
-from .shotgun_widgets import WidgetDelegate
-from .shotgun_widgets import ListWidget 
-from .shotgun_model import ShotgunModel
+ 
+# import the shotgun_model and view modules from the shotgun utils framework
+shotgun_model = tank.platform.import_framework("tk-framework-shotgunutils", "shotgun_model")
+shotgun_view = tank.platform.import_framework("tk-framework-shotgunutils", "shotgun_view")
 
 
-class SgPublishHistoryDelegate(WidgetDelegate):
+class SgPublishHistoryDelegate(shotgun_view.WidgetDelegate):
     """
     Delegate which 'glues up' the Details Widget with a QT View.
     """
 
     def __init__(self, view, status_model, action_manager):
-        WidgetDelegate.__init__(self, view)
+        shotgun_view.WidgetDelegate.__init__(self, view)
         self._status_model = status_model
         self._action_manager = action_manager
         
@@ -30,14 +31,14 @@ class SgPublishHistoryDelegate(WidgetDelegate):
         """
         Widget factory as required by base class
         """
-        return ListWidget(parent)
+        return shotgun_view.ListWidget(parent)
     
     def _configure_widget(self, widget, model_index, style_options):
         """
         Called when the associated widget is being set up. Initialize
         things that shall persist, for example action menu items.
         """
-        sg_item = model_index.data(ShotgunModel.SG_DATA_ROLE)
+        sg_item = model_index.data(shotgun_model.ShotgunModel.SG_DATA_ROLE)
 
         # set up the menu
         widget.set_actions( self._action_manager.get_actions_for_publish(sg_item) )            
@@ -64,7 +65,7 @@ class SgPublishHistoryDelegate(WidgetDelegate):
         # introduces a coupling between the delegate and the model.
         # but I guess that's inevitable here...
         
-        sg_item = model_index.data(ShotgunModel.SG_DATA_ROLE)
+        sg_item = model_index.data(shotgun_model.ShotgunModel.SG_DATA_ROLE)
 
         if sg_item.get("version_number") is None:
             version_str = "No Version"
@@ -93,5 +94,5 @@ class SgPublishHistoryDelegate(WidgetDelegate):
         """
         Base the size on the icon size property of the view
         """
-        return ListWidget.calculate_size()
+        return shotgun_view.ListWidget.calculate_size()
              

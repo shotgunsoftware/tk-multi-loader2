@@ -5,7 +5,6 @@
     <file>arrow_forward.png</file>
     <file>down_arrow.png</file>
     <file>search.png</file>
-    <file>sg_logo.png</file>
     
     <file>no_publishes_found.png</file>
     <file>no_item_selected_512x400.png</file>
@@ -14,7 +13,6 @@
     <file>folder_512x400.png</file>
     <file>loading_512x400.png</file>
     <file>loading_100x100.png</file>
-    
     
   </qresource>
 </RCC>

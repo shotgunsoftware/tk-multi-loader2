@@ -11,7 +11,9 @@
 import tank
 from tank.platform.qt import QtCore, QtGui
 
-from .shotgun_model import ShotgunModel
+# import the shotgun_model module from the shotgun utils framework
+shotgun_model = tank.platform.import_framework("tk-framework-shotgunutils", "shotgun_model") 
+ShotgunModel = shotgun_model.ShotgunModel 
 
 class SgStatusModel(ShotgunModel):
     """

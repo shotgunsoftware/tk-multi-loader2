@@ -25,11 +25,13 @@ from .proxymodel_publish import SgPublishProxyModel
 from .delegate_publish_thumb import SgPublishDelegate
 from .model_publishhistory import SgPublishHistoryModel
 from .delegate_publish_history import SgPublishHistoryDelegate
-from .shotgun_model import ShotgunModel
 
 from .ui.dialog import Ui_Dialog
 
-        
+# import the shotgun_model module from the shotgun utils framework
+shotgun_model = tank.platform.import_framework("tk-framework-shotgunutils", "shotgun_model") 
+ShotgunModel = shotgun_model.ShotgunModel 
+       
 
 class AppDialog(QtGui.QWidget):
     """

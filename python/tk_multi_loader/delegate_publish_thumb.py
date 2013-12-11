@@ -15,19 +15,20 @@ import tempfile
 from . import utils
 
 from tank.platform.qt import QtCore, QtGui
-from .shotgun_widgets import WidgetDelegate
-from .shotgun_widgets import ThumbWidget
 from .model_latestpublish import SgLatestPublishModel
-from .shotgun_model import ShotgunModel
+
+# import the shotgun_model and view modules from the shotgun utils framework
+shotgun_model = tank.platform.import_framework("tk-framework-shotgunutils", "shotgun_model")
+shotgun_view = tank.platform.import_framework("tk-framework-shotgunutils", "shotgun_view")
 
 
-class SgPublishDelegate(WidgetDelegate):
+class SgPublishDelegate(shotgun_view.WidgetDelegate):
     """
     Delegate which 'glues up' the ThumbWidget with a QT View.
     """
 
     def __init__(self, view, status_model, action_manager):
-        WidgetDelegate.__init__(self, view)
+        shotgun_view.WidgetDelegate.__init__(self, view)
         self._status_model = status_model
         self._action_manager = action_manager
         
@@ -35,14 +36,14 @@ class SgPublishDelegate(WidgetDelegate):
         """
         Widget factory as required by base class
         """
-        return ThumbWidget(parent)
+        return shotgun_view.ThumbWidget(parent)
     
     def _configure_widget(self, widget, model_index, style_options):
         """
         Called when the associated widget is being set up. Initialize
         things that shall persist, for example action menu items.
         """
-        sg_item = model_index.data(ShotgunModel.SG_DATA_ROLE)
+        sg_item = model_index.data(shotgun_model.ShotgunModel.SG_DATA_ROLE)
         is_folder = model_index.data(SgLatestPublishModel.IS_FOLDER_ROLE)
         if sg_item is None:
             # an intermediate folder widget with no shotgun data
@@ -69,7 +70,7 @@ class SgPublishDelegate(WidgetDelegate):
         widget.set_thumbnail(thumb)
         widget.set_selected(selected)
         
-        sg_data = model_index.data(ShotgunModel.SG_DATA_ROLE)
+        sg_data = model_index.data(shotgun_model.ShotgunModel.SG_DATA_ROLE)
         
         if sg_data is None:
             # this is an intermediate node with no metadata on it
@@ -100,6 +101,6 @@ class SgPublishDelegate(WidgetDelegate):
         """
         # base the size of each element off the icon size property of the view
         scale_factor = self._view.iconSize().width()        
-        return ThumbWidget.calculate_size(scale_factor)
+        return shotgun_view.ThumbWidget.calculate_size(scale_factor)
         
              

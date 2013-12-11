@@ -28,7 +28,7 @@ class MultiLoader(tank.platform.Application):
         cb = lambda : tk_multi_loader.show_dialog(self)
         
         # add stuff to main menu
-        self.engine.register_command("Show me the new Loader!", cb, {"short_name": "loader"})
+        self.engine.register_command("Add items...", cb, {"short_name": "loader"})
 
     def get_setting_name(self, param_name):
         """

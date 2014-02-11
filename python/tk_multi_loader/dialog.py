@@ -168,7 +168,7 @@ class AppDialog(QtGui.QWidget):
         self._publish_model.destroy()
         self._publish_history_model.destroy()
         self._publish_type_model.destroy()
-        self._status_model.destroy()
+        self._status_model.destroy()    
         for p in self._entity_presets:
             self._entity_presets[p].model.destroy()
         
@@ -399,7 +399,8 @@ class AppDialog(QtGui.QWidget):
             # no suitable item found. Use the first tab
             found_preset = self.ui.entity_preset_tabs.tabText(0)
             
-        # set the current preset to the one we just found 
+        # set the current preset to the one we just found
+        print "on home clicked" 
         self._current_entity_preset = found_preset
         
         # select it in the left hand side tree view
@@ -653,20 +654,17 @@ class AppDialog(QtGui.QWidget):
             
             self._entity_presets[preset_name] = ep
             
-        print self._entity_presets
-        
         # hook up an event handler when someone clicks a tab
         self.ui.entity_preset_tabs.currentChanged.connect(self._on_entity_profile_tab_clicked)
                 
         # finalize initialization by clicking the home button, but only once the 
         # data has properly arrived in the model. 
-        #self._on_home_clicked()
+        self._on_home_clicked()
         
     def _on_entity_profile_tab_clicked(self):
         """
         Called when someone clicks one of the profile tabs
         """
-        print "profile tab click!"
         # get the name of the clicked tab        
         curr_tab_index = self.ui.entity_preset_tabs.currentIndex()
         curr_tab_name = self.ui.entity_preset_tabs.tabText(curr_tab_index)
@@ -716,7 +714,7 @@ class AppDialog(QtGui.QWidget):
         """
         Signal triggered when someone changes the selection in a treeview.
         """
-
+        print "SELECTION CHANGED!"
         # update breadcrumbs
         self._populate_entity_breadcrumbs()
         

@@ -29,6 +29,11 @@ class MultiLoader(tank.platform.Application):
         
         # add stuff to main menu
         self.engine.register_command("Add items to your Scene...", cb, {"short_name": "loader"})
+        
+        # hot patch shotgun API to allow for pickling
+        from tank_vendor.shotgun_api3.lib import sgtimezone
+        sgtimezone.LocalTimezone = sgtimezone.SgTimezone.LocalTimezone 
+        
 
     def get_setting_name(self, param_name):
         """

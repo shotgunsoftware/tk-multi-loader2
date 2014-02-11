@@ -119,9 +119,14 @@ class AppDialog(QtGui.QWidget):
         
         # if an item in the table is double clicked ensure details are shown
         self.ui.publish_view.doubleClicked.connect(self._on_publish_double_clicked)
-        
+                
         # event handler for when the selection in the publish view is changing
-        self.ui.publish_view.selectionModel().selectionChanged.connect(self._on_publish_selection)
+        # note! Because of some GC issues (maya 2012 Pyside), need to first establish
+        # a direct reference to the selection model before we can set up any signal/slots
+        # against it
+        publish_view_selection_model = self.ui.publish_view.selectionModel()
+        self._dynamic_widgets.append(publish_view_selection_model)
+        publish_view_selection_model.selectionChanged.connect(self._on_publish_selection)
         
         self.ui.show_sub_items.toggled.connect(self._on_show_subitems_toggled)
         
@@ -163,6 +168,7 @@ class AppDialog(QtGui.QWidget):
         self._publish_model.destroy()
         self._publish_history_model.destroy()
         self._publish_type_model.destroy()
+        self._status_model.destroy()
         for p in self._entity_presets:
             self._entity_presets[p].model.destroy()
         
@@ -339,7 +345,9 @@ class AppDialog(QtGui.QWidget):
         # after the current item
 
         if not self._history_navigation_mode: # do not add to history when browsing the history :)
+            # chop off history at the point we are currently
             self._history = self._history[:self._history_index]         
+            # append our current item to the chopped history
             self._history.append({"preset": preset_caption, "item": std_item})
             self._history_index += 1
 
@@ -365,7 +373,7 @@ class AppDialog(QtGui.QWidget):
         User clicks the home button
         """
         # first, try to find the "home" item by looking at the current app context.
-        found_profile = None
+        found_preset = None
         found_item = None
         
         # get entity portion of context
@@ -376,7 +384,7 @@ class AppDialog(QtGui.QWidget):
             for p in self._entity_presets:
                 if self._entity_presets[p].entity_type == ctx.entity["type"]:
                     # found an at least partially matching entity profile.
-                    found_profile = p
+                    found_preset = p
                                         
                     # now see if our context object also exists in the tree of this profile
                     model = self._entity_presets[p].model
@@ -387,12 +395,15 @@ class AppDialog(QtGui.QWidget):
                         found_item = item
                         break
                 
-        if found_profile is None:
+        if found_preset is None:
             # no suitable item found. Use the first tab
-            found_profile = self.ui.entity_preset_tabs.tabText(0)
+            found_preset = self.ui.entity_preset_tabs.tabText(0)
             
-        # select it in the list
-        self._select_item_in_entity_tree(found_profile, found_item)
+        # set the current preset to the one we just found 
+        self._current_entity_preset = found_preset
+        
+        # select it in the left hand side tree view
+        self._select_item_in_entity_tree(found_preset, found_item)
                 
     def _on_back_clicked(self):
         """
@@ -521,7 +532,7 @@ class AppDialog(QtGui.QWidget):
         """
         
         # indicate that all events triggered by operations in here
-        # originated from this programmatric request and not by
+        # originated from this programmatic request and not by
         # a user's click
         self._programmatic_selection_mode = True
         
@@ -627,8 +638,11 @@ class AppDialog(QtGui.QWidget):
             view.setHeaderHidden(True)
             view.setModel(model)
         
-            # set up on-select callbacks
+            # set up on-select callbacks - need to help pyside GC (maya 2012)
+            # by first creating a direct handle to the selection model before
+            # setting up signal / slots
             selection_model = view.selectionModel()
+            self._dynamic_widgets.append(selection_model)            
             selection_model.selectionChanged.connect(self._on_treeview_item_selected)
             
             # finally store all these objects keyed by the caption
@@ -639,18 +653,20 @@ class AppDialog(QtGui.QWidget):
             
             self._entity_presets[preset_name] = ep
             
+        print self._entity_presets
+        
         # hook up an event handler when someone clicks a tab
         self.ui.entity_preset_tabs.currentChanged.connect(self._on_entity_profile_tab_clicked)
                 
         # finalize initialization by clicking the home button, but only once the 
-        # data has properly arrived in the model. empty_refresh_completed
-        
-        self._on_home_clicked()
+        # data has properly arrived in the model. 
+        #self._on_home_clicked()
         
     def _on_entity_profile_tab_clicked(self):
         """
         Called when someone clicks one of the profile tabs
         """
+        print "profile tab click!"
         # get the name of the clicked tab        
         curr_tab_index = self.ui.entity_preset_tabs.currentIndex()
         curr_tab_name = self.ui.entity_preset_tabs.tabText(curr_tab_index)

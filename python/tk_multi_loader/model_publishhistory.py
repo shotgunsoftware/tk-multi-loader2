@@ -36,9 +36,6 @@ class SgPublishHistoryModel(ShotgunModel):
         self._loading_icon = QtGui.QPixmap(":/res/loading_100x100.png")
         ShotgunModel.__init__(self, overlay_parent_widget, download_thumbs=True)
         
-        # hot patch shotgun API to allow for pickling
-        from tank_vendor.shotgun_api3.lib import sgtimezone
-        sgtimezone.LocalTimezone = sgtimezone.SgTimezone.LocalTimezone 
                 
     ############################################################################################
     # public interface

@@ -72,7 +72,10 @@ class SgPublishHistoryDelegate(shotgun_view.WidgetDelegate):
         else:
             version_str = "Version %03d" % sg_item.get("version_number")
             
-        created_str = sg_item.get("created_at").strftime('%Y-%m-%d %H:%M:%S')
+        if sg_item.get("created_at") is None:
+            created_str = "Undefined"
+        else:
+            created_str = sg_item.get("created_at").strftime('%Y-%m-%d %H:%M:%S')
             
         # set the little description bit next to the artist icon
         if sg_item.get("description") is None:

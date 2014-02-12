@@ -40,7 +40,7 @@ class SgLatestPublishModel(ShotgunModel):
     FOLDER_STATUS_ROLE = QtCore.Qt.UserRole + 109
     
     
-    def __init__(self, overlay_parent_widget, publish_type_model):
+    def __init__(self, parent, overlay_parent_widget, publish_type_model):
         """
         Model which represents the latest publishes for an entity
         
@@ -59,7 +59,7 @@ class SgLatestPublishModel(ShotgunModel):
         self._loading_icon = QtGui.QPixmap(":/res/loading_512x400.png")
 
         # init base class
-        ShotgunModel.__init__(self, overlay_parent_widget, download_thumbs=True)
+        ShotgunModel.__init__(self, parent, overlay_parent_widget, download_thumbs=True)
     
     ############################################################################################
     # public interface

@@ -28,13 +28,13 @@ class SgPublishTypeModel(ShotgunModel):
     DISPLAY_NAME_ROLE = QtCore.Qt.UserRole + 103 # holds the display name for the node
     
     
-    def __init__(self, overlay_parent_widget):
+    def __init__(self, parent, overlay_parent_widget):
         """
         Constructor
         """
         # folder icon
         self._folder_icon = QtGui.QPixmap(":/res/folder_512x400.png")    
-        ShotgunModel.__init__(self, overlay_parent_widget, download_thumbs=False)
+        ShotgunModel.__init__(self, parent, overlay_parent_widget, download_thumbs=False)
         
         # specify sort key
         self.setSortRole(SgPublishTypeModel.SORT_KEY_ROLE)

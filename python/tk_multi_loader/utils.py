@@ -83,7 +83,12 @@ def create_overlayed_folder_thumbnail(path):
     
     # this is a thumbnail for a folder coming in!
     # merge it with the current folder thumbnail image
-    base_image = QtGui.QPixmap(":/res/folder_512x400.png")
+    res_base = QtGui.QPixmap(":/res/folder_512x400.png")
+    # looks like there are some pyside related memory issues here relating to 
+    # referencing a resource and then operating on it. Just to be sure, make 
+    # make a full copy of the resource before starting to manipulate.
+    base_image = QtGui.QPixmap(res_base)
+    
     thumb_scaled = thumb.scaled(MAX_THUMB_WIDTH, 
                                 MAX_THUMB_HEIGHT, 
                                 QtCore.Qt.KeepAspectRatio, 

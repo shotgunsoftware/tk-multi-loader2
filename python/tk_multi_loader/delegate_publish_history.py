@@ -33,29 +33,25 @@ class SgPublishHistoryDelegate(shotgun_view.WidgetDelegate):
         """
         return shotgun_view.ListWidget(parent)
     
-    def _configure_widget(self, widget, model_index, style_options):
+    def _on_before_selection(self, widget, model_index, style_options):
         """
         Called when the associated widget is being set up. Initialize
         things that shall persist, for example action menu items.
         """
-        sg_item = model_index.data(shotgun_model.ShotgunModel.SG_DATA_ROLE)
-
+        # do std drawing first
+        self._on_before_paint(widget, model_index, style_options)        
+        widget.set_selected(True)
+        
         # set up the menu
+        sg_item = model_index.data(shotgun_model.ShotgunModel.SG_DATA_ROLE)
         widget.set_actions( self._action_manager.get_actions_for_publish(sg_item) )            
     
     
-    def _draw_widget(self, widget, model_index, style_options):
+    def _on_before_paint(self, widget, model_index, style_options):
         """
         Called by the base class when the associated widget should be
         painted in the view.
-        """
-        if style_options.state & QtGui.QStyle.State_Selected:
-            selected = True
-        else:
-            selected = False
-        
-        widget.set_selected(selected)
-        
+        """        
         icon = model_index.data(QtCore.Qt.DecorationRole)
         thumb = icon.pixmap(512)
         widget.set_thumbnail(thumb)

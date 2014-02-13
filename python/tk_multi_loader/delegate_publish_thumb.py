@@ -31,6 +31,7 @@ class SgPublishDelegate(shotgun_view.WidgetDelegate):
         shotgun_view.WidgetDelegate.__init__(self, view)
         self._status_model = status_model
         self._action_manager = action_manager
+        self._view = view
         
     def _create_widget(self, parent):
         """
@@ -38,11 +39,17 @@ class SgPublishDelegate(shotgun_view.WidgetDelegate):
         """
         return shotgun_view.ThumbWidget(parent)
     
-    def _configure_widget(self, widget, model_index, style_options):
+    def _on_before_selection(self, widget, model_index, style_options):
         """
         Called when the associated widget is being set up. Initialize
         things that shall persist, for example action menu items.
         """
+        # do std drawing first
+        self._on_before_paint(widget, model_index, style_options)
+        
+        widget.set_selected(True)
+        
+        # now set up actions menu        
         sg_item = model_index.data(shotgun_model.ShotgunModel.SG_DATA_ROLE)
         is_folder = model_index.data(SgLatestPublishModel.IS_FOLDER_ROLE)
         if sg_item is None:
@@ -55,20 +62,14 @@ class SgPublishDelegate(shotgun_view.WidgetDelegate):
             # publish!
             widget.set_actions( self._action_manager.get_actions_for_publish(sg_item) )                
     
-    def _draw_widget(self, widget, model_index, style_options):
+    def _on_before_paint(self, widget, model_index, style_options):
         """
         Called by the base class when the associated widget should be
         painted in the view.
         """
-        if style_options.state & QtGui.QStyle.State_Selected:
-            selected = True
-        else:
-            selected = False
-        
         icon = model_index.data(QtCore.Qt.DecorationRole)
         thumb = icon.pixmap( 512 )
-        widget.set_thumbnail(thumb)
-        widget.set_selected(selected)
+        widget.set_thumbnail(thumb)        
         
         sg_data = model_index.data(shotgun_model.ShotgunModel.SG_DATA_ROLE)
         

@@ -106,13 +106,13 @@ class AppDialog(QtGui.QWidget):
         # set up a proxy model to cull results based on type selection
         self._publish_proxy_model = SgPublishProxyModel(self)
         self._publish_proxy_model.setSourceModel(self._publish_model)
+
+        # hook up view -> proxy model -> model
+        self.ui.publish_view.setModel(self._publish_proxy_model)
                 
         # tell our publish view to use a custom delegate to produce widgetry
         self._publish_delegate = SgPublishDelegate(self.ui.publish_view, self._status_model, self._action_manager) 
-        self.ui.publish_view.setItemDelegate(self._publish_delegate)
-                
-        # hook up view -> proxy model -> model
-        self.ui.publish_view.setModel(self._publish_proxy_model)
+        self.ui.publish_view.setItemDelegate(self._publish_delegate)                
         
         # whenever the type list is checked, update the publish filters
         self._publish_type_model.itemChanged.connect(self._apply_type_filters_on_publishes)        

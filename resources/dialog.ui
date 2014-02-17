@@ -203,7 +203,7 @@
           <string>This &lt;i&gt;breadcrubs listing&lt;/i&gt; shows your currently selected Shotgun location.</string>
          </property>
          <property name="text">
-          <string>Breadcrumbs &gt; Breadcrumbs &gt; Breadcrumbs</string>
+          <string/>
          </property>
         </widget>
        </item>

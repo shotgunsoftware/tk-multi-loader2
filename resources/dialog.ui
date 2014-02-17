@@ -30,6 +30,9 @@
          <height>40</height>
         </size>
        </property>
+       <property name="toolTip">
+        <string>Clicking the &lt;i&gt;home button&lt;/i&gt; will take you to the location that best matches your current work area.</string>
+       </property>
        <property name="text">
         <string>Home</string>
        </property>
@@ -55,6 +58,9 @@
          <width>40</width>
          <height>40</height>
         </size>
+       </property>
+       <property name="toolTip">
+        <string>&lt;i&gt;Go back&lt;/i&gt; in the folder history.</string>
        </property>
        <property name="text">
         <string>&lt; Back</string>
@@ -82,6 +88,9 @@
          <height>40</height>
         </size>
        </property>
+       <property name="toolTip">
+        <string>&lt;i&gt;Go forward&lt;/i&gt; in the folder history.</string>
+       </property>
        <property name="text">
         <string>Next &gt;</string>
        </property>
@@ -96,6 +105,9 @@
      </item>
      <item>
       <widget class="QLabel" name="entity_breadcrumbs">
+       <property name="toolTip">
+        <string>This &lt;i&gt;breadcrubs listing&lt;/i&gt; shows your currently selected Shotgun location.</string>
+       </property>
        <property name="text">
         <string>Breadcrumbs &gt; Breadcrumbs &gt; Breadcrumbs</string>
        </property>
@@ -116,6 +128,9 @@
      </item>
      <item>
       <widget class="QToolButton" name="info">
+       <property name="toolTip">
+        <string>Use this button to &lt;i&gt;toggle details on and off&lt;/i&gt;. The details section will show you detailed information about the current selection in the main area of the UI. If you have selected a publish in the main UI, it will also show you the complete history for that publish and you can easily access older versions.</string>
+       </property>
        <property name="text">
         <string>Show Publish Details</string>
        </property>
@@ -163,6 +178,9 @@
       <layout class="QHBoxLayout" name="horizontalLayout_4">
        <item>
         <widget class="QCheckBox" name="show_sub_items">
+         <property name="toolTip">
+          <string>Checking this option enables the &lt;i&gt;subfolder mode&lt;/i&gt;. This mode will show you all items in all subfolders of your current selection. For example, if you select a sequence, you will see all the publishes for all shots in that sequence. You will also see the individual Shot folders. (If you only want to see the publishes and not the folders, just untick the folders item in the type filter list.)</string>
+         </property>
          <property name="text">
           <string>Show items in subfolders</string>
          </property>
@@ -206,7 +224,7 @@
           </size>
          </property>
          <property name="toolTip">
-          <string>Thumbnail Size</string>
+          <string>Use this handle to &lt;i&gt;adjust the size&lt;/i&gt; of the thumbnails that are shown in the main area.</string>
          </property>
          <property name="styleSheet">
           <string notr="true">QSlider::groove:horizontal {
@@ -256,6 +274,9 @@
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
         <widget class="QTabWidget" name="entity_preset_tabs">
+         <property name="toolTip">
+          <string>This area shows &lt;i&gt;Shotgun objects&lt;/i&gt; such as Shots or Assets, grouped into sections. You can use this tree as a way of navigating your Shotgun data. Selecting an item will show all the various publishes and sub folders that belong to this item in the main UI section.</string>
+         </property>
          <property name="currentIndex">
           <number>-1</number>
          </property>
@@ -285,6 +306,9 @@
            <width>0</width>
            <height>100</height>
           </size>
+         </property>
+         <property name="toolTip">
+          <string>This list shows all the relevant &lt;i&gt;publish types&lt;/i&gt; for your current selection. By ticking and unticking items in this list, publishes in the main view will be shown or hidden. You can see a summary count next to each publish type, showing how many items of that sort are matching your current selection.</string>
          </property>
          <property name="editTriggers">
           <set>QAbstractItemView::NoEditTriggers</set>
@@ -441,6 +465,9 @@
       </item>
       <item>
        <widget class="QListView" name="history_view">
+        <property name="toolTip">
+         <string>If you select a publish in the main view, this list shows &lt;i&gt;the complete history for that publish&lt;/i&gt;, who created each publish, the description and the publish date. If you select an item, an action menu will appear, allowing you to load historical versions into your scene.</string>
+        </property>
         <property name="verticalScrollMode">
          <enum>QAbstractItemView::ScrollPerPixel</enum>
         </property>
@@ -457,6 +484,18 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>navigation_home</tabstop>
+  <tabstop>navigation_prev</tabstop>
+  <tabstop>navigation_next</tabstop>
+  <tabstop>entity_preset_tabs</tabstop>
+  <tabstop>publish_type_list</tabstop>
+  <tabstop>publish_view</tabstop>
+  <tabstop>show_sub_items</tabstop>
+  <tabstop>thumb_scale</tabstop>
+  <tabstop>info</tabstop>
+  <tabstop>history_view</tabstop>
+ </tabstops>
  <resources>
   <include location="resources.qrc"/>
  </resources>

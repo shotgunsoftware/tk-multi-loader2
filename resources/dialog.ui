@@ -6,143 +6,229 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1276</width>
-    <height>738</height>
+    <width>1331</width>
+    <height>776</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Load items into your scene</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0" colspan="3">
-    <layout class="QHBoxLayout" name="top_toolbar">
+  <layout class="QHBoxLayout" name="horizontalLayout_3">
+   <item>
+    <layout class="QVBoxLayout" name="left_side">
      <item>
-      <widget class="QToolButton" name="navigation_home">
-       <property name="minimumSize">
-        <size>
-         <width>40</width>
-         <height>40</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>40</width>
-         <height>40</height>
-        </size>
-       </property>
-       <property name="toolTip">
-        <string>Clicking the &lt;i&gt;home button&lt;/i&gt; will take you to the location that best matches your current work area.</string>
-       </property>
-       <property name="text">
-        <string>Home</string>
-       </property>
-       <property name="icon">
-        <iconset resource="resources.qrc">
-         <normaloff>:/res/home.png</normaloff>:/res/home.png</iconset>
-       </property>
-       <property name="autoRaise">
-        <bool>true</bool>
-       </property>
-      </widget>
+      <layout class="QHBoxLayout" name="top_toolbar">
+       <item>
+        <widget class="QToolButton" name="navigation_home">
+         <property name="minimumSize">
+          <size>
+           <width>40</width>
+           <height>40</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>40</width>
+           <height>40</height>
+          </size>
+         </property>
+         <property name="toolTip">
+          <string>Clicking the &lt;i&gt;home button&lt;/i&gt; will take you to the location that best matches your current work area.</string>
+         </property>
+         <property name="text">
+          <string>Home</string>
+         </property>
+         <property name="icon">
+          <iconset resource="resources.qrc">
+           <normaloff>:/res/home.png</normaloff>:/res/home.png</iconset>
+         </property>
+         <property name="autoRaise">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QToolButton" name="navigation_prev">
+         <property name="minimumSize">
+          <size>
+           <width>40</width>
+           <height>40</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>40</width>
+           <height>40</height>
+          </size>
+         </property>
+         <property name="toolTip">
+          <string>&lt;i&gt;Go back&lt;/i&gt; in the folder history.</string>
+         </property>
+         <property name="text">
+          <string>&lt; Back</string>
+         </property>
+         <property name="icon">
+          <iconset resource="resources.qrc">
+           <normaloff>:/res/arrow_back.png</normaloff>:/res/arrow_back.png</iconset>
+         </property>
+         <property name="autoRaise">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QToolButton" name="navigation_next">
+         <property name="minimumSize">
+          <size>
+           <width>40</width>
+           <height>40</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>40</width>
+           <height>40</height>
+          </size>
+         </property>
+         <property name="toolTip">
+          <string>&lt;i&gt;Go forward&lt;/i&gt; in the folder history.</string>
+         </property>
+         <property name="text">
+          <string>Next &gt;</string>
+         </property>
+         <property name="icon">
+          <iconset resource="resources.qrc">
+           <normaloff>:/res/arrow_forward.png</normaloff>:/res/arrow_forward.png</iconset>
+         </property>
+         <property name="autoRaise">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </item>
      <item>
-      <widget class="QToolButton" name="navigation_prev">
-       <property name="minimumSize">
-        <size>
-         <width>40</width>
-         <height>40</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>40</width>
-         <height>40</height>
-        </size>
-       </property>
-       <property name="toolTip">
-        <string>&lt;i&gt;Go back&lt;/i&gt; in the folder history.</string>
-       </property>
-       <property name="text">
-        <string>&lt; Back</string>
-       </property>
-       <property name="icon">
-        <iconset resource="resources.qrc">
-         <normaloff>:/res/arrow_back.png</normaloff>:/res/arrow_back.png</iconset>
-       </property>
-       <property name="autoRaise">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QToolButton" name="navigation_next">
-       <property name="minimumSize">
-        <size>
-         <width>40</width>
-         <height>40</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>40</width>
-         <height>40</height>
-        </size>
-       </property>
-       <property name="toolTip">
-        <string>&lt;i&gt;Go forward&lt;/i&gt; in the folder history.</string>
-       </property>
-       <property name="text">
-        <string>Next &gt;</string>
-       </property>
-       <property name="icon">
-        <iconset resource="resources.qrc">
-         <normaloff>:/res/arrow_forward.png</normaloff>:/res/arrow_forward.png</iconset>
-       </property>
-       <property name="autoRaise">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLabel" name="entity_breadcrumbs">
-       <property name="toolTip">
-        <string>This &lt;i&gt;breadcrubs listing&lt;/i&gt; shows your currently selected Shotgun location.</string>
-       </property>
-       <property name="text">
-        <string>Breadcrumbs &gt; Breadcrumbs &gt; Breadcrumbs</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <spacer name="horizontalSpacer_2">
+      <widget class="QSplitter" name="left_side_splitter">
        <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+        <enum>Qt::Vertical</enum>
        </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item>
-      <widget class="QToolButton" name="info">
-       <property name="toolTip">
-        <string>Use this button to &lt;i&gt;toggle details on and off&lt;/i&gt;. The details section will show you detailed information about the current selection in the main area of the UI. If you have selected a publish in the main UI, it will also show you the complete history for that publish and you can easily access older versions.</string>
-       </property>
-       <property name="text">
-        <string>Show Publish Details</string>
-       </property>
-       <property name="checkable">
-        <bool>true</bool>
-       </property>
+       <widget class="QWidget" name="layoutWidget">
+        <layout class="QVBoxLayout" name="verticalLayout">
+         <item>
+          <widget class="QTabWidget" name="entity_preset_tabs">
+           <property name="toolTip">
+            <string>This area shows &lt;i&gt;Shotgun objects&lt;/i&gt; such as Shots or Assets, grouped into sections. You can use this tree as a way of navigating your Shotgun data. Selecting an item will show all the various publishes and sub folders that belong to this item in the main UI section.</string>
+           </property>
+           <property name="currentIndex">
+            <number>-1</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="layoutWidget">
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <property name="spacing">
+          <number>2</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="label_4">
+           <property name="text">
+            <string>Filter by Publish Type</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QListView" name="publish_type_list">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>100</height>
+            </size>
+           </property>
+           <property name="toolTip">
+            <string>This list shows all the relevant &lt;i&gt;publish types&lt;/i&gt; for your current selection. By ticking and unticking items in this list, publishes in the main view will be shown or hidden. You can see a summary count next to each publish type, showing how many items of that sort are matching your current selection.</string>
+           </property>
+           <property name="editTriggers">
+            <set>QAbstractItemView::NoEditTriggers</set>
+           </property>
+           <property name="showDropIndicator" stdset="0">
+            <bool>false</bool>
+           </property>
+           <property name="selectionMode">
+            <enum>QAbstractItemView::NoSelection</enum>
+           </property>
+           <property name="spacing">
+            <number>2</number>
+           </property>
+           <property name="uniformItemSizes">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+        <zorder>publish_type_list</zorder>
+        <zorder>label_4</zorder>
+       </widget>
       </widget>
      </item>
     </layout>
    </item>
-   <item row="1" column="1">
+   <item>
     <layout class="QVBoxLayout" name="middle_area">
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <widget class="QLabel" name="entity_breadcrumbs">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>40</height>
+          </size>
+         </property>
+         <property name="toolTip">
+          <string>This &lt;i&gt;breadcrubs listing&lt;/i&gt; shows your currently selected Shotgun location.</string>
+         </property>
+         <property name="text">
+          <string>Breadcrumbs &gt; Breadcrumbs &gt; Breadcrumbs</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_5">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QToolButton" name="info">
+         <property name="toolTip">
+          <string>Use this button to &lt;i&gt;toggle details on and off&lt;/i&gt;. The details section will show you detailed information about the current selection in the main area of the UI. If you have selected a publish in the main UI, it will also show you the complete history for that publish and you can easily access older versions.</string>
+         </property>
+         <property name="text">
+          <string>Show Details</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
      <item>
       <widget class="QListView" name="publish_view">
        <property name="styleSheet">
@@ -265,75 +351,7 @@
      </item>
     </layout>
    </item>
-   <item row="1" column="0">
-    <widget class="QSplitter" name="left_side_splitter">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <widget class="QWidget" name="layoutWidget">
-      <layout class="QVBoxLayout" name="verticalLayout">
-       <item>
-        <widget class="QTabWidget" name="entity_preset_tabs">
-         <property name="toolTip">
-          <string>This area shows &lt;i&gt;Shotgun objects&lt;/i&gt; such as Shots or Assets, grouped into sections. You can use this tree as a way of navigating your Shotgun data. Selecting an item will show all the various publishes and sub folders that belong to this item in the main UI section.</string>
-         </property>
-         <property name="currentIndex">
-          <number>-1</number>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="layoutWidget">
-      <layout class="QVBoxLayout" name="verticalLayout_2">
-       <property name="spacing">
-        <number>2</number>
-       </property>
-       <item>
-        <widget class="QLabel" name="label_4">
-         <property name="text">
-          <string>Filter by Publish Type</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QListView" name="publish_type_list">
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>100</height>
-          </size>
-         </property>
-         <property name="toolTip">
-          <string>This list shows all the relevant &lt;i&gt;publish types&lt;/i&gt; for your current selection. By ticking and unticking items in this list, publishes in the main view will be shown or hidden. You can see a summary count next to each publish type, showing how many items of that sort are matching your current selection.</string>
-         </property>
-         <property name="editTriggers">
-          <set>QAbstractItemView::NoEditTriggers</set>
-         </property>
-         <property name="showDropIndicator" stdset="0">
-          <bool>false</bool>
-         </property>
-         <property name="selectionMode">
-          <enum>QAbstractItemView::NoSelection</enum>
-         </property>
-         <property name="spacing">
-          <number>2</number>
-         </property>
-         <property name="uniformItemSizes">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-      </layout>
-      <zorder>publish_type_list</zorder>
-      <zorder>label_4</zorder>
-     </widget>
-    </widget>
-   </item>
-   <item row="1" column="2">
+   <item>
     <widget class="QGroupBox" name="details">
      <property name="minimumSize">
       <size>
@@ -493,7 +511,6 @@
   <tabstop>publish_view</tabstop>
   <tabstop>show_sub_items</tabstop>
   <tabstop>thumb_scale</tabstop>
-  <tabstop>info</tabstop>
   <tabstop>history_view</tabstop>
  </tabstops>
  <resources>

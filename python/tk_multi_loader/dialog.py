@@ -70,7 +70,7 @@ class AppDialog(QtGui.QWidget):
         #################################################
         # details pane
         self.ui.details.setVisible(False)
-        self.ui.info.toggled.connect(self._on_info_toggled)
+        self.ui.info.clicked.connect(self._toggle_details_pane)
                 
         self._publish_history_model = SgPublishHistoryModel(self, self.ui.history_view)
         
@@ -178,12 +178,19 @@ class AppDialog(QtGui.QWidget):
     ########################################################################################
     # info bar related
     
-    def _on_info_toggled(self, checked):
+    def _toggle_details_pane(self):
         """
         Executed when someone clicks the show/hide details button
         """
-        if checked:
+        if self.ui.details.isVisible():
+            # hide details pane
+            self.ui.details.setVisible(False)
+            self.ui.info.setText("Show Details")
+        
+        else:
+            # show details pane
             self.ui.details.setVisible(True)
+            self.ui.info.setText("Hide Details")
             
             # if there is something selected, make sure the detail
             # section is focused on this 
@@ -208,8 +215,6 @@ class AppDialog(QtGui.QWidget):
             else:
                 self._setup_details_panel(None)
                 
-        else:
-            self.ui.details.setVisible(False)
         
         
         
@@ -518,8 +523,8 @@ class AppDialog(QtGui.QWidget):
             
         else:
             # ensure publish details are visible
-            if not self.ui.info.isChecked():
-                self.ui.info.setChecked(True)
+            if not self.ui.details.isVisible():
+                self._toggle_details_pane()
         
     ########################################################################################
     # entity listing tree view and presets toolbar

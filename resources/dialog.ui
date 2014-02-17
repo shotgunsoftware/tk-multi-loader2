@@ -159,6 +159,12 @@
            <property name="toolTip">
             <string>This list shows all the relevant &lt;i&gt;publish types&lt;/i&gt; for your current selection. By ticking and unticking items in this list, publishes in the main view will be shown or hidden. You can see a summary count next to each publish type, showing how many items of that sort are matching your current selection.</string>
            </property>
+           <property name="styleSheet">
+            <string notr="true">QListView::item {
+    border-top: 1px dotted #888888;
+    padding: 5px;
+ }</string>
+           </property>
            <property name="editTriggers">
             <set>QAbstractItemView::NoEditTriggers</set>
            </property>
@@ -167,9 +173,6 @@
            </property>
            <property name="selectionMode">
             <enum>QAbstractItemView::NoSelection</enum>
-           </property>
-           <property name="spacing">
-            <number>2</number>
            </property>
            <property name="uniformItemSizes">
             <bool>true</bool>
@@ -372,16 +375,7 @@
       <property name="spacing">
        <number>2</number>
       </property>
-      <property name="leftMargin">
-       <number>4</number>
-      </property>
-      <property name="topMargin">
-       <number>0</number>
-      </property>
-      <property name="rightMargin">
-       <number>4</number>
-      </property>
-      <property name="bottomMargin">
+      <property name="margin">
        <number>4</number>
       </property>
       <item>

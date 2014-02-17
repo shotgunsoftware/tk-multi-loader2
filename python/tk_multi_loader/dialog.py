@@ -639,7 +639,9 @@ class AppDialog(QtGui.QWidget):
             # configure the view
             view.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
             view.setProperty("showDropIndicator", False)
-            view.setIconSize(QtCore.QSize(16, 16))
+            view.setIconSize(QtCore.QSize(20, 20))
+            view.setStyleSheet("QTreeView::item { padding: 5px; }")            
+            view.setUniformRowHeights(True)
             view.setHeaderHidden(True)
             view.setModel(model)
         

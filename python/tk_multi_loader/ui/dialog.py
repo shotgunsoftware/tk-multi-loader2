@@ -73,10 +73,13 @@ class Ui_Dialog(object):
         self.verticalLayout_2.addWidget(self.label_4)
         self.publish_type_list = QtGui.QListView(self.layoutWidget1)
         self.publish_type_list.setMinimumSize(QtCore.QSize(0, 100))
+        self.publish_type_list.setStyleSheet("QListView::item {\n"
+"    border-top: 1px dotted #888888;\n"
+"    padding: 5px;\n"
+" }")
         self.publish_type_list.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
         self.publish_type_list.setProperty("showDropIndicator", False)
         self.publish_type_list.setSelectionMode(QtGui.QAbstractItemView.NoSelection)
-        self.publish_type_list.setSpacing(2)
         self.publish_type_list.setUniformItemSizes(True)
         self.publish_type_list.setObjectName("publish_type_list")
         self.verticalLayout_2.addWidget(self.publish_type_list)
@@ -155,7 +158,7 @@ class Ui_Dialog(object):
         self.details.setObjectName("details")
         self.verticalLayout_3 = QtGui.QVBoxLayout(self.details)
         self.verticalLayout_3.setSpacing(2)
-        self.verticalLayout_3.setContentsMargins(4, 0, 4, 4)
+        self.verticalLayout_3.setContentsMargins(4, 4, 4, 4)
         self.verticalLayout_3.setObjectName("verticalLayout_3")
         self.horizontalLayout = QtGui.QHBoxLayout()
         self.horizontalLayout.setObjectName("horizontalLayout")

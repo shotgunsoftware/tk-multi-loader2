@@ -133,7 +133,7 @@ class AppDialog(QtGui.QWidget):
         #################################################
         # thumb scaling
         self.ui.thumb_scale.valueChanged.connect(self._on_thumb_size_slider_change)
-        self.ui.thumb_scale.setValue(120)
+        self.ui.thumb_scale.setValue(140)
         
         #################################################
         # setup history

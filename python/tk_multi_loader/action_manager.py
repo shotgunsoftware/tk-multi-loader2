@@ -73,10 +73,13 @@ class ActionManager(object):
         fs = QtGui.QAction("Show in the file system", None)
         fs.triggered[()].connect(lambda f=sg_data: self._show_in_fs(f))
         
-        sg = QtGui.QAction("Show in Shotgun", None)
+        sg = QtGui.QAction("Show details in Shotgun", None)
         sg.triggered[()].connect(lambda f=sg_data: self._show_in_sg(f))
+
+        sr = QtGui.QAction("Show in Screening Room", None)
+        sr.triggered[()].connect(lambda f=sg_data: self._show_in_sr(f))
         
-        return [fs, sg]
+        return [fs, sg, sr]
     
     ########################################################################################
     # callbacks
@@ -95,6 +98,14 @@ class ActionManager(object):
         url = "%s/detail/%s/%d" % (self._app.sgtk.shotgun.base_url, entity["type"], entity["id"])                    
         QtGui.QDesktopServices.openUrl(QtCore.QUrl(url))
 
+    def _show_in_sr(self, entity):
+        """
+        Callback - Shows a shotgun entity in screening room
+        """
+        url = "%s/page/screening_room?entity_type=%s&entity_id=%d" % (self._app.sgtk.shotgun.base_url, 
+                                                                      entity["type"], 
+                                                                      entity["id"])                    
+        QtGui.QDesktopServices.openUrl(QtCore.QUrl(url))
     
     def _show_in_fs(self, entity):
         """

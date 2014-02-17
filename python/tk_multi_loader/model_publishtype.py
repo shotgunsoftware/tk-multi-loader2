@@ -33,7 +33,6 @@ class SgPublishTypeModel(ShotgunModel):
         Constructor
         """
         # folder icon
-        self._folder_icon = QtGui.QPixmap(":/res/folder_512x400.png")    
         ShotgunModel.__init__(self, parent, overlay_parent_widget, download_thumbs=False)
         
         # specify sort key
@@ -54,7 +53,7 @@ class SgPublishTypeModel(ShotgunModel):
                                filters=[], 
                                hierarchy=["code"], 
                                fields=["code","description","id"],
-                               order=[{"field_name":"version_number", "direction":"desc"}])
+                               order=[])
         
         # and finally ask model to refresh itself
         self._refresh_data()

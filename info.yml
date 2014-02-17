@@ -13,6 +13,16 @@
 # expected fields in the configuration file for this app
 configuration:
 
+    menu_name:
+        type: str
+        default_value: "Add items to your Scene..."
+        description: Name to appear on the Shotgun menu.
+
+    title_name:
+        type: str
+        default_value: "Add items to your Scene"
+        description: Name to appear on the title of the UI Dialog.
+
     # hook
     hook_list: 
         type: hook

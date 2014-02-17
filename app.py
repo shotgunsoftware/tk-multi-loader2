@@ -24,11 +24,13 @@ class MultiLoader(tank.platform.Application):
         """
         Called as the application is being initialized
         """
+        
         tk_multi_loader = self.import_module("tk_multi_loader")
         cb = lambda : tk_multi_loader.show_dialog(self)
+        menu_caption = self.get_setting("menu_name")
         
         # add stuff to main menu
-        self.engine.register_command("Add items to your Scene...", cb, {"short_name": "add_scene_items"})        
+        self.engine.register_command(menu_caption, cb)        
         
 
     def get_setting_name(self, param_name):

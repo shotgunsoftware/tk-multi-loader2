@@ -808,7 +808,11 @@ class AppDialog(QtGui.QWidget):
                 crumbs.append(tmp_item.text())
                 tmp_item = tmp_item.parent()
                     
-        breadcrumbs = " > ".join( crumbs[::-1] )  
+        # lastly add the name of the tab
+        crumbs.append(self._current_entity_preset)
+        
+        breadcrumbs = " <span style='color:#619DE0'>&#9656;</span> ".join( crumbs[::-1] )
+          
         self.ui.entity_breadcrumbs.setText("<big>%s</big>" % breadcrumbs)
         
         

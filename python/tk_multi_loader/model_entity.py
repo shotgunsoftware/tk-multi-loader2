@@ -44,7 +44,7 @@ class SgEntityModel(ShotgunModel):
     ############################################################################################
     # subclassed methods
     
-    def _populate_item(self, item, sg_data):
+    def _populate_default_thumbnail(self, item):
         """
         Whenever an item is constructed, this methods is called. It allows subclasses to intercept
         the construction of a QStandardItem and add additional metadata or make other changes
@@ -55,10 +55,6 @@ class SgEntityModel(ShotgunModel):
         :param sg_data: Shotgun data dictionary that was received from Shotgun given the fields
                         and other settings specified in load_data()
         """
-        # for the tree view, no need to manipulate anything! For non-leaf nodes,
-        # associate a folder icon.
-        if sg_data is None:
-            # non-leaf node!
-            item.setIcon(self._folder_icon)
+        item.setIcon(self._folder_icon)
         
         

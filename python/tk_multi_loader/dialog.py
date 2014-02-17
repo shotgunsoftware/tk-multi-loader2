@@ -405,7 +405,6 @@ class AppDialog(QtGui.QWidget):
             found_preset = self.ui.entity_preset_tabs.tabText(0)
             
         # set the current preset to the one we just found
-        print "on home clicked" 
         self._current_entity_preset = found_preset
         
         # select it in the left hand side tree view
@@ -719,7 +718,6 @@ class AppDialog(QtGui.QWidget):
         """
         Signal triggered when someone changes the selection in a treeview.
         """
-        print "SELECTION CHANGED!"
         # update breadcrumbs
         self._populate_entity_breadcrumbs()
         

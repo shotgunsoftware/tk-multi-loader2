@@ -754,34 +754,42 @@ class AppDialog(QtGui.QWidget):
         # data is being loaded in, resulting in many many events
         self.ui.publish_view.selectionModel().clear()
         
+        # first determine the child folders.
         if item is None:
-            self._publish_model.load_data(None, [])
-        
+            # nothing is selected, bring in all the top level
+            # objects in the current tab
+            root_item = self._entity_presets[self._current_entity_preset].model.invisibleRootItem()
+
         else:
+            root_item = item
 
-            # get all the folder children - these need to be displayed
-            # by the model as folders
-            child_folders = []
-            for child_idx in range(item.rowCount()):
-                child_folders.append(item.child(child_idx))
+        # get all the folder children - these need to be displayed
+        # by the model as folders
+        child_folders = []
+        for child_idx in range(root_item.rowCount()):
+            child_folders.append(root_item.child(child_idx))
+        
+        # now determine the rest of the query
+        if item is None:
+            # nothing selected.
+            self._publish_model.load_data(None, child_folders)
+        
+        elif self.ui.show_sub_items.isChecked():
+            # we have a selection and the show sub items is ticked
+            partial_filters = item.model().get_filters(item)
+            entity_type = item.model().get_entity_type()
+            self._publish_model.load_data_based_on_query(partial_filters, entity_type, child_folders)
 
+        else:
+            # we have a selection and show sub items is not checked
             sg_data = item.data(ShotgunModel.SG_DATA_ROLE)
             
             if sg_data is None:
-                show_sub_items = self.ui.show_sub_items.isChecked()
-                if show_sub_items:
-                    # we are at an intermediary node and the sub items is ticked!
-                    # load up a partial query
-                    partial_filters = item.model().get_filters(item)
-                    entity_type = item.model().get_entity_type()
-                    self._publish_model.load_data_based_on_query(partial_filters, entity_type, child_folders)
-                    
-                else:
-                    # do not include shotgun matches 
-                    self._publish_model.load_data(None, child_folders)
+                # not at leaf level. so do not include shotgun matches 
+                self._publish_model.load_data(None, child_folders)
                     
             else:
-                # we are at a leaf level. 
+                # we are at a leaf level!
                 self._publish_model.load_data(sg_data, child_folders)
             
 

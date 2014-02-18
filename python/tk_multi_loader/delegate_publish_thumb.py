@@ -71,32 +71,20 @@ class SgPublishDelegate(shotgun_view.WidgetDelegate):
         thumb = icon.pixmap(512)
         widget.set_thumbnail(thumb)        
         
-        sg_data = model_index.data(shotgun_model.ShotgunModel.SG_DATA_ROLE)
-        
         if model_index.data(SgLatestPublishModel.IS_FOLDER_ROLE):
-            # folder. The name is in the main text role.
-            
-            status_code = model_index.data(SgLatestPublishModel.FOLDER_STATUS_ROLE)
-            if status_code is None:
-                status_name = "No Status"
-            else:
-                status_name = self._status_model.get_long_name(status_code)
-                
+                            
             entity_type = model_index.data(SgLatestPublishModel.FOLDER_TYPE_ROLE)
             if entity_type is None: # intermediate node
                 entity_type_str = ""
             else:
                 entity_type_str = entity_type 
                         
-            widget.set_text(model_index.data(SgLatestPublishModel.FOLDER_NAME_ROLE), 
-                            entity_type, 
-                            "Status: %s" % status_name) 
+            widget.set_text(model_index.data(SgLatestPublishModel.FOLDER_NAME_ROLE), entity_type_str) 
+ 
         else:
             # this is a publish!
-            
             widget.set_text(model_index.data(SgLatestPublishModel.PUBLISH_NAME_ROLE),
-                            model_index.data(SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE), 
-                            model_index.data(SgLatestPublishModel.ENTITY_NAME_ROLE)) 
+                            model_index.data(SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE)) 
         
     def sizeHint(self, style_options, model_index):
         """

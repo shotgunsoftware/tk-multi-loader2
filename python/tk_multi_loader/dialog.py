@@ -490,8 +490,7 @@ class AppDialog(QtGui.QWidget):
         """
         When someone double clicks an item in the publish area,
         ensure that the details pane is visible
-        """
-        
+        """        
         # the incoming model index is an index into our proxy model
         # before continuing, translate it to an index into the 
         # underlying model
@@ -505,7 +504,6 @@ class AppDialog(QtGui.QWidget):
         is_folder = item.data(SgLatestPublishModel.IS_FOLDER_ROLE)
         
         if is_folder:
-            
             # get the corresponding tree view item
             tree_view_item = item.data(SgLatestPublishModel.ASSOCIATED_TREE_VIEW_ITEM_ROLE)
             
@@ -570,7 +568,6 @@ class AppDialog(QtGui.QWidget):
             # ensure that the tree view is expanded and that the item we are about 
             # to selected is in vertically centered in the widget
             view.scrollTo(item.index(), QtGui.QAbstractItemView.PositionAtCenter)
-            selection_model.clear()
             selection_model.select(item.index(), QtGui.QItemSelectionModel.ClearAndSelect)
             selection_model.setCurrentIndex(item.index(), QtGui.QItemSelectionModel.ClearAndSelect)
             

@@ -806,24 +806,12 @@ class AppDialog(QtGui.QWidget):
             # walk up to root, list of items will be in bottom-up order...
             tmp_item = item
             while tmp_item:
-
-                # {u'name': u'sg_sequence', u'value': {u'type': u'Sequence', u'id': 11, u'name': u'bunny_080'}}
-                field_data = tmp_item.data(ShotgunModel.SG_ASSOCIATED_FIELD_ROLE)
-                sg_data = tmp_item.data(ShotgunModel.SG_DATA_ROLE)
-                print field_data
-                field_name = field_data["name"]
-                field_value = field_data["value"]
-                if isinstance(field_value, dict) and "name" in field_value and "type" in field_value:
-                    # entity link
-                    crumbs.append("<b>%s</b> %s" % (field_value["type"], field_value["name"]))
-                
-                elif field_name in ("code", "name") and sg_data:
-                    # this is a leaf node
-                    crumbs.append("<b>%s</b> %s" % (sg_data.get("type"), field_value))
-                     
+                sg_type = tmp_item.data(SgEntityModel.TYPE_ROLE)
+                name = tmp_item.text()
+                if sg_type is None:
+                    crumbs.append(name)
                 else:
-                    crumbs.append(field_value)
-                
+                    crumbs.append("<b>%s</b> %s" % (sg_type, name))
                 tmp_item = tmp_item.parent()
                     
         # lastly add the name of the tab

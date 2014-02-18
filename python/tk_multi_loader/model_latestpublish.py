@@ -13,6 +13,7 @@ from tank.platform.qt import QtCore, QtGui
 
 import tank
 from . import utils
+from .model_entity import SgEntityModel
 
 # import the shotgun_model module from the shotgun utils framework
 shotgun_model = tank.platform.import_framework("tk-framework-shotgunutils", "shotgun_model") 
@@ -59,7 +60,7 @@ class SgLatestPublishModel(ShotgunModel):
         self._loading_icon = QtGui.QPixmap(":/res/loading_512x400.png")
 
         # init base class
-        ShotgunModel.__init__(self, parent, overlay_parent_widget, download_thumbs=True)
+        ShotgunModel.__init__(self, parent, overlay_parent_widget, download_thumbs=True, schema_generation=2)
     
     ############################################################################################
     # public interface
@@ -169,12 +170,12 @@ class SgLatestPublishModel(ShotgunModel):
             
             # set advanced data for the delegate
             item.setData(tree_view_item.text(), SgLatestPublishModel.FOLDER_NAME_ROLE)
+            item.setData(tree_view_item.data(SgEntityModel.TYPE_ROLE), SgLatestPublishModel.FOLDER_TYPE_ROLE)
+            
             if treeview_sg_data is None:
                 # intermediate node
-                item.setData("", SgLatestPublishModel.FOLDER_TYPE_ROLE)
                 item.setData("", SgLatestPublishModel.FOLDER_STATUS_ROLE)
             else:
-                item.setData(treeview_sg_data["type"], SgLatestPublishModel.FOLDER_TYPE_ROLE)
                 status = treeview_sg_data.get("sg_status_list")
                 if status is None:
                     item.setData("", SgLatestPublishModel.FOLDER_STATUS_ROLE)
@@ -230,8 +231,6 @@ class SgLatestPublishModel(ShotgunModel):
         else:
             item.setData(None, SgLatestPublishModel.TYPE_ID_ROLE)
             item.setData("No Type", SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE)
-
-
 
     def _populate_default_thumbnail(self, item):    
         """

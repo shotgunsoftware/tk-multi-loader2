@@ -9,7 +9,6 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import tank
-from . import utils
 from tank.platform.qt import QtCore, QtGui
 
 # import the shotgun_model module from the shotgun utils framework

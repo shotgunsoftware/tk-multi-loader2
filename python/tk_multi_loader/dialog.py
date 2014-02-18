@@ -10,10 +10,6 @@
 
 import tank
 from tank import TankError
-import os
-import sys
-import threading
-
 from tank.platform.qt import QtCore, QtGui
 
 from .model_entity import SgEntityModel

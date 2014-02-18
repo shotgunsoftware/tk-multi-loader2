@@ -404,9 +404,6 @@ class AppDialog(QtGui.QWidget):
             # no suitable item found. Use the first tab
             found_preset = self.ui.entity_preset_tabs.tabText(0)
             
-        # set the current preset to the one we just found
-        self._current_entity_preset = found_preset
-        
         # select it in the left hand side tree view
         self._select_item_in_entity_tree(found_preset, found_item)
                 
@@ -551,6 +548,8 @@ class AppDialog(QtGui.QWidget):
                         # on-index changed events, shift the new content
                         # into view and prepare the treeview.
                         self.ui.entity_preset_tabs.setCurrentIndex(idx)
+                        # and change the current preset 
+                        self._current_entity_preset = tab_caption
             
             
             # now focus on the item
@@ -677,7 +676,10 @@ class AppDialog(QtGui.QWidget):
 
         # and set up which our currently visible preset is
         self._current_entity_preset = curr_tab_name 
-                
+        
+        # update breadcrumbs
+        self._populate_entity_breadcrumbs()        
+        
         if self._history_navigation_mode == False:
             # when we are not navigating back and forth as part of 
             # history navigation, ask the currently visible

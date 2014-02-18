@@ -42,9 +42,6 @@
           <iconset resource="resources.qrc">
            <normaloff>:/res/home.png</normaloff>:/res/home.png</iconset>
          </property>
-         <property name="autoRaise">
-          <bool>true</bool>
-         </property>
         </widget>
        </item>
        <item>
@@ -71,9 +68,6 @@
           <iconset resource="resources.qrc">
            <normaloff>:/res/arrow_back.png</normaloff>:/res/arrow_back.png</iconset>
          </property>
-         <property name="autoRaise">
-          <bool>true</bool>
-         </property>
         </widget>
        </item>
        <item>
@@ -99,9 +93,6 @@
          <property name="icon">
           <iconset resource="resources.qrc">
            <normaloff>:/res/arrow_forward.png</normaloff>:/res/arrow_forward.png</iconset>
-         </property>
-         <property name="autoRaise">
-          <bool>true</bool>
          </property>
         </widget>
        </item>

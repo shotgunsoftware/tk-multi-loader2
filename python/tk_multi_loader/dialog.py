@@ -341,10 +341,6 @@ class AppDialog(QtGui.QWidget):
         # after the current item
 
         if not self._history_navigation_mode: # do not add to history when browsing the history :)
-            if std_item:
-                print "Adding history record %s %s" % (preset_caption, std_item.text())
-            else:
-                print "Adding history record %s %s" % (preset_caption, std_item)
             # chop off history at the point we are currently
             self._history = self._history[:self._history_index]         
             # append our current item to the chopped history

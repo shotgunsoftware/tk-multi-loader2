@@ -18,21 +18,19 @@ from tank.platform.qt import QtCore, QtGui
 
 def create_overlayed_user_publish_thumbnail(publish_pixmap, user_pixmap):
     """
-    Creates a sqaure 100x100 thumbnail with an optional overlayed pixmap. 
+    Creates a sqaure 75x75 thumbnail with an optional overlayed pixmap. 
     """
     # create a 100x100 base image
-    base_image = QtGui.QPixmap(100, 100)
+    base_image = QtGui.QPixmap(75, 75)
     base_image.fill(QtCore.Qt.transparent)
     
     # scale down the thumb
-    thumb_scaled = publish_pixmap.scaled(95, 95, QtCore.Qt.KeepAspectRatioByExpanding, QtCore.Qt.SmoothTransformation)  
-    
+    thumb_scaled = publish_pixmap.scaled(75, 75, QtCore.Qt.KeepAspectRatioByExpanding, QtCore.Qt.SmoothTransformation)  
 
     # now composite the thumbnail on top of the base image
     # bottom align it to make it look nice
     thumb_img = thumb_scaled.toImage()
     brush = QtGui.QBrush(thumb_img)
-    
     
     painter = QtGui.QPainter(base_image)
     painter.setRenderHint(QtGui.QPainter.Antialiasing)
@@ -40,19 +38,20 @@ def create_overlayed_user_publish_thumbnail(publish_pixmap, user_pixmap):
     painter.save() 
     painter.setBrush(brush)
     painter.setPen(QtGui.QPen(QtCore.Qt.NoPen))
-    painter.drawRect(0, 0, 94, 94) 
+    painter.drawRect(0, 0, 74, 74) 
     painter.restore()
     
     if user_pixmap: 
     
         # overlay the user picture on top of the thumbnail
-        user_scaled = user_pixmap.scaled(40, 40, QtCore.Qt.KeepAspectRatioByExpanding, QtCore.Qt.SmoothTransformation)  
+        user_scaled = user_pixmap.scaled(30, 30, QtCore.Qt.KeepAspectRatioByExpanding, QtCore.Qt.SmoothTransformation)  
         user_img = user_scaled.toImage()
         user_brush = QtGui.QBrush(user_img)
         painter.save() 
-        painter.translate(60, 60)
+        painter.translate(42, 42)
         painter.setBrush(user_brush)
-        painter.drawRect(0,0,40,40)
+        painter.setPen(QtGui.QPen(QtCore.Qt.NoPen))
+        painter.drawRect(0,0,30,30)
         painter.restore()
     
     painter.end()

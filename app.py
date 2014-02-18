@@ -12,13 +12,13 @@
 A loader application that lets you add new items to the scene.
 """
 
-from tank.platform.qt import QtCore, QtGui
+from sgtk.platform.qt import QtCore, QtGui
 
-import tank
+import sgtk
 import sys
 import os
 
-class MultiLoader(tank.platform.Application):
+class MultiLoader(sgtk.platform.Application):
     
     def init_app(self):
         """

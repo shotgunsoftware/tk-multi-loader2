@@ -16,10 +16,10 @@ different. See code comments for details.
 
 
 """
-import tank
+import sgtk
 import os
 
-class ListLoadActions(tank.Hook):
+class ListLoadActions(sgtk.Hook):
     
     def execute(self, publish_type, **kwargs):
         """

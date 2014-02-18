@@ -8,10 +8,10 @@
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights 
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
-import tank
+import sgtk
 import os
 import sys
-from tank.platform.qt import QtCore, QtGui
+from sgtk.platform.qt import QtCore, QtGui
 
 class ActionManager(object):
     """
@@ -22,8 +22,7 @@ class ActionManager(object):
         """
         Constructor
         """
-        self._app = tank.platform.current_bundle()
-        
+        self._app = sgtk.platform.current_bundle()
         self._cached_actions = {}
     
     
@@ -33,7 +32,7 @@ class ActionManager(object):
         """
 
         # first get the publish type
-        publish_entity_type = tank.util.get_published_file_entity_type(self._app.sgtk)
+        publish_entity_type = sgtk.util.get_published_file_entity_type(self._app.sgtk)
         
         if publish_entity_type == "PublishedFile":
             publish_type_field = "published_file_type"

@@ -18,10 +18,10 @@ different. See code comments for details.
 
 
 """
-import tank
+import sgtk
 import os
 
-class ExecuteLoadAction(tank.Hook):
+class ExecuteLoadAction(sgtk.Hook):
     
     def execute(self, action_name, shotgun_data, **kwargs):
         """
@@ -60,7 +60,7 @@ class ExecuteLoadAction(tank.Hook):
         # find a template that matches the path:
         template = None
         try:
-            template = self.parent.tank.template_from_path(path)
+            template = self.parent.sgtk.template_from_path(path)
         except TankError, e:
             self.parent.log_error("Unable to find image sequence range!")
         if not template:
@@ -70,7 +70,7 @@ class ExecuteLoadAction(tank.Hook):
         fields = template.get_fields(path)
         if not "SEQ" in fields:
             return
-        files = self.parent.tank.paths_from_template(template, fields, ["SEQ", "eye"])
+        files = self.parent.sgtk.paths_from_template(template, fields, ["SEQ", "eye"])
         
         # find frame numbers from these files:
         frames = []

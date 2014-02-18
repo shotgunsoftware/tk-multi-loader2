@@ -8,8 +8,8 @@
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights 
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
-import tank
-from tank.platform.qt import QtCore, QtGui
+import sgtk
+from sgtk.platform.qt import QtCore, QtGui
 
 
 def create_overlayed_user_publish_thumbnail(publish_pixmap, user_pixmap):

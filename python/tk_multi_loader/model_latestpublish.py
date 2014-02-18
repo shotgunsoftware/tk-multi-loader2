@@ -9,14 +9,14 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 from collections import defaultdict
-from tank.platform.qt import QtCore, QtGui
+from sgtk.platform.qt import QtCore, QtGui
 
-import tank
+import sgtk
 from . import utils
 from .model_entity import SgEntityModel
 
 # import the shotgun_model module from the shotgun utils framework
-shotgun_model = tank.platform.import_framework("tk-framework-shotgunutils", "shotgun_model") 
+shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model") 
 ShotgunModel = shotgun_model.ShotgunModel 
 
 class SgLatestPublishModel(ShotgunModel):
@@ -72,7 +72,7 @@ class SgLatestPublishModel(ShotgunModel):
         in order to resolve a number of shotgun objects based on a set of filters.
         These filters will form the basis of the model's source query.
         """
-        app = tank.platform.current_bundle()
+        app = sgtk.platform.current_bundle()
         
         # get shotgun data
         data = app.shotgun.find(entity_type, partial_filters)
@@ -106,8 +106,8 @@ class SgLatestPublishModel(ShotgunModel):
 
     def _do_load_data(self, sg_filters, treeview_folder_items):
         # first figure out which fields to get from shotgun
-        app = tank.platform.current_bundle()
-        publish_entity_type = tank.util.get_published_file_entity_type(app.tank)
+        app = sgtk.platform.current_bundle()
+        publish_entity_type = sgtk.util.get_published_file_entity_type(app.tank)
         
         if publish_entity_type == "PublishedFile":
             self._publish_type_field = "published_file_type"

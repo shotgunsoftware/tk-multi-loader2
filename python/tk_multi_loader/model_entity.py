@@ -8,11 +8,11 @@
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights 
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
-import tank
-from tank.platform.qt import QtCore, QtGui
+import sgtk
+from sgtk.platform.qt import QtCore, QtGui
 
 # import the shotgun_model module from the shotgun utils framework
-shotgun_model = tank.platform.import_framework("tk-framework-shotgunutils", "shotgun_model") 
+shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model") 
 ShotgunModel = shotgun_model.ShotgunModel 
 
 class SgEntityModel(ShotgunModel):

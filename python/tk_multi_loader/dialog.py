@@ -8,9 +8,9 @@
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights 
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
-import tank
-from tank import TankError
-from tank.platform.qt import QtCore, QtGui
+import sgtk
+from sgtk import TankError
+from sgtk.platform.qt import QtCore, QtGui
 
 from .model_entity import SgEntityModel
 from .model_latestpublish import SgLatestPublishModel
@@ -25,7 +25,7 @@ from .delegate_publish_history import SgPublishHistoryDelegate
 from .ui.dialog import Ui_Dialog
 
 # import the shotgun_model module from the shotgun utils framework
-shotgun_model = tank.platform.import_framework("tk-framework-shotgunutils", "shotgun_model") 
+shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model") 
 ShotgunModel = shotgun_model.ShotgunModel 
        
 
@@ -378,7 +378,7 @@ class AppDialog(QtGui.QWidget):
         found_item = None
         
         # get entity portion of context
-        ctx = tank.platform.current_bundle().context
+        ctx = sgtk.platform.current_bundle().context
         if ctx.entity:
 
             # now step through the profiles and find a matching entity
@@ -575,7 +575,7 @@ class AppDialog(QtGui.QWidget):
         Loads the entity presets from the configuration and sets up buttons and models
         based on the config.
         """
-        app = tank.platform.current_bundle()
+        app = sgtk.platform.current_bundle()
         entities = app.get_setting("entities")
         
         for e in entities:

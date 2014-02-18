@@ -51,6 +51,10 @@ class AppDialog(QtGui.QWidget):
         # the GC happy.
         self._dynamic_widgets = []
         
+        # maintain a special flag so that we can switch profile
+        # tabs without triggering events
+        self._disable_tab_event_handler = False
+        
         #################################################
         # hook a helper model tracking status codes so we
         # can use those in the UI
@@ -533,7 +537,7 @@ class AppDialog(QtGui.QWidget):
         # 3) we are on the wrong tab and need to switch but there is no item to select
         
         # Phase 1 - first check if we need to switch tabs
-        if tab_caption != self._current_entity_preset:            
+        if tab_caption != self._current_entity_preset:    
             for idx in range(self.ui.entity_preset_tabs.count()):
                 tab_name = self.ui.entity_preset_tabs.tabText(idx)
                 if tab_name == tab_caption:
@@ -550,6 +554,12 @@ class AppDialog(QtGui.QWidget):
                         combo_operation_mode = True
                     else:
                         combo_operation_mode = False
+                    
+                    # first switch the tab widget around but without triggering event
+                    # code (this would mean an infinite loop!)
+                    self._disable_tab_event_handler = True
+                    self.ui.entity_preset_tabs.setCurrentIndex(idx)
+                    # now run the logic for the switching
                     self._switch_profile_tab(idx, combo_operation_mode)
         
         # Phase 2 - Now select and zoom onto the item
@@ -666,7 +676,10 @@ class AppDialog(QtGui.QWidget):
         """
         # get the name of the clicked tab        
         curr_tab_index = self.ui.entity_preset_tabs.currentIndex()
-        self._switch_profile_tab(curr_tab_index, False)
+        if self._disable_tab_event_handler:
+            self._disable_tab_event_handler = False
+        else:
+            self._switch_profile_tab(curr_tab_index, False)
         
     def _switch_profile_tab(self, new_index, combo_operation_mode):
         """

@@ -237,10 +237,10 @@ class AppDialog(QtGui.QWidget):
                 # an item which doesn't have any sg data directly associated
                 # typically an item higher up the tree
                 # just use the default text
-                self.ui.details_header.setText("Folder Name: %s" % item.text())
+                self.ui.details_header.setText("<b color:#619DE0'>Folder Name:</b> %s" % item.text())
             
             elif item.data(SgLatestPublishModel.IS_FOLDER_ROLE):
-                # folder
+                # folder with sg data - basically a leaf node in the entity tree
                 
                 status_code = sg_data.get("sg_status_list")
                 if status_code is None:
@@ -258,9 +258,9 @@ class AppDialog(QtGui.QWidget):
                     desc_str = "No description entered."
 
                 msg = ""
-                msg += "<b>%s %s</b><br>" % (sg_data.get("type"), sg_data.get("code"))
-                msg += "<b>Status: </b>%s<br>" % status_name
-                msg += "<b>Description:</b> %s<br>" % desc_str
+                msg += "<b color:#619DE0'>%s %s</b><br>" % (sg_data.get("type"), sg_data.get("code"))
+                msg += "<b color:#619DE0'>Status: </b>%s<br>" % status_name
+                msg += "<b color:#619DE0'>Description:</b> %s<br>" % desc_str
                 self.ui.details_header.setText(msg)
                 
                 # blank out the version history
@@ -272,12 +272,6 @@ class AppDialog(QtGui.QWidget):
                 
                 sg_item = item.data(SgEntityModel.SG_DATA_ROLE)                
                 
-                if sg_item.get("entity") is None:
-                    entity_str = "Unlinked Publish"
-                else:
-                    entity_str = "%s %s" % (sg_item.get("entity").get("type"),
-                                            sg_item.get("entity").get("name"))
-                
                 if sg_item.get("name") is None:
                     name_str = "No Name"
                 else:
@@ -286,9 +280,14 @@ class AppDialog(QtGui.QWidget):
                 type_str = item.data(SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE)
                                                 
                 msg = ""
-                msg += "<b>Name:</b> %s<br>" % name_str
-                msg += "<b>Type:</b> %s<br>" % type_str
-                msg += "<b>Associated with:</b> %s<br>" % entity_str
+                msg += "<b style='color:#619DE0'>Name:</b> %s<br>" % name_str
+                msg += "<b style='color:#619DE0'>Type:</b> %s<br>" % type_str
+                msg += "<b style='color:#619DE0'>Latest Version:</b> %03d<br>" % sg_item.get("version_number")
+
+                if sg_item.get("entity"):
+                    entity_str = "<b>%s</b> %s" % (sg_item.get("entity").get("type"),
+                                                   sg_item.get("entity").get("name"))
+                    msg += "<b style='color:#619DE0'>Link:</b> %s<br>" % entity_str
 
                 # sort out the task label
                 if sg_item.get("task"):
@@ -304,8 +303,10 @@ class AppDialog(QtGui.QWidget):
                         task_status_code = sg_item.get("task.Task.sg_status_list")
                         task_status_str = self._status_model.get_long_name(task_status_code)
                     
-                    msg += "<b>Associated Task:</b> %s (%s)<br>" % (task_name_str, task_status_str)    
+                    msg += "<b style='color:#619DE0'>Associated Task:</b> %s (%s)<br>" % (task_name_str, task_status_str)    
                     
+                if sg_item.get("description"):
+                    msg += "<b style='color:#619DE0'>Description:</b> %s<br>" % sg_item.get("description")
 
                 self.ui.details_header.setText(msg)
                                 

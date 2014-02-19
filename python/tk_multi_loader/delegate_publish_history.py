@@ -9,6 +9,7 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import sgtk
+import datetime
 
 from sgtk.platform.qt import QtCore, QtGui
  
@@ -63,15 +64,21 @@ class SgPublishHistoryDelegate(shotgun_view.WidgetDelegate):
         
         sg_item = model_index.data(shotgun_model.ShotgunModel.SG_DATA_ROLE)
 
-        if sg_item.get("version_number") is None:
-            version_str = "No Version"
-        else:
-            version_str = "Version %03d" % sg_item.get("version_number")
+        # First do the header - this is on the form
+        # v004 (2014-02-21 12:34)
+
+        header_str = ""
+
+        if sg_item.get("version_number"):
+            header_str += "<b style='color:#619DE0'>Version %03d</b>" % sg_item.get("version_number")
+        
+        try:
+            created_unixtime = sg_item.get("created_at")
+            date_str = datetime.datetime.fromtimestamp(created_unixtime).strftime('%Y-%m-%d %H:%M')
+            header_str += "&nbsp;&nbsp;<small>(%s)</small>" % date_str
+        except:
+            pass
             
-        if sg_item.get("created_at") is None:
-            created_str = "Undefined"
-        else:
-            created_str = sg_item.get("created_at")#.strftime('%Y-%m-%d %H:%M:%S')
             
         # set the little description bit next to the artist icon
         if sg_item.get("description") is None:
@@ -84,8 +91,8 @@ class SgPublishHistoryDelegate(shotgun_view.WidgetDelegate):
         else:
             author_str = "%s" % sg_item.get("created_by").get("name")
 
-        header_str = "<b>%s</b>" % (version_str)
-        body_str = "<b>%s</b> &mdash; %s<br><br><small>%s</small>" % (author_str, desc_str, created_str)
+        
+        body_str = "<i>%s</i>: %s<br>" % (author_str, desc_str)
         widget.set_text(header_str, body_str)
         
         

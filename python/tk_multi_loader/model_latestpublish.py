@@ -117,7 +117,8 @@ class SgLatestPublishModel(ShotgunModel):
         publish_fields = ["name", 
                           "path",
                           "entity", 
-                          "version_number", 
+                          "version_number",
+                          "description", 
                           "task",
                           "task.Task.sg_status_list",
                           "task.Task.due_date",
@@ -135,7 +136,7 @@ class SgLatestPublishModel(ShotgunModel):
                                filters=sg_filters, 
                                hierarchy=["code"], 
                                fields=publish_fields,
-                               order=[{"field_name":"version_number", "direction":"asc"}])
+                               order=[{"field_name":"created_at", "direction":"asc"}])
 
         # and now trigger a refresh
         self._refresh_data()

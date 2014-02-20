@@ -26,10 +26,9 @@ configuration:
     # hook
     hook_list: 
         type: hook
-        parameters: [publish_type]
+        parameters: []
         default_value: "list_actions_{engine_name}"
-        description: The list hook returns a list of suitable load actions given a 
-                     particular publish.
+        description: The list hook returns a list of suitable load actions for the current environment.
 
     hook_load: 
         type: hook

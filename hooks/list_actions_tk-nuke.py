@@ -21,16 +21,17 @@ import os
 
 class ListLoadActions(sgtk.Hook):
     
-    def execute(self, publish_type, **kwargs):
+    def execute(self, **kwargs):
         """
         Returns a list of dictionaries, each with keys name, caption and description
         """
-        actions = []
-        if publish_type == "Rendered Image":
-            a = {"name": "read_node", 
-                 "caption": "Create Read Node for This Publish", 
-                 "description": "This will add a read node to the current scene."}
-            actions.append(a)
+        actions = {}
+                
+        a = {"name": "read_node", 
+             "caption": "Create Read Node for This Publish", 
+             "description": "This will add a read node to the current scene."}
         
+        actions["Rendered Image"] = [a]
+    
         return actions
                 

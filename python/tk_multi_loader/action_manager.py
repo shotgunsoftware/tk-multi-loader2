@@ -24,6 +24,8 @@ class ActionManager(object):
         """
         self._app = sgtk.platform.current_bundle()
         self._cached_actions = {}
+        # get all the supported actions for this loader
+        self._action_defs = self._app.execute_hook("hook_list")
     
     
     def get_actions_for_publish(self, sg_data):
@@ -46,12 +48,8 @@ class ActionManager(object):
         publish_type = publish_type_dict["name"]
         # call out to our hook to see if there are any 
 
-        if publish_type not in self._cached_actions:
-            self._cached_actions[publish_type] = self._app.execute_hook("hook_list", 
-                                                                        publish_type=publish_type)
-
         actions = []
-        for action_data in self._cached_actions[publish_type]:
+        for action_data in self.get_actions_for_type(publish_type):
             name = action_data["name"]
             caption = action_data["caption"]
             description = action_data["description"]
@@ -62,7 +60,16 @@ class ActionManager(object):
             actions.append(a)
             
         return actions
-        
+            
+
+    def get_actions_for_type(self, publish_type):
+        """
+        Returns a list of actions for a publish type
+        """
+        if publish_type in self._action_defs:
+            return self._action_defs[publish_type]
+        else:
+            return []
     
     
     def get_actions_for_folder(self, sg_data):

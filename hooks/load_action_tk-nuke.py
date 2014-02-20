@@ -27,7 +27,32 @@ class ExecuteLoadAction(sgtk.Hook):
         """
         Hook entry point and app-specific code dispatcher
         """
+        if action_name == "read_node":
+            self._create_read_node(shotgun_data)
+        
+        if action_name == "script_import":
+            self._import_script(shotgun_data)
+           
+    
+           
+    def _import_script(self, shotgun_data):
+        """
+        Import contents into scene
+        """
+        import nuke
+        
+        file_path = shotgun_data.get("path").get("local_path")
+        if os.path.exists(file_path):
+            file_path = file_path.replace(os.path.sep, "/")
+            nuke.nodePaste(file_path)
+        else:
+            self.parent.log_error("File not found on disk - '%s'" % file_path)
+        
                 
+    def _create_read_node(self, shotgun_data):
+        """
+        Create a readnode given a publish
+        """
         import nuke
         
         file_path = shotgun_data.get("path").get("local_path")

@@ -9,17 +9,12 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 """
-Hook that loads items into the current scene. 
-
-This hook supports a number of different platforms and the behaviour on each platform is
-different. See code comments for details.
-
-
+Hook that loads defines all the available actions, broken down by publish type. 
 """
 import sgtk
 import os
 
-class ListLoadActions(sgtk.Hook):
+class ListActions(sgtk.Hook):
     
     def execute(self, **kwargs):
         """
@@ -31,23 +26,18 @@ class ListLoadActions(sgtk.Hook):
                "caption": "Create Reference", 
                "description": "This will add the item to the scene as a standard reference."}
         
-        imp = {"name": "import", 
-               "caption": "Import Contents", 
-               "description": "This will import the item into the scene."}
+#        imp = {"name": "import", 
+#               "caption": "Import Contents", 
+#               "description": "This will import the item into the scene."}
 
         tex = {"name": "texture_node", 
                "caption": "Create texture node", 
                "description": "Creates a file texture node for the selected item."}
 
-        abc = {"name": "alembic_node", 
-               "caption": "Create alembic node", 
-               "description": "Creates an alembic gpuCache node for the selected item."}
-
         
-        actions["Maya Scene"] = [ref, imp]
+        actions["Maya Scene"] = [ref]
         actions["Rendered Image"] = [tex]
         actions["Photoshop Image"] = [tex]
-        actions["Alembic Cache"] = [abc]
     
         return actions
                 

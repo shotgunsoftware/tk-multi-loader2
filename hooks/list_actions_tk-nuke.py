@@ -9,17 +9,12 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 """
-Hook that loads items into the current scene. 
-
-This hook supports a number of different platforms and the behaviour on each platform is
-different. See code comments for details.
-
-
+Hook that loads defines all the available actions, broken down by publish type. 
 """
 import sgtk
 import os
 
-class ListLoadActions(sgtk.Hook):
+class ListActions(sgtk.Hook):
     
     def execute(self, **kwargs):
         """

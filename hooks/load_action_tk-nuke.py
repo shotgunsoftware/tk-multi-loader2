@@ -12,16 +12,12 @@
 
 """
 Hook that loads items into the current scene. 
-
-This hook supports a number of different platforms and the behaviour on each platform is
-different. See code comments for details.
-
-
 """
 import sgtk
+import nuke
 import os
 
-class ExecuteLoadAction(sgtk.Hook):
+class LoadAction(sgtk.Hook):
     
     def execute(self, action_name, shotgun_data, **kwargs):
         """
@@ -39,8 +35,6 @@ class ExecuteLoadAction(sgtk.Hook):
         """
         Import contents into scene
         """
-        import nuke
-        
         file_path = shotgun_data.get("path").get("local_path")
         if os.path.exists(file_path):
             file_path = file_path.replace(os.path.sep, "/")
@@ -51,10 +45,8 @@ class ExecuteLoadAction(sgtk.Hook):
                 
     def _create_read_node(self, shotgun_data):
         """
-        Create a readnode given a publish
-        """
-        import nuke
-        
+        Create a read node given a publish
+        """        
         file_path = shotgun_data.get("path").get("local_path")
         
         # get the slashes right

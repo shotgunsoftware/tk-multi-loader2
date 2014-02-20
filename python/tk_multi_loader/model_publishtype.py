@@ -215,10 +215,11 @@ class SgPublishTypeModel(ShotgunModel):
             item.setCheckState(QtCore.Qt.Checked)
             item.setForeground( QtGui.QBrush( QtGui.QColor("#619DE0") ) )
             item.setData(True, SgPublishTypeModel.HANDLED_BY_HOOK_ROLE)
-            item.setToolTip("The <span style='color: #619DE0'>blue color</span> indicates that this "
-                            "type is supported by this engine.")
+            item.setToolTip("The <b style='color: #619DE0'>blue color</b> indicates that this "
+                            "type of publish can be loaded into the current application.")
         else:
             # current hooks do not know what to do with this type
             # -- uncheck it
             item.setCheckState(QtCore.Qt.Unchecked)
-            item.setToolTip("This publish type <i>cannot be loaded</i> into this engine.")
+            item.setToolTip("Publishes of this type are unchecked by default because they cannot "
+                            "be loaded into the current application.")

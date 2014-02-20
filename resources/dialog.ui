@@ -176,16 +176,6 @@
             <number>2</number>
            </property>
            <item>
-            <widget class="QLabel" name="label_3">
-             <property name="text">
-              <string>&lt;small&gt;Show Types: &lt;/small&gt;</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item>
             <widget class="QToolButton" name="check_supported">
              <property name="toolTip">
               <string>Clicking the &lt;span style='color: #619DE0'&gt;supported&lt;/span&gt; button will check all the types in the type list above that are supported by the current application. After you have pressed this button, when browsing you will only see publishes which can be added to the current scene. </string>
@@ -215,6 +205,16 @@
              </property>
              <property name="text">
               <string>None</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_3">
+             <property name="text">
+              <string>  </string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
              </property>
             </widget>
            </item>

@@ -31,7 +31,13 @@ class ListLoadActions(sgtk.Hook):
              "caption": "Create Read Node for This Publish", 
              "description": "This will add a read node to the current scene."}
         
+        nk = {"name": "script_import", 
+             "caption": "Import contents", 
+             "description": "This will import all the nodes into the current scene."}        
+
+        # associate actions with types
         actions["Rendered Image"] = [a]
+        actions["Nuke Script"] = [nk]    
     
         return actions
                 

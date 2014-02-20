@@ -91,7 +91,7 @@ class AppDialog(QtGui.QWidget):
         
         #################################################
         # load and initialize cached publish type model
-        self._publish_type_model = SgPublishTypeModel(self, self.ui.publish_type_list)        
+        self._publish_type_model = SgPublishTypeModel(self, self.ui.publish_type_list, self._action_manager)        
         self.ui.publish_type_list.setModel(self._publish_type_model)
 
         #################################################
@@ -217,6 +217,27 @@ class AppDialog(QtGui.QWidget):
         """
         Sets up the details panel with info for a given item.        
         """
+        
+        def __make_table_row(left, right):
+            """
+            Helper method to make a detail table row
+            """
+            return "<tr><td><b style='color:#619DE0'>%s</b>&nbsp;</td><td>%s</td></tr>" % (left, right)
+        
+        def __set_publish_ui_visibility(is_publish):
+            """
+            Helper method to enable disable publish specific details UI
+            """
+            # disable version history stuff
+            self.ui.version_history_label.setEnabled(is_publish)
+            self.ui.history_view.setEnabled(is_publish)
+
+            # hide actions and playback stuff
+            self.ui.detail_actions_btn.setVisible(is_publish)
+            self.ui.detail_playback_btn.setVisible(is_publish)
+            
+            
+        
         if not self.ui.details.isVisible():
             return
         
@@ -225,6 +246,7 @@ class AppDialog(QtGui.QWidget):
             self._publish_history_model.clear()
             self.ui.details_header.setText("")
             self.ui.details_image.setPixmap(self._no_selection_pixmap)
+            __set_publish_ui_visibility(False)
             
         else:            
             # render out details
@@ -237,7 +259,9 @@ class AppDialog(QtGui.QWidget):
                 # an item which doesn't have any sg data directly associated
                 # typically an item higher up the tree
                 # just use the default text
-                self.ui.details_header.setText("<b color:#619DE0'>Folder Name:</b> %s" % item.text())
+                folder_name = __make_table_row("Name", item.text())
+                self.ui.details_header.setText("<table>%s</table>" % folder_name )
+                __set_publish_ui_visibility(False)
             
             elif item.data(SgLatestPublishModel.IS_FOLDER_ROLE):
                 # folder with sg data - basically a leaf node in the entity tree
@@ -258,17 +282,19 @@ class AppDialog(QtGui.QWidget):
                     desc_str = "No description entered."
 
                 msg = ""
-                msg += "<b color:#619DE0'>%s %s</b><br>" % (sg_data.get("type"), sg_data.get("code"))
-                msg += "<b color:#619DE0'>Status: </b>%s<br>" % status_name
-                msg += "<b color:#619DE0'>Description:</b> %s<br>" % desc_str
-                self.ui.details_header.setText(msg)
+                msg += __make_table_row("Name", "%s %s" % (sg_data.get("type"), sg_data.get("code")))
+                msg += __make_table_row("Status", status_name)
+                msg += __make_table_row("Description", desc_str)
+                self.ui.details_header.setText("<table>%s</table>" % msg)
                 
                 # blank out the version history
+                __set_publish_ui_visibility(False)
                 self._publish_history_model.clear()
                 
             
             else:
                 # this is a publish!
+                __set_publish_ui_visibility(True)
                 
                 sg_item = item.data(SgEntityModel.SG_DATA_ROLE)                
                 
@@ -280,14 +306,14 @@ class AppDialog(QtGui.QWidget):
                 type_str = item.data(SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE)
                                                 
                 msg = ""
-                msg += "<b style='color:#619DE0'>Name:</b> %s<br>" % name_str
-                msg += "<b style='color:#619DE0'>Type:</b> %s<br>" % type_str
-                msg += "<b style='color:#619DE0'>Latest Version:</b> %03d<br>" % sg_item.get("version_number")
-
+                msg += __make_table_row("Name", name_str)
+                msg += __make_table_row("Type", type_str)
+                msg += __make_table_row("Version", "%03d" % sg_item.get("version_number"))
+                
                 if sg_item.get("entity"):
                     entity_str = "<b>%s</b> %s" % (sg_item.get("entity").get("type"),
                                                    sg_item.get("entity").get("name"))
-                    msg += "<b style='color:#619DE0'>Link:</b> %s<br>" % entity_str
+                    msg += __make_table_row("Link", entity_str)
 
                 # sort out the task label
                 if sg_item.get("task"):
@@ -303,12 +329,9 @@ class AppDialog(QtGui.QWidget):
                         task_status_code = sg_item.get("task.Task.sg_status_list")
                         task_status_str = self._status_model.get_long_name(task_status_code)
                     
-                    msg += "<b style='color:#619DE0'>Associated Task:</b> %s (%s)<br>" % (task_name_str, task_status_str)    
+                    msg += __make_table_row("Task", "%s (%s)" % (task_name_str, task_status_str) )
                     
-                if sg_item.get("description"):
-                    msg += "<b style='color:#619DE0'>Description:</b> %s<br>" % sg_item.get("description")
-
-                self.ui.details_header.setText(msg)
+                self.ui.details_header.setText("<table>%s</table>" % msg)
                                 
                 # tell details pane to load stuff
                 sg_data = item.data(ShotgunModel.SG_DATA_ROLE)

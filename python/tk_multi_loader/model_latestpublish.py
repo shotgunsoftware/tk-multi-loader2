@@ -56,6 +56,7 @@ class SgLatestPublishModel(ShotgunModel):
         """        
         self._publish_type_model = publish_type_model
         self._no_pubs_found_icon = QtGui.QPixmap(":/res/no_publishes_found.png")
+        self._welcome_icon = QtGui.QPixmap(":/res/welcome.png")
         self._folder_icon = QtGui.QPixmap(":/res/folder_512x400.png")
         self._loading_icon = QtGui.QPixmap(":/res/loading_512x400.png")
 
@@ -96,6 +97,11 @@ class SgLatestPublishModel(ShotgunModel):
                              these are the sub folders for the currently selected item
                              in the tree view.
         """
+        
+        if sg_entity_link is None and len(treeview_folder_items) == 0:
+            self._show_overlay_pixmap(self._welcome_icon)
+            return
+        
         if sg_entity_link:
             sg_filters = [["entity", "is", sg_entity_link]]
         else:
@@ -132,12 +138,14 @@ class SgLatestPublishModel(ShotgunModel):
         self._treeview_folder_items = treeview_folder_items
         
         ShotgunModel._load_data(self, 
-                               entity_type=publish_entity_type, 
-                               filters=sg_filters, 
-                               hierarchy=["code"], 
-                               fields=publish_fields,
-                               order=[{"field_name":"created_at", "direction":"asc"}])
-
+                                entity_type=publish_entity_type, 
+                                filters=sg_filters, 
+                                hierarchy=["code"], 
+                                fields=publish_fields,
+                                order=[{"field_name":"created_at", "direction":"asc"}])
+        
+        # todo: recompute aggregates here! 
+        
         # and now trigger a refresh
         self._refresh_data()
 
@@ -342,7 +350,6 @@ class SgLatestPublishModel(ShotgunModel):
             type_id = second_pass_data["type_id"]
             type_id_aggregates[type_id] += 1
             
-        
         # tell the type model to reshuffle and reformat itself
         # based on the types contained in this search
         self._publish_type_model.set_active_types( type_id_aggregates )

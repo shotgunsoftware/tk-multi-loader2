@@ -21,16 +21,19 @@ class SgPublishTypeModel(ShotgunModel):
     on the left hand side.
     """
     
-    SORT_KEY_ROLE = QtCore.Qt.UserRole + 102     # holds a sortable key
-    DISPLAY_NAME_ROLE = QtCore.Qt.UserRole + 103 # holds the display name for the node
+    SORT_KEY_ROLE = QtCore.Qt.UserRole + 102        # holds a sortable key
+    DISPLAY_NAME_ROLE = QtCore.Qt.UserRole + 103    # holds the display name for the node
+    HANDLED_BY_HOOK_ROLE = QtCore.Qt.UserRole + 104 # hooks know how to process this type
     
     
-    def __init__(self, parent, overlay_parent_widget):
+    def __init__(self, parent, overlay_parent_widget, action_manager):
         """
         Constructor
         """
         # folder icon
         ShotgunModel.__init__(self, parent, overlay_parent_widget, download_thumbs=False)
+        
+        self._action_manager = action_manager
         
         # specify sort key
         self.setSortRole(SgPublishTypeModel.SORT_KEY_ROLE)
@@ -51,6 +54,9 @@ class SgPublishTypeModel(ShotgunModel):
                                hierarchy=["code"], 
                                fields=["code","description","id"],
                                order=[])
+        
+        # now compute aggregates and filters for any cached data that has come in.
+        
         
         # and finally ask model to refresh itself
         self._refresh_data()
@@ -111,17 +117,26 @@ class SgPublishTypeModel(ShotgunModel):
             
             sg_type_id = item.data(ShotgunModel.SG_DATA_ROLE).get("id")            
             display_name = item.data(SgPublishTypeModel.DISPLAY_NAME_ROLE)
+            is_blue = item.data(SgPublishTypeModel.HANDLED_BY_HOOK_ROLE)
             
             if sg_type_id in type_aggregates:
+                
                 # this type is in the active list
+                if is_blue:
+                    # blue items are up the very top
+                    item.setData("a_%s" % display_name, SgPublishTypeModel.SORT_KEY_ROLE)
+                else:
+                    # enabled but non-blue come after
+                    item.setData("b_%s" % display_name, SgPublishTypeModel.SORT_KEY_ROLE)
+                
                 item.setEnabled(True)
-                item.setData("a_%s" % display_name, SgPublishTypeModel.SORT_KEY_ROLE)
-                # disply name with aggregate
+                
+                # display name with aggregate summary
                 item.setText("%s (%d)" % (display_name, type_aggregates[sg_type_id]))
                 
             else:
                 item.setEnabled(False)
-                item.setData("b_%s" % display_name, SgPublishTypeModel.SORT_KEY_ROLE)
+                item.setData("c_%s" % display_name, SgPublishTypeModel.SORT_KEY_ROLE)
                 # disply name with no aggregate
                 item.setText(display_name)
                 
@@ -145,10 +160,37 @@ class SgPublishTypeModel(ShotgunModel):
         self._folder_items = []        
         item = QtGui.QStandardItem("Folders")
         item.setCheckable(True)
-        item.setCheckState(QtCore.Qt.Checked)        
+        item.setCheckState(QtCore.Qt.Checked)
+        item.setToolTip("This filter controls the <i>folder objects</i>. "
+                        "If you are using the 'Show items in subfolders' mode, it can "
+                        "sometimes be useful to hide folders and only see publishes.")        
         self.appendRow(item)
         self._folder_items.append(item)
             
+            
+    def _populate_default_thumbnail(self, item):
+        """
+        Called whenever an item is originally born, either because a shotgun query returned it
+        or because it was loaded as part of a cache load from disk. This method will by default
+        set up all brand new fresh items with an empty thumbail.
+        
+        Later on, if the model was instantiated with the download_thumbs parameter set to True,
+        the standard 'image' field thumbnail will be automatically downloaded for all items (or
+        picked up from local cache if possible). When these real thumbnails arrive, the
+        _populate_thumbnail() method will be called.
+        
+        This method can be useful if you want to control both the visual state of an entity which
+        does not have a thumbnail in Shotgun and the state before a thumbnail has been downloaded.
+        
+        :param item: QStandardItem that is about to be added to the model. This has been primed
+                     with the standard settings that the ShotgunModel handles.        
+        """
+        ShotgunModel._populate_default_thumbnail(self, item)
+        # implement this method as a way to be able to interact with items
+        # as they are born, either from the cache or from SG
+        
+        # When items are born they are all disabled by default
+        item.setEnabled(False)
             
     def _populate_item(self, item, sg_data):
         """
@@ -161,17 +203,25 @@ class SgPublishTypeModel(ShotgunModel):
         :param sg_data: Shotgun data dictionary that was received from Shotgun given the fields
                         and other settings specified in load_data()
         """
-
-        sg_desc = sg_data.get("description")
-        if sg_desc is None:
-            sg_desc = "No description available for this type."
-        sg_name = sg_data.get("code")
-        if sg_name is None:
-            sg_name = "Unnamed"
-        sg_name = sg_name.capitalize()
+        sg_code = sg_data.get("code")
+        if sg_code is None:
+            sg_name_formatted = "Unnamed"
+        else:
+            sg_name_formatted = sg_code.capitalize()
         
-        item.setData(sg_name, SgPublishTypeModel.DISPLAY_NAME_ROLE)
-        item.setToolTip(str(sg_desc))
+        item.setData(sg_name_formatted, SgPublishTypeModel.DISPLAY_NAME_ROLE)
         item.setCheckable(True)
-        item.setCheckState(QtCore.Qt.Checked)
         
+        if len(self._action_manager.get_actions_for_type(sg_code)) > 0:
+            # there are actions for this file type!
+            # check it and highlight it
+            item.setCheckState(QtCore.Qt.Checked)
+            item.setForeground( QtGui.QBrush( QtGui.QColor("#619DE0") ) )
+            item.setData(True, SgPublishTypeModel.HANDLED_BY_HOOK_ROLE)
+            item.setToolTip("The <span style='color: #619DE0'>blue color</span> indicates that this "
+                            "type is supported by this engine.")
+        else:
+            # current hooks do not know what to do with this type
+            # -- uncheck it
+            item.setCheckState(QtCore.Qt.Unchecked)
+            item.setToolTip("This publish type <i>cannot be loaded</i> into this engine.")

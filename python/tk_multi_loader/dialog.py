@@ -123,7 +123,13 @@ class AppDialog(QtGui.QWidget):
         self._dynamic_widgets.append(publish_view_selection_model)
         publish_view_selection_model.selectionChanged.connect(self._on_publish_selection)
         
+        #################################################
+        # checkboxes, buttons etc
         self.ui.show_sub_items.toggled.connect(self._on_show_subitems_toggled)
+                
+        self.ui.check_supported.clicked.connect(self._publish_type_model.select_compatible)
+        self.ui.check_all.clicked.connect(self._publish_type_model.select_all)
+        self.ui.check_none.clicked.connect(self._publish_type_model.select_none)
         
         #################################################
         # thumb scaling

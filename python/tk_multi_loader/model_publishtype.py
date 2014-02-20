@@ -58,6 +58,24 @@ class SgPublishTypeModel(ShotgunModel):
         # and finally ask model to refresh itself
         self._refresh_data()
 
+    def select_none(self):
+        """
+        Deselect all types
+        """
+        print "none"
+    
+    def select_all(self):
+        """
+        Select all types
+        """
+        print "all"
+        
+    def select_compatible(self):
+        """
+        Select compatible types
+        """
+        print "blue"
+
     def get_show_folders(self):
         """
         Returns true if the special Folders

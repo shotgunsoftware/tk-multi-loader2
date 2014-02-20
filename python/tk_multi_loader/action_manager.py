@@ -9,6 +9,7 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import sgtk
+import hashlib
 import os
 import sys
 from sgtk.platform.qt import QtCore, QtGui
@@ -26,6 +27,11 @@ class ActionManager(object):
         self._cached_actions = {}
         # get all the supported actions for this loader
         self._action_defs = self._app.execute_hook("hook_list")
+        
+        # compute the checksum of the hook action definitions
+        m = hashlib.md5()
+        m.update(str(self._action_defs))
+        self._action_defs_chksum = m.hexdigest()
     
     
     def get_actions_for_publish(self, sg_data):
@@ -61,6 +67,12 @@ class ActionManager(object):
             
         return actions
             
+    def get_actions_chksum(self):
+        """
+        Returns a hex MD5 string representing the actions 
+        list from the hook
+        """
+        return self._action_defs_chksum
 
     def get_actions_for_type(self, publish_type):
         """

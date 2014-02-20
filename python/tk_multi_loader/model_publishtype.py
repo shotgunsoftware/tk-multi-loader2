@@ -49,11 +49,15 @@ class SgPublishTypeModel(ShotgunModel):
         else:
             publish_type_field = "TankType"
                 
+        # slight hack: we pass in the checksum of the actions listing (the hook)
+        # as a field to the model. This will force the caching to take the hook code
+        # into account, ensuring that the HANDLED_BY_HOOK_ROLE is handled correcty
+        # across different environments
         ShotgunModel._load_data(self, 
                                entity_type=publish_type_field, 
                                filters=[], 
                                hierarchy=["code"], 
-                               fields=["code","description","id"],
+                               fields=["code","description","id", self._action_manager.get_actions_chksum()],
                                order=[])
         
         # and finally ask model to refresh itself

@@ -27,11 +27,27 @@ class ListLoadActions(sgtk.Hook):
         """
         actions = {}
                 
-        a = {"name": "read_node", 
-             "caption": "Create Read Node for This Publish", 
-             "description": "This will add a read node to the current scene."}
+        ref = {"name": "reference", 
+               "caption": "Create Reference", 
+               "description": "This will add the item to the scene as a standard reference."}
         
-        actions["Rendered Image"] = [a]
+        imp = {"name": "import", 
+               "caption": "Import Contents", 
+               "description": "This will import the item into the scene."}
+
+        tex = {"name": "texture_node", 
+               "caption": "Create texture node", 
+               "description": "Creates a file texture node for the selected item."}
+
+        abc = {"name": "alembic_node", 
+               "caption": "Create alembic node", 
+               "description": "Creates an alembic gpuCache node for the selected item."}
+
+        
+        actions["Maya Scene"] = [ref, imp]
+        actions["Rendered Image"] = [tex]
+        actions["Photoshop Image"] = [tex]
+        actions["Alembic Cache"] = [abc]
     
         return actions
                 

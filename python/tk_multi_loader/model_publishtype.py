@@ -25,6 +25,7 @@ class SgPublishTypeModel(ShotgunModel):
     DISPLAY_NAME_ROLE = QtCore.Qt.UserRole + 103    # holds the display name for the node
     HANDLED_BY_HOOK_ROLE = QtCore.Qt.UserRole + 104 # hooks know how to process this type
     
+    FOLDERS_ITEM_TEXT = "Folders"
     
     def __init__(self, parent, overlay_parent_widget, action_manager):
         """
@@ -62,19 +63,32 @@ class SgPublishTypeModel(ShotgunModel):
         """
         Deselect all types
         """
-        print "none"
+        for idx in range(self.rowCount()):
+            item = self.item(idx)
+            # ignore special case folders item
+            if item.text() != SgPublishTypeModel.FOLDERS_ITEM_TEXT:
+                item.setCheckState(QtCore.Qt.Unchecked)
     
     def select_all(self):
         """
         Select all types
         """
-        print "all"
+        for idx in range(self.rowCount()):
+            item = self.item(idx)
+            item.setCheckState(QtCore.Qt.Checked)
         
     def select_compatible(self):
         """
         Select compatible types
         """
-        print "blue"
+        for idx in range(self.rowCount()):
+            item = self.item(idx)
+            # ignore special case folders item
+            if item.text() != SgPublishTypeModel.FOLDERS_ITEM_TEXT:
+                if item.data(SgPublishTypeModel.HANDLED_BY_HOOK_ROLE):         
+                    item.setCheckState(QtCore.Qt.Checked)
+                else:
+                    item.setCheckState(QtCore.Qt.Unchecked)
 
     def get_show_folders(self):
         """
@@ -85,7 +99,7 @@ class SgPublishTypeModel(ShotgunModel):
             item = self.item(idx)
             
             # ignore special case folders item
-            if item.text() != "Folders":
+            if item.text() != SgPublishTypeModel.FOLDERS_ITEM_TEXT:
                 continue            
             
             if item.checkState() == QtCore.Qt.Checked:
@@ -104,7 +118,7 @@ class SgPublishTypeModel(ShotgunModel):
             item = self.item(idx)
             
             # ignore special case folders item
-            if item.text() == "Folders":
+            if item.text() == SgPublishTypeModel.FOLDERS_ITEM_TEXT:
                 continue            
             
             if item.checkState() == QtCore.Qt.Checked:
@@ -127,7 +141,7 @@ class SgPublishTypeModel(ShotgunModel):
             item = self.item(idx)
             
             # ignore special folders item
-            if item.text() == "Folders":
+            if item.text() == SgPublishTypeModel.FOLDERS_ITEM_TEXT:
                 continue
             
             sg_type_id = item.data(ShotgunModel.SG_DATA_ROLE).get("id")            
@@ -151,7 +165,10 @@ class SgPublishTypeModel(ShotgunModel):
                 
             else:
                 item.setEnabled(False)
-                item.setData("c_%s" % display_name, SgPublishTypeModel.SORT_KEY_ROLE)
+                if is_blue:
+                    item.setData("c_%s" % display_name, SgPublishTypeModel.SORT_KEY_ROLE)
+                else:
+                    item.setData("d_%s" % display_name, SgPublishTypeModel.SORT_KEY_ROLE)
                 # disply name with no aggregate
                 item.setText(display_name)
                 
@@ -173,7 +190,7 @@ class SgPublishTypeModel(ShotgunModel):
         # items to keep the GC happy.
         
         self._folder_items = []        
-        item = QtGui.QStandardItem("Folders")
+        item = QtGui.QStandardItem(SgPublishTypeModel.FOLDERS_ITEM_TEXT)
         item.setCheckable(True)
         item.setCheckState(QtCore.Qt.Checked)
         item.setToolTip("This filter controls the <i>folder objects</i>. "

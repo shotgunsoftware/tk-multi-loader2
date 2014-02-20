@@ -55,9 +55,6 @@ class SgPublishTypeModel(ShotgunModel):
                                fields=["code","description","id"],
                                order=[])
         
-        # now compute aggregates and filters for any cached data that has come in.
-        
-        
         # and finally ask model to refresh itself
         self._refresh_data()
 

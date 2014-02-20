@@ -45,7 +45,22 @@ class SgPublishHistoryDelegate(shotgun_view.WidgetDelegate):
         
         # set up the menu
         sg_item = model_index.data(shotgun_model.ShotgunModel.SG_DATA_ROLE)
-        widget.set_actions( self._action_manager.get_actions_for_publish(sg_item) )            
+        actions = self._action_manager.get_actions_for_publish(sg_item)
+        
+        # if there is a version associated, add View in Screening Room Action
+        if sg_item.get("version"):
+            sg_url = sgtk.platform.current_bundle().shotgun.base_url
+            url = "%s/page/screening_room?entity_type=%s&entity_id=%d" % (sg_url, 
+                                                                          sg_item["version"]["type"], 
+                                                                          sg_item["version"]["id"])                    
+            
+            fn = lambda: QtGui.QDesktopServices.openUrl(QtCore.QUrl(url))                    
+            a = QtGui.QAction("View in Screening Room", None)
+            a.triggered[()].connect(fn)
+            actions.append(a)
+        
+        # add actions to actions menu
+        widget.set_actions(actions)            
     
     
     def _on_before_paint(self, widget, model_index, style_options):

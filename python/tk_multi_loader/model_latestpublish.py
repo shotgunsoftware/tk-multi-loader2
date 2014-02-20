@@ -119,6 +119,7 @@ class SgLatestPublishModel(ShotgunModel):
             self._publish_type_field = "published_file_type"
         else:
             self._publish_type_field = "tank_type"
+            
         
         publish_fields = ["name", 
                           "path",
@@ -130,6 +131,8 @@ class SgLatestPublishModel(ShotgunModel):
                           "task.Task.due_date",
                           "task.Task.content",                          
                           "image", 
+                          "version", # note: not supported on TankPublishedFile so always None
+                          "version.Version.sg_status_list",
                           self._publish_type_field]
         
         

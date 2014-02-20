@@ -192,6 +192,7 @@ class SgPublishTypeModel(ShotgunModel):
         self._folder_items = []        
         item = QtGui.QStandardItem(SgPublishTypeModel.FOLDERS_ITEM_TEXT)
         item.setCheckable(True)
+        item.setForeground( QtGui.QBrush( QtGui.QColor("#619DE0") ) )
         item.setCheckState(QtCore.Qt.Checked)
         item.setToolTip("This filter controls the <i>folder objects</i>. "
                         "If you are using the 'Show items in subfolders' mode, it can "

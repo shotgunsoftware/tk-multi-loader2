@@ -64,6 +64,10 @@ class AppDialog(QtGui.QWidget):
         
         #################################################
         # details pane
+        
+        self._details_action_menu = QtGui.QMenu()   
+        self.ui.detail_actions_btn.setMenu(self._details_action_menu)
+        
         self.ui.details.setVisible(False)
         self.ui.info.clicked.connect(self._toggle_details_pane)
                 
@@ -304,6 +308,31 @@ class AppDialog(QtGui.QWidget):
                 
                 sg_item = item.data(SgEntityModel.SG_DATA_ROLE)                
                 
+                # sort out the actions button
+                actions = self._action_manager.get_actions_for_publish(sg_item)
+                if len(actions) == 0:
+                    self.ui.detail_actions_btn.setVisible(False)
+                else:
+                    self.ui.detail_playback_btn.setVisible(True)
+                    self._details_action_menu.clear()
+                    for a in actions:
+                        self._dynamic_widgets.append(a) 
+                        self._details_action_menu.addAction(a)
+                
+                # if there is an associated version, show the play button
+                if sg_item.get("version"):
+                    sg_url = sgtk.platform.current_bundle().shotgun.base_url
+                    url = "%s/page/screening_room?entity_type=%s&entity_id=%d" % (sg_url, 
+                                                                                  sg_item["version"]["type"], 
+                                                                                  sg_item["version"]["id"])                    
+                    
+                    fn = lambda: QtGui.QDesktopServices.openUrl(QtCore.QUrl(url))                    
+                    self.ui.detail_playback_btn.setVisible(True)
+                    self.ui.detail_playback_btn.clicked.connect(fn)
+                else:
+                    self.ui.detail_playback_btn.setVisible(False)
+                
+                
                 if sg_item.get("name") is None:
                     name_str = "No Name"
                 else:
@@ -337,6 +366,13 @@ class AppDialog(QtGui.QWidget):
                     
                     msg += __make_table_row("Task", "%s (%s)" % (task_name_str, task_status_str) )
                     
+                # if there is a version associated, get the status for this
+                if sg_item.get("version.Version.sg_status_list"):
+                    task_status_code = sg_item.get("version.Version.sg_status_list")
+                    task_status_str = self._status_model.get_long_name(task_status_code)
+                    msg += __make_table_row("Review", task_status_str )
+
+                
                 self.ui.details_header.setText("<table>%s</table>" % msg)
                                 
                 # tell details pane to load stuff

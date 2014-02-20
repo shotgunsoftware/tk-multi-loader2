@@ -211,7 +211,7 @@
            <item>
             <widget class="QLabel" name="label_3">
              <property name="text">
-              <string>  </string>
+              <string/>
              </property>
              <property name="alignment">
               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -524,6 +524,9 @@
               <height>55</height>
              </size>
             </property>
+            <property name="toolTip">
+             <string>The most recent published version has some playable media associated. Click this button to launch the Shotgun &lt;b&gt;Screening Room&lt;/b&gt; web player to see the review version and any notes and comments that have been submitted.</string>
+            </property>
             <property name="text">
              <string/>
             </property>
@@ -539,9 +542,6 @@
             </property>
             <property name="toolButtonStyle">
              <enum>Qt::ToolButtonTextBesideIcon</enum>
-            </property>
-            <property name="autoRaise">
-             <bool>true</bool>
             </property>
            </widget>
           </item>

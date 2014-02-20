@@ -60,6 +60,7 @@ class SgPublishHistoryModel(ShotgunModel):
                   "path",
                   "created_by",
                   "created_at",
+                  "version",
                   "created_by.HumanUser.image",
                   "description"]
 

@@ -299,11 +299,23 @@ class SgLatestPublishModel(ShotgunModel):
         :param sg_data_list: list of shotgun dictionaries, as retunrned by the find() call.
         :returns: should return a list of shotgun dictionaries, on the same form as the input.
         """
+        app = sgtk.platform.current_bundle()
 
+        try:
+            # first, let the hook_filter_publishes have a chance to filter
+            # the list of publishes:
+            sg_data_list = app.execute_hook("hook_filter_publishes", publishes=sg_data_list)
+            if not isinstance(sg_data_list, list):
+                app.log_error("hook_filter_publishes returned an unexpected result type '%s' - ignoring!" 
+                              % type(sg_data_list).__name__)
+                sg_data_list = []
+        except:
+            app.log_exception("Failed to execute 'hook_filter_publishes'!")
+            sg_data_list = []
+        
         # filter the shotgun data so that we only return the latest publish for each file.
         # also perform aggregate computations and push those summaries into the associated
         # publish type model. 
-
         
         if len(sg_data_list) == 0 and len(self._treeview_folder_items) == 0:
             # no publishes or folders found!

@@ -132,7 +132,7 @@
          <item>
           <widget class="QLabel" name="label_4">
            <property name="text">
-            <string>&lt;small&gt;Filter by Publish Type&lt;/small&gt;</string>
+            <string>&lt;small&gt;Filter by Published File Type&lt;/small&gt;</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignCenter</set>

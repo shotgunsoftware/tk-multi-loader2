@@ -20,12 +20,12 @@ class SgStatusModel(ShotgunModel):
     This model represents status codes.
     """
     
-    def __init__(self, parent, overlay_parent_widget):
+    def __init__(self, parent):
         """
         Constructor
         """
         # folder icon
-        ShotgunModel.__init__(self, parent, overlay_parent_widget, download_thumbs=False)
+        ShotgunModel.__init__(self, parent, download_thumbs=False)
         fields=["bg_color", "icon", "code", "name"]
         order=[]
         self._load_data("Status", [], ["code"], fields, order)

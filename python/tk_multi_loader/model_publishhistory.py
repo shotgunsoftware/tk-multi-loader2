@@ -25,13 +25,13 @@ class SgPublishHistoryModel(ShotgunModel):
     USER_THUMB_ROLE = QtCore.Qt.UserRole + 101
     PUBLISH_THUMB_ROLE = QtCore.Qt.UserRole + 102
     
-    def __init__(self, parent, overlay_parent_widget):
+    def __init__(self, parent):
         """
         Constructor
         """
         # folder icon
         self._loading_icon = QtGui.QPixmap(":/res/loading_100x100.png")
-        ShotgunModel.__init__(self, parent, overlay_parent_widget, download_thumbs=True)
+        ShotgunModel.__init__(self, parent, download_thumbs=True)
         
                 
     ############################################################################################

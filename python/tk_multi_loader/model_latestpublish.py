@@ -41,18 +41,9 @@ class SgLatestPublishModel(ShotgunModel):
     FOLDER_STATUS_ROLE = QtCore.Qt.UserRole + 109
     
     
-    def __init__(self, parent, overlay_parent_widget, publish_type_model):
+    def __init__(self, parent, publish_type_model):
         """
         Model which represents the latest publishes for an entity
-        
-        :param sg_entity_link: shotgun link dict for an entity for which we should 
-                               display associated publishes. If None then there is no entity 
-                               present for which to load publishes
-                        
-        :param folder_items: list of QStandardItem representing items in the tree view.
-                             these are the sub folders for the currently selected item
-                             in the tree view.
-        
         """        
         self._publish_type_model = publish_type_model
         self._no_pubs_found_icon = QtGui.QPixmap(":/res/no_publishes_found.png")
@@ -61,7 +52,7 @@ class SgLatestPublishModel(ShotgunModel):
         self._loading_icon = QtGui.QPixmap(":/res/loading_512x400.png")
 
         # init base class
-        ShotgunModel.__init__(self, parent, overlay_parent_widget, download_thumbs=True, schema_generation=2)
+        ShotgunModel.__init__(self, parent, download_thumbs=True, schema_generation=2)
     
     ############################################################################################
     # public interface

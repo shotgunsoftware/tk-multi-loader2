@@ -58,7 +58,8 @@ class AppDialog(QtGui.QWidget):
         #################################################
         # hook a helper model tracking status codes so we
         # can use those in the UI
-        self._status_model = SgStatusModel(self, self.ui.publish_type_list)
+        self._status_model = SgStatusModel(self)
+        self._status_model.set_overlay_parent(self.ui.publish_type_list)
         
         self._action_manager = ActionManager()
         
@@ -71,7 +72,8 @@ class AppDialog(QtGui.QWidget):
         self.ui.details.setVisible(False)
         self.ui.info.clicked.connect(self._toggle_details_pane)
                 
-        self._publish_history_model = SgPublishHistoryModel(self, self.ui.history_view)
+        self._publish_history_model = SgPublishHistoryModel(self)
+        self._publish_history_model.set_overlay_parent(self.ui.history_view)
         
         self._publish_history_proxy = QtGui.QSortFilterProxyModel(self)
         self._publish_history_proxy.setSourceModel(self._publish_history_model)
@@ -95,12 +97,14 @@ class AppDialog(QtGui.QWidget):
         
         #################################################
         # load and initialize cached publish type model
-        self._publish_type_model = SgPublishTypeModel(self, self.ui.publish_type_list, self._action_manager)        
+        self._publish_type_model = SgPublishTypeModel(self, self._action_manager)
+        self._publish_type_model.set_overlay_parent(self.ui.publish_type_list)        
         self.ui.publish_type_list.setModel(self._publish_type_model)
 
         #################################################
         # setup publish model
-        self._publish_model = SgLatestPublishModel(self, self.ui.publish_view, self._publish_type_model)
+        self._publish_model = SgLatestPublishModel(self, self._publish_type_model)
+        self._publish_model.set_overlay_parent(self.ui.publish_view)
         
         # set up a proxy model to cull results based on type selection
         self._publish_proxy_model = SgPublishProxyModel(self)
@@ -704,6 +708,7 @@ class AppDialog(QtGui.QWidget):
 
             # set up data backend
             model = SgEntityModel(self, view, sg_entity_type, e["filters"], e["hierarchy"])
+            model.set_overlay_parent(view)
 
             # configure the view
             view.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)

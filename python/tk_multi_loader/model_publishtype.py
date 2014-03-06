@@ -27,12 +27,12 @@ class SgPublishTypeModel(ShotgunModel):
     
     FOLDERS_ITEM_TEXT = "Folders"
     
-    def __init__(self, parent, overlay_parent_widget, action_manager):
+    def __init__(self, parent, action_manager):
         """
         Constructor
         """
         # folder icon
-        ShotgunModel.__init__(self, parent, overlay_parent_widget, download_thumbs=False)
+        ShotgunModel.__init__(self, parent, download_thumbs=False)
         
         self._action_manager = action_manager
         

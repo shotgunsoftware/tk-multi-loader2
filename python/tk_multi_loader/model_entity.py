@@ -22,13 +22,13 @@ class SgEntityModel(ShotgunModel):
     """
     TYPE_ROLE = QtCore.Qt.UserRole + 101    
     
-    def __init__(self, parent, overlay_parent_widget, entity_type, filters, hierarchy):
+    def __init__(self, parent, entity_type, filters, hierarchy):
         """
         Constructor
         """
         # folder icon
         self._folder_icon = QtGui.QPixmap(":/res/folder_512x400.png")    
-        ShotgunModel.__init__(self, parent, overlay_parent_widget, download_thumbs=False, schema_generation=4)
+        ShotgunModel.__init__(self, parent, download_thumbs=False, schema_generation=4)
         fields=["image", "sg_status_list", "description"]
         order=[]
         self._load_data(entity_type, filters, hierarchy, fields, order)

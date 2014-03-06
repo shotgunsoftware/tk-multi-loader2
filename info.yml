@@ -36,6 +36,12 @@ configuration:
         default_value: "load_action_{engine_name}"
         description: The list hook carries out the actual loading of a given load action.
 
+    hook_filter_publishes:
+        type: hook
+        parameters: [publishes]
+        default_value: filter_publishes
+        description: Specify a hook that, if needed, can filter the raw list of publishes returned
+                     from Shotgun for the current location.
 
     entities:
         default_value: 

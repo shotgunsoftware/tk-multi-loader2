@@ -707,7 +707,7 @@ class AppDialog(QtGui.QWidget):
             self._dynamic_widgets.extend( [tab, layout, view] )
 
             # set up data backend
-            model = SgEntityModel(self, view, sg_entity_type, e["filters"], e["hierarchy"])
+            model = SgEntityModel(self, sg_entity_type, e["filters"], e["hierarchy"])
             model.set_overlay_parent(view)
 
             # configure the view

@@ -303,7 +303,7 @@ class SgLatestPublishModel(ShotgunModel):
             hook_publish_list = app.execute_hook("hook_filter_publishes", publishes=hook_publish_list)
             if not isinstance(hook_publish_list, list):
                 app.log_error("hook_filter_publishes returned an unexpected result type '%s' - ignoring!" 
-                              % type(sg_data_list).__name__)
+                              % type(hook_publish_list).__name__)
                 hook_publish_list = []
 
             # split back out publishes:

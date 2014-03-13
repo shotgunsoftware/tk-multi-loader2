@@ -908,7 +908,10 @@ class AppDialog(QtGui.QWidget):
                 if sg_type is None:
                     crumbs.append(name)
                 else:
-                    crumbs.append("<b>%s</b> %s" % (sg_type, name))
+                    # lookup the display name for the entity type:
+                    tk = sgtk.platform.current_bundle().sgtk
+                    sg_type_display_name = sgtk.util.get_entity_type_display_name(tk, sg_type)
+                    crumbs.append("<b>%s</b> %s" % (sg_type_display_name, name))
                 tmp_item = tmp_item.parent()
                     
         # lastly add the name of the tab

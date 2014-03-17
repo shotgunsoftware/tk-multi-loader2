@@ -14,6 +14,10 @@ Hook that loads defines all the available actions, broken down by publish type.
 import sgtk
 import os
 
+import pymel.core as pm
+import maya.cmds as cmds
+
+
 HookBaseClass = sgtk.get_hook_baseclass()
 
 class MayaActions(HookBaseClass):

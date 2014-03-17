@@ -8,11 +8,12 @@
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights 
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
-# Metadata defining the behaviour and requirements for this app
+# Metadata defining the behavior and requirements for this app
 
 # expected fields in the configuration file for this app
 configuration:
-
+    
+    # UI customization
     menu_name:
         type: str
         default_value: "Add items to your Scene..."
@@ -23,25 +24,32 @@ configuration:
         default_value: "Add items to your Scene"
         description: Name to appear on the title of the UI Dialog.
 
-    # hook
-    hook_list: 
-        type: hook
-        parameters: []
-        default_value: "list_actions_{engine_name}"
-        description: The list hook returns a list of suitable load actions for the current environment.
 
-    hook_load: 
+    # hooks
+    actions_hook: 
         type: hook
-        parameters: [action_name, shotgun_data]
-        default_value: "load_action_{engine_name}"
-        description: The list hook carries out the actual loading of a given load action.
+        default_value: "{self}/{engine_name}_actions.py"
+        description: Hook which contains all methods for action management.
 
-    hook_filter_publishes:
+    filter_publishes_hook:
         type: hook
-        parameters: [publishes]
-        default_value: filter_publishes
+        default_value: "{self}/filter_publishes.py"
         description: Specify a hook that, if needed, can filter the raw list of publishes returned
                      from Shotgun for the current location.
+
+    action_mappings:
+        type: dict
+        description: Associates published file types with actions. The actions are all defined
+                     inside the actions hook, so a number of actions are available by default 
+                     and in addition to this you can add your own actions if you like.
+        default_value: {}
+        default_value_tk-nuke: 
+            Rendered Image: [read_node] 
+            Nuke Script: [script_import]
+        default_value_tk-maya: 
+            Maya Scene: [reference]
+            Rendered Image: [texture_node]
+            Photoshop Image: [texture_node]        
 
     entities:
         default_value: 
@@ -75,7 +83,7 @@ description: "Locate and Open Files on Disk."
 
 # Required minimum versions for this item to run
 requires_shotgun_version:
-requires_core_version: "v0.14.44"
+requires_core_version: "v0.14.45"
 requires_engine_version:
 
 # the frameworks required to run this app

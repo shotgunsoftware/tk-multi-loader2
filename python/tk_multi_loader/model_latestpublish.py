@@ -293,14 +293,14 @@ class SgLatestPublishModel(ShotgunModel):
         app = sgtk.platform.current_bundle()
 
         try:
-            # first, let the hook_filter_publishes have a chance to filter
+            # first, let the filter_publishes_hook have a chance to filter
             # the list of publishes:
             
             # Constructing a wrapper dictionary so that it's future proof to support returning
             # additional information from the hook 
             hook_publish_list = [{"sg_publish":sg_data} for sg_data in sg_data_list] 
             
-            hook_publish_list = app.execute_hook("hook_filter_publishes", publishes=hook_publish_list)
+            hook_publish_list = app.execute_hook("filter_publishes_hook", publishes=hook_publish_list)
             if not isinstance(hook_publish_list, list):
                 app.log_error("hook_filter_publishes returned an unexpected result type '%s' - ignoring!" 
                               % type(hook_publish_list).__name__)
@@ -314,7 +314,7 @@ class SgLatestPublishModel(ShotgunModel):
                     sg_data_list.append(sg_data)
             
         except:
-            app.log_exception("Failed to execute 'hook_filter_publishes'!")
+            app.log_exception("Failed to execute 'filter_publishes_hook'!")
             sg_data_list = []
         
         # filter the shotgun data so that we only return the latest publish for each file.

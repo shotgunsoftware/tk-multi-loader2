@@ -313,7 +313,7 @@ class AppDialog(QtGui.QWidget):
                 sg_item = item.data(SgEntityModel.SG_DATA_ROLE)                
                 
                 # sort out the actions button
-                actions = self._action_manager.get_actions_for_publish(sg_item)
+                actions = self._action_manager.get_actions_for_publish(sg_item, self._action_manager.UI_AREA_DETAILS)
                 if len(actions) == 0:
                     self.ui.detail_actions_btn.setVisible(False)
                 else:

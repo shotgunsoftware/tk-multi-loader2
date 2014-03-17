@@ -55,7 +55,7 @@ class SgPublishDelegate(shotgun_view.WidgetDelegate):
             widget.set_actions( self._action_manager.get_actions_for_folder(sg_item) )
         else:
             # publish!
-            widget.set_actions( self._action_manager.get_actions_for_publish(sg_item) )                
+            widget.set_actions( self._action_manager.get_actions_for_publish(sg_item, self._action_manager.UI_AREA_MAIN) )                
     
     def _on_before_paint(self, widget, model_index, style_options):
         """

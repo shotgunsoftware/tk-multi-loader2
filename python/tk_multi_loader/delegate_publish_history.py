@@ -45,7 +45,7 @@ class SgPublishHistoryDelegate(shotgun_view.WidgetDelegate):
         
         # set up the menu
         sg_item = model_index.data(shotgun_model.ShotgunModel.SG_DATA_ROLE)
-        actions = self._action_manager.get_actions_for_publish(sg_item)
+        actions = self._action_manager.get_actions_for_publish(sg_item, self._action_manager.UI_AREA_HISTORY)
         
         # if there is a version associated, add View in Screening Room Action
         if sg_item.get("version"):

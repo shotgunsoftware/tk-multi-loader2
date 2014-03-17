@@ -14,79 +14,106 @@ import os
 import sys
 from sgtk.platform.qt import QtCore, QtGui
 
+from sgtk import TankError
+
 class ActionManager(object):
     """
     Class that handles dishing out and executing QActions based on the hook configuration.
     """
+    
+    UI_AREA_MAIN = 0x1
+    UI_AREA_DETAILS = 0x2
+    UI_AREA_HISTORY = 0x3
     
     def __init__(self):
         """
         Constructor
         """
         self._app = sgtk.platform.current_bundle()
-        self._cached_actions = {}
-        # get all the supported actions for this loader
-        self._action_defs = self._app.execute_hook("hook_list")
         
-        # compute the checksum of the hook action definitions
-        m = hashlib.md5()
-        m.update(str(self._action_defs))
-        self._action_defs_chksum = m.hexdigest()
-    
-    
-    def get_actions_for_publish(self, sg_data):
-        """
-        Returns a list of actions for a publish given its type.
-        """
-
-        # first get the publish type
+        # are we old school or new school with publishes?
         publish_entity_type = sgtk.util.get_published_file_entity_type(self._app.sgtk)
         
         if publish_entity_type == "PublishedFile":
-            publish_type_field = "published_file_type"
+            self._publish_type_field = "published_file_type"
         else:
-            publish_type_field = "tank_type"
+            self._publish_type_field = "tank_type"
         
-        publish_type_dict = sg_data.get(publish_type_field)
+    
+    def get_actions_for_publish(self, sg_data, ui_area):
+        """
+        Returns a list of actions for a publish.
+        
+        :param sg_data: shotgun data for a publish
+        """
+        publish_type_dict = sg_data.get(self._publish_type_field)
         if publish_type_dict is None:
+            # this publish does not have a type
+            return []
+        else:
+            publish_type = publish_type_dict["name"]
+        
+        # check if we have logic configured to handle this
+        mappings = self._app.get_setting("action_mappings")
+        # returns a structure on the form
+        # { "Maya Scene": ["reference", "import"] }
+        actions = mappings.get(publish_type, [])
+        
+        if len(actions) == 0:
             return []
         
-        publish_type = publish_type_dict["name"]
-        # call out to our hook to see if there are any 
+        # cool so we have one or more actions for this publish type.
+        # call out to hook to give us the specifics.
+        
+        # resolve UI area
+        if ui_area == ActionManager.UI_AREA_DETAILS:
+            ui_area_str = "details"
+        elif ui_area == ActionManager.UI_AREA_HISTORY:
+            ui_area_str = "history"
+        elif ui_area == ActionManager.UI_AREA_MAIN:
+            ui_area_str = "main"
+        else:
+            raise TankError("Unsupported UI_AREA. Contact support.")
 
+        action_defs = self._app.execute_hook_method("actions_hook", 
+                                                    "generate_actions", 
+                                                    sg_publish_data=sg_data, 
+                                                    actions=actions,
+                                                    ui_area=ui_area_str)
+        
+        # create QActions
         actions = []
-        for action_data in self.get_actions_for_type(publish_type):
-            name = action_data["name"]
-            caption = action_data["caption"]
-            description = action_data["description"]
+        for action_def in action_defs:
+            name = action_def["name"]
+            caption = action_def["caption"]
+            params = action_def["params"]
+            description = action_def["description"]
             
             a = QtGui.QAction(caption, None)
             a.setToolTip(description)
-            a.triggered[()].connect(lambda n=name, sg=sg_data: self._execute_hook(n, sg))
+            a.triggered[()].connect(lambda n=name, sg=sg_data, p=params: self._execute_hook(n, sg, p))
             actions.append(a)
             
         return actions
             
-    def get_actions_chksum(self):
+    def has_actions(self, publish_type):
         """
-        Returns a hex MD5 string representing the actions 
-        list from the hook
+        Returns true if the given publish type has any actions associated with it.
+        
+        :param publish_type: A Shotgun publish type (e.g. 'Maya Render')
+        :returns: True if the current actions setup knows how to handle this.
         """
-        return self._action_defs_chksum
+        mappings = self._app.get_setting("action_mappings")
 
-    def get_actions_for_type(self, publish_type):
-        """
-        Returns a list of actions for a publish type
-        """
-        if publish_type in self._action_defs:
-            return self._action_defs[publish_type]
-        else:
-            return []
-    
-    
+        # returns a structure on the form
+        # { "Maya Scene": ["reference", "import"] }
+        my_mappings = mappings.get(publish_type, [])
+        
+        return len(my_mappings) > 0
+        
     def get_actions_for_folder(self, sg_data):
         """
-        Returns a list of actions for a folder.
+        Returns a list of actions for a folder object.
         """
         fs = QtGui.QAction("Show in the file system", None)
         fs.triggered[()].connect(lambda f=sg_data: self._show_in_fs(f))
@@ -102,12 +129,16 @@ class ActionManager(object):
     ########################################################################################
     # callbacks
     
-    def _execute_hook(self, action_name, sg_data):
+    def _execute_hook(self, action_name, sg_data, params):
         """
         callback - executes a hook
         """
-        self._app.log_debug("Calling scene load hook for %s - %s" % (action_name, sg_data))
-        self._app.execute_hook("hook_load", action_name=action_name, shotgun_data=sg_data)
+        self._app.log_debug("Calling scene load hook for %s. Params: %s. Sg data: %s" % (action_name, params, sg_data))
+        self._app.execute_hook_method("actions_hook", 
+                                      "execute_action", 
+                                      name=action_name, 
+                                      params=params, 
+                                      sg_publish_data=sg_data)
     
     def _show_in_sg(self, entity):
         """

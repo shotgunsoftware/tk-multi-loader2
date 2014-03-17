@@ -9,6 +9,7 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import sgtk
+import hashlib
 from sgtk.platform.qt import QtCore, QtGui
 
 # import the shotgun_model module from the shotgun utils framework
@@ -17,8 +18,8 @@ ShotgunModel = shotgun_model.ShotgunModel
 
 class SgPublishTypeModel(ShotgunModel):
     """
-    This model represents the data which is displayed inside one of the treeview tabs
-    on the left hand side.
+    This model holds all the publish types. It is connected to the filter UI where
+    a user can choose which items to display.
     """
     
     SORT_KEY_ROLE = QtCore.Qt.UserRole + 102        # holds a sortable key
@@ -31,7 +32,6 @@ class SgPublishTypeModel(ShotgunModel):
         """
         Constructor
         """
-        # folder icon
         ShotgunModel.__init__(self, parent, download_thumbs=False)
         
         self._action_manager = action_manager
@@ -49,15 +49,25 @@ class SgPublishTypeModel(ShotgunModel):
         else:
             publish_type_field = "TankType"
                 
-        # slight hack: we pass in the checksum of the actions listing (the hook)
-        # as a field to the model. This will force the caching to take the hook code
-        # into account, ensuring that the HANDLED_BY_HOOK_ROLE is handled correcty
-        # across different environments
+        # note: this model encodes which publish types are currently 
+        # supported by the running engine. Basically what this means is that the 
+        # model data holds a combination of shotgun data (the publish types) and
+        # the action_mappings configuration parameter. We need a way to indicate
+        # that the model cache is out of date whenever the action_mappings are 
+        # changing. We do this by computing a checksum of the action_mappings
+        # config value and pass that in as a shotgun field to the model. This
+        # effectively makes the checksum part of the "query" and the model will
+        # correctly manage cached changes of config values. 
+        m = hashlib.md5()
+        mappings = app.get_setting("action_mappings")
+        m.update(str(mappings))
+        mappings_chksum = m.hexdigest()
+                
         ShotgunModel._load_data(self, 
                                entity_type=publish_type_field, 
                                filters=[], 
                                hierarchy=["code"], 
-                               fields=["code","description","id", self._action_manager.get_actions_chksum()],
+                               fields=["code","description","id", mappings_chksum],
                                order=[])
         
         # and finally ask model to refresh itself
@@ -249,7 +259,7 @@ class SgPublishTypeModel(ShotgunModel):
         item.setData(sg_name_formatted, SgPublishTypeModel.DISPLAY_NAME_ROLE)
         item.setCheckable(True)
         
-        if len(self._action_manager.get_actions_for_type(sg_code)) > 0:
+        if self._action_manager.has_actions(sg_code):
             # there are actions for this file type!
             # check it and highlight it
             item.setCheckState(QtCore.Qt.Checked)

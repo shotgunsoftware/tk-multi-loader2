@@ -95,6 +95,9 @@ class AppDialog(QtGui.QWidget):
         
         self._no_selection_pixmap = QtGui.QPixmap(":/res/no_item_selected_512x400.png")
         
+        self.ui.detail_playback_btn.clicked.connect(self._on_detail_version_playback)
+        self._current_version_detail_playback_url = None
+        
         #################################################
         # load and initialize cached publish type model
         self._publish_type_model = SgPublishTypeModel(self, self._action_manager)
@@ -330,11 +333,11 @@ class AppDialog(QtGui.QWidget):
                                                                                   sg_item["version"]["type"], 
                                                                                   sg_item["version"]["id"])                    
                     
-                    fn = lambda: QtGui.QDesktopServices.openUrl(QtCore.QUrl(url))                    
                     self.ui.detail_playback_btn.setVisible(True)
-                    self.ui.detail_playback_btn.clicked.connect(fn)
+                    self._current_version_detail_playback_url = url
                 else:
                     self.ui.detail_playback_btn.setVisible(False)
+                    self._current_version_detail_playback_url = None
                 
                 
                 if sg_item.get("name") is None:
@@ -386,10 +389,14 @@ class AppDialog(QtGui.QWidget):
             self.ui.details_header.updateGeometry()
             
             
-            
-            
-            
-                
+    def _on_detail_version_playback(self):
+        """
+        Callback when someone clicks the version playback button
+        """
+        # the code that sets up the version button also populates
+        # a member variable which olds the current screening room url.
+        if self._current_version_detail_playback_url:
+            QtGui.QDesktopServices.openUrl(QtCore.QUrl(self._current_version_detail_playback_url))
         
     ########################################################################################
     # history related

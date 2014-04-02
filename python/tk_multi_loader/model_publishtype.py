@@ -249,12 +249,12 @@ class SgPublishTypeModel(ShotgunModel):
                      with the standard settings that the ShotgunModel handles.
         :param sg_data: Shotgun data dictionary that was received from Shotgun given the fields
                         and other settings specified in load_data()
-        """
+        """        
         sg_code = sg_data.get("code")
         if sg_code is None:
             sg_name_formatted = "Unnamed"
         else:
-            sg_name_formatted = sg_code.capitalize()
+            sg_name_formatted = sg_code
         
         item.setData(sg_name_formatted, SgPublishTypeModel.DISPLAY_NAME_ROLE)
         item.setCheckable(True)

@@ -586,8 +586,7 @@ class AppDialog(QtGui.QWidget):
         
     def _on_publish_double_clicked(self, model_index):
         """
-        When someone double clicks an item in the publish area,
-        ensure that the details pane is visible
+        When someone double clicks on a publish, run the default action
         """        
         # the incoming model index is an index into our proxy model
         # before continuing, translate it to an index into the 
@@ -609,9 +608,8 @@ class AppDialog(QtGui.QWidget):
             self._select_item_in_entity_tree(self._current_entity_preset, tree_view_item)
             
         else:
-            # ensure publish details are visible
-            if not self.ui.details.isVisible():
-                self._toggle_details_pane()
+            # todo - run default action
+            pass
         
     ########################################################################################
     # entity listing tree view and presets toolbar

@@ -43,7 +43,9 @@ class AppDialog(QtGui.QWidget):
         QtGui.QWidget.__init__(self)
         
         # create a settings manager where we can pull and push prefs later
-        self.__settings_manager = settings.UserSettingsManager(sgtk.platform.current_bundle())        
+        # prefs in this manager are shared
+        self.__settings_manager = settings.UserSettingsManager(sgtk.platform.current_bundle(),
+                                                               settings.UserSettingsManager.SCOPE_PER_CONFIG)        
         
         # set up the UI
         self.ui = Ui_Dialog()

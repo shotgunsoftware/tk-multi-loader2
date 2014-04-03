@@ -24,7 +24,6 @@ class SgPublishTypeModel(ShotgunModel):
     
     SORT_KEY_ROLE = QtCore.Qt.UserRole + 102        # holds a sortable key
     DISPLAY_NAME_ROLE = QtCore.Qt.UserRole + 103    # holds the display name for the node
-    HANDLED_BY_HOOK_ROLE = QtCore.Qt.UserRole + 104 # hooks know how to process this type
     
     FOLDERS_ITEM_TEXT = "Folders"
     
@@ -91,19 +90,6 @@ class SgPublishTypeModel(ShotgunModel):
             item = self.item(idx)
             item.setCheckState(QtCore.Qt.Checked)
         
-    def select_compatible(self):
-        """
-        Select compatible types
-        """
-        for idx in range(self.rowCount()):
-            item = self.item(idx)
-            # ignore special case folders item
-            if item.text() != SgPublishTypeModel.FOLDERS_ITEM_TEXT:
-                if item.data(SgPublishTypeModel.HANDLED_BY_HOOK_ROLE):         
-                    item.setCheckState(QtCore.Qt.Checked)
-                else:
-                    item.setCheckState(QtCore.Qt.Unchecked)
-
     def get_show_folders(self):
         """
         Returns true if the special Folders
@@ -160,31 +146,22 @@ class SgPublishTypeModel(ShotgunModel):
             
             sg_type_id = item.data(ShotgunModel.SG_DATA_ROLE).get("id")            
             display_name = item.data(SgPublishTypeModel.DISPLAY_NAME_ROLE)
-            is_blue = item.data(SgPublishTypeModel.HANDLED_BY_HOOK_ROLE)
             
             if sg_type_id in type_aggregates:
                 
                 # this type is in the active list
-                if is_blue:
-                    # blue items are up the very top
-                    item.setData("a_%s" % display_name, SgPublishTypeModel.SORT_KEY_ROLE)
-                else:
-                    # enabled but non-blue come after
-                    item.setData("b_%s" % display_name, SgPublishTypeModel.SORT_KEY_ROLE)
-                
+                item.setData("a_%s" % display_name, SgPublishTypeModel.SORT_KEY_ROLE)                
                 item.setEnabled(True)
                 
                 # display name with aggregate summary
                 item.setText("%s (%d)" % (display_name, type_aggregates[sg_type_id]))
                 
             else:
+                # this type is not found in the list of current matches
                 item.setEnabled(False)
-                if is_blue:
-                    item.setData("c_%s" % display_name, SgPublishTypeModel.SORT_KEY_ROLE)
-                else:
-                    item.setData("d_%s" % display_name, SgPublishTypeModel.SORT_KEY_ROLE)
+                item.setData("b_%s" % display_name, SgPublishTypeModel.SORT_KEY_ROLE)
                 # disply name with no aggregate
-                item.setText(display_name)
+                item.setText("%s (0)" % display_name)
                 
         # and ask the model to resort itself 
         self.sort(0)
@@ -213,6 +190,27 @@ class SgPublishTypeModel(ShotgunModel):
                         "sometimes be useful to hide folders and only see publishes.")        
         self.appendRow(item)
         self._folder_items.append(item)
+            
+    def _before_data_processing(self, sg_data_list):
+        """
+        Called just after data has been retrieved from Shotgun but before any processing
+        takes place. This makes it possible for deriving classes to perform summaries, 
+        calculations and other manipulations of the data before it is passed on to the model
+        class. 
+        
+        :param sg_data_list: list of shotgun dictionaries, as retunrned by the find() call.
+        :returns: should return a list of shotgun dictionaries, on the same form as the input.
+        """
+        # go through each type and check if it is known by our action mappings
+        sg_data_handled_types = []
+        
+        for sg_data in sg_data_list:                    
+            sg_code = sg_data.get("code")
+            if self._action_manager.has_actions(sg_code):
+                # there are actions for this file type!
+                sg_data_handled_types.append(sg_data)
+            
+        return sg_data_handled_types
             
             
     def _populate_default_thumbnail(self, item):
@@ -257,19 +255,5 @@ class SgPublishTypeModel(ShotgunModel):
             sg_name_formatted = sg_code
         
         item.setData(sg_name_formatted, SgPublishTypeModel.DISPLAY_NAME_ROLE)
-        item.setCheckable(True)
-        
-        if self._action_manager.has_actions(sg_code):
-            # there are actions for this file type!
-            # check it and highlight it
-            item.setCheckState(QtCore.Qt.Checked)
-            item.setForeground( QtGui.QBrush( QtGui.QColor("#619DE0") ) )
-            item.setData(True, SgPublishTypeModel.HANDLED_BY_HOOK_ROLE)
-            item.setToolTip("The <b style='color: #619DE0'>blue color</b> indicates that this "
-                            "type of publish can be loaded into the current application.")
-        else:
-            # current hooks do not know what to do with this type
-            # -- uncheck it
-            item.setCheckState(QtCore.Qt.Unchecked)
-            item.setToolTip("Publishes of this type are unchecked by default because they cannot "
-                            "be loaded into the current application.")
+        item.setCheckable(True)        
+        item.setCheckState(QtCore.Qt.Checked)

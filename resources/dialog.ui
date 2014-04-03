@@ -176,25 +176,12 @@
             <number>2</number>
            </property>
            <item>
-            <widget class="QToolButton" name="check_supported">
-             <property name="toolTip">
-              <string>Clicking the &lt;span style='color: #619DE0'&gt;supported&lt;/span&gt; button will check all the types in the type list above that are supported by the current application. After you have pressed this button, when browsing you will only see publishes which can be added to the current scene. </string>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">QToolButton { color: #619DE0; }</string>
-             </property>
-             <property name="text">
-              <string>Supported</string>
-             </property>
-            </widget>
-           </item>
-           <item>
             <widget class="QToolButton" name="check_all">
              <property name="toolTip">
               <string>Clicking the &lt;b&gt;All&lt;/b&gt; button will tick all the boxes in the list of type filters. After clicking, you will see all publishes when browsing, including publishes are not compatible with this application (for example you may see Nuke scripts when you are browsing inside Maya). Publishes that can be used in the current application will have an actions menu when they are selected, non-supported pubishes won't.</string>
              </property>
              <property name="text">
-              <string>All</string>
+              <string>Select All</string>
              </property>
             </widget>
            </item>
@@ -204,7 +191,7 @@
               <string>Clicking the &lt;b&gt;None&lt;/b&gt; button will untick all check boxes in the list except the Folders button.</string>
              </property>
              <property name="text">
-              <string>None</string>
+              <string>Select None</string>
              </property>
             </widget>
            </item>

@@ -143,7 +143,6 @@ class AppDialog(QtGui.QWidget):
         # checkboxes, buttons etc
         self.ui.show_sub_items.toggled.connect(self._on_show_subitems_toggled)
                 
-        self.ui.check_supported.clicked.connect(self._publish_type_model.select_compatible)
         self.ui.check_all.clicked.connect(self._publish_type_model.select_all)
         self.ui.check_none.clicked.connect(self._publish_type_model.select_none)
         

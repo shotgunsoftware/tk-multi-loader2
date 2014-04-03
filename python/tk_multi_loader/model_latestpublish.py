@@ -131,6 +131,7 @@ class SgLatestPublishModel(ShotgunModel):
         # make gc happy by keeping handle to all items
         self._treeview_folder_items = treeview_folder_items
         
+        # load cached data
         ShotgunModel._load_data(self, 
                                 entity_type=publish_entity_type, 
                                 filters=sg_filters, 
@@ -138,7 +139,12 @@ class SgLatestPublishModel(ShotgunModel):
                                 fields=publish_fields,
                                 order=[{"field_name":"created_at", "direction":"asc"}])
         
-        # todo: recompute aggregates here! 
+        # now calculate type aggregates
+        type_id_aggregates = defaultdict(int)
+        for x in range(self.invisibleRootItem().rowCount()):
+            type_id = self.invisibleRootItem().child(x).data(SgLatestPublishModel.TYPE_ID_ROLE)
+            type_id_aggregates[type_id] += 1
+        self._publish_type_model.set_active_types(type_id_aggregates)
         
         # and now trigger a refresh
         self._refresh_data()

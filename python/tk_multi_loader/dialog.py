@@ -24,8 +24,9 @@ from .delegate_publish_history import SgPublishHistoryDelegate
 
 from .ui.dialog import Ui_Dialog
 
-# import the shotgun_model module from the shotgun utils framework
+# import frameworks
 shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model") 
+settings = sgtk.platform.import_framework("tk-framework-settings", "settings")
 ShotgunModel = shotgun_model.ShotgunModel 
        
 
@@ -40,6 +41,9 @@ class AppDialog(QtGui.QWidget):
         """
         
         QtGui.QWidget.__init__(self)
+        
+        # create a settings manager where we can pull and push prefs later
+        self.__settings_manager = settings.UserSettingsManager(sgtk.platform.current_bundle())        
         
         # set up the UI
         self.ui = Ui_Dialog()
@@ -65,11 +69,10 @@ class AppDialog(QtGui.QWidget):
         
         #################################################
         # details pane
-        
+                
         self._details_action_menu = QtGui.QMenu()   
         self.ui.detail_actions_btn.setMenu(self._details_action_menu)
         
-        self.ui.details.setVisible(False)
         self.ui.info.clicked.connect(self._toggle_details_pane)
                 
         self._publish_history_model = SgPublishHistoryModel(self)
@@ -166,8 +169,13 @@ class AppDialog(QtGui.QWidget):
         self._current_entity_preset = None
         self._load_entity_presets()
         
-        # lastly, set the splitter ratio roughly. QT will do fine adjustments.
+        # set the splitter ratio roughly. QT will do fine adjustments.
         self.ui.left_side_splitter.setSizes( [400, 200] )
+        
+        # load visibility state for details pane
+        show_details = self.__settings_manager.get_setting("show_details", False)
+        self._set_details_pane_visiblity(show_details)
+
         
         
         
@@ -195,6 +203,18 @@ class AppDialog(QtGui.QWidget):
         Executed when someone clicks the show/hide details button
         """
         if self.ui.details.isVisible():
+            self._set_details_pane_visiblity(False)
+        else:
+            self._set_details_pane_visiblity(True)
+    
+    def _set_details_pane_visiblity(self, visible):
+        """
+        Specifies if the details pane should be visible or not
+        """
+        # store our value in a setting        
+        self.__settings_manager.store_setting("show_details", visible)
+        
+        if visible == False:
             # hide details pane
             self.ui.details.setVisible(False)
             self.ui.info.setText("Show Details")

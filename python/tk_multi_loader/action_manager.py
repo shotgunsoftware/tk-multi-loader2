@@ -143,6 +143,8 @@ class ActionManager(object):
     def _show_in_sg(self, entity):
         """
         Callback - Shows a shotgun entity in the web browser
+        
+        :param entity: std sg entity dict with keys type, id and name
         """
         url = "%s/detail/%s/%d" % (self._app.sgtk.shotgun.base_url, entity["type"], entity["id"])                    
         QtGui.QDesktopServices.openUrl(QtCore.QUrl(url))
@@ -150,6 +152,8 @@ class ActionManager(object):
     def _show_in_sr(self, entity):
         """
         Callback - Shows a shotgun entity in screening room
+        
+        :param entity: std sg entity dict with keys type, id and name
         """
         url = "%s/page/screening_room?entity_type=%s&entity_id=%d" % (self._app.sgtk.shotgun.base_url, 
                                                                       entity["type"], 
@@ -159,6 +163,8 @@ class ActionManager(object):
     def _show_in_fs(self, entity):
         """
         Callback - Shows a shotgun entity in the file system
+        
+        :param entity: std sg entity dict with keys type, id and name
         """
         paths = self._app.sgtk.paths_from_entity(entity["type"], entity["id"])    
         for disk_location in paths:

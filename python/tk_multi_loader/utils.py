@@ -131,7 +131,7 @@ def create_overlayed_publish_thumbnail(path):
 
     CANVAS_WIDTH = 512
     CANVAS_HEIGHT = 400
-    CORNER_RADIUS = 20
+    CORNER_RADIUS = 10
     
     thumb = QtGui.QPixmap(path)
     

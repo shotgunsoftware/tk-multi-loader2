@@ -176,8 +176,11 @@ class AppDialog(QtGui.QWidget):
         # load visibility state for details pane
         show_details = self.__settings_manager.get_setting("show_details", False)
         self._set_details_pane_visiblity(show_details)
-
         
+        # load previous width and height
+        geometry = self.__settings_manager.get_setting("window_geometry")
+        if geometry:
+            self.restoreGeometry(geometry)
         
         
     def closeEvent(self, event):
@@ -192,6 +195,9 @@ class AppDialog(QtGui.QWidget):
         self._status_model.destroy()    
         for p in self._entity_presets:
             self._entity_presets[p].model.destroy()
+        
+        # store our current geometry
+        self.__settings_manager.store_setting("window_geometry", self.saveGeometry())
         
         # okay to close!
         event.accept()

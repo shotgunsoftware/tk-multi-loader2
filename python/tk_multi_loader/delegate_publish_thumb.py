@@ -44,7 +44,7 @@ class SgPublishDelegate(shotgun_view.WidgetDelegate):
         
         widget.set_selected(True)
         
-        # now set up actions menu        
+        # now set up actions menu
         sg_item = model_index.data(shotgun_model.ShotgunModel.SG_DATA_ROLE)
         is_folder = model_index.data(SgLatestPublishModel.IS_FOLDER_ROLE)
         if sg_item is None:

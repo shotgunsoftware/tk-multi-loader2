@@ -608,8 +608,15 @@ class AppDialog(QtGui.QWidget):
             self._select_item_in_entity_tree(self._current_entity_preset, tree_view_item)
             
         else:
-            # todo - run default action
-            pass
+            # Run default action. The default action is defined as the one that 
+            # appears first in the list in the action mappings.
+            sg_item = model_index.data(shotgun_model.ShotgunModel.SG_DATA_ROLE)
+            actions = self._action_manager.get_actions_for_publish(sg_item, self._action_manager.UI_AREA_MAIN)
+            if len(actions) > 0:
+                # run the first (primary) action returned
+                actions[0].trigger()
+            
+            
         
     ########################################################################################
     # entity listing tree view and presets toolbar

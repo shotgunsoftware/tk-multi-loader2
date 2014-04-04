@@ -148,8 +148,12 @@ class AppDialog(QtGui.QWidget):
         
         #################################################
         # thumb scaling
+        scale_val = self.__settings_manager.get_setting("thumb_size_scale", 140)
+        # position both slider and view
+        self.ui.thumb_scale.setValue(scale_val)
+        self.ui.publish_view.setIconSize(QtCore.QSize(scale_val, scale_val))
+        # and track subsequent changes
         self.ui.thumb_scale.valueChanged.connect(self._on_thumb_size_slider_change)
-        self.ui.thumb_scale.setValue(140)
         
         #################################################
         # setup history
@@ -180,7 +184,7 @@ class AppDialog(QtGui.QWidget):
         # load previous width and height
         geometry = self.__settings_manager.get_setting("window_geometry")
         if geometry:
-            self.restoreGeometry(geometry)
+            self.restoreGeometry(geometry)        
         
         
     def closeEvent(self, event):
@@ -563,6 +567,7 @@ class AppDialog(QtGui.QWidget):
         When scale slider is manipulated
         """
         self.ui.publish_view.setIconSize(QtCore.QSize(value, value))
+        self.__settings_manager.store_setting("thumb_size_scale", value)
         
     def _on_publish_selection(self, selected, deselected):
         """
@@ -731,15 +736,15 @@ class AppDialog(QtGui.QWidget):
             
             # now set up a new tab
             tab = QtGui.QWidget()
+            # add it to the main tab UI
+            self.ui.entity_preset_tabs.addTab(tab, preset_name)
             # add a layout
             layout = QtGui.QVBoxLayout(tab)
-            layout.setSpacing(1)
-            layout.setContentsMargins(1, 1, 1, 1)
+            layout.setSpacing(0)
+            layout.setContentsMargins(0, 0, 0, 0)
             # and add a treeview
             view = QtGui.QTreeView(tab)
             layout.addWidget(view)
-            # add it to the main tab UI
-            self.ui.entity_preset_tabs.addTab(tab, preset_name)
 
             # make sure we keep a handle to all the new objects
             # otherwise the GC may not work
@@ -762,7 +767,7 @@ class AppDialog(QtGui.QWidget):
             # by first creating a direct handle to the selection model before
             # setting up signal / slots
             selection_model = view.selectionModel()
-            self._dynamic_widgets.append(selection_model)            
+            self._dynamic_widgets.append(selection_model)      
             selection_model.selectionChanged.connect(self._on_treeview_item_selected)
             
             # finally store all these objects keyed by the caption

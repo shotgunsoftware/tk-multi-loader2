@@ -174,9 +174,6 @@ class AppDialog(QtGui.QWidget):
         self._current_entity_preset = None
         self._load_entity_presets()
         
-        # set the splitter ratio roughly. QT will do fine adjustments.
-        self.ui.left_side_splitter.setSizes( [400, 200] )
-        
         # load visibility state for details pane
         show_details = self.__settings_manager.get_setting("show_details", False)
         self._set_details_pane_visiblity(show_details)
@@ -184,7 +181,7 @@ class AppDialog(QtGui.QWidget):
         # load previous width and height
         geometry = self.__settings_manager.get_setting("window_geometry")
         if geometry:
-            self.restoreGeometry(geometry)        
+            self.restoreGeometry(geometry)
         
         
     def closeEvent(self, event):

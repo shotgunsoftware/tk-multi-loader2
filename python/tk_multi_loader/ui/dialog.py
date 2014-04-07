@@ -157,6 +157,8 @@ class Ui_Dialog(object):
 "")
         self.thumb_scale.setMinimum(70)
         self.thumb_scale.setMaximum(250)
+        self.thumb_scale.setProperty("value", 70)
+        self.thumb_scale.setSliderPosition(70)
         self.thumb_scale.setOrientation(QtCore.Qt.Horizontal)
         self.thumb_scale.setInvertedAppearance(False)
         self.thumb_scale.setInvertedControls(False)

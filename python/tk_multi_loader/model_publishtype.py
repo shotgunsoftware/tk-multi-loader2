@@ -213,27 +213,14 @@ class SgPublishTypeModel(ShotgunModel):
         return sg_data_handled_types
             
             
-    def _populate_default_thumbnail(self, item):
+    def _finalize_item(self, item):
         """
-        Called whenever an item is originally born, either because a shotgun query returned it
-        or because it was loaded as part of a cache load from disk. This method will by default
-        set up all brand new fresh items with an empty thumbail.
-        
-        Later on, if the model was instantiated with the download_thumbs parameter set to True,
-        the standard 'image' field thumbnail will be automatically downloaded for all items (or
-        picked up from local cache if possible). When these real thumbnails arrive, the
-        _populate_thumbnail() method will be called.
-        
-        This method can be useful if you want to control both the visual state of an entity which
-        does not have a thumbnail in Shotgun and the state before a thumbnail has been downloaded.
+        Called whenever an item is fully constructed, either because a shotgun query returned it
+        or because it was loaded as part of a cache load from disk.
         
         :param item: QStandardItem that is about to be added to the model. This has been primed
                      with the standard settings that the ShotgunModel handles.        
         """
-        ShotgunModel._populate_default_thumbnail(self, item)
-        # implement this method as a way to be able to interact with items
-        # as they are born, either from the cache or from SG
-        
         # When items are born they are all disabled by default
         item.setEnabled(False)
             

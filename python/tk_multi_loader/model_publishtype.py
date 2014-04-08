@@ -51,22 +51,17 @@ class SgPublishTypeModel(ShotgunModel):
         # note: this model encodes which publish types are currently 
         # supported by the running engine. Basically what this means is that the 
         # model data holds a combination of shotgun data (the publish types) and
-        # the action_mappings configuration parameter. We need a way to indicate
-        # that the model cache is out of date whenever the action_mappings are 
-        # changing. We do this by computing a checksum of the action_mappings
-        # config value and pass that in as a shotgun field to the model. This
-        # effectively makes the checksum part of the "query" and the model will
-        # correctly manage cached changes of config values. 
-        m = hashlib.md5()
-        mappings = app.get_setting("action_mappings")
-        m.update(str(mappings))
-        mappings_chksum = m.hexdigest()
+        # the action_mappings configuration parameter. We therefore need to pass
+        # an external cache seed to the query and this seed is based on the current
+        # action mappings - whenever these change, the cache data is also affected. 
+        mappings_str = str(app.get_setting("action_mappings"))
                 
         ShotgunModel._load_data(self, 
                                entity_type=publish_type_field, 
                                filters=[], 
                                hierarchy=["code"], 
-                               fields=["code","description","id", mappings_chksum])
+                               fields=["code","description","id"],
+                               seed=mappings_str)
         
         # and finally ask model to refresh itself
         self._refresh_data()

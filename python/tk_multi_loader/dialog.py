@@ -176,13 +176,7 @@ class AppDialog(QtGui.QWidget):
         
         # load visibility state for details pane
         show_details = self.__settings_manager.get_setting("show_details", False)
-        self._set_details_pane_visiblity(show_details)
-        
-        # load previous width and height
-        geometry = self.__settings_manager.get_setting("window_geometry")
-        if geometry:
-            self.restoreGeometry(geometry)
-        
+        self._set_details_pane_visiblity(show_details)        
         
     def closeEvent(self, event):
         """
@@ -196,9 +190,6 @@ class AppDialog(QtGui.QWidget):
         self._status_model.destroy()    
         for p in self._entity_presets:
             self._entity_presets[p].model.destroy()
-        
-        # store our current geometry
-        self.__settings_manager.store_setting("window_geometry", self.saveGeometry())
         
         # okay to close!
         event.accept()
@@ -800,6 +791,10 @@ class AppDialog(QtGui.QWidget):
                                      operations and not stand alone.
         """
         curr_tab_name = self.ui.entity_preset_tabs.tabText(new_index)
+        
+        # pyqt returns qstring
+        if hasattr(QtCore, "QString") and isinstance(curr_tab_name, QtCore.QString):
+            curr_tab_name = str(curr_tab_name.toUtf8())
 
         # and set up which our currently visible preset is
         self._current_entity_preset = curr_tab_name 

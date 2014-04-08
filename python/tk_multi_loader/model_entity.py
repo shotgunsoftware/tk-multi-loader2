@@ -27,11 +27,10 @@ class SgEntityModel(ShotgunModel):
         Constructor
         """
         # folder icon
-        self._folder_icon = QtGui.QPixmap(":/res/folder_512x400.png")    
+        self._folder_icon = QtGui.QIcon(QtGui.QPixmap(":/res/folder_512x400.png"))    
         ShotgunModel.__init__(self, parent, download_thumbs=False, schema_generation=4)
         fields=["image", "sg_status_list", "description"]
-        order=[]
-        self._load_data(entity_type, filters, hierarchy, fields, order)
+        self._load_data(entity_type, filters, hierarchy, fields)
     
     ############################################################################################
     # public methods

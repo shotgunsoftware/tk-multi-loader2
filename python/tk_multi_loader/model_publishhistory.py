@@ -73,8 +73,7 @@ class SgPublishHistoryModel(ShotgunModel):
                                entity_type=publish_entity_type, 
                                filters=filters, 
                                hierarchy=["version_number"], 
-                               fields=fields,
-                               order=[])
+                               fields=fields)
         
         self._refresh_data()
         

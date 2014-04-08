@@ -27,8 +27,7 @@ class SgStatusModel(ShotgunModel):
         # folder icon
         ShotgunModel.__init__(self, parent, download_thumbs=False)
         fields=["bg_color", "icon", "code", "name"]
-        order=[]
-        self._load_data("Status", [], ["code"], fields, order)
+        self._load_data("Status", [], ["code"], fields)
         self._refresh_data()
     
     ############################################################################################

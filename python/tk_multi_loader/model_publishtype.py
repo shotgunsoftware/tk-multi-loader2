@@ -66,8 +66,7 @@ class SgPublishTypeModel(ShotgunModel):
                                entity_type=publish_type_field, 
                                filters=[], 
                                hierarchy=["code"], 
-                               fields=["code","description","id", mappings_chksum],
-                               order=[])
+                               fields=["code","description","id", mappings_chksum])
         
         # and finally ask model to refresh itself
         self._refresh_data()

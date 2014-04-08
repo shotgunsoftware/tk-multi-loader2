@@ -3,18 +3,14 @@
     <file>home.png</file>
     <file>arrow_back.png</file>
     <file>arrow_forward.png</file>
-    <file>down_arrow.png</file>
     <file>search.png</file>
+    <file>gear.png</file>
     <file>play_icon.png</file>
-    
     <file>no_publishes_found.png</file>
     <file>welcome.png</file>
     <file>no_item_selected_512x400.png</file>
-    
-    
     <file>folder_512x400.png</file>
     <file>loading_512x400.png</file>
     <file>loading_100x100.png</file>
-    
   </qresource>
 </RCC>

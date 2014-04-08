@@ -31,6 +31,9 @@ class SgPublishProxyModel(QtGui.QSortFilterProxyModel):
         self._show_folders = show_folders
         # tell model to repush data
         self.invalidateFilter()
+        # have sg source model display a not found overlay if
+        # nothing is selected
+        self.sourceModel().toggle_not_found_overlay(self.rowCount() == 0)
         
     def filterAcceptsRow(self, source_row, source_parent_idx):
         """

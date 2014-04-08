@@ -181,6 +181,12 @@
        </property>
        <item>
         <widget class="QToolButton" name="check_all">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="toolTip">
           <string>Clicking the &lt;b&gt;All&lt;/b&gt; button will tick all the boxes in the list of type filters. After clicking, you will see all publishes when browsing, including publishes are not compatible with this application (for example you may see Nuke scripts when you are browsing inside Maya). Publishes that can be used in the current application will have an actions menu when they are selected, non-supported pubishes won't.</string>
          </property>
@@ -191,6 +197,12 @@
        </item>
        <item>
         <widget class="QToolButton" name="check_none">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="toolTip">
           <string>Clicking the &lt;b&gt;None&lt;/b&gt; button will untick all check boxes in the list except the Folders button.</string>
          </property>
@@ -206,6 +218,20 @@
          </property>
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QToolButton" name="check_none_2">
+         <property name="toolTip">
+          <string>Tools and Settings</string>
+         </property>
+         <property name="icon">
+          <iconset resource="resources.qrc">
+           <normaloff>:/res/gear.png</normaloff>:/res/gear.png</iconset>
+         </property>
+         <property name="popupMode">
+          <enum>QToolButton::InstantPopup</enum>
          </property>
         </widget>
        </item>

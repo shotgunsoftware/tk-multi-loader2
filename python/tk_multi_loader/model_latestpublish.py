@@ -46,8 +46,8 @@ class SgLatestPublishModel(ShotgunModel):
         Model which represents the latest publishes for an entity
         """        
         self._publish_type_model = publish_type_model
-        self._no_pubs_found_icon = QtGui.QPixmap(":/res/no_publishes_found.png")
         self._welcome_icon = QtGui.QPixmap(":/res/welcome.png")
+        self._no_pubs_found_icon = QtGui.QPixmap(":/res/no_publishes_found.png")
         self._folder_icon = QtGui.QPixmap(":/res/folder_512x400.png")
         self._loading_icon = QtGui.QPixmap(":/res/loading_512x400.png")
 
@@ -285,6 +285,15 @@ class SgLatestPublishModel(ShotgunModel):
             thumb = utils.create_overlayed_publish_thumbnail(path)
         item.setIcon(thumb)
 
+    def toggle_not_found_overlay(self, show):
+        """
+        Displays the items not found overlay
+        """
+        if show:
+            self._show_overlay_pixmap(self._no_pubs_found_icon)
+        else:
+            self._hide_overlay_info()
+        
 
     def _before_data_processing(self, sg_data_list):
         """
@@ -328,8 +337,6 @@ class SgLatestPublishModel(ShotgunModel):
         # publish type model. 
         
         if len(sg_data_list) == 0 and len(self._treeview_folder_items) == 0:
-            # no publishes or folders found!
-            self._show_overlay_pixmap(self._no_pubs_found_icon)
             # tell publish type setup that there is nothing to display
             self._publish_type_model.set_active_types({})
             return []

@@ -80,9 +80,9 @@ class SgLatestPublishModel(ShotgunModel):
         asynchronously update the model in the background with new
         Shotgun data.
                 
-        :param sg_data: shotgun data for an entity for which we should display
-                        associated publishes. If None then there is no entity 
-                        present for which to load publishes.
+        :param sg_entity_link: shotgun data for an entity for which we should display
+                               associated publishes. If None then there is no entity 
+                               present for which to load publishes.
                         
         :param folder_items: list of QStandardItem representing items in the tree view.
                              these are the sub folders for the currently selected item
@@ -90,7 +90,9 @@ class SgLatestPublishModel(ShotgunModel):
         """
         
         if sg_entity_link is None and len(treeview_folder_items) == 0:
-            self._show_overlay_pixmap(self._welcome_icon)
+            # this is an edge case that really only happens when the
+            # initial cache hasn't been primed.
+            self._show_overlay_pixmap(self._no_pubs_found_icon)
             return
         
         if sg_entity_link:

@@ -21,6 +21,7 @@ from .proxymodel_publish import SgPublishProxyModel
 from .delegate_publish_thumb import SgPublishDelegate
 from .model_publishhistory import SgPublishHistoryModel
 from .delegate_publish_history import SgPublishHistoryDelegate
+from .utils import ensure_utf8
 
 from .ui.dialog import Ui_Dialog
 
@@ -28,6 +29,8 @@ from .ui.dialog import Ui_Dialog
 shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model") 
 settings = sgtk.platform.import_framework("tk-framework-settings", "settings")
 ShotgunModel = shotgun_model.ShotgunModel 
+       
+       
        
 
 class AppDialog(QtGui.QWidget):
@@ -790,11 +793,8 @@ class AppDialog(QtGui.QWidget):
                                      this tab switch is part of a sequence of 
                                      operations and not stand alone.
         """
-        curr_tab_name = self.ui.entity_preset_tabs.tabText(new_index)
-        
-        # pyqt returns qstring
-        if hasattr(QtCore, "QString") and isinstance(curr_tab_name, QtCore.QString):
-            curr_tab_name = str(curr_tab_name.toUtf8())
+        # qt returns unicode/qstring here so force to str
+        curr_tab_name = ensure_utf8(self.ui.entity_preset_tabs.tabText(new_index))
 
         # and set up which our currently visible preset is
         self._current_entity_preset = curr_tab_name 

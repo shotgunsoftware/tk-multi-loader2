@@ -15,9 +15,9 @@ from . import utils
 
 # import the shotgun_model module from the shotgun utils framework
 shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model") 
-ShotgunModel = shotgun_model.ShotgunModel 
+ShotgunOverlayModel = shotgun_model.ShotgunOverlayModel 
 
-class SgPublishHistoryModel(ShotgunModel):
+class SgPublishHistoryModel(ShotgunOverlayModel):
     """
     This model represents the version history for a publish.
     """
@@ -25,13 +25,13 @@ class SgPublishHistoryModel(ShotgunModel):
     USER_THUMB_ROLE = QtCore.Qt.UserRole + 101
     PUBLISH_THUMB_ROLE = QtCore.Qt.UserRole + 102
     
-    def __init__(self, parent):
+    def __init__(self, parent, overlay_widget):
         """
         Constructor
         """
         # folder icon
         self._loading_icon = QtGui.QPixmap(":/res/loading_100x100.png")
-        ShotgunModel.__init__(self, parent, download_thumbs=True)
+        ShotgunOverlayModel.__init__(self, parent, overlay_widget, download_thumbs=True)
         
                 
     ############################################################################################
@@ -69,11 +69,11 @@ class SgPublishHistoryModel(ShotgunModel):
                     [publish_type_field, "is", sg_data[publish_type_field] ],
                   ]
 
-        ShotgunModel._load_data(self, 
-                               entity_type=publish_entity_type, 
-                               filters=filters, 
-                               hierarchy=["version_number"], 
-                               fields=fields)
+        ShotgunOverlayModel._load_data(self, 
+                                       entity_type=publish_entity_type, 
+                                       filters=filters, 
+                                       hierarchy=["version_number"], 
+                                       fields=fields)
         
         self._refresh_data()
         

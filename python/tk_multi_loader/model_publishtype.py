@@ -14,9 +14,9 @@ from sgtk.platform.qt import QtCore, QtGui
 
 # import the shotgun_model module from the shotgun utils framework
 shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model") 
-ShotgunModel = shotgun_model.ShotgunModel 
+ShotgunOverlayModel = shotgun_model.ShotgunOverlayModel 
 
-class SgPublishTypeModel(ShotgunModel):
+class SgPublishTypeModel(ShotgunOverlayModel):
     """
     This model holds all the publish types. It is connected to the filter UI where
     a user can choose which items to display.
@@ -27,11 +27,11 @@ class SgPublishTypeModel(ShotgunModel):
     
     FOLDERS_ITEM_TEXT = "Folders"
     
-    def __init__(self, parent, action_manager):
+    def __init__(self, parent, overlay_widget, action_manager):
         """
         Constructor
         """
-        ShotgunModel.__init__(self, parent, download_thumbs=False)
+        ShotgunOverlayModel.__init__(self, parent, overlay_widget, download_thumbs=False)
         
         self._action_manager = action_manager
         
@@ -56,12 +56,12 @@ class SgPublishTypeModel(ShotgunModel):
         # action mappings - whenever these change, the cache data is also affected. 
         mappings_str = str(app.get_setting("action_mappings"))
                 
-        ShotgunModel._load_data(self, 
-                               entity_type=publish_type_field, 
-                               filters=[], 
-                               hierarchy=["code"], 
-                               fields=["code","description","id"],
-                               seed=mappings_str)
+        ShotgunOverlayModel._load_data(self, 
+                                       entity_type=publish_type_field, 
+                                       filters=[], 
+                                       hierarchy=["code"], 
+                                       fields=["code","description","id"],
+                                       seed=mappings_str)
         
         # and finally ask model to refresh itself
         self._refresh_data()

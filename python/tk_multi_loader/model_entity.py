@@ -13,22 +13,26 @@ from sgtk.platform.qt import QtCore, QtGui
 
 # import the shotgun_model module from the shotgun utils framework
 shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model") 
-ShotgunModel = shotgun_model.ShotgunModel 
+ShotgunOverlayModel = shotgun_model.ShotgunOverlayModel 
 
-class SgEntityModel(ShotgunModel):
+class SgEntityModel(ShotgunOverlayModel):
     """
     This model represents the data which is displayed inside one of the treeview tabs
     on the left hand side.
     """
     TYPE_ROLE = QtCore.Qt.UserRole + 101    
     
-    def __init__(self, parent, entity_type, filters, hierarchy):
+    def __init__(self, parent, overlay_widget, entity_type, filters, hierarchy):
         """
         Constructor
         """
         # folder icon
         self._folder_icon = QtGui.QIcon(QtGui.QPixmap(":/res/folder_512x400.png"))    
-        ShotgunModel.__init__(self, parent, download_thumbs=False, schema_generation=4)
+        ShotgunOverlayModel.__init__(self, 
+                                     parent, 
+                                     overlay_widget, 
+                                     download_thumbs=False, 
+                                     schema_generation=4)
         fields=["image", "sg_status_list", "description"]
         self._load_data(entity_type, filters, hierarchy, fields)
     
@@ -55,7 +59,11 @@ class SgEntityModel(ShotgunModel):
         :param sg_data: Shotgun data dictionary that was received from Shotgun given the fields
                         and other settings specified in load_data()
         """
-        item.setIcon(self._folder_icon)
+        
+        field_data = shotgun_model.get_sg_data(item)        
+        if field_data is None:
+            # intermediate node
+            item.setIcon(self._folder_icon)
                 
     def _populate_item(self, item, sg_data):
         """
@@ -72,7 +80,7 @@ class SgEntityModel(ShotgunModel):
         :param sg_data: Shotgun data dictionary that was received from Shotgun given the fields
                         and other settings specified in _load_data()
         """
-        field_data = shotgun_model.get_sanitized_data(item, ShotgunModel.SG_ASSOCIATED_FIELD_ROLE)
+        field_data = shotgun_model.get_sanitized_data(item, self.SG_ASSOCIATED_FIELD_ROLE)
         # {'name': 'sg_sequence', 'value': {'type': 'Sequence', 'id': 11, 'name': 'bunny_080'}}
         
         field_name = field_data["name"]

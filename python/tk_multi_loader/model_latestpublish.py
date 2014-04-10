@@ -17,9 +17,9 @@ from .model_entity import SgEntityModel
 
 # import the shotgun_model module from the shotgun utils framework
 shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model") 
-ShotgunModel = shotgun_model.ShotgunModel 
+ShotgunOverlayModel = shotgun_model.ShotgunOverlayModel 
 
-class SgLatestPublishModel(ShotgunModel):
+class SgLatestPublishModel(ShotgunOverlayModel):
     
     """
     Model which handles the main spreadsheet view which displays the latest version of all 
@@ -41,18 +41,22 @@ class SgLatestPublishModel(ShotgunModel):
     FOLDER_STATUS_ROLE = QtCore.Qt.UserRole + 109
     
     
-    def __init__(self, parent, publish_type_model):
+    def __init__(self, parent, overlay_widget, publish_type_model):
         """
         Model which represents the latest publishes for an entity
         """        
         self._publish_type_model = publish_type_model
         self._welcome_icon = QtGui.QIcon(QtGui.QPixmap(":/res/welcome.png"))
-        self._no_pubs_found_icon = QtGui.QIcon(QtGui.QPixmap(":/res/no_publishes_found.png"))
+        self._no_pubs_found_icon = QtGui.QPixmap(":/res/no_publishes_found.png")
         self._folder_icon = QtGui.QIcon(QtGui.QPixmap(":/res/folder_512x400.png"))
         self._loading_icon = QtGui.QIcon(QtGui.QPixmap(":/res/loading_512x400.png"))
 
         # init base class
-        ShotgunModel.__init__(self, parent, download_thumbs=True, schema_generation=2)
+        ShotgunOverlayModel.__init__(self, 
+                                     parent, 
+                                     overlay_widget, 
+                                     download_thumbs=True, 
+                                     schema_generation=2)
     
     ############################################################################################
     # public interface
@@ -134,12 +138,12 @@ class SgLatestPublishModel(ShotgunModel):
         self._treeview_folder_items = treeview_folder_items
         
         # load cached data
-        ShotgunModel._load_data(self, 
-                                entity_type=publish_entity_type, 
-                                filters=sg_filters, 
-                                hierarchy=["code"], 
-                                fields=publish_fields,
-                                order=[{"field_name":"created_at", "direction":"asc"}])
+        ShotgunOverlayModel._load_data(self, 
+                                       entity_type=publish_entity_type, 
+                                       filters=sg_filters, 
+                                       hierarchy=["code"], 
+                                       fields=publish_fields,
+                                       order=[{"field_name":"created_at", "direction":"asc"}])
         
         # now calculate type aggregates
         type_id_aggregates = defaultdict(int)
@@ -177,7 +181,7 @@ class SgLatestPublishModel(ShotgunModel):
             # copy the sg data from the tree view item onto this node - after all
             # this node is also associated with that data!
             treeview_sg_data = tree_view_item.get_sg_data() 
-            item.setData(treeview_sg_data, ShotgunModel.SG_DATA_ROLE)
+            item.setData(treeview_sg_data, self.SG_DATA_ROLE)
             
             # set advanced data for the delegate
             item.setData(tree_view_item.text(), SgLatestPublishModel.FOLDER_NAME_ROLE)

@@ -46,7 +46,7 @@ class SgPublishDelegate(shotgun_view.WidgetDelegate):
         
         # now set up actions menu
         sg_item = shotgun_model.get_sg_data(model_index)
-        is_folder = model_index.data(SgLatestPublishModel.IS_FOLDER_ROLE)
+        is_folder = shotgun_model.get_sanitized_data(model_index, SgLatestPublishModel.IS_FOLDER_ROLE)
         if sg_item is None:
             # an intermediate folder widget with no shotgun data
             return
@@ -67,8 +67,7 @@ class SgPublishDelegate(shotgun_view.WidgetDelegate):
             thumb = icon.pixmap(512)
             widget.set_thumbnail(thumb)        
         
-        if model_index.data(SgLatestPublishModel.IS_FOLDER_ROLE):
-                            
+        if shotgun_model.get_sanitized_data(model_index, SgLatestPublishModel.IS_FOLDER_ROLE):           
             entity_type = shotgun_model.get_sanitized_data(model_index, SgLatestPublishModel.FOLDER_TYPE_ROLE)
             if entity_type is None: # intermediate node
                 entity_type_str = ""

@@ -285,7 +285,7 @@ class SgLatestPublishModel(ShotgunModel):
             thumb = utils.create_overlayed_folder_thumbnail(path)
         else:
             thumb = utils.create_overlayed_publish_thumbnail(path)
-        item.setIcon(thumb)
+        item.setIcon(QtGui.QIcon(thumb))
 
     def toggle_not_found_overlay(self, show):
         """

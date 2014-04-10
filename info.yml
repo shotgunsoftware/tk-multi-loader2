@@ -16,7 +16,7 @@ configuration:
     # UI customization
     menu_name:
         type: str
-        default_value: "Add items to your Scene..."
+        default_value: "Add items to your Scene"
         description: Name to appear on the Shotgun menu.
 
     title_name:

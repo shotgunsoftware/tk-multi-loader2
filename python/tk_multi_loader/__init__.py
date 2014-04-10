@@ -10,19 +10,21 @@
 
 from sgtk.platform.qt import QtCore, QtGui
 
+from .ui import resources_rc
+
 def show_dialog(app):
     # defer imports so that the app works gracefully in batch modes
     from .dialog import AppDialog
     
-    # alpha message
-    msg =  "Welcome to the Toolkit Loader Evaluation!\n\n"
-    msg += "This is an alpha version for evaluation only.\n"
-    msg += "Note that there may be bugs and missing features.\n\n"
-    msg += "Please send feedback to toolkitsupport@shotgunsoftware.com"
-    
-    QtGui.QMessageBox.information(None, "Toolkit Loader Evaluation", msg)
-    
+    # Create and display the splash screen
+    splash_pix = QtGui.QPixmap(":/res/splash.png") 
+    splash = QtGui.QSplashScreen(splash_pix, QtCore.Qt.WindowStaysOnTopHint)
+    splash.setMask(splash_pix.mask())
+    splash.show()
+    QtCore.QCoreApplication.processEvents()
+        
     # start ui
     ui_title = app.get_setting("title_name")
-    app.engine.show_dialog(ui_title, app, AppDialog)
-    
+    w = app.engine.show_dialog(ui_title, app, AppDialog)
+    # hide splash screen after loader UI show
+    splash.finish(w.window())

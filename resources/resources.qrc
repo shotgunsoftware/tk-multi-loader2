@@ -12,5 +12,7 @@
     <file>folder_512x400.png</file>
     <file>loading_512x400.png</file>
     <file>loading_100x100.png</file>
+    <file>splash.png</file>
+    <file>exit_splash.png</file>
   </qresource>
 </RCC>

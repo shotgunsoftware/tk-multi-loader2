@@ -282,7 +282,7 @@ class Ui_Dialog(object):
         self.check_all.setText(QtGui.QApplication.translate("Dialog", "Select All", None, QtGui.QApplication.UnicodeUTF8))
         self.check_none.setToolTip(QtGui.QApplication.translate("Dialog", "Clicking the <b>None</b> button will untick all check boxes in the list except the Folders button.", None, QtGui.QApplication.UnicodeUTF8))
         self.check_none.setText(QtGui.QApplication.translate("Dialog", "Select None", None, QtGui.QApplication.UnicodeUTF8))
-        self.check_none_2.setToolTip(QtGui.QApplication.translate("Dialog", "Clicking the <b>None</b> button will untick all check boxes in the list except the Folders button.", None, QtGui.QApplication.UnicodeUTF8))
+        self.check_none_2.setToolTip(QtGui.QApplication.translate("Dialog", "Tools and Settings", None, QtGui.QApplication.UnicodeUTF8))
         self.entity_breadcrumbs.setToolTip(QtGui.QApplication.translate("Dialog", "This <i>breadcrubs listing</i> shows your currently selected Shotgun location.", None, QtGui.QApplication.UnicodeUTF8))
         self.info.setToolTip(QtGui.QApplication.translate("Dialog", "Use this button to <i>toggle details on and off</i>. The details section will show you detailed information about the current selection in the main area of the UI. If you have selected a publish in the main UI, it will also show you the complete history for that publish and you can easily access older versions.", None, QtGui.QApplication.UnicodeUTF8))
         self.info.setText(QtGui.QApplication.translate("Dialog", "Show Details", None, QtGui.QApplication.UnicodeUTF8))

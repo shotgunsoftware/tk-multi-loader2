@@ -72,7 +72,7 @@ configuration:
             
 # this app works in all engines - it does not contain 
 # any host application specific commands
-supported_engines: ["tk-maya", "tk-nuke"]
+supported_engines: 
 
 # the Shotgun fields that this app needs in order to operate correctly
 requires_shotgun_fields:

@@ -186,6 +186,14 @@ class AppDialog(QtGui.QWidget):
         All worker threads and other things which need a proper shutdown
         need to be called here.
         """
+        # display exit splash screen
+        splash_pix = QtGui.QPixmap(":/res/exit_splash.png") 
+        splash = QtGui.QSplashScreen(splash_pix, QtCore.Qt.WindowStaysOnTopHint)
+        splash.setMask(splash_pix.mask())
+        splash.show()
+        QtCore.QCoreApplication.processEvents()
+           
+        # gracefully close all connections 
         self._publish_model.destroy()
         self._publish_history_model.destroy()
         self._publish_type_model.destroy()
@@ -193,7 +201,10 @@ class AppDialog(QtGui.QWidget):
         for p in self._entity_presets:
             self._entity_presets[p].model.destroy()
         
-        # okay to close!
+        # close splash
+        splash.close()
+        
+        # okay to close dialog
         event.accept()
                 
     ########################################################################################

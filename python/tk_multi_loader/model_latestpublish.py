@@ -46,10 +46,10 @@ class SgLatestPublishModel(ShotgunModel):
         Model which represents the latest publishes for an entity
         """        
         self._publish_type_model = publish_type_model
-        self._welcome_icon = QtGui.QPixmap(":/res/welcome.png")
-        self._no_pubs_found_icon = QtGui.QPixmap(":/res/no_publishes_found.png")
-        self._folder_icon = QtGui.QPixmap(":/res/folder_512x400.png")
-        self._loading_icon = QtGui.QPixmap(":/res/loading_512x400.png")
+        self._welcome_icon = QtGui.QIcon(QtGui.QPixmap(":/res/welcome.png"))
+        self._no_pubs_found_icon = QtGui.QIcon(QtGui.QPixmap(":/res/no_publishes_found.png"))
+        self._folder_icon = QtGui.QIcon(QtGui.QPixmap(":/res/folder_512x400.png"))
+        self._loading_icon = QtGui.QIcon(QtGui.QPixmap(":/res/loading_512x400.png"))
 
         # init base class
         ShotgunModel.__init__(self, parent, download_thumbs=True, schema_generation=2)
@@ -170,13 +170,13 @@ class SgLatestPublishModel(ShotgunModel):
         for tree_view_item in self._treeview_folder_items:
 
             # all of the items created in this class get special role data assigned.
-            item = QtGui.QStandardItem(self._folder_icon, tree_view_item.text())
+            item = shotgun_model.ShotgunStandardItem(self._folder_icon, tree_view_item.text())
             item.setData(None, SgLatestPublishModel.TYPE_ID_ROLE)
             item.setData(True, SgLatestPublishModel.IS_FOLDER_ROLE)
             item.setData(tree_view_item, SgLatestPublishModel.ASSOCIATED_TREE_VIEW_ITEM_ROLE)
             # copy the sg data from the tree view item onto this node - after all
             # this node is also associated with that data!
-            treeview_sg_data = tree_view_item.data(ShotgunModel.SG_DATA_ROLE) 
+            treeview_sg_data = tree_view_item.get_sg_data() 
             item.setData(treeview_sg_data, ShotgunModel.SG_DATA_ROLE)
             
             # set advanced data for the delegate

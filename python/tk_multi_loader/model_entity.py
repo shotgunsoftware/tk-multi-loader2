@@ -72,8 +72,9 @@ class SgEntityModel(ShotgunModel):
         :param sg_data: Shotgun data dictionary that was received from Shotgun given the fields
                         and other settings specified in _load_data()
         """
-        # {u'name': u'sg_sequence', u'value': {u'type': u'Sequence', u'id': 11, u'name': u'bunny_080'}}
-        field_data = item.data(ShotgunModel.SG_ASSOCIATED_FIELD_ROLE)
+        field_data = shotgun_model.get_sanitized_data(item, ShotgunModel.SG_ASSOCIATED_FIELD_ROLE)
+        # {'name': 'sg_sequence', 'value': {'type': 'Sequence', 'id': 11, 'name': 'bunny_080'}}
+        
         field_name = field_data["name"]
         field_value = field_data["value"]
 

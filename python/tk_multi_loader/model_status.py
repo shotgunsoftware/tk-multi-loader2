@@ -41,8 +41,7 @@ class SgStatusModel(ShotgunModel):
             item = self.item(idx)
             
             if item.text() == code:
-                sg_data = item.data(ShotgunModel.SG_DATA_ROLE)
-                return sg_data["bg_color"]
+                return item.get_sg_data().get("bg_color")
                         
         return None
     
@@ -54,8 +53,7 @@ class SgStatusModel(ShotgunModel):
             item = self.item(idx)
             
             if item.text() == code:
-                sg_data = item.data(ShotgunModel.SG_DATA_ROLE)
-                return sg_data["name"]
+                return item.get_sg_data().get("name")
                         
         return "Undefined"
 

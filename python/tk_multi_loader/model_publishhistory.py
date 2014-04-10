@@ -120,7 +120,7 @@ class SgPublishHistoryModel(ShotgunModel):
         item.setData(self._loading_icon, SgPublishHistoryModel.PUBLISH_THUMB_ROLE)
         thumb = utils.create_overlayed_user_publish_thumbnail(item.data(SgPublishHistoryModel.PUBLISH_THUMB_ROLE), 
                                                               None)
-        item.setIcon(thumb)
+        item.setIcon(QtGui.QIcon(thumb))
 
     def _populate_thumbnail(self, item, field, path):
         """
@@ -154,6 +154,6 @@ class SgPublishHistoryModel(ShotgunModel):
         # composite the user thumbnail and the publish thumb into a single image
         thumb = utils.create_overlayed_user_publish_thumbnail(item.data(SgPublishHistoryModel.PUBLISH_THUMB_ROLE), 
                                                               item.data(SgPublishHistoryModel.USER_THUMB_ROLE))
-        item.setIcon(thumb)
+        item.setIcon(QtGui.QIcon(thumb))
             
             

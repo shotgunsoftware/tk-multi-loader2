@@ -21,7 +21,6 @@ from .proxymodel_publish import SgPublishProxyModel
 from .delegate_publish_thumb import SgPublishDelegate
 from .model_publishhistory import SgPublishHistoryModel
 from .delegate_publish_history import SgPublishHistoryDelegate
-from .utils import ensure_utf8
 
 from .ui.dialog import Ui_Dialog
 
@@ -292,7 +291,7 @@ class AppDialog(QtGui.QWidget):
             thumb_pixmap = item.icon().pixmap(512)
             self.ui.details_image.setPixmap(thumb_pixmap)
             
-            sg_data = item.data(SgEntityModel.SG_DATA_ROLE)
+            sg_data = item.get_sg_data()
             
             if sg_data is None:
                 # an item which doesn't have any sg data directly associated
@@ -335,7 +334,7 @@ class AppDialog(QtGui.QWidget):
                 # this is a publish!
                 __set_publish_ui_visibility(True)
                 
-                sg_item = item.data(SgEntityModel.SG_DATA_ROLE)                
+                sg_item = item.get_sg_data()                
                 
                 # sort out the actions button
                 actions = self._action_manager.get_actions_for_publish(sg_item, self._action_manager.UI_AREA_DETAILS)
@@ -367,7 +366,7 @@ class AppDialog(QtGui.QWidget):
                 else:
                     name_str = sg_item.get("name")
         
-                type_str = item.data(SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE)
+                type_str = shotgun_model.get_sanitized_data(item, SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE)
                                                 
                 msg = ""
                 msg += __make_table_row("Name", name_str)
@@ -405,7 +404,7 @@ class AppDialog(QtGui.QWidget):
                 self.ui.details_header.setText("<table>%s</table>" % msg)
                                 
                 # tell details pane to load stuff
-                sg_data = item.data(ShotgunModel.SG_DATA_ROLE)
+                sg_data = item.get_sg_data()
                 self._publish_history_model.load_data(sg_data)
             
             self.ui.details_header.updateGeometry()
@@ -612,7 +611,7 @@ class AppDialog(QtGui.QWidget):
         else:
             # Run default action. The default action is defined as the one that 
             # appears first in the list in the action mappings.
-            sg_item = model_index.data(shotgun_model.ShotgunModel.SG_DATA_ROLE)
+            sg_item = shotgun_model.get_sg_data(model_index)
             actions = self._action_manager.get_actions_for_publish(sg_item, self._action_manager.UI_AREA_MAIN)
             if len(actions) > 0:
                 # run the first (primary) action returned
@@ -794,7 +793,7 @@ class AppDialog(QtGui.QWidget):
                                      operations and not stand alone.
         """
         # qt returns unicode/qstring here so force to str
-        curr_tab_name = ensure_utf8(self.ui.entity_preset_tabs.tabText(new_index))
+        curr_tab_name = shotgun_model.sanitize_qt(self.ui.entity_preset_tabs.tabText(new_index))
 
         # and set up which our currently visible preset is
         self._current_entity_preset = curr_tab_name 
@@ -907,7 +906,7 @@ class AppDialog(QtGui.QWidget):
 
         else:
             # we have a selection and show sub items is not checked
-            sg_data = item.data(ShotgunModel.SG_DATA_ROLE)
+            sg_data = item.get_sg_data()
             
             if sg_data is None:
                 # not at leaf level. so do not include shotgun matches 
@@ -939,7 +938,7 @@ class AppDialog(QtGui.QWidget):
             # walk up to root, list of items will be in bottom-up order...
             tmp_item = item
             while tmp_item:
-                sg_type = tmp_item.data(SgEntityModel.TYPE_ROLE)
+                sg_type = shotgun_model.get_sanitized_data(tmp_item, SgEntityModel.TYPE_ROLE)
                 name = tmp_item.text()
                 if sg_type is None:
                     crumbs.append(name)

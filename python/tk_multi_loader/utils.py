@@ -11,27 +11,6 @@
 import sgtk
 from sgtk.platform.qt import QtCore, QtGui
 
-
-# only check once
-HAS_QSTRING = hasattr(QtCore, "QString")
-
-def ensure_utf8(val):
-    """
-    Helper method to sort out the string madness of pyside and pyqt.
-    This method will convert QString and unicode strings to utf-8 strs.
-    All objects which are not qstring or utf-8 are passed through.
-    """
-    if HAS_QSTRING and isinstance(val, QtCore.QString):
-        # convert any QStrings to utf-8 encoded strings
-        return val.toUtf8()
-    elif isinstance(val, unicode):
-        # unicode object
-        return val.encode("UTF-8")
-    else:
-        # passthrough
-        return val
-
-
 def create_overlayed_user_publish_thumbnail(publish_pixmap, user_pixmap):
     """
     Creates a sqaure 75x75 thumbnail with an optional overlayed pixmap. 

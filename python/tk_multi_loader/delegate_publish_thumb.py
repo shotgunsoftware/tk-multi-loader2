@@ -45,7 +45,7 @@ class SgPublishDelegate(shotgun_view.WidgetDelegate):
         widget.set_selected(True)
         
         # now set up actions menu
-        sg_item = model_index.data(shotgun_model.ShotgunModel.SG_DATA_ROLE)
+        sg_item = shotgun_model.get_sg_data(model_index)
         is_folder = model_index.data(SgLatestPublishModel.IS_FOLDER_ROLE)
         if sg_item is None:
             # an intermediate folder widget with no shotgun data
@@ -62,24 +62,27 @@ class SgPublishDelegate(shotgun_view.WidgetDelegate):
         Called by the base class when the associated widget should be
         painted in the view.
         """
-        icon = model_index.data(QtCore.Qt.DecorationRole)
-        thumb = icon.pixmap(512)
-        widget.set_thumbnail(thumb)        
+        icon = shotgun_model.get_sanitized_data(model_index, QtCore.Qt.DecorationRole)
+        if icon:
+            thumb = icon.pixmap(512)
+            widget.set_thumbnail(thumb)        
         
         if model_index.data(SgLatestPublishModel.IS_FOLDER_ROLE):
                             
-            entity_type = model_index.data(SgLatestPublishModel.FOLDER_TYPE_ROLE)
+            entity_type = shotgun_model.get_sanitized_data(model_index, SgLatestPublishModel.FOLDER_TYPE_ROLE)
             if entity_type is None: # intermediate node
                 entity_type_str = ""
             else:
                 entity_type_str = entity_type 
                         
-            widget.set_text(model_index.data(SgLatestPublishModel.FOLDER_NAME_ROLE), entity_type_str) 
+            folder_name = shotgun_model.get_sanitized_data(model_index, SgLatestPublishModel.FOLDER_NAME_ROLE)
+            
+            widget.set_text(folder_name, entity_type_str) 
  
         else:
             # this is a publish!
-            widget.set_text(model_index.data(SgLatestPublishModel.PUBLISH_NAME_ROLE),
-                            model_index.data(SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE)) 
+            widget.set_text(shotgun_model.get_sanitized_data(model_index, SgLatestPublishModel.PUBLISH_NAME_ROLE),
+                            shotgun_model.get_sanitized_data(model_index, SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE)) 
         
     def sizeHint(self, style_options, model_index):
         """

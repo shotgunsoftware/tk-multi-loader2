@@ -44,7 +44,7 @@ class SgPublishHistoryDelegate(shotgun_view.WidgetDelegate):
         widget.set_selected(True)
         
         # set up the menu
-        sg_item = model_index.data(shotgun_model.ShotgunModel.SG_DATA_ROLE)
+        sg_item = shotgun_model.get_sg_data(model_index)
         actions = self._action_manager.get_actions_for_publish(sg_item, self._action_manager.UI_AREA_HISTORY)
         
         # if there is a version associated, add View in Screening Room Action
@@ -68,16 +68,17 @@ class SgPublishHistoryDelegate(shotgun_view.WidgetDelegate):
         Called by the base class when the associated widget should be
         painted in the view.
         """        
-        icon = model_index.data(QtCore.Qt.DecorationRole)
-        thumb = icon.pixmap(512)
-        widget.set_thumbnail(thumb)
+        icon = shotgun_model.get_sanitized_data(model_index, QtCore.Qt.DecorationRole)
+        if icon:
+            thumb = icon.pixmap(512)
+            widget.set_thumbnail(thumb)
         
         # fill in the rest of the widget based on the raw sg data
         # this is not totally clean separation of concerns, but
         # introduces a coupling between the delegate and the model.
         # but I guess that's inevitable here...
         
-        sg_item = model_index.data(shotgun_model.ShotgunModel.SG_DATA_ROLE)
+        sg_item = shotgun_model.get_sg_data(model_index)
 
         # First do the header - this is on the form
         # v004 (2014-02-21 12:34)

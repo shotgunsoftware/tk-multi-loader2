@@ -117,7 +117,7 @@ class SgPublishTypeModel(ShotgunModel):
             
             if item.checkState() == QtCore.Qt.Checked:
                 # get the shotgun id
-                sg_type_id = item.data(ShotgunModel.SG_DATA_ROLE).get("id")
+                sg_type_id = item.get_sg_data().get("id")
                 type_ids.append(sg_type_id)
         return type_ids
         
@@ -138,8 +138,8 @@ class SgPublishTypeModel(ShotgunModel):
             if item.text() == SgPublishTypeModel.FOLDERS_ITEM_TEXT:
                 continue
             
-            sg_type_id = item.data(ShotgunModel.SG_DATA_ROLE).get("id")            
-            display_name = item.data(SgPublishTypeModel.DISPLAY_NAME_ROLE)
+            sg_type_id = shotgun_model.get_sg_data(item).get("id")            
+            display_name = shotgun_model.get_sanitized_data(item, self.DISPLAY_NAME_ROLE)
             
             if sg_type_id in type_aggregates:
                 
@@ -175,7 +175,7 @@ class SgPublishTypeModel(ShotgunModel):
         # items to keep the GC happy.
         
         self._folder_items = []        
-        item = QtGui.QStandardItem(SgPublishTypeModel.FOLDERS_ITEM_TEXT)
+        item = shotgun_model.ShotgunStandardItem(SgPublishTypeModel.FOLDERS_ITEM_TEXT)
         item.setCheckable(True)
         item.setForeground( QtGui.QBrush( QtGui.QColor("#619DE0") ) )
         item.setCheckState(QtCore.Qt.Checked)

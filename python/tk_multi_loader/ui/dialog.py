@@ -102,6 +102,7 @@ class Ui_Dialog(object):
         icon3 = QtGui.QIcon()
         icon3.addPixmap(QtGui.QPixmap(":/res/gear.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.check_none_2.setIcon(icon3)
+        self.check_none_2.setIconSize(QtCore.QSize(20, 16))
         self.check_none_2.setPopupMode(QtGui.QToolButton.InstantPopup)
         self.check_none_2.setObjectName("check_none_2")
         self.horizontalLayout_6.addWidget(self.check_none_2)

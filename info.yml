@@ -62,6 +62,13 @@ configuration:
               entity_type: Shot
               filters: [["project", "is", "{context.project}"]]
               hierarchy: [sg_sequence, code]
+              
+            - caption: My Tasks
+              entity_type: Task
+              filters: 
+              - [task_assignees, is, '{context.user}']
+              hierarchy: [entity, step, content]
+              
     
         type: list
         description: "List of entities for the tree view. Each item should have keys caption, entity_type, filters and hierarchy"

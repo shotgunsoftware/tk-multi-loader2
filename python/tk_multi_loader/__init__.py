@@ -8,9 +8,12 @@
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights 
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
+import sgtk
 from sgtk.platform.qt import QtCore, QtGui
 
 from .ui import resources_rc
+
+help_screen = sgtk.platform.import_framework("tk-framework-shotgunutils", "help_screen") 
 
 def show_dialog(app):
     # defer imports so that the app works gracefully in batch modes
@@ -28,3 +31,12 @@ def show_dialog(app):
     w = app.engine.show_dialog(ui_title, app, AppDialog)
     # hide splash screen after loader UI show
     splash.finish(w.window())
+    
+    
+    # pop up help screen
+    if w.is_first_launch():
+        def _show_help_screen():
+            help_screen.show_help_screen(w.window())
+        # wait a bit before show window
+        QtCore.QTimer.singleShot(1400, _show_help_screen)
+        

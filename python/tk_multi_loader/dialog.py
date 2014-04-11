@@ -26,7 +26,9 @@ from .ui.dialog import Ui_Dialog
 
 # import frameworks
 shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model") 
-settings = sgtk.platform.import_framework("tk-framework-shotgunutils", "settings") 
+settings = sgtk.platform.import_framework("tk-framework-shotgunutils", "settings")
+ 
+
        
 
 class AppDialog(QtGui.QWidget):
@@ -171,6 +173,8 @@ class AppDialog(QtGui.QWidget):
         show_details = self.__settings_manager.retrieve("show_details", False)
         self._set_details_pane_visiblity(show_details)        
         
+        
+        
     def closeEvent(self, event):
         """
         Executed when the main dialog is closed.
@@ -197,6 +201,17 @@ class AppDialog(QtGui.QWidget):
         
         # okay to close dialog
         event.accept()
+                
+    def is_first_launch(self):
+        """
+        Returns true if this is the first time UI is being launched
+        """
+        ui_launched = self.__settings_manager.retrieve("ui_launched", False, self.__settings_manager.SCOPE_ENGINE)
+        if ui_launched == False:
+            # store in settings that we now have launched
+            self.__settings_manager.store("ui_launched", True, self.__settings_manager.SCOPE_ENGINE)
+        
+        return not(ui_launched)
                 
     ########################################################################################
     # info bar related

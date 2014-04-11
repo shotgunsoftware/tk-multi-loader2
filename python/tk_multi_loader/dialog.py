@@ -755,10 +755,19 @@ class AppDialog(QtGui.QWidget):
             # and add a treeview
             view = QtGui.QTreeView(tab)
             layout.addWidget(view)
+            
+            action_ea = QtGui.QAction("Expand All Folders", view)
+            action_ca = QtGui.QAction("Collapse All Folders", view)
+            
+            action_ea.triggered.connect(view.expandAll)
+            action_ca.triggered.connect(view.collapseAll)         
+            view.addAction(action_ea)
+            view.addAction(action_ca)
+            view.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)                
 
             # make sure we keep a handle to all the new objects
             # otherwise the GC may not work
-            self._dynamic_widgets.extend( [tab, layout, view] )
+            self._dynamic_widgets.extend( [tab, layout, view, action_ea, action_ca] )
 
             # set up data backend
             model = SgEntityModel(self, view, sg_entity_type, e["filters"], e["hierarchy"])

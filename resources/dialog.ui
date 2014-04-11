@@ -222,7 +222,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QToolButton" name="check_none_2">
+        <widget class="QToolButton" name="cog_button">
          <property name="toolTip">
           <string>Tools and Settings</string>
          </property>

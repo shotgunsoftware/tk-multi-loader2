@@ -27,7 +27,7 @@ from .ui.dialog import Ui_Dialog
 # import frameworks
 shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model") 
 settings = sgtk.platform.import_framework("tk-framework-shotgunutils", "settings")
- 
+help_screen = sgtk.platform.import_framework("tk-framework-shotgunutils", "help_screen") 
 
        
 
@@ -165,6 +165,20 @@ class AppDialog(QtGui.QWidget):
         self.ui.navigation_home.clicked.connect(self._on_home_clicked)
         self.ui.navigation_prev.clicked.connect(self._on_back_clicked)
         self.ui.navigation_next.clicked.connect(self._on_forward_clicked)
+        
+        #################################################
+        # set up cog button actions
+        self._help_action = QtGui.QAction("Show Help Screen", self)
+        self._help_action.triggered.connect(self._on_help_action)
+        self.ui.cog_button.addAction(self._help_action)
+        
+        self._doc_action = QtGui.QAction("View Documentation", self)
+        self._doc_action.triggered.connect(self._on_doc_action)
+        self.ui.cog_button.addAction(self._doc_action)
+        
+        self._reload_action = QtGui.QAction("Reload", self) 
+        self._reload_action.triggered.connect(self._on_reload_action)
+        self.ui.cog_button.addAction(self._reload_action)
         
         #################################################
         # set up preset tabs and load and init tree views
@@ -636,8 +650,32 @@ class AppDialog(QtGui.QWidget):
             if len(actions) > 0:
                 # run the first (primary) action returned
                 actions[0].trigger()
+
+    ########################################################################################
+    # cog icon actions
             
-            
+    def _on_help_action(self):
+        """
+        Someone clicked the show help screen action
+        """
+        app = sgtk.platform.current_bundle()
+        help_pix = [ QtGui.QPixmap(":/res/help_1.png"), 
+                     QtGui.QPixmap(":/res/help_2.png"), 
+                     QtGui.QPixmap(":/res/help_3.png") ] 
+        help_screen.show_help_screen(self.window(), app, help_pix)
+    
+    def _on_doc_action(self):
+        """
+        Someone clicked the show docs action
+        """
+        app = sgtk.platform.current_bundle()
+        app.log_debug("Opening documentation url %s..." % app.documentation_url)
+        QtGui.QDesktopServices.openUrl(QtCore.QUrl(app.documentation_url))
+
+    
+    def _on_reload_action(self):
+        pass
+    
         
     ########################################################################################
     # entity listing tree view and presets toolbar

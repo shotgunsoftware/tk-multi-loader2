@@ -37,8 +37,8 @@ def show_dialog(app):
     if w.is_first_launch():
         def _show_help_screen():
             help_pix = [ QtGui.QPixmap(":/res/help_1.png"), 
-                        QtGui.QPixmap(":/res/help_2.png"), 
-                        QtGui.QPixmap(":/res/help_3.png") ] 
+                         QtGui.QPixmap(":/res/help_2.png"), 
+                         QtGui.QPixmap(":/res/help_3.png") ] 
             help_screen.show_help_screen(w.window(), app, help_pix)
         # wait a bit before show window
         QtCore.QTimer.singleShot(1400, _show_help_screen)

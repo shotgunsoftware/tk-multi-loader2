@@ -26,7 +26,7 @@ from .ui.dialog import Ui_Dialog
 
 # import frameworks
 shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model") 
-settings = sgtk.platform.import_framework("tk-framework-settings", "settings") 
+settings = sgtk.platform.import_framework("tk-framework-shotgunutils", "settings") 
        
 
 class AppDialog(QtGui.QWidget):
@@ -43,8 +43,7 @@ class AppDialog(QtGui.QWidget):
         
         # create a settings manager where we can pull and push prefs later
         # prefs in this manager are shared
-        self.__settings_manager = settings.UserSettingsManager(sgtk.platform.current_bundle(),
-                                                               settings.UserSettingsManager.SCOPE_PER_CONFIG)        
+        self.__settings_manager = settings.UserSettings(sgtk.platform.current_bundle())        
         
         # set up the UI
         self.ui = Ui_Dialog()
@@ -142,7 +141,7 @@ class AppDialog(QtGui.QWidget):
         
         #################################################
         # thumb scaling
-        scale_val = self.__settings_manager.get_setting("thumb_size_scale", 140)
+        scale_val = self.__settings_manager.retrieve("thumb_size_scale", 140)
         # position both slider and view
         self.ui.thumb_scale.setValue(scale_val)
         self.ui.publish_view.setIconSize(QtCore.QSize(scale_val, scale_val))
@@ -169,7 +168,7 @@ class AppDialog(QtGui.QWidget):
         self._load_entity_presets()
         
         # load visibility state for details pane
-        show_details = self.__settings_manager.get_setting("show_details", False)
+        show_details = self.__settings_manager.retrieve("show_details", False)
         self._set_details_pane_visiblity(show_details)        
         
     def closeEvent(self, event):
@@ -216,7 +215,7 @@ class AppDialog(QtGui.QWidget):
         Specifies if the details pane should be visible or not
         """
         # store our value in a setting        
-        self.__settings_manager.store_setting("show_details", visible)
+        self.__settings_manager.store("show_details", visible)
         
         if visible == False:
             # hide details pane
@@ -560,7 +559,7 @@ class AppDialog(QtGui.QWidget):
         When scale slider is manipulated
         """
         self.ui.publish_view.setIconSize(QtCore.QSize(value, value))
-        self.__settings_manager.store_setting("thumb_size_scale", value)
+        self.__settings_manager.store("thumb_size_scale", value)
         
     def _on_publish_selection(self, selected, deselected):
         """

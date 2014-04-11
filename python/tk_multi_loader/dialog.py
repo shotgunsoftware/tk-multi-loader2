@@ -45,7 +45,7 @@ class AppDialog(QtGui.QWidget):
         
         # create a settings manager where we can pull and push prefs later
         # prefs in this manager are shared
-        self.__settings_manager = settings.UserSettings(sgtk.platform.current_bundle())        
+        self._settings_manager = settings.UserSettings(sgtk.platform.current_bundle())        
         
         # set up the UI
         self.ui = Ui_Dialog()
@@ -102,7 +102,10 @@ class AppDialog(QtGui.QWidget):
         
         #################################################
         # load and initialize cached publish type model
-        self._publish_type_model = SgPublishTypeModel(self, self.ui.publish_type_list, self._action_manager)        
+        self._publish_type_model = SgPublishTypeModel(self, 
+                                                      self.ui.publish_type_list, 
+                                                      self._action_manager,
+                                                      self._settings_manager)        
         self.ui.publish_type_list.setModel(self._publish_type_model)
 
         #################################################
@@ -135,7 +138,7 @@ class AppDialog(QtGui.QWidget):
         publish_view_selection_model.selectionChanged.connect(self._on_publish_selection)
         
         #################################################
-        # checkboxes, buttons etc
+        # checkboxes, buttons etc        
         self.ui.show_sub_items.toggled.connect(self._on_show_subitems_toggled)
                 
         self.ui.check_all.clicked.connect(self._publish_type_model.select_all)
@@ -143,7 +146,7 @@ class AppDialog(QtGui.QWidget):
         
         #################################################
         # thumb scaling
-        scale_val = self.__settings_manager.retrieve("thumb_size_scale", 140)
+        scale_val = self._settings_manager.retrieve("thumb_size_scale", 140)
         # position both slider and view
         self.ui.thumb_scale.setValue(scale_val)
         self.ui.publish_view.setIconSize(QtCore.QSize(scale_val, scale_val))
@@ -170,7 +173,7 @@ class AppDialog(QtGui.QWidget):
         self._load_entity_presets()
         
         # load visibility state for details pane
-        show_details = self.__settings_manager.retrieve("show_details", False)
+        show_details = self._settings_manager.retrieve("show_details", False)
         self._set_details_pane_visiblity(show_details)        
         
         
@@ -206,10 +209,10 @@ class AppDialog(QtGui.QWidget):
         """
         Returns true if this is the first time UI is being launched
         """
-        ui_launched = self.__settings_manager.retrieve("ui_launched", False, self.__settings_manager.SCOPE_ENGINE)
+        ui_launched = self._settings_manager.retrieve("ui_launched", False, self._settings_manager.SCOPE_ENGINE)
         if ui_launched == False:
             # store in settings that we now have launched
-            self.__settings_manager.store("ui_launched", True, self.__settings_manager.SCOPE_ENGINE)
+            self._settings_manager.store("ui_launched", True, self._settings_manager.SCOPE_ENGINE)
         
         return not(ui_launched)
                 
@@ -230,7 +233,7 @@ class AppDialog(QtGui.QWidget):
         Specifies if the details pane should be visible or not
         """
         # store our value in a setting        
-        self.__settings_manager.store("show_details", visible)
+        self._settings_manager.store("show_details", visible)
         
         if visible == False:
             # hide details pane
@@ -574,7 +577,7 @@ class AppDialog(QtGui.QWidget):
         When scale slider is manipulated
         """
         self.ui.publish_view.setIconSize(QtCore.QSize(value, value))
-        self.__settings_manager.store("thumb_size_scale", value)
+        self._settings_manager.store("thumb_size_scale", value)
         
     def _on_publish_selection(self, selected, deselected):
         """

@@ -27,13 +27,14 @@ class SgPublishTypeModel(ShotgunOverlayModel):
     
     FOLDERS_ITEM_TEXT = "Folders"
     
-    def __init__(self, parent, overlay_widget, action_manager):
+    def __init__(self, parent, overlay_widget, action_manager, settings_manager):
         """
         Constructor
         """
         ShotgunOverlayModel.__init__(self, parent, overlay_widget, download_thumbs=False)
         
         self._action_manager = action_manager
+        self._settings_manager = settings_manager
         
         # specify sort key
         self.setSortRole(SgPublishTypeModel.SORT_KEY_ROLE)
@@ -47,6 +48,13 @@ class SgPublishTypeModel(ShotgunOverlayModel):
             publish_type_field = "PublishedFileType"
         else:
             publish_type_field = "TankType"
+                
+        # get previous sessions selection
+        self._deselected_pub_types = self._settings_manager.retrieve("deselected_pub_types", 
+                                                                     [], 
+                                                                     self._settings_manager.SCOPE_INSTANCE)
+                
+        print "deselected LOADED ------- %s" % self._deselected_pub_types
                 
         # note: this model encodes which publish types are currently 
         # supported by the running engine. Basically what this means is that the 
@@ -65,6 +73,26 @@ class SgPublishTypeModel(ShotgunOverlayModel):
         
         # and finally ask model to refresh itself
         self._refresh_data()
+
+    def destroy(self):
+        """
+        Destructor
+        """
+        
+        # save filter settings
+        val = []
+        for idx in range(self.rowCount()):
+            item = self.item(idx)
+            if item.checkState() == QtCore.Qt.Unchecked:
+                # this item is not checked. Store its publish id
+                sg_data = shotgun_model.get_sg_data(item)
+                val.append(sg_data.get("id"))
+
+        print "deselected %s" % val
+        self._settings_manager.store("deselected_pub_types", val, self._settings_manager.SCOPE_INSTANCE)
+        
+        # call base class
+        ShotgunOverlayModel.destroy(self)
 
     def select_none(self):
         """
@@ -217,6 +245,15 @@ class SgPublishTypeModel(ShotgunOverlayModel):
         """
         # When items are born they are all disabled by default
         item.setEnabled(False)
+
+        # check if we have stored any deselections from previous sessions
+        sg_data = item.get_sg_data()
+        print "------> SG DATA %s"% sg_data
+        if sg_data and sg_data.get("id") not in self._deselected_pub_types:
+            item.setCheckState(QtCore.Qt.Checked)
+        else:
+            item.setCheckState(QtCore.Qt.Unchecked)
+        
             
     def _populate_item(self, item, sg_data):
         """
@@ -237,4 +274,4 @@ class SgPublishTypeModel(ShotgunOverlayModel):
         
         item.setData(sg_name_formatted, SgPublishTypeModel.DISPLAY_NAME_ROLE)
         item.setCheckable(True)        
-        item.setCheckState(QtCore.Qt.Checked)
+        

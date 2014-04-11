@@ -54,8 +54,6 @@ class SgPublishTypeModel(ShotgunOverlayModel):
                                                                      [], 
                                                                      self._settings_manager.SCOPE_INSTANCE)
                 
-        print "deselected LOADED ------- %s" % self._deselected_pub_types
-                
         # note: this model encodes which publish types are currently 
         # supported by the running engine. Basically what this means is that the 
         # model data holds a combination of shotgun data (the publish types) and
@@ -88,7 +86,6 @@ class SgPublishTypeModel(ShotgunOverlayModel):
                 sg_data = shotgun_model.get_sg_data(item)
                 val.append(sg_data.get("id"))
 
-        print "deselected %s" % val
         self._settings_manager.store("deselected_pub_types", val, self._settings_manager.SCOPE_INSTANCE)
         
         # call base class
@@ -248,7 +245,6 @@ class SgPublishTypeModel(ShotgunOverlayModel):
 
         # check if we have stored any deselections from previous sessions
         sg_data = item.get_sg_data()
-        print "------> SG DATA %s"% sg_data
         if sg_data and sg_data.get("id") not in self._deselected_pub_types:
             item.setCheckState(QtCore.Qt.Checked)
         else:

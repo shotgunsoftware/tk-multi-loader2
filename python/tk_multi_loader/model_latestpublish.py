@@ -100,7 +100,10 @@ class SgLatestPublishModel(ShotgunOverlayModel):
             return
         
         if sg_entity_link:
-            sg_filters = [["entity", "is", sg_entity_link]]
+            if sg_entity_link.get("type") != "Task":
+                sg_filters = [["entity", "is", sg_entity_link]]
+            else:
+                sg_filters = [["task", "is", sg_entity_link]]
         else:
             # None indicates that we should not show any publishes
             sg_filters = None

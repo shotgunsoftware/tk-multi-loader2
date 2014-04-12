@@ -46,7 +46,6 @@ class SgLatestPublishModel(ShotgunOverlayModel):
         Model which represents the latest publishes for an entity
         """        
         self._publish_type_model = publish_type_model
-        self._welcome_icon = QtGui.QIcon(QtGui.QPixmap(":/res/welcome.png"))
         self._no_pubs_found_icon = QtGui.QPixmap(":/res/no_publishes_found.png")
         self._folder_icon = QtGui.QIcon(QtGui.QPixmap(":/res/folder_512x400.png"))
         self._loading_icon = QtGui.QIcon(QtGui.QPixmap(":/res/loading_512x400.png"))
@@ -92,13 +91,6 @@ class SgLatestPublishModel(ShotgunOverlayModel):
                              these are the sub folders for the currently selected item
                              in the tree view.
         """
-        
-        if sg_entity_link is None and len(treeview_folder_items) == 0:
-            # this is an edge case that really only happens when the
-            # initial cache hasn't been primed.
-            self._show_overlay_pixmap(self._no_pubs_found_icon)
-            return
-        
         if sg_entity_link:
             if sg_entity_link.get("type") != "Task":
                 sg_filters = [["entity", "is", sg_entity_link]]

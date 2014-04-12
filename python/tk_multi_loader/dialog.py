@@ -312,7 +312,7 @@ class AppDialog(QtGui.QWidget):
             self.ui.detail_playback_btn.setVisible(is_publish)
         
         # note - before the UI has been shown, querying isVisible on the actual
-        # widget doesn't work here so use memeber variable to track state instead                 
+        # widget doesn't work here so use member variable to track state instead                 
         if not self._details_pane_visible:
             return
         
@@ -677,8 +677,16 @@ class AppDialog(QtGui.QWidget):
 
     
     def _on_reload_action(self):
-        pass
-    
+        """
+        Hard reload all caches
+        """
+        self._status_model.hard_refresh()
+        self._publish_history_model.hard_refresh()
+        self._publish_type_model.hard_refresh()
+        self._publish_model.hard_refresh()
+        for p in self._entity_presets:
+            self._entity_presets[p].model.hard_refresh()
+
         
     ########################################################################################
     # entity listing tree view and presets toolbar

@@ -69,6 +69,7 @@ class AppDialog(QtGui.QWidget):
         
         #################################################
         # details pane
+        self._details_pane_visible = False
                 
         self._details_action_menu = QtGui.QMenu()   
         self.ui.detail_actions_btn.setMenu(self._details_action_menu)
@@ -251,11 +252,13 @@ class AppDialog(QtGui.QWidget):
         
         if visible == False:
             # hide details pane
+            self._details_pane_visible = False
             self.ui.details.setVisible(False)
             self.ui.info.setText("Show Details")
         
         else:
             # show details pane
+            self._details_pane_visible = True
             self.ui.details.setVisible(True)
             self.ui.info.setText("Hide Details")
             
@@ -307,10 +310,10 @@ class AppDialog(QtGui.QWidget):
             # hide actions and playback stuff
             self.ui.detail_actions_btn.setVisible(is_publish)
             self.ui.detail_playback_btn.setVisible(is_publish)
-            
-            
         
-        if not self.ui.details.isVisible():
+        # note - before the UI has been shown, querying isVisible on the actual
+        # widget doesn't work here so use memeber variable to track state instead                 
+        if not self._details_pane_visible:
             return
         
         if item is None:        

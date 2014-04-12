@@ -954,13 +954,12 @@ class AppDialog(QtGui.QWidget):
         # the selection model will attempt to pair up with the model is
         # data is being loaded in, resulting in many many events
         self.ui.publish_view.selectionModel().clear()
-        
-        # first determine the child folders.
+                
+        # Determine the child folders.
         if item is None:
             # nothing is selected, bring in all the top level
             # objects in the current tab
             root_item = self._entity_presets[self._current_entity_preset].model.invisibleRootItem()
-
         else:
             root_item = item
 
@@ -969,30 +968,17 @@ class AppDialog(QtGui.QWidget):
         child_folders = []
         for child_idx in range(root_item.rowCount()):
             child_folders.append(root_item.child(child_idx))
+                
+        # is the show child folders checked?
+        show_sub_items = self.ui.show_sub_items.isChecked()
         
-        # now determine the rest of the query
-        if item is None:
-            # nothing selected.
-            self._publish_model.load_data(None, child_folders)
-        
-        elif self.ui.show_sub_items.isChecked():
-            # we have a selection and the show sub items is ticked
-            partial_filters = item.model().get_filters(item)
-            entity_type = item.model().get_entity_type()
-            self._publish_model.load_data_based_on_query(partial_filters, entity_type, child_folders)
-
+        if show_sub_items:
+            # indicate this with a special background color
+            self.ui.publish_view.setStyleSheet("#publish_view { background-color: rgba(44, 147, 226, 20%); }")
         else:
-            # we have a selection and show sub items is not checked
-            sg_data = item.get_sg_data()
-            
-            if sg_data is None:
-                # not at leaf level. so do not include shotgun matches 
-                self._publish_model.load_data(None, child_folders)
-                    
-            else:
-                # we are at a leaf level!
-                self._publish_model.load_data(sg_data, child_folders)
-            
+            self.ui.publish_view.setStyleSheet("")
+        
+        self._publish_model.load_data(item, child_folders, show_sub_items)
 
     def _populate_entity_breadcrumbs(self):
         """

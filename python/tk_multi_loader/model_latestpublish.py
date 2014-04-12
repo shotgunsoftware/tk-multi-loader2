@@ -60,47 +60,102 @@ class SgLatestPublishModel(ShotgunOverlayModel):
     ############################################################################################
     # public interface
 
-    def load_data_based_on_query(self, partial_filters, entity_type, treeview_folder_items):
-        """
-        Special method which sets up the model based on a query.
-        This method will call shotgun SYNCHRONOUSLY, (something to improve later on)
-        in order to resolve a number of shotgun objects based on a set of filters.
-        These filters will form the basis of the model's source query.
-        """
-        app = sgtk.platform.current_bundle()
-        
-        # get shotgun data
-        data = app.shotgun.find(entity_type, partial_filters)
-        sg_filters = [["entity", "in", data]]
-        self._do_load_data(sg_filters, treeview_folder_items)
-
-    def load_data(self, sg_entity_link, treeview_folder_items):        
+    def load_data(self, item, child_folders, show_sub_items):        
         """
         Clears the model and sets it up for a particular entity.
         Loads any cached data that exists.
-        
-        This call should be followed by a call to refresh_data() to 
-        asynchronously update the model in the background with new
-        Shotgun data.
-                
-        :param sg_entity_link: shotgun data for an entity for which we should display
-                               associated publishes. If None then there is no entity 
-                               present for which to load publishes.
                         
-        :param folder_items: list of QStandardItem representing items in the tree view.
-                             these are the sub folders for the currently selected item
-                             in the tree view.
+        :param item: Selected itme in the treeview, None if nothing is selected.        
         """
-        if sg_entity_link:
-            if sg_entity_link.get("type") != "Task":
-                sg_filters = [["entity", "is", sg_entity_link]]
-            else:
-                sg_filters = [["task", "is", sg_entity_link]]
-        else:
-            # None indicates that we should not show any publishes
+        
+        app = sgtk.platform.current_bundle()
+        
+        if item is None:
+            # nothing selected in the treeview
+            # passing none to _load_data indicates that no query should be executed
             sg_filters = None
         
-        self._do_load_data(sg_filters, treeview_folder_items)
+        else:
+            # we have a selection!
+            
+            if show_sub_items:
+                # special mode -- in this case we don't show any of the 
+                # child folders and only the partial matches of all the leaf nodes 
+                 
+                # for example, this may return
+                # entity type shot, [["sequence", "is", "xxx"]] or
+                # entity type shot, [["status", "is", "ip"]] or
+                partial_filters = item.model().get_filters(item)
+                entity_type = item.model().get_entity_type()
+                
+                # now get a list of matches from the above query from
+                # shotgun - note that this is a synchronous call so
+                # it may 'pause' execution briefly for the user
+                data = app.shotgun.find(entity_type, partial_filters)
+                
+                # now create the final query for the model - this will be 
+                # a big in statement listing all the ids returned from
+                # the previous query, asking the model to only show the
+                # items matching the previous query.
+                #
+                # note that for tasks, we link via the task field
+                # rather than the std entity link field
+                #
+                if entity_type == "Task":
+                    sg_filters = [["task", "in", data]]
+                else:
+                    sg_filters = [["entity", "in", data]]
+                
+                # lastly, when we are in this special mode, the main view 
+                # is no longer functioning as a browsable hierarchy
+                # but is switching into more of a paradigm of an inverse
+                # database. Indicate the difference by not showing any folders
+                child_folders = []
+                
+            else:
+                # standard mode - show folders and items for the currently selected item
+                # for leaf nodes and for tree nodes which are connected to an entity,
+                # show matches.
+                
+                # get the field data associated with the node
+                # this is shotgun field name and value for the tree item
+                # for a leaf node, it is typically code: foo
+                # for a sequence intermedaite node its sg_sequence: {sg link dict}
+                # for a status intermediate node, it may be: sg_status: ip
+                field_data = shotgun_model.get_sanitized_data(item, self.SG_ASSOCIATED_FIELD_ROLE)
+                
+                # for leaf nodes, we also have the full sg data
+                # note that for intermediate nodes, this is None
+                sg_data = item.get_sg_data()
+                
+                if sg_data:
+                    # leaf node!
+                    # show the items associated. Handle tasks 
+                    # via the task field instead of the entity field
+                    if sg_data.get("type") == "Task":
+                        sg_filters = [["task", "is", {"type": sg_data["type"], "id": sg_data["id"]} ]]
+                    else:
+                        sg_filters = [["entity", "is", {"type": sg_data["type"], "id": sg_data["id"]} ]]
+                
+                else:
+                    # intermediate node. Get the field data
+                    field_name = field_data["name"]
+                    field_value = field_data["value"]
+                
+                    if isinstance(field_value, dict) and "name" in field_value and "type" in field_value:
+                        # this is an intermediate node like a sequence or an asset which 
+                        # can have publishes of its own associated
+                        sg_filters = [["entity", "is", field_value ]]
+                        
+                    else:
+                        # this is an intermediate node like status or asset type which does not 
+                        # have any publishes of its own, because the value (e.g. the status or the asset type)
+                        # is nothing that you could link up a publish to.
+                        sg_filters = None
+        
+        # now that we have establishes the sg filters and which 
+        # folders to load, set up the actual model
+        self._do_load_data(sg_filters, child_folders)
 
     def _do_load_data(self, sg_filters, treeview_folder_items):
         """

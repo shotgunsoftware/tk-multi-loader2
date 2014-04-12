@@ -71,10 +71,22 @@ configuration:
               
     
         type: list
-        description: "List of entities for the tree view. Each item should have keys caption, entity_type, filters and hierarchy"
+        description: "List of entities for the tree view. 
+                      Each item should be a dictionary with keys caption, 
+                      entity_type, filters and hierarchy"
         allows_empty: False
         values:
             type: dict
+
+    publish_filters:
+        type: list
+        description: "List of additional shotgun filters to apply to the publish listings.  These
+                      will be applied before any other filtering takes place and would allow you to 
+                      for example hide things with a certain status."
+        values:
+            type: shotgun_filter
+        allows_empty: True
+        default_value: []
 
             
 # this app works in all engines - it does not contain 

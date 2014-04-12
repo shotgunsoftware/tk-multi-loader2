@@ -69,6 +69,11 @@ class SgPublishHistoryModel(ShotgunOverlayModel):
                     [publish_type_field, "is", sg_data[publish_type_field] ],
                   ]
 
+        # add external filters from config
+        app = sgtk.platform.current_bundle()
+        pub_filters = app.get_setting("publish_filters", [])
+        filters.extend(pub_filters)
+
         ShotgunOverlayModel._load_data(self, 
                                        entity_type=publish_entity_type, 
                                        filters=filters, 

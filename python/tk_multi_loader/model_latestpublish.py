@@ -111,6 +111,9 @@ class SgLatestPublishModel(ShotgunOverlayModel):
         self._do_load_data(sg_filters, treeview_folder_items)
 
     def _do_load_data(self, sg_filters, treeview_folder_items):
+        """
+        Load and refresh data.
+        """
         # first figure out which fields to get from shotgun
         app = sgtk.platform.current_bundle()
         publish_entity_type = sgtk.util.get_published_file_entity_type(app.tank)
@@ -119,6 +122,12 @@ class SgLatestPublishModel(ShotgunOverlayModel):
             self._publish_type_field = "published_file_type"
         else:
             self._publish_type_field = "tank_type"
+            
+        # add external filters from config
+        if sg_filters:
+            app = sgtk.platform.current_bundle()
+            pub_filters = app.get_setting("publish_filters", [])
+            sg_filters.extend(pub_filters)
             
         
         publish_fields = ["name", 

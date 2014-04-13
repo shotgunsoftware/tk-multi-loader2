@@ -13,7 +13,7 @@ from sgtk.platform.qt import QtCore, QtGui
 
 from .model_latestpublish import SgLatestPublishModel
 
-class SgPublishProxyModel(QtGui.QSortFilterProxyModel):
+class SgLatestPublishProxyModel(QtGui.QSortFilterProxyModel):
     """
     Filter model to be used in conjunction with SgLatestPublishModel
     """

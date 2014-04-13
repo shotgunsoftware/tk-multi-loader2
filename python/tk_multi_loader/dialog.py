@@ -17,7 +17,8 @@ from .model_latestpublish import SgLatestPublishModel
 from .model_publishtype import SgPublishTypeModel
 from .model_status import SgStatusModel
 from .action_manager import ActionManager
-from .proxymodel_publish import SgPublishProxyModel 
+from .proxymodel_latestpublish import SgLatestPublishProxyModel 
+from .proxymodel_entity import SgEntityProxyModel
 from .delegate_publish_thumb import SgPublishDelegate
 from .model_publishhistory import SgPublishHistoryModel
 from .delegate_publish_history import SgPublishHistoryDelegate
@@ -114,7 +115,7 @@ class AppDialog(QtGui.QWidget):
         self._publish_model = SgLatestPublishModel(self, self.ui.publish_view, self._publish_type_model)
         
         # set up a proxy model to cull results based on type selection
-        self._publish_proxy_model = SgPublishProxyModel(self)
+        self._publish_proxy_model = SgLatestPublishProxyModel(self)
         self._publish_proxy_model.setSourceModel(self._publish_model)
 
         # hook up view -> proxy model -> model
@@ -801,9 +802,27 @@ class AppDialog(QtGui.QWidget):
             layout = QtGui.QVBoxLayout(tab)
             layout.setSpacing(0)
             layout.setContentsMargins(0, 0, 0, 0)
+            
             # and add a treeview
             view = QtGui.QTreeView(tab)
             layout.addWidget(view)
+            
+            # add search textfield
+            search = QtGui.QLineEdit(tab)
+            search.setStyleSheet("border-width: 1px; \n"
+                                        "background-image: url(:/res/search.png);\n"
+                                        "background-repeat: no-repeat;\n"
+                                        "background-position: center left;\n"
+                                        "border-color: #535353; \n"
+                                        "border-radius: 5px; \n"
+                                        "padding-left:20px;\n"
+                                        "margin:4px;\n"
+                                        "height:22px;\n"
+                                        "\n"
+                                        "")
+            layout.addWidget(search)
+            
+            
             
             action_ea = QtGui.QAction("Expand All Folders", view)
             action_ca = QtGui.QAction("Collapse All Folders", view)
@@ -816,11 +835,18 @@ class AppDialog(QtGui.QWidget):
 
             # make sure we keep a handle to all the new objects
             # otherwise the GC may not work
-            self._dynamic_widgets.extend( [tab, layout, view, action_ea, action_ca] )
+            self._dynamic_widgets.extend( [tab, layout, search, view, action_ea, action_ca] )
 
             # set up data backend
             model = SgEntityModel(self, view, sg_entity_type, e["filters"], e["hierarchy"])
+            
+            # set up proxy model that we connect our search to
+            proxy_model = SgEntityProxyModel(self)
+            proxy_model.setSourceModel(model)
+            search.textChanged.connect(proxy_model.setFilterFixedString)
 
+            self._dynamic_widgets.extend([model, proxy_model])
+            
             # configure the view
             view.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
             view.setProperty("showDropIndicator", False)
@@ -828,7 +854,7 @@ class AppDialog(QtGui.QWidget):
             view.setStyleSheet("QTreeView::item { padding: 5px; }")            
             view.setUniformRowHeights(True)
             view.setHeaderHidden(True)
-            view.setModel(model)
+            view.setModel(proxy_model)
         
             # set up on-select callbacks - need to help pyside GC (maya 2012)
             # by first creating a direct handle to the selection model before
@@ -931,9 +957,16 @@ class AppDialog(QtGui.QWidget):
         
         if selection_model.hasSelection():            
             # get the current index
-            current = selection_model.selection().indexes()[0]
-            # get selected item
-            item = current.model().itemFromIndex(current)
+            current_proxy_idx = selection_model.selection().indexes()[0]
+            
+            # the incoming model index is an index into our proxy model
+            # before continuing, translate it to an index into the underlying model
+            proxy_model = current_proxy_idx.model()
+            source_index = proxy_model.mapToSource(current_proxy_idx)
+            
+            # now we have arrived at our model derived from StandardItemModel
+            # so let's retrieve the standarditem object associated with the index
+            item = source_index.model().itemFromIndex(source_index)            
         
         # notify history
         self._add_history_record(self._current_entity_preset, item)
@@ -992,10 +1025,16 @@ class AppDialog(QtGui.QWidget):
         if selection_model.hasSelection():
         
             # get the current index
-            current = selection_model.selection().indexes()[0]
-            # get selected item
-            item = current.model().itemFromIndex(current)
+            current_proxy_idx = selection_model.selection().indexes()[0]
+
+            # the incoming model index is an index into our proxy model
+            # before continuing, translate it to an index into the underlying model
+            proxy_model = current_proxy_idx.model()
+            source_index = proxy_model.mapToSource(current_proxy_idx)
             
+            # now we have arrived at our model derived from StandardItemModel
+            # so let's retrieve the standarditem object associated with the index
+            item = source_index.model().itemFromIndex(source_index)
             
             # figure out the tree view selection, 
             # walk up to root, list of items will be in bottom-up order...

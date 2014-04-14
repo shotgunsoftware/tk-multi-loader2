@@ -305,7 +305,7 @@ class AppDialog(QtGui.QWidget):
             """
             Helper method to make a detail table row
             """
-            return "<tr><td><b style='color:#619DE0'>%s</b>&nbsp;</td><td>%s</td></tr>" % (left, right)
+            return "<tr><td><b style='color:#2C93E2'>%s</b>&nbsp;</td><td>%s</td></tr>" % (left, right)
         
         def __set_publish_ui_visibility(is_publish):
             """
@@ -1095,7 +1095,7 @@ class AppDialog(QtGui.QWidget):
         # lastly add the name of the tab
         crumbs.append("<b>%s</b>" % self._current_entity_preset)
         
-        breadcrumbs = " <span style='color:#619DE0'>&#9656;</span> ".join( crumbs[::-1] )
+        breadcrumbs = " <span style='color:#2C93E2'>&#9656;</span> ".join( crumbs[::-1] )
           
         self.ui.entity_breadcrumbs.setText("<big>%s</big>" % breadcrumbs)
         

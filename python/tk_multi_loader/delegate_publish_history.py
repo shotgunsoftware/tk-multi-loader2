@@ -86,7 +86,7 @@ class SgPublishHistoryDelegate(shotgun_view.WidgetDelegate):
         header_str = ""
 
         if sg_item.get("version_number"):
-            header_str += "<b style='color:#619DE0'>Version %03d</b>" % sg_item.get("version_number")
+            header_str += "<b style='color:#2C93E2'>Version %03d</b>" % sg_item.get("version_number")
         
         try:
             created_unixtime = sg_item.get("created_at")

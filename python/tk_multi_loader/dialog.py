@@ -777,9 +777,14 @@ class AppDialog(QtGui.QWidget):
         if item:
             # ensure that the tree view is expanded and that the item we are about 
             # to selected is in vertically centered in the widget
-            view.scrollTo(item.index(), QtGui.QAbstractItemView.PositionAtCenter)
-            selection_model.select(item.index(), QtGui.QItemSelectionModel.ClearAndSelect)
-            selection_model.setCurrentIndex(item.index(), QtGui.QItemSelectionModel.ClearAndSelect)
+            
+            # when we pass selection indicies into the view, must first convert them
+            # from deep model index into proxy model index style indicies
+            proxy_index = view.model().mapFromSource(item.index())
+            # and now perform view operations
+            view.scrollTo(proxy_index, QtGui.QAbstractItemView.PositionAtCenter)
+            selection_model.select(proxy_index, QtGui.QItemSelectionModel.ClearAndSelect)
+            selection_model.setCurrentIndex(proxy_index, QtGui.QItemSelectionModel.ClearAndSelect)
             
         else:
             # clear selection to match no items

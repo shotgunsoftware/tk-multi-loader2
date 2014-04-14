@@ -579,6 +579,24 @@ class AppDialog(QtGui.QWidget):
         """
         Triggered when the show sub items checkbox is clicked
         """
+
+        # check if we should pop up that help screen        
+        if self.ui.show_sub_items.isChecked():
+            subitems_shown = self._settings_manager.retrieve("subitems_shown", 
+                                                             False, 
+                                                             self._settings_manager.SCOPE_ENGINE)
+            if subitems_shown == False:
+                # store in settings that we now clicked the subitems at least once
+                self._settings_manager.store("subitems_shown", True, self._settings_manager.SCOPE_ENGINE)
+                # and display help
+                app = sgtk.platform.current_bundle()
+                help_pix = [ QtGui.QPixmap(":/res/subitems_help_1.png"), 
+                             QtGui.QPixmap(":/res/subitems_help_2.png"), 
+                             QtGui.QPixmap(":/res/subitems_help_3.png"),
+                             QtGui.QPixmap(":/res/help_4.png") ] 
+                help_screen.show_help_screen(self.window(), app, help_pix)
+                
+        
         selection_model = self._entity_presets[self._current_entity_preset].view.selectionModel()        
         item = None
         if selection_model.hasSelection():            
@@ -691,6 +709,30 @@ class AppDialog(QtGui.QWidget):
         
     ########################################################################################
     # entity listing tree view and presets toolbar
+        
+    def _get_item_from_selection(self):
+        """
+        Returns the item currently selected in the tree view, None 
+        if no selection has been made.
+        """
+        
+        selected_item = None
+        selection_model = self._entity_presets[self._current_entity_preset].view.selectionModel()
+        if selection_model.hasSelection():
+            
+            current_idx = selection_model.selection().indexes()[0]
+        
+            model = current_idx.model()
+
+            if not isinstance( model, SgEntityModel ):
+                # proxy model!
+                current_idx = model.mapToSource(current_idx)
+        
+            # now we have arrived at our model derived from StandardItemModel
+            # so let's retrieve the standarditem object associated with the index
+            selected_item = current_idx.model().itemFromIndex(current_idx)            
+        
+        return selected_item
         
     def _select_item_in_entity_tree(self, tab_caption, item):
         """
@@ -923,14 +965,8 @@ class AppDialog(QtGui.QWidget):
             # update breadcrumbs
             self._populate_entity_breadcrumbs()        
 
-            # now figure out what is selected            
-            selected_item = None
-            selection_model = self._entity_presets[self._current_entity_preset].view.selectionModel()
-            if selection_model.hasSelection():
-                # get the current index
-                current = selection_model.selection().indexes()[0]
-                # get selected item
-                selected_item = current.model().itemFromIndex(current)
+            # now figure out what is selected
+            selected_item = self._get_item_from_selection()
                         
             # add history record
             self._add_history_record(self._current_entity_preset, selected_item)
@@ -951,31 +987,16 @@ class AppDialog(QtGui.QWidget):
         # update breadcrumbs
         self._populate_entity_breadcrumbs()
         
-        selection_model = self._entity_presets[self._current_entity_preset].view.selectionModel()
-        
-        item = None
-        
-        if selection_model.hasSelection():            
-            # get the current index
-            current_proxy_idx = selection_model.selection().indexes()[0]
-            
-            # the incoming model index is an index into our proxy model
-            # before continuing, translate it to an index into the underlying model
-            proxy_model = current_proxy_idx.model()
-            source_index = proxy_model.mapToSource(current_proxy_idx)
-            
-            # now we have arrived at our model derived from StandardItemModel
-            # so let's retrieve the standarditem object associated with the index
-            item = source_index.model().itemFromIndex(source_index)            
-        
+        selected_item = self._get_item_from_selection()
+                
         # notify history
-        self._add_history_record(self._current_entity_preset, item)
+        self._add_history_record(self._current_entity_preset, selected_item)
         
         # tell details panel to clear itself
         self._setup_details_panel(None)
         
         # tell publish UI to update itself
-        self._load_publishes_for_entity_item(item)
+        self._load_publishes_for_entity_item(selected_item)
             
     
     def _load_publishes_for_entity_item(self, item):
@@ -1018,27 +1039,15 @@ class AppDialog(QtGui.QWidget):
         Computes the current entity breadcrumbs
         """
         
-        selection_model = self._entity_presets[self._current_entity_preset].view.selectionModel()
+        selected_item = self._get_item_from_selection()
         
         crumbs = []
     
-        if selection_model.hasSelection():
-        
-            # get the current index
-            current_proxy_idx = selection_model.selection().indexes()[0]
-
-            # the incoming model index is an index into our proxy model
-            # before continuing, translate it to an index into the underlying model
-            proxy_model = current_proxy_idx.model()
-            source_index = proxy_model.mapToSource(current_proxy_idx)
-            
-            # now we have arrived at our model derived from StandardItemModel
-            # so let's retrieve the standarditem object associated with the index
-            item = source_index.model().itemFromIndex(source_index)
-            
+        if selected_item:
+                    
             # figure out the tree view selection, 
             # walk up to root, list of items will be in bottom-up order...
-            tmp_item = item
+            tmp_item = selected_item
             while tmp_item:
                 sg_type = shotgun_model.get_sanitized_data(tmp_item, SgEntityModel.TYPE_ROLE)
                 name = tmp_item.text()

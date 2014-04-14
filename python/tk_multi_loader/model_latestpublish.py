@@ -65,7 +65,7 @@ class SgLatestPublishModel(ShotgunOverlayModel):
         Clears the model and sets it up for a particular entity.
         Loads any cached data that exists.
                         
-        :param item: Selected itme in the treeview, None if nothing is selected.        
+        :param item: Selected item in the treeview, None if nothing is selected.        
         """
         
         app = sgtk.platform.current_bundle()
@@ -156,6 +156,18 @@ class SgLatestPublishModel(ShotgunOverlayModel):
         # now that we have establishes the sg filters and which 
         # folders to load, set up the actual model
         self._do_load_data(sg_filters, child_folders)
+
+    def toggle_not_found_overlay(self, show):
+        """
+        Displays the items not found overlay.
+        """
+        if show:
+            self._show_overlay_pixmap(self._no_pubs_found_icon)
+        else:
+            self._hide_overlay_info()
+
+    ############################################################################################
+    # private methods
 
     def _do_load_data(self, sg_filters, treeview_folder_items):
         """
@@ -349,16 +361,6 @@ class SgLatestPublishModel(ShotgunOverlayModel):
         else:
             thumb = utils.create_overlayed_publish_thumbnail(path)
         item.setIcon(QtGui.QIcon(thumb))
-
-    def toggle_not_found_overlay(self, show):
-        """
-        Displays the items not found overlay
-        """
-        if show:
-            self._show_overlay_pixmap(self._no_pubs_found_icon)
-        else:
-            self._hide_overlay_info()
-        
 
     def _before_data_processing(self, sg_data_list):
         """

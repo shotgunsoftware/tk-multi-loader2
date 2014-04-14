@@ -118,6 +118,13 @@ class AppDialog(QtGui.QWidget):
         self._publish_proxy_model = SgLatestPublishProxyModel(self)
         self._publish_proxy_model.setSourceModel(self._publish_model)
 
+        # whenever the number of columns change in the proxy model
+        # check if we should display the "sorry, no publishes found" overlay
+        self._publish_model.cache_loaded.connect(self._on_publish_content_change)
+        self._publish_model.data_refreshed.connect(self._on_publish_content_change)
+        self._publish_proxy_model.filter_changed.connect(self._on_publish_content_change)
+        
+
         # hook up view -> proxy model -> model
         self.ui.publish_view.setModel(self._publish_proxy_model)
                 
@@ -574,6 +581,15 @@ class AppDialog(QtGui.QWidget):
 
     ########################################################################################
     # publish view
+        
+    def _on_publish_content_change(self):
+        """
+        Triggered when the number of columns in the model is changing
+        """
+        # if no publish items are visible, display not found overlay
+        pub_items = self._publish_proxy_model.rowCount()
+        self._publish_model.toggle_not_found_overlay(pub_items == 0)
+        
         
     def _on_show_subitems_toggled(self):
         """

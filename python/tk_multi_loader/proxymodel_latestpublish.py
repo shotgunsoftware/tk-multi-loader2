@@ -18,6 +18,9 @@ class SgLatestPublishProxyModel(QtGui.QSortFilterProxyModel):
     Filter model to be used in conjunction with SgLatestPublishModel
     """
     
+    # signal which is emitted whenever a filter changes
+    filter_changed = QtCore.Signal()
+    
     def __init__(self, parent):
         QtGui.QSortFilterProxyModel.__init__(self, parent)
         self._valid_type_ids = None
@@ -31,9 +34,7 @@ class SgLatestPublishProxyModel(QtGui.QSortFilterProxyModel):
         self._show_folders = show_folders
         # tell model to repush data
         self.invalidateFilter()
-        # have sg source model display a not found overlay if
-        # nothing is selected
-        self.sourceModel().toggle_not_found_overlay(self.rowCount() == 0)
+        self.filter_changed.emit()
         
     def filterAcceptsRow(self, source_row, source_parent_idx):
         """

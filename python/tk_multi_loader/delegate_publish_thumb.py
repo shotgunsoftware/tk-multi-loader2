@@ -102,11 +102,9 @@ class SgPublishDelegate(shotgun_view.WidgetDelegate):
                         
             elif tree_item_sg_data:
                 # this is a leaf node
-                print "leaf"
                 widget.set_text(field_value, tree_item_sg_data.get("type"))
                  
             else:
-                print "other"
                 # other value (e.g. intermediary non-entity link node like sg_asset_type)
                 widget.set_text(field_value, "")
 

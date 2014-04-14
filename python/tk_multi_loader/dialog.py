@@ -892,6 +892,7 @@ class AppDialog(QtGui.QWidget):
                                         "height:22px;\n"
                                         "\n"
                                         "")
+            search.setToolTip("Use the <i>search</i> field to narrow down the items displayed in the tree above.")
             layout.addWidget(search)
             
             
@@ -932,7 +933,7 @@ class AppDialog(QtGui.QWidget):
             # by first creating a direct handle to the selection model before
             # setting up signal / slots
             selection_model = view.selectionModel()
-            self._dynamic_widgets.append(selection_model)      
+            self._dynamic_widgets.append(selection_model)
             selection_model.selectionChanged.connect(self._on_treeview_item_selected)
             
             # finally store all these objects keyed by the caption

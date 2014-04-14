@@ -1,8 +1,6 @@
 <RCC>
   <qresource prefix="res">
-    <file>home.png</file>
-    <file>arrow_back.png</file>
-    <file>arrow_forward.png</file>
+
     <file>search.png</file>
     <file>gear.png</file>
     <file>play_icon.png</file>
@@ -20,6 +18,17 @@
     <file>subitems_help_1.png</file>
     <file>subitems_help_2.png</file>
     <file>subitems_help_3.png</file>
+    <file>right_arrow_hover.png</file>
+    <file>right_arrow_pressed.png</file>
+    <file>right_arrow.png</file>
+    <file>right_arrow_disabled.png</file>
+    <file>left_arrow_hover.png</file>
+    <file>left_arrow_pressed.png</file>
+    <file>left_arrow.png</file>
+    <file>left_arrow_disabled.png</file>
+    <file>home.png</file>
+    <file>home_hover.png</file>
+    <file>home_pressed.png</file>    
 
   </qresource>
 </RCC>

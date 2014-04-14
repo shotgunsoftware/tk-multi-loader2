@@ -22,25 +22,73 @@ class Ui_Dialog(object):
         self.navigation_home = QtGui.QToolButton(Dialog)
         self.navigation_home.setMinimumSize(QtCore.QSize(40, 40))
         self.navigation_home.setMaximumSize(QtCore.QSize(40, 40))
-        icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(":/res/home.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.navigation_home.setIcon(icon)
+        self.navigation_home.setStyleSheet("QToolButton{\n"
+"   border: none;\n"
+"   background-color: none;\n"
+"   background-repeat: no-repeat;\n"
+"   background-position: center center;\n"
+"   background-image: url(:/res/home.png);\n"
+"}\n"
+"\n"
+"QToolButton:hover{\n"
+"background-image: url(:/res/home_hover.png);\n"
+"}\n"
+"\n"
+"QToolButton:Pressed {\n"
+"background-image: url(:/res/home_pressed.png);\n"
+"}\n"
+"")
         self.navigation_home.setObjectName("navigation_home")
         self.top_toolbar.addWidget(self.navigation_home)
         self.navigation_prev = QtGui.QToolButton(Dialog)
         self.navigation_prev.setMinimumSize(QtCore.QSize(40, 40))
         self.navigation_prev.setMaximumSize(QtCore.QSize(40, 40))
-        icon1 = QtGui.QIcon()
-        icon1.addPixmap(QtGui.QPixmap(":/res/arrow_back.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.navigation_prev.setIcon(icon1)
+        self.navigation_prev.setStyleSheet("QToolButton{\n"
+"   border: none;\n"
+"   background-color: none;\n"
+"   background-repeat: no-repeat;\n"
+"   background-position: center center;\n"
+"   background-image: url(:/res/left_arrow.png);\n"
+"}\n"
+"\n"
+"QToolButton:disabled{\n"
+"   background-image: url(:/res/left_arrow_disabled.png);\n"
+"}\n"
+"\n"
+"QToolButton:hover{\n"
+"background-image: url(:/res/left_arrow_hover.png);\n"
+"}\n"
+"\n"
+"QToolButton:Pressed {\n"
+"background-image: url(:/res/left_arrow_pressed.png);\n"
+"}\n"
+"")
         self.navigation_prev.setObjectName("navigation_prev")
         self.top_toolbar.addWidget(self.navigation_prev)
         self.navigation_next = QtGui.QToolButton(Dialog)
         self.navigation_next.setMinimumSize(QtCore.QSize(40, 40))
         self.navigation_next.setMaximumSize(QtCore.QSize(40, 40))
-        icon2 = QtGui.QIcon()
-        icon2.addPixmap(QtGui.QPixmap(":/res/arrow_forward.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.navigation_next.setIcon(icon2)
+        self.navigation_next.setStyleSheet("QToolButton{\n"
+"   border: none;\n"
+"   background-color: none;\n"
+"   background-repeat: no-repeat;\n"
+"   background-position: center center;\n"
+"   background-image: url(:/res/right_arrow.png);\n"
+"}\n"
+"\n"
+"QToolButton:disabled{\n"
+"   background-image: url(:/res/right_arrow_disabled.png);\n"
+"}\n"
+"\n"
+"\n"
+"QToolButton:hover{\n"
+"background-image: url(:/res/right_arrow_hover.png);\n"
+"}\n"
+"\n"
+"QToolButton:Pressed {\n"
+"background-image: url(:/res/right_arrow_pressed.png);\n"
+"}\n"
+"")
         self.navigation_next.setObjectName("navigation_next")
         self.top_toolbar.addWidget(self.navigation_next)
         self.label = QtGui.QLabel(Dialog)
@@ -99,9 +147,9 @@ class Ui_Dialog(object):
         self.label_3.setObjectName("label_3")
         self.horizontalLayout_6.addWidget(self.label_3)
         self.cog_button = QtGui.QToolButton(Dialog)
-        icon3 = QtGui.QIcon()
-        icon3.addPixmap(QtGui.QPixmap(":/res/gear.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.cog_button.setIcon(icon3)
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(":/res/gear.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.cog_button.setIcon(icon)
         self.cog_button.setIconSize(QtCore.QSize(20, 16))
         self.cog_button.setPopupMode(QtGui.QToolButton.InstantPopup)
         self.cog_button.setObjectName("cog_button")
@@ -220,9 +268,9 @@ class Ui_Dialog(object):
         self.detail_playback_btn.setMinimumSize(QtCore.QSize(55, 55))
         self.detail_playback_btn.setMaximumSize(QtCore.QSize(55, 55))
         self.detail_playback_btn.setText("")
-        icon4 = QtGui.QIcon()
-        icon4.addPixmap(QtGui.QPixmap(":/res/play_icon.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.detail_playback_btn.setIcon(icon4)
+        icon1 = QtGui.QIcon()
+        icon1.addPixmap(QtGui.QPixmap(":/res/play_icon.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.detail_playback_btn.setIcon(icon1)
         self.detail_playback_btn.setIconSize(QtCore.QSize(40, 40))
         self.detail_playback_btn.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
         self.detail_playback_btn.setObjectName("detail_playback_btn")
@@ -271,30 +319,24 @@ class Ui_Dialog(object):
     def retranslateUi(self, Dialog):
         Dialog.setWindowTitle(QtGui.QApplication.translate("Dialog", "Load items into your scene", None, QtGui.QApplication.UnicodeUTF8))
         self.navigation_home.setToolTip(QtGui.QApplication.translate("Dialog", "Clicking the <i>home button</i> will take you to the location that best matches your current work area.", None, QtGui.QApplication.UnicodeUTF8))
-        self.navigation_home.setText(QtGui.QApplication.translate("Dialog", "Home", None, QtGui.QApplication.UnicodeUTF8))
         self.navigation_prev.setToolTip(QtGui.QApplication.translate("Dialog", "<i>Go back</i> in the folder history.", None, QtGui.QApplication.UnicodeUTF8))
-        self.navigation_prev.setText(QtGui.QApplication.translate("Dialog", "< Back", None, QtGui.QApplication.UnicodeUTF8))
         self.navigation_next.setToolTip(QtGui.QApplication.translate("Dialog", "<i>Go forward</i> in the folder history.", None, QtGui.QApplication.UnicodeUTF8))
-        self.navigation_next.setText(QtGui.QApplication.translate("Dialog", "Next >", None, QtGui.QApplication.UnicodeUTF8))
-        self.entity_preset_tabs.setToolTip(QtGui.QApplication.translate("Dialog", "This area shows <i>Shotgun objects</i> such as Shots or Assets, grouped into sections. You can use this tree as a way of navigating your Shotgun data. Selecting an item will show all the various publishes and sub folders that belong to this item in the main UI section.", None, QtGui.QApplication.UnicodeUTF8))
+        self.entity_preset_tabs.setToolTip(QtGui.QApplication.translate("Dialog", "This area shows <i>Shotgun objects</i> such as Shots or Assets, grouped into sections. ", None, QtGui.QApplication.UnicodeUTF8))
         self.label_4.setText(QtGui.QApplication.translate("Dialog", "<small>Filter by Published File Type</small>", None, QtGui.QApplication.UnicodeUTF8))
         self.publish_type_list.setToolTip(QtGui.QApplication.translate("Dialog", "This list shows all the relevant <i>publish types</i> for your current selection. By ticking and unticking items in this list, publishes in the main view will be shown or hidden. You can see a summary count next to each publish type, showing how many items of that sort are matching your current selection.", None, QtGui.QApplication.UnicodeUTF8))
-        self.check_all.setToolTip(QtGui.QApplication.translate("Dialog", "Clicking the <b>All</b> button will tick all the boxes in the list of type filters. After clicking, you will see all publishes when browsing, including publishes are not compatible with this application (for example you may see Nuke scripts when you are browsing inside Maya). Publishes that can be used in the current application will have an actions menu when they are selected, non-supported pubishes won\'t.", None, QtGui.QApplication.UnicodeUTF8))
         self.check_all.setText(QtGui.QApplication.translate("Dialog", "Select All", None, QtGui.QApplication.UnicodeUTF8))
-        self.check_none.setToolTip(QtGui.QApplication.translate("Dialog", "Clicking the <b>None</b> button will untick all check boxes in the list except the Folders button.", None, QtGui.QApplication.UnicodeUTF8))
         self.check_none.setText(QtGui.QApplication.translate("Dialog", "Select None", None, QtGui.QApplication.UnicodeUTF8))
         self.cog_button.setToolTip(QtGui.QApplication.translate("Dialog", "Tools and Settings", None, QtGui.QApplication.UnicodeUTF8))
         self.entity_breadcrumbs.setToolTip(QtGui.QApplication.translate("Dialog", "This <i>breadcrubs listing</i> shows your currently selected Shotgun location.", None, QtGui.QApplication.UnicodeUTF8))
-        self.info.setToolTip(QtGui.QApplication.translate("Dialog", "Use this button to <i>toggle details on and off</i>. The details section will show you detailed information about the current selection in the main area of the UI. If you have selected a publish in the main UI, it will also show you the complete history for that publish and you can easily access older versions.", None, QtGui.QApplication.UnicodeUTF8))
+        self.info.setToolTip(QtGui.QApplication.translate("Dialog", "Use this button to <i>toggle details on and off</i>. ", None, QtGui.QApplication.UnicodeUTF8))
         self.info.setText(QtGui.QApplication.translate("Dialog", "Show Details", None, QtGui.QApplication.UnicodeUTF8))
-        self.show_sub_items.setToolTip(QtGui.QApplication.translate("Dialog", "Checking this option enables the <i>subfolder mode</i>. This mode will show you all items in all subfolders of your current selection. For example, if you select a sequence, you will see all the publishes for all shots in that sequence. You will also see the individual Shot folders. (If you only want to see the publishes and not the folders, just untick the folders item in the type filter list.)", None, QtGui.QApplication.UnicodeUTF8))
+        self.show_sub_items.setToolTip(QtGui.QApplication.translate("Dialog", "Enables the <i>subfolder mode</i>, displaying a total aggregate of all selected items.", None, QtGui.QApplication.UnicodeUTF8))
         self.show_sub_items.setText(QtGui.QApplication.translate("Dialog", "Show items in subfolders", None, QtGui.QApplication.UnicodeUTF8))
-        self.thumb_scale.setToolTip(QtGui.QApplication.translate("Dialog", "Use this handle to <i>adjust the size</i> of the thumbnails that are shown in the main area.", None, QtGui.QApplication.UnicodeUTF8))
+        self.thumb_scale.setToolTip(QtGui.QApplication.translate("Dialog", "Use this handle to <i>adjust the size</i> of the displayed thumbnails.", None, QtGui.QApplication.UnicodeUTF8))
         self.details_image.setText(QtGui.QApplication.translate("Dialog", "TextLabel", None, QtGui.QApplication.UnicodeUTF8))
         self.details_header.setText(QtGui.QApplication.translate("Dialog", "TextLabel", None, QtGui.QApplication.UnicodeUTF8))
         self.detail_playback_btn.setToolTip(QtGui.QApplication.translate("Dialog", "The most recent published version has some playable media associated. Click this button to launch the Shotgun <b>Screening Room</b> web player to see the review version and any notes and comments that have been submitted.", None, QtGui.QApplication.UnicodeUTF8))
         self.detail_actions_btn.setText(QtGui.QApplication.translate("Dialog", "Actions", None, QtGui.QApplication.UnicodeUTF8))
         self.version_history_label.setText(QtGui.QApplication.translate("Dialog", "<small>Complete Version History</small>", None, QtGui.QApplication.UnicodeUTF8))
-        self.history_view.setToolTip(QtGui.QApplication.translate("Dialog", "If you select a publish in the main view, this list shows <i>the complete history for that publish</i>, who created each publish, the description and the publish date. If you select an item, an action menu will appear, allowing you to load historical versions into your scene.", None, QtGui.QApplication.UnicodeUTF8))
 
 from . import resources_rc

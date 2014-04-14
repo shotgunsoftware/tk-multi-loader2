@@ -38,12 +38,23 @@
          <property name="toolTip">
           <string>Clicking the &lt;i&gt;home button&lt;/i&gt; will take you to the location that best matches your current work area.</string>
          </property>
-         <property name="text">
-          <string>Home</string>
-         </property>
-         <property name="icon">
-          <iconset resource="resources.qrc">
-           <normaloff>:/res/home.png</normaloff>:/res/home.png</iconset>
+         <property name="styleSheet">
+          <string notr="true">QToolButton{
+   border: none;
+   background-color: none;
+   background-repeat: no-repeat;
+   background-position: center center;
+   background-image: url(:/res/home.png);
+}
+
+QToolButton:hover{
+background-image: url(:/res/home_hover.png);
+}
+
+QToolButton:Pressed {
+background-image: url(:/res/home_pressed.png);
+}
+</string>
          </property>
         </widget>
        </item>
@@ -64,12 +75,27 @@
          <property name="toolTip">
           <string>&lt;i&gt;Go back&lt;/i&gt; in the folder history.</string>
          </property>
-         <property name="text">
-          <string>&lt; Back</string>
-         </property>
-         <property name="icon">
-          <iconset resource="resources.qrc">
-           <normaloff>:/res/arrow_back.png</normaloff>:/res/arrow_back.png</iconset>
+         <property name="styleSheet">
+          <string notr="true">QToolButton{
+   border: none;
+   background-color: none;
+   background-repeat: no-repeat;
+   background-position: center center;
+   background-image: url(:/res/left_arrow.png);
+}
+
+QToolButton:disabled{
+   background-image: url(:/res/left_arrow_disabled.png);
+}
+
+QToolButton:hover{
+background-image: url(:/res/left_arrow_hover.png);
+}
+
+QToolButton:Pressed {
+background-image: url(:/res/left_arrow_pressed.png);
+}
+</string>
          </property>
         </widget>
        </item>
@@ -90,12 +116,28 @@
          <property name="toolTip">
           <string>&lt;i&gt;Go forward&lt;/i&gt; in the folder history.</string>
          </property>
-         <property name="text">
-          <string>Next &gt;</string>
-         </property>
-         <property name="icon">
-          <iconset resource="resources.qrc">
-           <normaloff>:/res/arrow_forward.png</normaloff>:/res/arrow_forward.png</iconset>
+         <property name="styleSheet">
+          <string notr="true">QToolButton{
+   border: none;
+   background-color: none;
+   background-repeat: no-repeat;
+   background-position: center center;
+   background-image: url(:/res/right_arrow.png);
+}
+
+QToolButton:disabled{
+   background-image: url(:/res/right_arrow_disabled.png);
+}
+
+
+QToolButton:hover{
+background-image: url(:/res/right_arrow_hover.png);
+}
+
+QToolButton:Pressed {
+background-image: url(:/res/right_arrow_pressed.png);
+}
+</string>
          </property>
         </widget>
        </item>
@@ -117,7 +159,7 @@
         </size>
        </property>
        <property name="toolTip">
-        <string>This area shows &lt;i&gt;Shotgun objects&lt;/i&gt; such as Shots or Assets, grouped into sections. You can use this tree as a way of navigating your Shotgun data. Selecting an item will show all the various publishes and sub folders that belong to this item in the main UI section.</string>
+        <string>This area shows &lt;i&gt;Shotgun objects&lt;/i&gt; such as Shots or Assets, grouped into sections. </string>
        </property>
        <property name="currentIndex">
         <number>-1</number>
@@ -187,9 +229,6 @@
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
-         <property name="toolTip">
-          <string>Clicking the &lt;b&gt;All&lt;/b&gt; button will tick all the boxes in the list of type filters. After clicking, you will see all publishes when browsing, including publishes are not compatible with this application (for example you may see Nuke scripts when you are browsing inside Maya). Publishes that can be used in the current application will have an actions menu when they are selected, non-supported pubishes won't.</string>
-         </property>
          <property name="text">
           <string>Select All</string>
          </property>
@@ -202,9 +241,6 @@
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
-         </property>
-         <property name="toolTip">
-          <string>Clicking the &lt;b&gt;None&lt;/b&gt; button will untick all check boxes in the list except the Folders button.</string>
          </property>
          <property name="text">
           <string>Select None</string>
@@ -281,7 +317,7 @@
        <item>
         <widget class="QToolButton" name="info">
          <property name="toolTip">
-          <string>Use this button to &lt;i&gt;toggle details on and off&lt;/i&gt;. The details section will show you detailed information about the current selection in the main area of the UI. If you have selected a publish in the main UI, it will also show you the complete history for that publish and you can easily access older versions.</string>
+          <string>Use this button to &lt;i&gt;toggle details on and off&lt;/i&gt;. </string>
          </property>
          <property name="text">
           <string>Show Details</string>
@@ -326,7 +362,7 @@
        <item>
         <widget class="QCheckBox" name="show_sub_items">
          <property name="toolTip">
-          <string>Checking this option enables the &lt;i&gt;subfolder mode&lt;/i&gt;. This mode will show you all items in all subfolders of your current selection. For example, if you select a sequence, you will see all the publishes for all shots in that sequence. You will also see the individual Shot folders. (If you only want to see the publishes and not the folders, just untick the folders item in the type filter list.)</string>
+          <string>Enables the &lt;i&gt;subfolder mode&lt;/i&gt;, displaying a total aggregate of all selected items.</string>
          </property>
          <property name="text">
           <string>Show items in subfolders</string>
@@ -371,7 +407,7 @@
           </size>
          </property>
          <property name="toolTip">
-          <string>Use this handle to &lt;i&gt;adjust the size&lt;/i&gt; of the thumbnails that are shown in the main area.</string>
+          <string>Use this handle to &lt;i&gt;adjust the size&lt;/i&gt; of the displayed thumbnails.</string>
          </property>
          <property name="styleSheet">
           <string notr="true">QSlider::groove:horizontal {
@@ -621,9 +657,6 @@
       </item>
       <item>
        <widget class="QListView" name="history_view">
-        <property name="toolTip">
-         <string>If you select a publish in the main view, this list shows &lt;i&gt;the complete history for that publish&lt;/i&gt;, who created each publish, the description and the publish date. If you select an item, an action menu will appear, allowing you to load historical versions into your scene.</string>
-        </property>
         <property name="verticalScrollMode">
          <enum>QAbstractItemView::ScrollPerPixel</enum>
         </property>

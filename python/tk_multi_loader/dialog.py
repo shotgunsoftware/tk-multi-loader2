@@ -597,14 +597,8 @@ class AppDialog(QtGui.QWidget):
                 help_screen.show_help_screen(self.window(), app, help_pix)
                 
         
-        selection_model = self._entity_presets[self._current_entity_preset].view.selectionModel()        
-        item = None
-        if selection_model.hasSelection():            
-            # get the current index
-            current = selection_model.selection().indexes()[0]
-            # get selected item
-            item = current.model().itemFromIndex(current)        
         # tell publish UI to update itself
+        item = self._get_selected_entity()
         self._load_publishes_for_entity_item(item)
          
         
@@ -710,7 +704,7 @@ class AppDialog(QtGui.QWidget):
     ########################################################################################
     # entity listing tree view and presets toolbar
         
-    def _get_item_from_selection(self):
+    def _get_selected_entity(self):
         """
         Returns the item currently selected in the tree view, None 
         if no selection has been made.
@@ -966,7 +960,7 @@ class AppDialog(QtGui.QWidget):
             self._populate_entity_breadcrumbs()        
 
             # now figure out what is selected
-            selected_item = self._get_item_from_selection()
+            selected_item = self._get_selected_entity()
                         
             # add history record
             self._add_history_record(self._current_entity_preset, selected_item)
@@ -987,7 +981,7 @@ class AppDialog(QtGui.QWidget):
         # update breadcrumbs
         self._populate_entity_breadcrumbs()
         
-        selected_item = self._get_item_from_selection()
+        selected_item = self._get_selected_entity()
                 
         # notify history
         self._add_history_record(self._current_entity_preset, selected_item)
@@ -1039,7 +1033,7 @@ class AppDialog(QtGui.QWidget):
         Computes the current entity breadcrumbs
         """
         
-        selected_item = self._get_item_from_selection()
+        selected_item = self._get_selected_entity()
         
         crumbs = []
     

@@ -27,6 +27,18 @@ class SgPublishDelegate(shotgun_view.WidgetDelegate):
         self._status_model = status_model
         self._action_manager = action_manager
         self._view = view
+        self._subitems_mode = False
+        
+    def enable_subitems_mode(self, enabled):
+        """
+        Enables rendering of item in subitems mode.
+        This mode means that objects associated with more than
+        one entity or task is rendered together, so the formatting
+        needs to be different to indicate this.
+        
+        :param enabled: True if subitems mode is enabled, false if not
+        """
+        self._subitems_mode = enabled
         
     def _create_widget(self, parent):
         """
@@ -63,25 +75,76 @@ class SgPublishDelegate(shotgun_view.WidgetDelegate):
         painted in the view.
         """
         icon = shotgun_model.get_sanitized_data(model_index, QtCore.Qt.DecorationRole)
+        sg_data = shotgun_model.get_sg_data(model_index)
+        
         if icon:
             thumb = icon.pixmap(512)
             widget.set_thumbnail(thumb)        
         
-        if shotgun_model.get_sanitized_data(model_index, SgLatestPublishModel.IS_FOLDER_ROLE):           
-            entity_type = shotgun_model.get_sanitized_data(model_index, SgLatestPublishModel.FOLDER_TYPE_ROLE)
-            if entity_type is None: # intermediate node
-                entity_type_str = ""
-            else:
-                entity_type_str = entity_type 
-                        
-            folder_name = shotgun_model.get_sanitized_data(model_index, SgLatestPublishModel.FOLDER_NAME_ROLE)
+        if shotgun_model.get_sanitized_data(model_index, SgLatestPublishModel.IS_FOLDER_ROLE):
             
-            widget.set_text(folder_name, entity_type_str) 
+            # get the associated tree item
+            tree_item = shotgun_model.get_sanitized_data(model_index, SgLatestPublishModel.ASSOCIATED_TREE_VIEW_ITEM_ROLE) 
+
+            tree_item_sg_data = tree_item.get_sg_data()
+
+            field_data = tree_item.data(shotgun_model.ShotgunModel.SG_ASSOCIATED_FIELD_ROLE)
+            # {'name': 'sg_asset_type', 'value': 'Character' }
+            # {'name': 'sg_sequence', 'value': {'type': 'Sequence', 'id': 11, 'name': 'bunny_080'}}
+            # {'name': 'code', 'value': 'mystuff'}
+            
+            field_name = field_data["name"]
+            field_value = field_data["value"]
+    
+            if isinstance(field_value, dict) and "name" in field_value and "type" in field_value:
+                # intermediate node with entity link
+                widget.set_text(field_value["name"], field_value["type"])
+                        
+            elif tree_item_sg_data:
+                # this is a leaf node
+                print "leaf"
+                widget.set_text(field_value, tree_item_sg_data.get("type"))
+                 
+            else:
+                print "other"
+                # other value (e.g. intermediary non-entity link node like sg_asset_type)
+                widget.set_text(field_value, "")
+
  
         else:
             # this is a publish!
-            widget.set_text(shotgun_model.get_sanitized_data(model_index, SgLatestPublishModel.PUBLISH_NAME_ROLE),
-                            shotgun_model.get_sanitized_data(model_index, SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE)) 
+            
+            # get the name (lighting v3)
+            name_str = "Unnamed"
+            if sg_data.get("name"):
+                name_str = sg_data.get("name")
+            
+            if sg_data.get("version_number"):
+                name_str += " v%s" % sg_data.get("version_number")
+            
+            if self._subitems_mode:
+
+                # display this publish in sub items node
+                # in this case we want to display the following two lines
+                # main_body v3
+                # Shot AAA001
+                
+                # get the name of the associated entity
+                entity_link = sg_data.get("entity")
+                if entity_link is None:
+                    entity_str = "Unlinked"
+                else:
+                    entity_str = "%s %s" % (entity_link["type"], entity_link["name"]) 
+                
+                widget.set_text(name_str, entity_str)
+                
+            else:
+                # std publish - render with a name and a publish type
+                # main_body v3
+                # Render
+                pub_type_str = shotgun_model.get_sanitized_data(model_index, 
+                                                                SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE)                
+                widget.set_text(name_str, pub_type_str) 
         
     def sizeHint(self, style_options, model_index):
         """

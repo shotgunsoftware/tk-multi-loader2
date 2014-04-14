@@ -1061,8 +1061,11 @@ class AppDialog(QtGui.QWidget):
         if show_sub_items:
             # indicate this with a special background color
             self.ui.publish_view.setStyleSheet("#publish_view { background-color: rgba(44, 147, 226, 20%); }")
+            # delegates are rendered in a special way
+            self._publish_delegate.enable_subitems_mode(True)
         else:
             self.ui.publish_view.setStyleSheet("")
+            self._publish_delegate.enable_subitems_mode(False)
         
         self._publish_model.load_data(item, child_folders, show_sub_items)
 

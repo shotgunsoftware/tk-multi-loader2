@@ -90,7 +90,7 @@ class SgEntityModel(ShotgunOverlayModel):
             # entity link
             item.setData(field_value["type"], SgEntityModel.TYPE_ROLE)
                     
-        elif field_name in ("code", "name") and sg_data:
+        elif sg_data:
             # this is a leaf node
             item.setData(sg_data.get("type"), SgEntityModel.TYPE_ROLE)
              

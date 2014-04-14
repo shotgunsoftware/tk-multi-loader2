@@ -50,6 +50,9 @@ configuration:
             Maya Scene: [reference]
             Rendered Image: [texture_node]
             Photoshop Image: [texture_node]        
+        default_value_tk-motionbuilder: 
+            Motionbuilder Fbx: [import_fbx]
+
 
     entities:
         default_value: 

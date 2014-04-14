@@ -773,18 +773,33 @@ class AppDialog(QtGui.QWidget):
         # Phase 2 - Now select and zoom onto the item
         view = self._entity_presets[self._current_entity_preset].view
         selection_model = view.selectionModel()
-
+        
         if item:
             # ensure that the tree view is expanded and that the item we are about 
             # to selected is in vertically centered in the widget
             
-            # when we pass selection indicies into the view, must first convert them
-            # from deep model index into proxy model index style indicies
-            proxy_index = view.model().mapFromSource(item.index())
-            # and now perform view operations
-            view.scrollTo(proxy_index, QtGui.QAbstractItemView.PositionAtCenter)
-            selection_model.select(proxy_index, QtGui.QItemSelectionModel.ClearAndSelect)
-            selection_model.setCurrentIndex(proxy_index, QtGui.QItemSelectionModel.ClearAndSelect)
+            # get the currently selected item in our tab
+            selected_item = self._get_selected_entity()
+            
+            if selected_item and selected_item.index() == item.index():
+                # the item is already selected!
+                # because there is no easy way to "kick" the selection
+                # model in QT, explicitly call the callback 
+                # which is normally being called when an item in the 
+                # treeview gets selected.
+                self._on_treeview_item_selected()
+                
+            else:
+                # we are about to select a new item in the tree view!
+                # when we pass selection indicies into the view, must first convert them
+                # from deep model index into proxy model index style indicies
+                proxy_index = view.model().mapFromSource(item.index())
+                # and now perform view operations
+                view.scrollTo(proxy_index, QtGui.QAbstractItemView.PositionAtCenter)
+                selection_model.select(proxy_index, QtGui.QItemSelectionModel.ClearAndSelect)
+                selection_model.setCurrentIndex(proxy_index, QtGui.QItemSelectionModel.ClearAndSelect)
+            
+            
             
         else:
             # clear selection to match no items
@@ -982,7 +997,7 @@ class AppDialog(QtGui.QWidget):
         """
         Signal triggered when someone changes the selection in a treeview.
         """
-                
+        
         # update breadcrumbs
         self._populate_entity_breadcrumbs()
         
@@ -1003,6 +1018,7 @@ class AppDialog(QtGui.QWidget):
         Given an item from the treeview, or None if no item
         is selected, prepare the publish area UI.
         """
+        
         # clear selection. If we don't clear the model at this point, 
         # the selection model will attempt to pair up with the model is
         # data is being loaded in, resulting in many many events

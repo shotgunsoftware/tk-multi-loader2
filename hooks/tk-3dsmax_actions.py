@@ -17,7 +17,7 @@ import os
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
-class MotionbuilderActions(HookBaseClass):
+class MaxActions(HookBaseClass):
     
     ##############################################################################################################
     # public interface - to be overridden by deriving classes 
@@ -57,13 +57,14 @@ class MotionbuilderActions(HookBaseClass):
         app.log_debug("Generate actions called for UI element %s. "
                       "Actions: %s. Publish Data: %s" % (ui_area, actions, sg_publish_data))
         
-        action_instances = []        
+        action_instances = []
+        
 
-        if "import_fbx" in actions:
-            action_instances.append( {"name": "import_fbx", 
-                                      "params": None,
+        if "import_max" in actions:        
+            action_instances.append( {"name": "import_max",
+                                      "params": None, 
                                       "caption": "Import contents", 
-                                      "description": "This will imports the file contents into the current scene."} )
+                                      "description": "This will import the contents into the current scene."} )        
     
         return action_instances
                 
@@ -78,23 +79,10 @@ class MotionbuilderActions(HookBaseClass):
         
         file_path = shotgun_data.get("path").get("local_path")
         
-        from pyfbsdk import FBApplication
-
+        from Py3dsMax import mxs
         if not os.path.exists(file_path):
             self.parent.log_error("The file %s does not exist." % file_path)
-            return
-
-        # get the slashes right
-        file_path = file_path.replace(os.path.sep, "/")
-        
-        (path, ext) = os.path.splitext(file_path)
-        
-        if ext != ".fbx":
-            self.parent.log_error("Unsupported file extension for %s. Only FBX files are supported." % file_path)
         else:
-            app = FBApplication()
-            app.FileMerge(file_path)
+            mxs.importFile(file_path)
         
-        
-           
         

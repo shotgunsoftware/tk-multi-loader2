@@ -17,7 +17,7 @@ import os
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
-class MotionbuilderActions(HookBaseClass):
+class PhotoshopActions(HookBaseClass):
     
     ##############################################################################################################
     # public interface - to be overridden by deriving classes 
@@ -57,13 +57,13 @@ class MotionbuilderActions(HookBaseClass):
         app.log_debug("Generate actions called for UI element %s. "
                       "Actions: %s. Publish Data: %s" % (ui_area, actions, sg_publish_data))
         
-        action_instances = []        
-
-        if "import_fbx" in actions:
-            action_instances.append( {"name": "import_fbx", 
-                                      "params": None,
-                                      "caption": "Import contents", 
-                                      "description": "This will imports the file contents into the current scene."} )
+        action_instances = []
+        
+        if "open_file" in actions:        
+            action_instances.append( {"name": "open_file",
+                                      "params": None, 
+                                      "caption": "Open", 
+                                      "description": "This will open the file."} )        
     
         return action_instances
                 
@@ -78,23 +78,7 @@ class MotionbuilderActions(HookBaseClass):
         
         file_path = shotgun_data.get("path").get("local_path")
         
-        from pyfbsdk import FBApplication
+        import photoshop        
+        f = photoshop.RemoteObject('flash.filesystem::File', file_path)
+        photoshop.app.load(f)        
 
-        if not os.path.exists(file_path):
-            self.parent.log_error("The file %s does not exist." % file_path)
-            return
-
-        # get the slashes right
-        file_path = file_path.replace(os.path.sep, "/")
-        
-        (path, ext) = os.path.splitext(file_path)
-        
-        if ext != ".fbx":
-            self.parent.log_error("Unsupported file extension for %s. Only FBX files are supported." % file_path)
-        else:
-            app = FBApplication()
-            app.FileMerge(file_path)
-        
-        
-           
-        

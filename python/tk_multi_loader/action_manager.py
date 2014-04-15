@@ -75,12 +75,17 @@ class ActionManager(object):
         else:
             raise TankError("Unsupported UI_AREA. Contact support.")
 
-        action_defs = self._app.execute_hook_method("actions_hook", 
-                                                    "generate_actions", 
-                                                    sg_publish_data=sg_data, 
-                                                    actions=actions,
-                                                    ui_area=ui_area_str)
-        
+        try:
+            action_defs = self._app.execute_hook_method("actions_hook", 
+                                                        "generate_actions", 
+                                                        sg_publish_data=sg_data, 
+                                                        actions=actions,
+                                                        ui_area=ui_area_str)
+        except:
+            self._app.log_exception("Could not execute generate_actions hook.")
+            
+            
+            
         # create QActions
         actions = []
         for action_def in action_defs:
@@ -134,11 +139,16 @@ class ActionManager(object):
         callback - executes a hook
         """
         self._app.log_debug("Calling scene load hook for %s. Params: %s. Sg data: %s" % (action_name, params, sg_data))
-        self._app.execute_hook_method("actions_hook", 
-                                      "execute_action", 
-                                      name=action_name, 
-                                      params=params, 
-                                      sg_publish_data=sg_data)
+        
+        try:
+            self._app.execute_hook_method("actions_hook", 
+                                          "execute_action", 
+                                          name=action_name, 
+                                          params=params, 
+                                          sg_publish_data=sg_data)
+        except Exception, e:
+            self._app.log_exception("Could not execute execute_action hook.")
+            QtGui.QMessageBox.critical(None, "Hook Error", "Error: %s" % e)
     
     def _show_in_sg(self, entity):
         """

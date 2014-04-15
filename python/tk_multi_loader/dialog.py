@@ -669,7 +669,7 @@ class AppDialog(QtGui.QWidget):
         
         if is_folder:
             # get the corresponding tree view item
-            tree_view_item = item.data(SgLatestPublishModel.ASSOCIATED_TREE_VIEW_ITEM_ROLE)
+            tree_view_item = self._publish_model.get_associated_tree_view_item(item)
             
             # select it in the tree view
             self._select_item_in_entity_tree(self._current_entity_preset, tree_view_item)

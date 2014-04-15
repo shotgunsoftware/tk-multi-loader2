@@ -42,6 +42,8 @@ class SgLatestPublishModel(ShotgunOverlayModel):
         self._folder_icon = QtGui.QIcon(QtGui.QPixmap(":/res/folder_512x400.png"))
         self._loading_icon = QtGui.QIcon(QtGui.QPixmap(":/res/loading_512x400.png"))
 
+        self._associated_items = {}
+
         # init base class
         ShotgunOverlayModel.__init__(self, 
                                      parent, 
@@ -51,6 +53,15 @@ class SgLatestPublishModel(ShotgunOverlayModel):
     
     ############################################################################################
     # public interface
+
+    def get_associated_tree_view_item(self, item):
+        """
+        Returns the entity tree view item associated with a publish folder item.
+        
+        :returns: item or None if not found.
+        """
+        entity_item_hash = item.data(self.ASSOCIATED_TREE_VIEW_ITEM_ROLE)
+        return self._associated_items.get(entity_item_hash)
 
     def load_data(self, item, child_folders, show_sub_items):        
         """
@@ -233,8 +244,12 @@ class SgLatestPublishModel(ShotgunOverlayModel):
         # items to keep the GC happy.
         
         self._folder_items = []
+        self._associated_items = {}
         
         for tree_view_item in self._treeview_folder_items:
+
+            # compute and store a hash for the tree view item so that we can access it later
+            tree_view_item_hash = str(hash(tree_view_item))
 
             # create an item in the publish item for each folder item in the tree view
             item = shotgun_model.ShotgunStandardItem(self._folder_icon, tree_view_item.text())
@@ -242,8 +257,8 @@ class SgLatestPublishModel(ShotgunOverlayModel):
             # all of the items created in this class get special role data assigned.
             item.setData(True, SgLatestPublishModel.IS_FOLDER_ROLE)
             
-            # associate the tree view node with this node.
-            item.setData(tree_view_item, SgLatestPublishModel.ASSOCIATED_TREE_VIEW_ITEM_ROLE)            
+            # associate the tree view node hash with this node.
+            item.setData(tree_view_item_hash, SgLatestPublishModel.ASSOCIATED_TREE_VIEW_ITEM_ROLE)            
             
             # copy across the std fields SG_ASSOCIATED_FIELD_ROLE and SG_DATA_ROLE
             tree_item_sg_data = tree_view_item.get_sg_data()
@@ -262,7 +277,11 @@ class SgLatestPublishModel(ShotgunOverlayModel):
                                                  treeview_sg_data["type"], 
                                                  treeview_sg_data["id"])
             self.appendRow(item)
+            
+            # help GC
             self._folder_items.append(item)
+            # store original item, allowing us to do a reverse lookup
+            self._associated_items[ tree_view_item_hash ] = tree_view_item
         
 
     def _populate_item(self, item, sg_data):

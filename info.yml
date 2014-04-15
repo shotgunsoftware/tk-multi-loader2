@@ -46,12 +46,16 @@ configuration:
         default_value_tk-nuke: 
             Rendered Image: [read_node] 
             Nuke Script: [script_import]
-        default_value_tk-maya: 
+        default_value_tk-maya:
             Maya Scene: [reference]
             Rendered Image: [texture_node]
             Photoshop Image: [texture_node]        
         default_value_tk-motionbuilder: 
-            Motionbuilder Fbx: [import_fbx]
+            Motionbuilder Fbx: [import]
+        default_value_tk-3dsmax:
+            3dsmax Scene: [import]
+        default_value_tk-photoshop:
+            Texture: [open_file]
 
 
     entities:

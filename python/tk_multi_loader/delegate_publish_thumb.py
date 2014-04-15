@@ -67,7 +67,11 @@ class SgPublishDelegate(shotgun_view.WidgetDelegate):
             widget.set_actions( self._action_manager.get_actions_for_folder(sg_item) )
         else:
             # publish!
-            widget.set_actions( self._action_manager.get_actions_for_publish(sg_item, self._action_manager.UI_AREA_MAIN) )                
+            actions = self._action_manager.get_actions_for_publish(sg_item, self._action_manager.UI_AREA_MAIN)
+            widget.set_actions(actions)
+            if len(actions) > 0:
+                primary_action = actions[0]
+                widget.setToolTip("Double click for the <i>%s</i> action." % primary_action.text())
     
     def _on_before_paint(self, widget, model_index, style_options):
         """
@@ -82,27 +86,24 @@ class SgPublishDelegate(shotgun_view.WidgetDelegate):
             widget.set_thumbnail(thumb)        
         
         if shotgun_model.get_sanitized_data(model_index, SgLatestPublishModel.IS_FOLDER_ROLE):
+            # this is a folder item, injected into the publish model from the entity tree
             
-            # get the associated tree item
-            tree_item = shotgun_model.get_sanitized_data(model_index, SgLatestPublishModel.ASSOCIATED_TREE_VIEW_ITEM_ROLE) 
-
-            tree_item_sg_data = tree_item.get_sg_data()
-
-            field_data = tree_item.data(shotgun_model.ShotgunModel.SG_ASSOCIATED_FIELD_ROLE)
-            # {'name': 'sg_asset_type', 'value': 'Character' }
-            # {'name': 'sg_sequence', 'value': {'type': 'Sequence', 'id': 11, 'name': 'bunny_080'}}
-            # {'name': 'code', 'value': 'mystuff'}
+            field_data = shotgun_model.get_sanitized_data(model_index, 
+                                                          shotgun_model.ShotgunModel.SG_ASSOCIATED_FIELD_ROLE)
+            # examples of data:
+            # intermediate node: {'name': 'sg_asset_type', 'value': 'Character' }
+            # intermediate node: {'name': 'sg_sequence',   'value': {'type': 'Sequence', 'id': 11, 'name': 'bunny_080'}}
+            # leaf node:         {'name': 'code',          'value': 'mystuff'}
             
-            field_name = field_data["name"]
             field_value = field_data["value"]
     
             if isinstance(field_value, dict) and "name" in field_value and "type" in field_value:
                 # intermediate node with entity link
                 widget.set_text(field_value["name"], field_value["type"])
                         
-            elif tree_item_sg_data:
+            elif sg_data:
                 # this is a leaf node
-                widget.set_text(field_value, tree_item_sg_data.get("type"))
+                widget.set_text(field_value, sg_data.get("type"))
                  
             else:
                 # other value (e.g. intermediary non-entity link node like sg_asset_type)

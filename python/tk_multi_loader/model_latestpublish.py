@@ -243,7 +243,14 @@ class SgLatestPublishModel(ShotgunOverlayModel):
             item.setData(True, SgLatestPublishModel.IS_FOLDER_ROLE)
             
             # associate the tree view node with this node.
-            item.setData(tree_view_item, SgLatestPublishModel.ASSOCIATED_TREE_VIEW_ITEM_ROLE)
+            item.setData(tree_view_item, SgLatestPublishModel.ASSOCIATED_TREE_VIEW_ITEM_ROLE)            
+            
+            # copy across the std fields SG_ASSOCIATED_FIELD_ROLE and SG_DATA_ROLE
+            tree_item_sg_data = tree_view_item.get_sg_data()
+            item.setData(tree_item_sg_data, SgLatestPublishModel.SG_DATA_ROLE)
+            
+            tree_item_field_data = tree_view_item.data(shotgun_model.ShotgunModel.SG_ASSOCIATED_FIELD_ROLE)
+            item.setData(tree_item_field_data, SgLatestPublishModel.SG_ASSOCIATED_FIELD_ROLE)
             
             # see if we can get a thumbnail for this node!
             treeview_sg_data = tree_view_item.get_sg_data()

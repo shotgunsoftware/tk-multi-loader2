@@ -31,6 +31,7 @@ class MotionbuilderActions(HookBaseClass):
         The mapping between Publish types and actions are kept in a different place
         (in the configuration) so at the point when this hook is called, the loader app
         has already established *which* actions are appropriate for this object.
+        
         The hook should return at least one action for each item passed in via the 
         actions parameter.
         
@@ -52,6 +53,11 @@ class MotionbuilderActions(HookBaseClass):
         "attach to left hand", "attach to right hand" etc. In this case, when more than 
         one object is returned for an action, use the params key to pass additional 
         data into the run_action hook.
+        
+        :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
+        :param actions: List of action strings which have been defined in the app configuration.
+        :param ui_area: String denoting the UI Area (see above).
+        :returns List of dictionaries, each with keys name, params, caption and description
         """
         app = self.parent
         app.log_debug("Generate actions called for UI element %s. "
@@ -59,8 +65,8 @@ class MotionbuilderActions(HookBaseClass):
         
         action_instances = []        
 
-        if "import_fbx" in actions:
-            action_instances.append( {"name": "import_fbx", 
+        if "import" in actions:
+            action_instances.append( {"name": "import", 
                                       "params": None,
                                       "caption": "Import contents", 
                                       "description": "This will imports the file contents into the current scene."} )
@@ -70,31 +76,58 @@ class MotionbuilderActions(HookBaseClass):
 
     def execute_action(self, name, params, sg_publish_data):
         """
-        Execute a given action, as enumerated by the create_actions() method.
+        Execute a given action. The data sent to this be method will
+        represent one of the actions enumerated by the generate_actions method.
+        
+        :param name: Action name string representing one of the items returned by generate_actions.
+        :param params: Params data, as specified by generate_actions.
+        :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
+        :returns: No return value expected.
         """
         app = self.parent
         app.log_debug("Execute action called for action %s. "
                       "Parameters: %s. Publish Data: %s" % (name, params, sg_publish_data))
         
-        file_path = shotgun_data.get("path").get("local_path")
+        # resolve path
+        path = self._get_path(sg_publish_data)
         
+        if name == "import":
+            self._import(path, sg_publish_data)
+
+
+    ##############################################################################################################
+    # helper methods which can be subclassed in custom hooks to fine tune the behavior of things
+    
+    def _get_path(self, sg_publish_data):
+        """
+        Typically subclassed by hook setups where files are not stored directly
+        on disk or alternatively represented by urls rather than local paths.
+        
+        :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
+        :returns: Path on disk to the publish
+        """
+        path = sg_publish_data.get("path").get("local_path")
+        # forward slashes on all platforms in motionbuilder
+        path = path.replace(os.path.sep, "/")
+        return path    
+
+    def _import(self, path, sg_publish_data):
+        """
+        Import contents of the given file into the scene.
+        
+        :param path: Path to file.
+        :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
+        """
         from pyfbsdk import FBApplication
+        
+        if not os.path.exists(path):
+            raise Exception("File not found on disk - '%s'" % path)
+        
+        (_, ext) = os.path.splitext(path)
+        
+        if ext.lower() != ".fbx":
+            raise Exception("Unsupported file extension for '%s'. Only FBX files are supported." % path)
 
-        if not os.path.exists(file_path):
-            self.parent.log_error("The file %s does not exist." % file_path)
-            return
-
-        # get the slashes right
-        file_path = file_path.replace(os.path.sep, "/")
-        
-        (path, ext) = os.path.splitext(file_path)
-        
-        if ext != ".fbx":
-            self.parent.log_error("Unsupported file extension for %s. Only FBX files are supported." % file_path)
-        else:
-            app = FBApplication()
-            app.FileMerge(file_path)
-        
-        
-           
+        app = FBApplication()
+        app.FileMerge(path)
         

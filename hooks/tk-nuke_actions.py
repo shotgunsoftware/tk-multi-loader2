@@ -30,6 +30,7 @@ class NukeActions(HookBaseClass):
         The mapping between Publish types and actions are kept in a different place
         (in the configuration) so at the point when this hook is called, the loader app
         has already established *which* actions are appropriate for this object.
+        
         The hook should return at least one action for each item passed in via the 
         actions parameter.
         
@@ -51,6 +52,11 @@ class NukeActions(HookBaseClass):
         "attach to left hand", "attach to right hand" etc. In this case, when more than 
         one object is returned for an action, use the params key to pass additional 
         data into the run_action hook.
+        
+        :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
+        :param actions: List of action strings which have been defined in the app configuration.
+        :param ui_area: String denoting the UI Area (see above).
+        :returns List of dictionaries, each with keys name, params, caption and description
         """
         app = self.parent
         app.log_debug("Generate actions called for UI element %s. "
@@ -75,7 +81,13 @@ class NukeActions(HookBaseClass):
 
     def execute_action(self, name, params, sg_publish_data):
         """
-        Execute a given action, as enumerated by the create_actions() method.
+        Execute a given action. The data sent to this be method will
+        represent one of the actions enumerated by the generate_actions method.
+        
+        :param name: Action name string representing one of the items returned by generate_actions.
+        :param params: Params data, as specified by generate_actions.
+        :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
+        :returns: No return value expected.
         """
         app = self.parent
         app.log_debug("Execute action called for action %s. "
@@ -93,19 +105,25 @@ class NukeActions(HookBaseClass):
     ##############################################################################################################
     # helper methods which can be subclassed in custom hooks to fine tune the behavior of things
     
-    def _get_path(self, shotgun_data):
+    def _get_path(self, sg_publish_data):
         """
         Typically subclassed by hook setups where files are not stored directly
         on disk or alternatively represented by urls rather than local paths.
+        
+        :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
+        :returns: Path on disk to the publish
         """
         path = shotgun_data.get("path").get("local_path")
         # forward slashes on all platforms in Nuke
         path = path.replace(os.path.sep, "/")
         return path    
            
-    def _import_script(self, path, shotgun_data):
+    def _import_script(self, path, sg_publish_data):
         """
-        Import contents into scene
+        Import contents of the given file into the scene.
+        
+        :param path: Path to file.
+        :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
         """
         import nuke
         if not os.path.exists(path):
@@ -113,9 +131,12 @@ class NukeActions(HookBaseClass):
         
         nuke.nodePaste(path)
                 
-    def _create_read_node(self, path, shotgun_data):
+    def _create_read_node(self, path, sg_publish_data):
         """
-        Create a read node
+        Create a read node representing the publish.
+        
+        :param path: Path to file.
+        :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.        
         """        
         import nuke
         
@@ -138,16 +159,21 @@ class NukeActions(HookBaseClass):
 
     def _find_sequence_range(self, path):
         """
-        If the path contains a sequence then try to match it
-        to a template and use that to extract the sequence range
-        based on the files that exist on disk.
+        Helper method attempting to extract sequence information.
+        
+        Using the toolkit template system, the path will be probed to 
+        check if it is a sequence, and if so, frame information is
+        attempted to be extracted.
+        
+        :param path: Path to file on disk.
+        :returns: None if no range could be determined, otherwise (min, max)
         """
         # find a template that matches the path:
         template = None
         try:
             template = self.parent.sgtk.template_from_path(path)
-        except TankError, e:
-            self.parent.log_error("Unable to find image sequence range!")
+        except TankError:
+            pass
         
         if not template:
             return None

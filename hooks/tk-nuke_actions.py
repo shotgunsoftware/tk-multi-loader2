@@ -12,7 +12,6 @@
 Hook that loads defines all the available actions, broken down by publish type. 
 """
 import sgtk
-import nuke
 import os
 
 HookBaseClass = sgtk.get_hook_baseclass()
@@ -58,7 +57,6 @@ class NukeActions(HookBaseClass):
                       "Actions: %s. Publish Data: %s" % (ui_area, actions, sg_publish_data))
         
         action_instances = []
-        
 
         if "read_node" in actions:
             action_instances.append( {"name": "read_node", 
@@ -83,52 +81,60 @@ class NukeActions(HookBaseClass):
         app.log_debug("Execute action called for action %s. "
                       "Parameters: %s. Publish Data: %s" % (name, params, sg_publish_data))
         
+        # resolve path
+        path = self._get_path(sg_publish_data)
+        
         if name == "read_node":
-            self._create_read_node(sg_publish_data)
+            self._create_read_node(path, sg_publish_data)
         
         if name == "script_import":
-            self._import_script(sg_publish_data)
+            self._import_script(path, sg_publish_data)
            
     ##############################################################################################################
-    # default implementation helpers
+    # helper methods which can be subclassed in custom hooks to fine tune the behavior of things
     
+    def _get_path(self, shotgun_data):
+        """
+        Typically subclassed by hook setups where files are not stored directly
+        on disk or alternatively represented by urls rather than local paths.
+        """
+        path = shotgun_data.get("path").get("local_path")
+        # forward slashes on all platforms in Nuke
+        path = path.replace(os.path.sep, "/")
+        return path    
            
-    def _import_script(self, shotgun_data):
+    def _import_script(self, path, shotgun_data):
         """
         Import contents into scene
         """
-        file_path = shotgun_data.get("path").get("local_path")
-        if os.path.exists(file_path):
-            file_path = file_path.replace(os.path.sep, "/")
-            nuke.nodePaste(file_path)
-        else:
-            self.parent.log_error("File not found on disk - '%s'" % file_path)
+        import nuke
+        if not os.path.exists(path):
+            raise Exception("File not found on disk - '%s'" % path)
         
+        nuke.nodePaste(path)
                 
-    def _create_read_node(self, shotgun_data):
+    def _create_read_node(self, path, shotgun_data):
         """
-        Create a read node given a publish
+        Create a read node
         """        
-        file_path = shotgun_data.get("path").get("local_path")
+        import nuke
         
-        # get the slashes right
-        file_path = file_path.replace(os.path.sep, "/")
+        (_, ext) = os.path.splitext(path)
 
-        (path, ext) = os.path.splitext(file_path)
+        valid_extensions = [".png", ".jpg", ".jpeg", ".exr", ".cin", ".dpx", ".tiff", ".tif", ".mov"]
 
-        valid_extensions = [".png", ".jpg", ".jpeg", ".exr", ".cin", ".dpx", ".tiff", ".mov"]
+        if ext not in valid_extensions:
+            raise Exception("Unsupported file extension for '%s'!" % path)
 
-        if ext in valid_extensions:
-            # find the sequence range if it has one:
-            seq_range = self._find_sequence_range(file_path)
-            
-            # create the read node
-            if seq_range:
-                nuke.nodes.Read(file=file_path, first=seq_range[0], last=seq_range[1])
-            else:
-                nuke.nodes.Read(file=file_path)
+        # find the sequence range if it has one:
+        seq_range = self._find_sequence_range(path)
+        
+        # create the read node
+        if seq_range:
+            nuke.nodes.Read(file=path, first=seq_range[0], last=seq_range[1])
         else:
-            self.parent.log_error("Unsupported file extension for %s - no read node will be created." % file_path)        
+            nuke.nodes.Read(file=path)
+                    
 
     def _find_sequence_range(self, path):
         """
@@ -142,13 +148,15 @@ class NukeActions(HookBaseClass):
             template = self.parent.sgtk.template_from_path(path)
         except TankError, e:
             self.parent.log_error("Unable to find image sequence range!")
+        
         if not template:
-            return
+            return None
             
         # get the fields and find all matching files:
         fields = template.get_fields(path)
         if not "SEQ" in fields:
-            return
+            return None
+        
         files = self.parent.sgtk.paths_from_template(template, fields, ["SEQ", "eye"])
         
         # find frame numbers from these files:
@@ -159,7 +167,7 @@ class NukeActions(HookBaseClass):
             if frame != None:
                 frames.append(frame)
         if not frames:
-            return
+            return None
         
         # return the range
         return (min(frames), max(frames))

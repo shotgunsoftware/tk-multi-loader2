@@ -113,7 +113,7 @@ class NukeActions(HookBaseClass):
         :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
         :returns: Path on disk to the publish
         """
-        path = shotgun_data.get("path").get("local_path")
+        path = sg_publish_data.get("path").get("local_path")
         # forward slashes on all platforms in Nuke
         path = path.replace(os.path.sep, "/")
         return path    

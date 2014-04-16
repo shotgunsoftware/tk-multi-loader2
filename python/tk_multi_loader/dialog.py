@@ -199,6 +199,8 @@ class AppDialog(QtGui.QWidget):
         show_details = self._settings_manager.retrieve("show_details", False)
         self._set_details_pane_visiblity(show_details)        
         
+        # trigger an initial evaluation of filter proxy model
+        self._apply_type_filters_on_publishes()
         
         
     def closeEvent(self, event):
@@ -592,9 +594,8 @@ class AppDialog(QtGui.QWidget):
         Triggered when the number of columns in the model is changing
         """
         # if no publish items are visible, display not found overlay
-        pub_items = self._publish_proxy_model.rowCount()
-        self._publish_model.toggle_not_found_overlay(pub_items == 0)
-        
+        num_pub_items = self._publish_proxy_model.rowCount()
+        self._publish_model.toggle_not_found_overlay(num_pub_items == 0)        
         
     def _on_show_subitems_toggled(self):
         """

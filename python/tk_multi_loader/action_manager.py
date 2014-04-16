@@ -75,6 +75,7 @@ class ActionManager(object):
         else:
             raise TankError("Unsupported UI_AREA. Contact support.")
 
+        action_defs = []
         try:
             action_defs = self._app.execute_hook_method("actions_hook", 
                                                         "generate_actions", 

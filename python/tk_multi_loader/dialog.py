@@ -214,6 +214,11 @@ class AppDialog(QtGui.QWidget):
         splash.show()
         QtCore.QCoreApplication.processEvents()
            
+        # disconnect some signals so we don't go all crazy when
+        # the cascading model deletes begin as part of the destroy calls
+        for p in self._entity_presets:
+            self._entity_presets[p].view.selectionModel().selectionChanged.disconnect(self._on_treeview_item_selected)
+           
         # gracefully close all connections 
         self._publish_model.destroy()
         self._publish_history_model.destroy()
@@ -1014,7 +1019,6 @@ class AppDialog(QtGui.QWidget):
         """
         Signal triggered when someone changes the selection in a treeview.
         """
-        
         # update breadcrumbs
         self._populate_entity_breadcrumbs()
         
@@ -1035,7 +1039,6 @@ class AppDialog(QtGui.QWidget):
         Given an item from the treeview, or None if no item
         is selected, prepare the publish area UI.
         """
-        
         # clear selection. If we don't clear the model at this point, 
         # the selection model will attempt to pair up with the model is
         # data is being loaded in, resulting in many many events

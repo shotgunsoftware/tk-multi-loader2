@@ -29,6 +29,10 @@ def show_dialog(app):
     # start ui
     ui_title = app.get_setting("title_name")
     w = app.engine.show_dialog(ui_title, app, AppDialog)
+    
+    # attach splash screen to the main window to help GC
+    w.__splash_screen = splash
+    
     # hide splash screen after loader UI show
     splash.finish(w.window())
     

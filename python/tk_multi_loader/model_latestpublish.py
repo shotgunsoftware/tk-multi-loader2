@@ -88,13 +88,20 @@ class SgLatestPublishModel(ShotgunOverlayModel):
                 # for example, this may return
                 # entity type shot, [["sequence", "is", "xxx"]] or
                 # entity type shot, [["status", "is", "ip"]] or
-                partial_filters = item.model().get_filters(item)
-                entity_type = item.model().get_entity_type()
+                
+                # note! Because of nasty bug https://bugreports.qt-project.org/browse/PYSIDE-158,
+                # we cannot pull the model directly from the item but have to pull it from
+                # the model index instead.
+                model_idx = item.index()
+                model = model_idx.model()
+                partial_filters = model.get_filters(item)
+                entity_type = model.get_entity_type()
                 
                 # now get a list of matches from the above query from
                 # shotgun - note that this is a synchronous call so
                 # it may 'pause' execution briefly for the user
                 data = app.shotgun.find(entity_type, partial_filters)
+                
                 
                 # now create the final query for the model - this will be 
                 # a big in statement listing all the ids returned from

@@ -107,7 +107,7 @@ supported_engines:
 requires_shotgun_fields:
 
 # More verbose description of this item 
-display_name: "Loader"
+display_name: "Content Loader"
 description: "Locate and Open Files on Disk."
 
 # Required minimum versions for this item to run

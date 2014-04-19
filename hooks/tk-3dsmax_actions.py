@@ -93,7 +93,7 @@ class MaxActions(HookBaseClass):
                       "Parameters: %s. Publish Data: %s" % (name, params, sg_publish_data))
         
         # resolve path
-        path = self._get_path(sg_publish_data)
+        path = self.get_publish_path(sg_publish_data)
         
         if name == "import":
             self._import(path, sg_publish_data)
@@ -102,16 +102,6 @@ class MaxActions(HookBaseClass):
     ##############################################################################################################
     # helper methods which can be subclassed in custom hooks to fine tune the behaviour of things
     
-    def _get_path(self, sg_publish_data):
-        """
-        Typically subclassed by hook setups where files are not stored directly
-        on disk or alternatively represented by urls rather than local paths.
-        
-        :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
-        :returns: Path on disk to the publish
-        """
-        return sg_publish_data.get("path").get("local_path")
-           
     def _import(self, path, sg_publish_data):
         """
         Import contents of the given file into the scene.

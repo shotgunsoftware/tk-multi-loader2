@@ -139,10 +139,7 @@ class MayaActions(HookBaseClass):
         """
         import pymel.core as pm
         import maya.cmds as cmds        
-        
-        if not os.path.exists(path):
-            raise Exception("File not found on disk - '%s'" % path)
-        
+                
         x = cmds.shadingNode('file', asTexture=True)
         cmds.setAttr( "%s.fileTextureName" % x, path, type="string" )
         

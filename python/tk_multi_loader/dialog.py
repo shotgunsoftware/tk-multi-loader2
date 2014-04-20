@@ -699,7 +699,8 @@ class AppDialog(QtGui.QWidget):
         app = sgtk.platform.current_bundle()
         help_pix = [ QtGui.QPixmap(":/res/help_1.png"), 
                      QtGui.QPixmap(":/res/help_2.png"), 
-                     QtGui.QPixmap(":/res/help_3.png") ] 
+                     QtGui.QPixmap(":/res/help_3.png"),
+                     QtGui.QPixmap(":/res/help_4.png") ] 
         help_screen.show_help_screen(self.window(), app, help_pix)
     
     def _on_doc_action(self):

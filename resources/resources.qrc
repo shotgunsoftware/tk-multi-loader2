@@ -28,7 +28,22 @@
     <file>left_arrow_disabled.png</file>
     <file>home.png</file>
     <file>home_hover.png</file>
-    <file>home_pressed.png</file>    
+    <file>home_pressed.png</file>
+    <file>clear_search.png</file>
+    
+    <file>icon_Asset_dark.png</file>
+    <file>icon_EventLogEntry_dark.png</file>
+    <file>icon_Group_dark.png</file>
+    <file>icon_HumanUser_dark.png</file>
+    <file>icon_Note_dark.png</file>
+    <file>icon_Project_dark.png</file>
+    <file>icon_Sequence_dark.png</file>
+    <file>icon_Shot_dark.png</file>
+    <file>icon_Task_dark.png</file>
+    <file>icon_Ticket_dark.png</file>
+    <file>icon_Version_dark.png</file>
+    
+        
 
   </qresource>
 </RCC>

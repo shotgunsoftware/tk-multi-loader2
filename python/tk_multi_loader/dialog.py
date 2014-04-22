@@ -896,7 +896,6 @@ class AppDialog(QtGui.QWidget):
                                         "background-image: url(:/res/search.png);"
                                         "background-repeat: no-repeat;"
                                         "background-position: center left;"
-                                        "border-color: #535353; "
                                         "border-radius: 5px; "
                                         "padding-left:20px;"
                                         "margin:4px;"

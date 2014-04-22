@@ -961,7 +961,7 @@ class AppDialog(QtGui.QWidget):
             selection_model.selectionChanged.connect(self._on_treeview_item_selected)
             
             # finally store all these objects keyed by the caption
-            ep = EntityPreset(preset_name, sg_entity_type, model, view)
+            ep = EntityPreset(preset_name, sg_entity_type, model, proxy_model, view)
             
             self._entity_presets[preset_name] = ep
             
@@ -1085,6 +1085,7 @@ class AppDialog(QtGui.QWidget):
         Given an item from the treeview, or None if no item
         is selected, prepare the publish area UI.
         """
+        
         # clear selection. If we don't clear the model at this point, 
         # the selection model will attempt to pair up with the model is
         # data is being loaded in, resulting in many many events
@@ -1098,11 +1099,24 @@ class AppDialog(QtGui.QWidget):
         else:
             root_item = item
 
+        # now get the proxy model level item instead - this way we can take search into 
+        # account as we show the folder listings.
+        root_model_idx = root_item.index()
+        proxy_model = self._entity_presets[self._current_entity_preset].proxy_model
+        root_model_idx_proxy = proxy_model.mapFromSource(root_model_idx) 
+        num_children = proxy_model.rowCount(root_model_idx_proxy)
+
         # get all the folder children - these need to be displayed
         # by the model as folders
         child_folders = []
-        for child_idx in range(root_item.rowCount()):
-            child_folders.append(root_item.child(child_idx))
+        for x in range(num_children):
+            # get the (proxy model) index for the child
+            child_idx_proxy = root_model_idx_proxy.child(x,0)
+            # switch to shotgun model index
+            child_idx = proxy_model.mapToSource(child_idx_proxy)
+            # resolve the index into an actual standarditem object
+            item = self._entity_presets[self._current_entity_preset].model.itemFromIndex(child_idx)
+            child_folders.append(item)
                 
         # is the show child folders checked?
         show_sub_items = self.ui.show_sub_items.isChecked()
@@ -1160,8 +1174,9 @@ class EntityPreset(object):
     Little struct that represents one of the tabs / presets in the 
     Left hand side entity tree view
     """
-    def __init__(self, name, entity_type, model, view): 
+    def __init__(self, name, entity_type, model, proxy_model, view): 
         self.model = model
+        self.proxy_model = proxy_model
         self.name = name
         self.view = view
         self.entity_type = entity_type 

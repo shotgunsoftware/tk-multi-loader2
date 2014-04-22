@@ -886,23 +886,41 @@ class AppDialog(QtGui.QWidget):
             view = QtGui.QTreeView(tab)
             layout.addWidget(view)
             
+            # a horiz layout to host search            
+            hlayout = QtGui.QHBoxLayout()
+            layout.addLayout(hlayout)
+
             # add search textfield
             search = QtGui.QLineEdit(tab)
-            search.setStyleSheet("border-width: 1px; \n"
-                                        "background-image: url(:/res/search.png);\n"
-                                        "background-repeat: no-repeat;\n"
-                                        "background-position: center left;\n"
-                                        "border-color: #535353; \n"
-                                        "border-radius: 5px; \n"
-                                        "padding-left:20px;\n"
-                                        "margin:4px;\n"
-                                        "height:22px;\n"
-                                        "\n"
-                                        "")
+            search.setStyleSheet("QLineEdit{ border-width: 1px; "
+                                        "background-image: url(:/res/search.png);"
+                                        "background-repeat: no-repeat;"
+                                        "background-position: center left;"
+                                        "border-color: #535353; "
+                                        "border-radius: 5px; "
+                                        "padding-left:20px;"
+                                        "margin:4px;"
+                                        "height:22px;"
+                                        "}")
             search.setToolTip("Use the <i>search</i> field to narrow down the items displayed in the tree above.")
-            layout.addWidget(search)
             
+            try:
+                # this was introduced in qt 4.7, so try to use it if we can... :)
+                search.setPlaceholderText("Search...")
+            except:
+                pass
             
+            hlayout.addWidget(search)
+
+            # and add a cancel search button, disabled by default            
+            clear_search = QtGui.QToolButton(tab)
+            icon = QtGui.QIcon()
+            icon.addPixmap(QtGui.QPixmap(":/res/clear_search.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+            clear_search.setIcon(icon)
+            clear_search.setAutoRaise(True)
+            clear_search.clicked.connect( lambda editor=search: editor.setText("") )
+            search.setToolTip("Click to clear your current search.")
+            hlayout.addWidget(clear_search)
             
             action_ea = QtGui.QAction("Expand All Folders", view)
             action_ca = QtGui.QAction("Collapse All Folders", view)
@@ -915,7 +933,7 @@ class AppDialog(QtGui.QWidget):
 
             # make sure we keep a handle to all the new objects
             # otherwise the GC may not work
-            self._dynamic_widgets.extend( [tab, layout, search, view, action_ea, action_ca] )
+            self._dynamic_widgets.extend( [tab, layout, hlayout, search, clear_search, view, action_ea, action_ca] )
 
             # set up data backend
             model = SgEntityModel(self, view, sg_entity_type, e["filters"], e["hierarchy"])
@@ -924,6 +942,7 @@ class AppDialog(QtGui.QWidget):
             proxy_model = SgEntityProxyModel(self)
             proxy_model.setSourceModel(model)
             search.textChanged.connect(proxy_model.setFilterFixedString)
+            search.textChanged.connect(lambda text, tree_view=view: self._on_search_text_changed(text, tree_view) )
 
             self._dynamic_widgets.extend([model, proxy_model])
             
@@ -954,6 +973,25 @@ class AppDialog(QtGui.QWidget):
         # finalize initialization by clicking the home button, but only once the 
         # data has properly arrived in the model. 
         self._on_home_clicked()
+        
+    def _on_search_text_changed(self, pattern, tree_view):
+        """
+        Triggered when the text in a search editor changes.
+        tree_view holds the associated tree view widget.
+        """
+        if pattern and len(pattern) > 0:
+            # indicate with a blue border that a search is active
+            tree_view.setStyleSheet("""QTreeView { border-width: 3px; 
+                                                   border-style: solid; 
+                                                   border-color: #2C93E2; }
+                                       QTreeView::item { padding: 5px; }
+                                    """)
+            # expand all nodes in the tree
+            tree_view.expandAll()
+        else:
+            # revert to default style sheet
+            tree_view.setStyleSheet("QTreeView::item { padding: 5px; }")
+        
         
     def _on_entity_profile_tab_clicked(self):
         """

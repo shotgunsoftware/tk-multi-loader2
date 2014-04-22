@@ -919,7 +919,7 @@ class AppDialog(QtGui.QWidget):
             clear_search.setIcon(icon)
             clear_search.setAutoRaise(True)
             clear_search.clicked.connect( lambda editor=search: editor.setText("") )
-            search.setToolTip("Click to clear your current search.")
+            clear_search.setToolTip("Click to clear your current search.")
             hlayout.addWidget(clear_search)
             
             action_ea = QtGui.QAction("Expand All Folders", view)

@@ -30,10 +30,9 @@ class SgEntityProxyModel(QtGui.QSortFilterProxyModel):
         """
         Recursive matching.
         """
-        # use the python hash as a key - both
-        # for performance and to avoid
-        # keeping references to items
-        item_hash = hash(item)
+        # use the python memory address as a key - both
+        # for performance and to avoid keeping references to items
+        item_hash = str(id(item))
         
         # check cache - did we already compute the cull state of this node?
         if item_hash in self._cache:
@@ -67,6 +66,9 @@ class SgEntityProxyModel(QtGui.QSortFilterProxyModel):
         """
         Overridden from base class.
         """
+        print "-=" * 120
+        print "filter string '%s'" % pattern
+        print "-=" * 120
         # clear cache - now that the search criteria is changing,
         # the cache results are no longer valid
         app = sgtk.platform.current_bundle()

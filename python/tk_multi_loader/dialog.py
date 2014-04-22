@@ -940,8 +940,7 @@ class AppDialog(QtGui.QWidget):
             # set up proxy model that we connect our search to
             proxy_model = SgEntityProxyModel(self)
             proxy_model.setSourceModel(model)
-            search.textChanged.connect(proxy_model.setFilterFixedString)
-            search.textChanged.connect(lambda text, tree_view=view: self._on_search_text_changed(text, tree_view) )
+            search.textChanged.connect(lambda text, v=view, pm=proxy_model: self._on_search_text_changed(text, v, pm) )
 
             self._dynamic_widgets.extend([model, proxy_model])
             
@@ -973,11 +972,19 @@ class AppDialog(QtGui.QWidget):
         # data has properly arrived in the model. 
         self._on_home_clicked()
         
-    def _on_search_text_changed(self, pattern, tree_view):
+    def _on_search_text_changed(self, pattern, tree_view, proxy_model):
         """
         Triggered when the text in a search editor changes.
-        tree_view holds the associated tree view widget.
+        
+        :param pattern: new contents of search box
+        :param tree_view: associated tree view.
+        :param proxy_model: associated proxy model
         """
+        
+        # tell proxy model to reevaulate itself given the new pattern.
+        proxy_model.setFilterFixedString(pattern)        
+        
+        # change UI decorations based on new pattern.
         if pattern and len(pattern) > 0:
             # indicate with a blue border that a search is active
             tree_view.setStyleSheet("""QTreeView { border-width: 3px; 

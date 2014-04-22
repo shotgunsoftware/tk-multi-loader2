@@ -77,7 +77,7 @@ configuration:
               filters: 
               - [task_assignees, is, '{context.user}']
               - ["project", "is", "{context.project}"]
-              hierarchy: [entity, step, content]
+              hierarchy: [entity, content]
               
     
         type: list

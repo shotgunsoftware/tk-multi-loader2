@@ -1092,31 +1092,43 @@ class AppDialog(QtGui.QWidget):
         self.ui.publish_view.selectionModel().clear()
                 
         # Determine the child folders.
+        child_folders = []
+        proxy_model = self._entity_presets[self._current_entity_preset].proxy_model
+        
         if item is None:
             # nothing is selected, bring in all the top level
             # objects in the current tab
-            root_item = self._entity_presets[self._current_entity_preset].model.invisibleRootItem()
+            num_children = proxy_model.rowCount()
+        
+            for x in range(num_children):
+                # get the (proxy model) index for the child
+                child_idx_proxy = proxy_model.index(x,0)
+                # switch to shotgun model index
+                child_idx = proxy_model.mapToSource(child_idx_proxy)
+                # resolve the index into an actual standarditem object
+                item = self._entity_presets[self._current_entity_preset].model.itemFromIndex(child_idx)
+                child_folders.append(item)
+        
         else:
-            root_item = item
-
-        # now get the proxy model level item instead - this way we can take search into 
-        # account as we show the folder listings.
-        root_model_idx = root_item.index()
-        proxy_model = self._entity_presets[self._current_entity_preset].proxy_model
-        root_model_idx_proxy = proxy_model.mapFromSource(root_model_idx) 
-        num_children = proxy_model.rowCount(root_model_idx_proxy)
-
-        # get all the folder children - these need to be displayed
-        # by the model as folders
-        child_folders = []
-        for x in range(num_children):
-            # get the (proxy model) index for the child
-            child_idx_proxy = root_model_idx_proxy.child(x,0)
-            # switch to shotgun model index
-            child_idx = proxy_model.mapToSource(child_idx_proxy)
-            # resolve the index into an actual standarditem object
-            item = self._entity_presets[self._current_entity_preset].model.itemFromIndex(child_idx)
-            child_folders.append(item)
+            # we got a specific item to process!
+            
+            # now get the proxy model level item instead - this way we can take search into 
+            # account as we show the folder listings.
+            root_model_idx = item.index()
+            root_model_idx_proxy = proxy_model.mapFromSource(root_model_idx)             
+            num_children = proxy_model.rowCount(root_model_idx_proxy)
+            
+            # get all the folder children - these need to be displayed
+            # by the model as folders
+            
+            for x in range(num_children):
+                # get the (proxy model) index for the child
+                child_idx_proxy = root_model_idx_proxy.child(x,0)
+                # switch to shotgun model index
+                child_idx = proxy_model.mapToSource(child_idx_proxy)
+                # resolve the index into an actual standarditem object
+                item = self._entity_presets[self._current_entity_preset].model.itemFromIndex(child_idx)
+                child_folders.append(item)
                 
         # is the show child folders checked?
         show_sub_items = self.ui.show_sub_items.isChecked()

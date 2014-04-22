@@ -66,9 +66,6 @@ class SgEntityProxyModel(QtGui.QSortFilterProxyModel):
         """
         Overridden from base class.
         """
-        print "-=" * 120
-        print "filter string '%s'" % pattern
-        print "-=" * 120
         # clear cache - now that the search criteria is changing,
         # the cache results are no longer valid
         app = sgtk.platform.current_bundle()

@@ -950,7 +950,7 @@ class AppDialog(QtGui.QWidget):
             view.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
             view.setProperty("showDropIndicator", False)
             view.setIconSize(QtCore.QSize(20, 20))
-            view.setStyleSheet("QTreeView::item { padding: 5px; }")            
+            view.setStyleSheet("QTreeView::item { padding: 6px;  }")            
             view.setUniformRowHeights(True)
             view.setHeaderHidden(True)
             view.setModel(proxy_model)
@@ -984,13 +984,13 @@ class AppDialog(QtGui.QWidget):
             tree_view.setStyleSheet("""QTreeView { border-width: 3px; 
                                                    border-style: solid; 
                                                    border-color: #2C93E2; }
-                                       QTreeView::item { padding: 5px; }
+                                       QTreeView::item { padding: 6px; }
                                     """)
             # expand all nodes in the tree
             tree_view.expandAll()
         else:
             # revert to default style sheet
-            tree_view.setStyleSheet("QTreeView::item { padding: 5px; }")
+            tree_view.setStyleSheet("QTreeView::item { padding: 6px; }")
         
         
     def _on_entity_profile_tab_clicked(self):

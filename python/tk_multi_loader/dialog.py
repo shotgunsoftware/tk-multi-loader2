@@ -1106,8 +1106,8 @@ class AppDialog(QtGui.QWidget):
                 # switch to shotgun model index
                 child_idx = proxy_model.mapToSource(child_idx_proxy)
                 # resolve the index into an actual standarditem object
-                item = self._entity_presets[self._current_entity_preset].model.itemFromIndex(child_idx)
-                child_folders.append(item)
+                i = self._entity_presets[self._current_entity_preset].model.itemFromIndex(child_idx)
+                child_folders.append(i)
         
         else:
             # we got a specific item to process!
@@ -1127,8 +1127,8 @@ class AppDialog(QtGui.QWidget):
                 # switch to shotgun model index
                 child_idx = proxy_model.mapToSource(child_idx_proxy)
                 # resolve the index into an actual standarditem object
-                item = self._entity_presets[self._current_entity_preset].model.itemFromIndex(child_idx)
-                child_folders.append(item)
+                i = self._entity_presets[self._current_entity_preset].model.itemFromIndex(child_idx)
+                child_folders.append(i)
                 
         # is the show child folders checked?
         show_sub_items = self.ui.show_sub_items.isChecked()
@@ -1142,6 +1142,7 @@ class AppDialog(QtGui.QWidget):
             self.ui.publish_view.setStyleSheet("")
             self._publish_delegate.enable_subitems_mode(False)
         
+        # now finally load up the data in the publish model
         self._publish_model.load_data(item, child_folders, show_sub_items)
 
     def _populate_entity_breadcrumbs(self):

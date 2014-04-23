@@ -107,8 +107,8 @@ supported_engines:
 requires_shotgun_fields:
 
 # More verbose description of this item 
-display_name: "Content Loader"
-description: "Locate and Open Files on Disk."
+display_name: "Publish Loader"
+description: "Locate published files and reference them into your scene."
 
 # Required minimum versions for this item to run
 requires_shotgun_version:

@@ -51,11 +51,11 @@ configuration:
             Rendered Image: [texture_node]
             Photoshop Image: [texture_node]        
         default_value_tk-motionbuilder: 
-            Motionbuilder Fbx: [import]
+            Motion Builder FBX: [import]
         default_value_tk-3dsmax:
             3dsmax Scene: [import]
         default_value_tk-photoshop:
-            Texture: [open_file]
+            Photoshop Image: [open_file]
 
 
     entities:

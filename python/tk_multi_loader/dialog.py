@@ -1160,10 +1160,37 @@ class AppDialog(QtGui.QWidget):
             # walk up to root, list of items will be in bottom-up order...
             tmp_item = selected_item
             while tmp_item:
-                sg_type = shotgun_model.get_sanitized_data(tmp_item, SgEntityModel.TYPE_ROLE)
-                name = tmp_item.text()
+                
+                # now figure out the associated value and type for this node
+                # we base it both on the sg_data (None for all non-leaf nodes)
+                # and on the associated data role
+                sg_data = tmp_item.get_sg_data()
+                field_data = shotgun_model.get_sanitized_data(tmp_item, SgEntityModel.SG_ASSOCIATED_FIELD_ROLE)
+                # examples of data:
+                # intermediate node: {'name': 'sg_asset_type', 'value': 'Character' }
+                # intermediate node: {'name': 'sg_sequence',   'value': {'type': 'Sequence', 'id': 11, 'name': 'bunny_080'}}
+                # leaf node:         {'name': 'code',          'value': 'mystuff'}
+                
+                field_value = field_data["value"]
+                
+                if sg_data:
+                    # leaf node
+                    name = str(field_value)
+                    sg_type = sg_data.get("type") 
+                
+                elif isinstance(field_value, dict) and "name" in field_value and "type" in field_value:
+                    name = field_value["name"]
+                    sg_type = field_value["type"]
+                                     
+                else:
+                    # other value (e.g. intermediary non-entity link node like sg_asset_type)
+                    name = str(field_value)
+                    sg_type = None
+                
+                # now set up the crumbs                
                 if sg_type is None:
                     crumbs.append(name)
+                    
                 else:
                     # lookup the display name for the entity type:
                     tk = sgtk.platform.current_bundle().sgtk

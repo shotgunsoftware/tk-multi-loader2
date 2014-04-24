@@ -215,19 +215,24 @@ class AppDialog(QtGui.QWidget):
         splash.setMask(splash_pix.mask())
         splash.show()
         QtCore.QCoreApplication.processEvents()
-           
-        # disconnect some signals so we don't go all crazy when
-        # the cascading model deletes begin as part of the destroy calls
-        for p in self._entity_presets:
-            self._entity_presets[p].view.selectionModel().selectionChanged.disconnect(self._on_treeview_item_selected)
-           
-        # gracefully close all connections 
-        self._publish_model.destroy()
-        self._publish_history_model.destroy()
-        self._publish_type_model.destroy()
-        self._status_model.destroy()    
-        for p in self._entity_presets:
-            self._entity_presets[p].model.destroy()
+        
+        try:
+            # disconnect some signals so we don't go all crazy when
+            # the cascading model deletes begin as part of the destroy calls
+            for p in self._entity_presets:
+                self._entity_presets[p].view.selectionModel().selectionChanged.disconnect(self._on_treeview_item_selected)
+               
+            # gracefully close all connections 
+            self._publish_model.destroy()
+            self._publish_history_model.destroy()
+            self._publish_type_model.destroy()
+            self._status_model.destroy()    
+            for p in self._entity_presets:
+                self._entity_presets[p].model.destroy()
+        
+        except:
+            app = sgtk.platform.current_bundle()
+            app.log_exception("Error running Loader App closeEvent()")
         
         # close splash
         splash.close()

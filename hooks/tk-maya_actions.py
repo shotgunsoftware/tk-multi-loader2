@@ -70,6 +70,12 @@ class MayaActions(HookBaseClass):
                                       "caption": "Create Reference", 
                                       "description": "This will add the item to the scene as a standard reference."} )
 
+        if "import" in actions:
+            action_instances.append( {"name": "import", 
+                                      "params": None,
+                                      "caption": "Import into Scene", 
+                                      "description": "This will import the item into the current scene."} )
+
         if "texture_node" in actions:        
             action_instances.append( {"name": "texture_node",
                                       "params": None, 
@@ -98,6 +104,9 @@ class MayaActions(HookBaseClass):
         
         if name == "reference":
             self._create_reference(path, sg_publish_data)
+
+        if name == "import":
+            self._do_import(path, sg_publish_data)
         
         if name == "texture_node":
             self._create_texture_node(path, sg_publish_data)
@@ -122,14 +131,36 @@ class MayaActions(HookBaseClass):
         
         # make a name space out of entity name + publish name
         # e.g. bunny_upperbody                
-        namespace = "%s_%s" % (sg_publish_data.get("entity").get("name"), sg_publish_data.get("name"))
+        namespace = "%s %s" % (sg_publish_data.get("entity").get("name"), sg_publish_data.get("name"))
+        namespace = namespace.replace(" ", "_")
                 
         pm.system.createReference(path, 
                                   loadReferenceDepth= "all", 
                                   mergeNamespacesOnClash=False, 
                                   namespace=namespace)
 
+    def _do_import(self, path, sg_publish_data):
+        """
+        Create a reference with the same settings Maya would use
+        if you used the create settings dialog.
+        
+        :param path: Path to file.
+        :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
+        """
+        import pymel.core as pm
+        import maya.cmds as cmds
 
+        if not os.path.exists(path):
+            raise Exception("File not found on disk - '%s'" % path)
+                
+        # make a name space out of entity name + publish name
+        # e.g. bunny_upperbody                
+        namespace = "%s %s" % (sg_publish_data.get("entity").get("name"), sg_publish_data.get("name"))
+        namespace = namespace.replace(" ", "_")
+        
+        # perform a more or less standard maya import, putting all nodes brought in into a specific namespace
+        cmds.file(path, i=True, renameAll=True, namespace=namespace, loadReferenceDepth="all", preserveReferences=True)
+            
     def _create_texture_node(self, path, sg_publish_data):
         """
         Create a file texture node for a texture

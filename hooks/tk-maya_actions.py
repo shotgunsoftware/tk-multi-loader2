@@ -79,7 +79,7 @@ class MayaActions(HookBaseClass):
         if "texture_node" in actions:        
             action_instances.append( {"name": "texture_node",
                                       "params": None, 
-                                      "caption": "Create texture node", 
+                                      "caption": "Create Texture Node", 
                                       "description": "Creates a file texture node for the selected item.."} )        
     
         return action_instances

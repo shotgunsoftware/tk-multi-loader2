@@ -67,7 +67,7 @@ class NukeActions(HookBaseClass):
         if "read_node" in actions:
             action_instances.append( {"name": "read_node", 
                                       "params": None,
-                                      "caption": "Create Read Node for This Publish", 
+                                      "caption": "Create Read Node", 
                                       "description": "This will add a read node to the current scene."} )
 
         if "script_import" in actions:        

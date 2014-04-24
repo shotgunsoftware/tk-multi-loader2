@@ -300,7 +300,7 @@ background-image: url(:/res/right_arrow_pressed.png);
           </size>
          </property>
          <property name="toolTip">
-          <string>This &lt;i&gt;breadcrubs listing&lt;/i&gt; shows your currently selected Shotgun location.</string>
+          <string>This &lt;i&gt;breadcrumbs listing&lt;/i&gt; shows your currently selected Shotgun location.</string>
          </property>
          <property name="text">
           <string/>

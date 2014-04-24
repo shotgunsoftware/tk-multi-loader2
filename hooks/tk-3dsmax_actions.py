@@ -68,7 +68,7 @@ class MaxActions(HookBaseClass):
         if "import" in actions:        
             action_instances.append( {"name": "import",
                                       "params": None, 
-                                      "caption": "Import contents", 
+                                      "caption": "Import Contents", 
                                       "description": "This will import the contents into the current scene."} )        
     
         return action_instances

@@ -68,7 +68,7 @@ class MotionbuilderActions(HookBaseClass):
         if "import" in actions:
             action_instances.append( {"name": "import", 
                                       "params": None,
-                                      "caption": "Import contents", 
+                                      "caption": "Import Contents", 
                                       "description": "This will imports the file contents into the current scene."} )
     
         return action_instances

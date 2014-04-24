@@ -73,7 +73,7 @@ class NukeActions(HookBaseClass):
         if "script_import" in actions:        
             action_instances.append( {"name": "script_import",
                                       "params": None, 
-                                      "caption": "Import contents", 
+                                      "caption": "Import Contents", 
                                       "description": "This will import all the nodes into the current scene."} )        
     
         return action_instances

@@ -66,10 +66,10 @@ class MaxActions(HookBaseClass):
         
 
         if "import" in actions:        
-            action_instances.append( {"name": "import",
+            action_instances.append( {"name": "merge",
                                       "params": None, 
-                                      "caption": "Import Contents", 
-                                      "description": "This will import the contents into the current scene."} )        
+                                      "caption": "Merge Contents", 
+                                      "description": "This will merge the contents into the current scene."} )        
     
         return action_instances
                 
@@ -91,16 +91,16 @@ class MaxActions(HookBaseClass):
         # resolve path
         path = self.get_publish_path(sg_publish_data)
         
-        if name == "import":
-            self._import(path, sg_publish_data)
+        if name == "merge":
+            self._merge(path, sg_publish_data)
         
     
     ##############################################################################################################
     # helper methods which can be subclassed in custom hooks to fine tune the behaviour of things
     
-    def _import(self, path, sg_publish_data):
+    def _merge(self, path, sg_publish_data):
         """
-        Import contents of the given file into the scene.
+        Merge contents of the given file into the scene.
         
         :param path: Path to file.
         :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
@@ -115,6 +115,6 @@ class MaxActions(HookBaseClass):
         if ext.lower() != ".max":
             raise Exception("Unsupported file extension for '%s'. Only .max files are supported." % path)
         
-        mxs.importFile(path)
+        mxs.mergeMAXFile(path)
 
 

@@ -53,7 +53,7 @@ configuration:
         default_value_tk-motionbuilder: 
             Motion Builder FBX: [import]
         default_value_tk-3dsmax:
-            3dsmax Scene: [import]
+            3dsmax Scene: [import, reference]
         default_value_tk-photoshop:
             Photoshop Image: [open_file]
 

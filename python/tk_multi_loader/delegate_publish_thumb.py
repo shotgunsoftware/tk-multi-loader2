@@ -27,18 +27,18 @@ class SgPublishDelegate(shotgun_view.WidgetDelegate):
         self._status_model = status_model
         self._action_manager = action_manager
         self._view = view
-        self._subitems_mode = False
+        self._show_entity_instead_of_type = False
         
-    def enable_subitems_mode(self, enabled):
+    def show_entity_instead_of_type(self, enabled):
         """
-        Enables rendering of item in subitems mode.
-        This mode means that objects associated with more than
-        one entity or task is rendered together, so the formatting
-        needs to be different to indicate this.
+        Enables rendering of cells in a non-standard way,
+        where the second line is not the type but instead
+        the linked entity. This is for example used when the
+        subfolders mode is enabled.
         
         :param enabled: True if subitems mode is enabled, false if not
         """
-        self._subitems_mode = enabled
+        self._show_entity_instead_of_type = enabled
         
     def _create_widget(self, parent):
         """
@@ -121,7 +121,7 @@ class SgPublishDelegate(shotgun_view.WidgetDelegate):
             if sg_data.get("version_number"):
                 name_str += " v%s" % sg_data.get("version_number")
             
-            if self._subitems_mode:
+            if self._show_entity_instead_of_type:
 
                 # display this publish in sub items node
                 # in this case we want to display the following two lines

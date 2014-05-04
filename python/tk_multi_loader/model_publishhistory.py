@@ -73,7 +73,7 @@ class SgPublishHistoryModel(ShotgunOverlayModel):
         app = sgtk.platform.current_bundle()
         pub_filters = app.get_setting("publish_filters", [])
         filters.extend(pub_filters)
-
+ 
         ShotgunOverlayModel._load_data(self, 
                                        entity_type=publish_entity_type, 
                                        filters=filters, 
@@ -99,6 +99,18 @@ class SgPublishHistoryModel(ShotgunOverlayModel):
         :param sg_data: Shotgun data dictionary that was received from Shotgun given the fields
                         and other settings specified in load_data()
         """
+        
+        # note that when the sg model creates the name field for each item,
+        # it creates a string value. In our case, we use version number as the name
+        # and use this for automatic sorting, meaning that QT will auto sort 
+        # "1", "10", "2" etc instead of proper integer sorting. Avoid this by 
+        # force setting the name field to a three zero padded string instead to 
+        # reflect how values are displayed.
+        # Also note that since we use a delegate for data display, this value is
+        # only used for sorting, not for display.
+        if sg_data.get("version_number"):
+            item.setText("%03d" % sg_data.get("version_number"))
+
         
         # see if we can get a thumbnail for the user
         if sg_data.get("created_by.HumanUser.image"):

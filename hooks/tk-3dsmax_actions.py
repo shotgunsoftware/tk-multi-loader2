@@ -65,12 +65,18 @@ class MaxActions(HookBaseClass):
         action_instances = []
         
 
-        if "import" in actions:        
-            action_instances.append( {"name": "import",
+        if "import" in actions:
+            action_instances.append( {"name": "merge",
                                       "params": None, 
-                                      "caption": "Import Contents", 
-                                      "description": "This will import the contents into the current scene."} )        
-    
+                                      "caption": "Merge", 
+                                      "description": "This will merge the contents of this file into the current scene."} )        
+        
+        if "reference" in actions:
+            action_instances.append( {"name": "xref_scene",
+                                      "params": None, 
+                                      "caption": "XRef Scene", 
+                                      "description": "This will insert a reference to this file into the current scene."} )        
+        
         return action_instances
                 
 
@@ -91,16 +97,18 @@ class MaxActions(HookBaseClass):
         # resolve path
         path = self.get_publish_path(sg_publish_data)
         
-        if name == "import":
-            self._import(path, sg_publish_data)
+        if name == "merge":
+            self._merge(path, sg_publish_data)
+        elif name == "xref_scene":
+            self._xref_scene(path, sg_publish_data)
         
     
     ##############################################################################################################
     # helper methods which can be subclassed in custom hooks to fine tune the behaviour of things
     
-    def _import(self, path, sg_publish_data):
+    def _merge(self, path, sg_publish_data):
         """
-        Import contents of the given file into the scene.
+        Merge contents of the given file into the scene.
         
         :param path: Path to file.
         :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
@@ -112,9 +120,31 @@ class MaxActions(HookBaseClass):
         
         (_, ext) = os.path.splitext(path)
         
-        if ext.lower() != ".max":
-            raise Exception("Unsupported file extension for '%s'. Only .max files are supported." % path)
+        supported_file_exts = [".max"]
+        if ext.lower() not in supported_file_exts:
+            raise Exception("Unsupported file extension for '%s'. "
+                            "Supported file extensions are: %s" % (path, supported_file_exts))
         
-        mxs.importFile(path)
+        mxs.mergeMAXFile(path)
 
 
+    def _xref_scene(self, path, sg_publish_data):
+        """
+        Insert a reference to the given external file into the current scene.
+        
+        :param path: Path to file.
+        :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
+        """
+        from Py3dsMax import mxs
+        
+        if not os.path.exists(path):
+            raise Exception("File not found on disk - '%s'" % path)
+        
+        (_, ext) = os.path.splitext(path)
+        
+        supported_file_exts = [".max"]
+        if ext.lower() not in supported_file_exts:
+            raise Exception("Unsupported file extension for '%s'. "
+                            "Supported file extensions are: %s" % (path, supported_file_exts))
+        
+        mxs.xrefs.addNewXRefFile(path)

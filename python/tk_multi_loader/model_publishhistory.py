@@ -31,7 +31,7 @@ class SgPublishHistoryModel(ShotgunOverlayModel):
         """
         # folder icon
         self._loading_icon = QtGui.QPixmap(":/res/loading_100x100.png")
-        ShotgunOverlayModel.__init__(self, parent, overlay_widget, download_thumbs=True)
+        ShotgunOverlayModel.__init__(self, parent, overlay_widget, download_thumbs=True, schema_generation=1)
         
                 
     ############################################################################################

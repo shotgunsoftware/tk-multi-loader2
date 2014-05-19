@@ -43,12 +43,14 @@ class SgLatestPublishModel(ShotgunOverlayModel):
         self._loading_icon = QtGui.QIcon(QtGui.QPixmap(":/res/loading_512x400.png"))
 
         self._associated_items = {}
+        
+        app = sgtk.platform.current_bundle()
 
         # init base class
         ShotgunOverlayModel.__init__(self, 
                                      parent, 
                                      overlay_widget, 
-                                     download_thumbs=True, 
+                                     download_thumbs=app.get_setting("download_thumbnails"), 
                                      schema_generation=2)
     
     ############################################################################################

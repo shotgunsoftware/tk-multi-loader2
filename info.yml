@@ -37,6 +37,14 @@ configuration:
         description: Specify a hook that, if needed, can filter the raw list of publishes returned
                      from Shotgun for the current location.
 
+    download_thumbnails:
+        type: bool
+        default_value: true
+        description: Controls whether thumbnails should be downloaded from Shotgun or not. We 
+                     strongly recommend that thumbnails are downloaded since this greatly enhances
+                     the user experience of the loader, however in some situations this may be 
+                     difficult due to bandwidth or infrastructural restrictions.
+
     action_mappings:
         type: dict
         description: Associates published file types with actions. The actions are all defined

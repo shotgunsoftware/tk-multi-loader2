@@ -12,7 +12,6 @@
 Hook that loads defines all the available actions, broken down by publish type. 
 """
 import sgtk
-import nuke
 import os
 
 HookBaseClass = sgtk.get_hook_baseclass()
@@ -109,7 +108,7 @@ class PhotoshopActions(HookBaseClass):
             raise Exception("File not found on disk - '%s'" % path)
         
         import photoshop        
-        f = photoshop.RemoteObject('flash.filesystem::File', file_path)
+        f = photoshop.RemoteObject('flash.filesystem::File', path)
         photoshop.app.load(f)        
 
         

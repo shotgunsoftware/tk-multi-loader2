@@ -35,7 +35,8 @@ class SgPublishHistoryModel(ShotgunOverlayModel):
         ShotgunOverlayModel.__init__(self, 
                                      parent, 
                                      overlay_widget, 
-                                     download_thumbs=app.get_setting("download_thumbnails"))
+                                     download_thumbs=app.get_setting("download_thumbnails"),
+                                     schema_generation=1)
         
                 
     ############################################################################################

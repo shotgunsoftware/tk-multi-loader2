@@ -28,7 +28,7 @@ from .ui.dialog import Ui_Dialog
 # import frameworks
 shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model") 
 settings = sgtk.platform.import_framework("tk-framework-shotgunutils", "settings")
-help_screen = sgtk.platform.import_framework("tk-framework-shotgunutils", "help_screen") 
+help_screen = sgtk.platform.import_framework("tk-framework-qtwidgets", "help_screen") 
 
        
 

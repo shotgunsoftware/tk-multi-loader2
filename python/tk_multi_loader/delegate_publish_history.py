@@ -15,7 +15,7 @@ from sgtk.platform.qt import QtCore, QtGui
  
 # import the shotgun_model and view modules from the shotgun utils framework
 shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model")
-shotgun_view = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_view")
+shotgun_view = sgtk.platform.import_framework("tk-framework-qtwidgets", "shotgun_view")
 
 
 class SgPublishHistoryDelegate(shotgun_view.WidgetDelegate):

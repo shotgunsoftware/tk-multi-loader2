@@ -13,7 +13,7 @@ from sgtk.platform.qt import QtCore, QtGui
 
 from .ui import resources_rc
 
-help_screen = sgtk.platform.import_framework("tk-framework-shotgunutils", "help_screen") 
+help_screen = sgtk.platform.import_framework("tk-framework-qtwidgets", "help_screen") 
 
 def show_dialog(app):
     # defer imports so that the app works gracefully in batch modes

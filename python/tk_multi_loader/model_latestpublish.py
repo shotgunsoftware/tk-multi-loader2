@@ -51,7 +51,7 @@ class SgLatestPublishModel(ShotgunOverlayModel):
                                      parent,
                                      overlay_widget,
                                      download_thumbs=app.get_setting("download_thumbnails"),
-                                     schema_generation=2)
+                                     schema_generation=3)
 
     ############################################################################################
     # public interface
@@ -207,19 +207,23 @@ class SgLatestPublishModel(ShotgunOverlayModel):
             sg_filters.extend(pub_filters)
 
 
-        publish_fields = ["name",
-                          "path",
-                          "entity",
+        publish_fields = [self._publish_type_field,
+                          "name",
                           "version_number",
+                          "image",
+                          "entity",
+                          "path",
                           "description",
                           "task",
                           "task.Task.sg_status_list",
                           "task.Task.due_date",
                           "task.Task.content",
-                          "image",
+                          "created_by",
+                          "created_at",
                           "version", # note: not supported on TankPublishedFile so always None
                           "version.Version.sg_status_list",
-                          self._publish_type_field]
+                          "created_by.HumanUser.image"
+                          ]
 
 
         # first add our folders to the model

@@ -1217,6 +1217,23 @@ class AppDialog(QtGui.QWidget):
                     name = field_value["name"]
                     sg_type = field_value["type"]
 
+                elif isinstance(field_value, list):
+                    # this is a list of some sort. Loop over all elements and extrat a comma separated list.
+                    formatted_values = []
+                    if len(field_value) == 0:
+                        # no items in list
+                        formatted_values.append("No Value")
+                    for v in field_value:
+                        if isinstance(v, dict) and "name" in v and "type" in v:
+                            # This is a link field
+                            if v.get("name"):
+                                formatted_values.append(v.get("name"))
+                        else:
+                            formatted_values.append(str(v))
+
+                    name = ", ".join(formatted_values)
+                    sg_type = None
+
                 else:
                     # other value (e.g. intermediary non-entity link node like sg_asset_type)
                     name = str(field_value)

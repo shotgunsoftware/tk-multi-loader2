@@ -36,7 +36,7 @@ class SgPublishHistoryModel(ShotgunOverlayModel):
                                      parent,
                                      overlay_widget,
                                      download_thumbs=app.get_setting("download_thumbnails"),
-                                     schema_generation=1)
+                                     schema_generation=2)
 
 
     ############################################################################################
@@ -63,11 +63,16 @@ class SgPublishHistoryModel(ShotgunOverlayModel):
                   "image",
                   "entity",
                   "path",
+                  "description",
+                  "task",
+                  "task.Task.sg_status_list",
+                  "task.Task.due_date",
+                  "task.Task.content",
                   "created_by",
                   "created_at",
-                  "version",
-                  "created_by.HumanUser.image",
-                  "description"]
+                  "version", # note: not supported on TankPublishedFile so always None
+                  "version.Version.sg_status_list",
+                  "created_by.HumanUser.image"]
 
         filters = [ ["name", "is", sg_data["name"] ],
                     ["entity", "is", sg_data["entity"] ],

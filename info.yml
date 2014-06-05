@@ -1,18 +1,18 @@
 # Copyright (c) 2013 Shotgun Software Inc.
-# 
+#
 # CONFIDENTIAL AND PROPRIETARY
-# 
-# This work is provided "AS IS" and subject to the Shotgun Pipeline Toolkit 
+#
+# This work is provided "AS IS" and subject to the Shotgun Pipeline Toolkit
 # Source Code License included in this distribution package. See LICENSE.
-# By accessing, using, copying or modifying this work you indicate your 
-# agreement to the Shotgun Pipeline Toolkit Source Code License. All rights 
+# By accessing, using, copying or modifying this work you indicate your
+# agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 # Metadata defining the behavior and requirements for this app
 
 # expected fields in the configuration file for this app
 configuration:
-    
+
     # UI customization
     menu_name:
         type: str
@@ -26,7 +26,7 @@ configuration:
 
 
     # hooks
-    actions_hook: 
+    actions_hook:
         type: hook
         default_value: "{self}/{engine_name}_actions.py"
         description: Hook which contains all methods for action management.
@@ -40,25 +40,25 @@ configuration:
     download_thumbnails:
         type: bool
         default_value: true
-        description: Controls whether thumbnails should be downloaded from Shotgun or not. We 
+        description: Controls whether thumbnails should be downloaded from Shotgun or not. We
                      strongly recommend that thumbnails are downloaded since this greatly enhances
-                     the user experience of the loader, however in some situations this may be 
+                     the user experience of the loader, however in some situations this may be
                      difficult due to bandwidth or infrastructural restrictions.
 
     action_mappings:
         type: dict
         description: Associates published file types with actions. The actions are all defined
-                     inside the actions hook, so a number of actions are available by default 
+                     inside the actions hook, so a number of actions are available by default
                      and in addition to this you can add your own actions if you like.
         default_value: {}
-        default_value_tk-nuke: 
-            Rendered Image: [read_node] 
+        default_value_tk-nuke:
+            Rendered Image: [read_node]
             Nuke Script: [script_import]
         default_value_tk-maya:
             Maya Scene: [reference, import]
             Rendered Image: [texture_node]
-            Photoshop Image: [texture_node]        
-        default_value_tk-motionbuilder: 
+            Photoshop Image: [texture_node]
+        default_value_tk-motionbuilder:
             Motion Builder FBX: [import]
         default_value_tk-3dsmax:
             3dsmax Scene: [import, reference]
@@ -67,30 +67,30 @@ configuration:
 
 
     entities:
-        default_value: 
+        default_value:
             - caption: Assets
               entity_type: Asset
-              filters: 
+              filters:
               - ["project", "is", "{context.project}"]
               hierarchy: [sg_asset_type, code]
-            
+
             - caption: Shots
               entity_type: Shot
-              filters: 
+              filters:
               - ["project", "is", "{context.project}"]
               hierarchy: [sg_sequence, code]
-              
+
             - caption: My Tasks
               entity_type: Task
-              filters: 
+              filters:
               - [task_assignees, is, '{context.user}']
               - ["project", "is", "{context.project}"]
               hierarchy: [entity, content]
-              
-    
+
+
         type: list
-        description: "List of entities for the tree view. 
-                      Each item should be a dictionary with keys caption, 
+        description: "List of entities for the tree view.
+                      Each item should be a dictionary with keys caption,
                       entity_type, filters and hierarchy"
         allows_empty: False
         values:
@@ -99,23 +99,23 @@ configuration:
     publish_filters:
         type: list
         description: "List of additional shotgun filters to apply to the publish listings.  These
-                      will be applied before any other filtering takes place and would allow you to 
+                      will be applied before any other filtering takes place and would allow you to
                       for example hide things with a certain status."
         values:
             type: shotgun_filter
         allows_empty: True
         default_value: []
 
-            
-# this app works in all engines - it does not contain 
+
+# this app works in all engines - it does not contain
 # any host application specific commands
-supported_engines: 
+supported_engines:
 
 # the Shotgun fields that this app needs in order to operate correctly
 requires_shotgun_fields:
 
-# More verbose description of this item 
-display_name: "Publish Loader"
+# More verbose description of this item
+display_name: "Loader"
 description: "Locate published files and reference them into your scene."
 
 # Required minimum versions for this item to run
@@ -127,5 +127,3 @@ requires_engine_version:
 frameworks:
     - {"name": "tk-framework-shotgunutils", "version": "v2.x.x"}
     - {"name": "tk-framework-qtwidgets", "version": "v1.x.x"}
-    
-        

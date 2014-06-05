@@ -102,7 +102,7 @@ class SgPublishDelegate(shotgun_view.WidgetDelegate):
                 widget.set_text(field_value["name"], field_value["type"])
 
             elif isinstance(field_value, list):
-                # this is a list of some sort. Loop over all elements and extrat a comma separated list.
+                # this is a list of some sort. Loop over all elements and extract a comma separated list.
                 formatted_values = []
                 if len(field_value) == 0:
                     # no items in list

@@ -51,8 +51,8 @@ class SgStatusModel(ShotgunModel):
         """
         for idx in range(self.rowCount()):
             item = self.item(idx)
-            
-            if item.text() == code:
+            if item.text() == code and item.get_sg_data().get("name"):
+                # avoid non-None values
                 return item.get_sg_data().get("name")
                         
         return "Undefined"

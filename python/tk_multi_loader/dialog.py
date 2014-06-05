@@ -190,7 +190,7 @@ class AppDialog(QtGui.QWidget):
         #################################################
         # set up cog button actions
         self._help_action = QtGui.QAction("Show Help Screen", self)
-        self._help_action.triggered.connect(self._on_help_action)
+        self._help_action.triggered.connect(self.show_help_popup)
         self.ui.cog_button.addAction(self._help_action)
 
         self._doc_action = QtGui.QAction("View Documentation", self)
@@ -709,7 +709,7 @@ class AppDialog(QtGui.QWidget):
     ########################################################################################
     # cog icon actions
 
-    def _on_help_action(self):
+    def show_help_popup(self):
         """
         Someone clicked the show help screen action
         """

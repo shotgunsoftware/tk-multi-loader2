@@ -406,7 +406,7 @@ class SgLatestPublishModel(ShotgunOverlayModel):
                 if sg_data:
                     sg_data_list.append(sg_data)
 
-        except:
+        except Exception:
             app.log_exception("Failed to execute 'filter_publishes_hook'!")
             sg_data_list = []
 

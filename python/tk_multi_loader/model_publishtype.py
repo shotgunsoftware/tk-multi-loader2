@@ -142,7 +142,7 @@ class SgPublishTypeModel(ShotgunOverlayModel):
             
             if item.checkState() == QtCore.Qt.Checked:
                 # get the shotgun id
-                sg_type_id = item.get_sg_data().get("id")
+                sg_type_id = item.get_sg_data()["id"]
                 type_ids.append(sg_type_id)
         return type_ids
         

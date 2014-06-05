@@ -49,7 +49,7 @@ class ActionManager(object):
         publish_type_dict = sg_data.get(self._publish_type_field)
         if publish_type_dict is None:
             # this publish does not have a type
-            return []
+            publish_type = "undefined"
         else:
             publish_type = publish_type_dict["name"]
         
@@ -82,7 +82,7 @@ class ActionManager(object):
                                                         sg_publish_data=sg_data, 
                                                         actions=actions,
                                                         ui_area=ui_area_str)
-        except:
+        except Exception:
             self._app.log_exception("Could not execute generate_actions hook.")
             
             

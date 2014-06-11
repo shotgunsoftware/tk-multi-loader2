@@ -51,6 +51,10 @@ configuration:
                      inside the actions hook, so a number of actions are available by default
                      and in addition to this you can add your own actions if you like.
         default_value: {}
+        default_value_tk-3dsmax:
+            3dsmax Scene: [import, reference]
+        default_value_tk-houdini:
+            Houdini Scene: [merge]
         default_value_tk-nuke:
             Rendered Image: [read_node]
             Nuke Script: [script_import]
@@ -60,8 +64,6 @@ configuration:
             Photoshop Image: [texture_node]
         default_value_tk-motionbuilder:
             Motion Builder FBX: [import]
-        default_value_tk-3dsmax:
-            3dsmax Scene: [import, reference]
         default_value_tk-photoshop:
             Photoshop Image: [open_file]
 

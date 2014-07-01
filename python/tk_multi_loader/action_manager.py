@@ -70,7 +70,10 @@ class ActionManager(object):
         
         This ensures consistency for any hooks implemented by users.
         
-        :param sg_data: shotgun data for a publish
+        :param sg_data: Shotgun data for a publish
+        :param ui_area: Indicates which part of the UI the request is coming from. 
+                        Currently one of UI_AREA_MAIN, UI_AREA_DETAILS and UI_AREA_HISTORY
+        :returns: List of QAction objects, ready to be parented to some QT Widgetry.
         """
         publish_type_dict = sg_data.get(self._publish_type_field)
         if publish_type_dict is None:

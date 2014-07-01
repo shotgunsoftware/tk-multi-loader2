@@ -10,10 +10,12 @@
 
 import sgtk
 import hashlib
+import datetime
 import os
+import copy
 import sys
 from sgtk.platform.qt import QtCore, QtGui
-
+from tank_vendor import shotgun_api3
 from sgtk import TankError
 
 class ActionManager(object):
@@ -43,6 +45,30 @@ class ActionManager(object):
     def get_actions_for_publish(self, sg_data, ui_area):
         """
         Returns a list of actions for a publish.
+        
+        Shotgun data representing a publish is passed in and forwarded on to hooks
+        to help them determine which actions may be applicable. This data should by convention
+        contain at least the following fields:
+                 
+          "published_file_type",
+          "tank_type"
+          "name",
+          "version_number",
+          "image",
+          "entity",
+          "path",
+          "description",
+          "task",
+          "task.Task.sg_status_list",
+          "task.Task.due_date",
+          "task.Task.content",
+          "created_by",
+          "created_at", # note: as a unix time stamp
+          "version",    # note: not supported on TankPublishedFile so always None
+          "version.Version.sg_status_list",
+          "created_by.HumanUser.image"
+        
+        This ensures consistency for any hooks implemented by users.
         
         :param sg_data: shotgun data for a publish
         """
@@ -75,6 +101,13 @@ class ActionManager(object):
         else:
             raise TankError("Unsupported UI_AREA. Contact support.")
 
+        # convert created_at unix time stamp to shotgun std time stamp
+        unix_timestamp = sg_data.get("created_at")
+        if unix_timestamp:
+            sg_timestamp = datetime.datetime.fromtimestamp(unix_timestamp, 
+                                                           shotgun_api3.sg_timezone.LocalTimezone())
+            sg_data["created_at"] = sg_timestamp
+                    
         action_defs = []
         try:
             action_defs = self._app.execute_hook_method("actions_hook", 

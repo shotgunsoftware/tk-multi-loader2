@@ -865,6 +865,11 @@ class AppDialog(QtGui.QWidget):
                     raise TankError("Configuration error: One or more items in %s "
                                     "are missing a '%s' key!" % (entities, k))
 
+            # get optional publish_filter setting
+            publish_filters = e.get("publish_filters")
+            if publish_filters is None:
+                publish_filters = []
+
             # set up a bunch of stuff
 
             # resolve any magic tokens in the filter
@@ -990,7 +995,12 @@ class AppDialog(QtGui.QWidget):
             selection_model.selectionChanged.connect(self._on_treeview_item_selected)
 
             # finally store all these objects keyed by the caption
-            ep = EntityPreset(preset_name, sg_entity_type, model, proxy_model, view)
+            ep = EntityPreset(preset_name, 
+                              sg_entity_type, 
+                              model, 
+                              proxy_model, 
+                              view,
+                              publish_filters)
 
             self._entity_presets[preset_name] = ep
 
@@ -1178,7 +1188,8 @@ class AppDialog(QtGui.QWidget):
             self._publish_delegate.show_entity_instead_of_type(False)
 
         # now finally load up the data in the publish model
-        self._publish_model.load_data(item, child_folders, show_sub_items)
+        publish_filters = self._entity_presets[self._current_entity_preset].publish_filters
+        self._publish_model.load_data(item, child_folders, show_sub_items, publish_filters)
 
     def _populate_entity_breadcrumbs(self):
         """
@@ -1266,9 +1277,10 @@ class EntityPreset(object):
     Little struct that represents one of the tabs / presets in the
     Left hand side entity tree view
     """
-    def __init__(self, name, entity_type, model, proxy_model, view):
+    def __init__(self, name, entity_type, model, proxy_model, view, publish_filters):
         self.model = model
         self.proxy_model = proxy_model
         self.name = name
         self.view = view
         self.entity_type = entity_type
+        self.publish_filters = publish_filters

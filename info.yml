@@ -72,18 +72,21 @@ configuration:
         default_value:
             - caption: Assets
               entity_type: Asset
+              publish_filters: []
               filters:
               - ["project", "is", "{context.project}"]
               hierarchy: [sg_asset_type, code]
 
             - caption: Shots
               entity_type: Shot
+              publish_filters: []
               filters:
               - ["project", "is", "{context.project}"]
               hierarchy: [sg_sequence, code]
 
             - caption: My Tasks
               entity_type: Task
+              publish_filters: []
               filters:
               - [task_assignees, is, '{context.user}']
               - ["project", "is", "{context.project}"]
@@ -91,9 +94,14 @@ configuration:
 
 
         type: list
-        description: "List of entities for the tree view.
-                      Each item should be a dictionary with keys caption,
-                      entity_type, filters and hierarchy"
+        description: "This setting defines the different tabs that will show up on the left hand side.
+                      Each tab represents a Shotgun query, grouped by some shotgun fields to form a tree. 
+                      This setting is a list of dictionaries. Each dictionary in the list defines one tab,
+                      and should have they following keys: *caption* specifies the name of the tab, *entity_type*
+                      specifies the shotgun entity type to display. *filters* is a list of standard API Shotgun 
+                      filters. *hierarchy* is a list of shotgun fields, defining the grouping of the tree.
+                      Optionally, you can specify a *publish_filters* key, containing shotgun API filters to
+                      apply to the publishes listing as it is being loaded in the main view." 
         allows_empty: False
         values:
             type: dict

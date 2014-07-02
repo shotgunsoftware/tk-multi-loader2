@@ -51,7 +51,7 @@ class SgLatestPublishModel(ShotgunOverlayModel):
                                      parent,
                                      overlay_widget,
                                      download_thumbs=app.get_setting("download_thumbnails"),
-                                     schema_generation=3)
+                                     schema_generation=4)
 
     ############################################################################################
     # public interface
@@ -217,6 +217,7 @@ class SgLatestPublishModel(ShotgunOverlayModel):
                           "task",
                           "task.Task.sg_status_list",
                           "task.Task.due_date",
+                          "project",
                           "task.Task.content",
                           "created_by",
                           "created_at",

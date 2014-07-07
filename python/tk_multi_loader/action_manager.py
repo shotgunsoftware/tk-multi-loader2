@@ -63,9 +63,9 @@ class ActionManager(object):
           "task.Task.due_date",
           "task.Task.content",
           "created_by",
-          "created_at", # note: as a unix time stamp
-          "version",    # note: not supported on TankPublishedFile so always None
-          "version.Version.sg_status_list",
+          "created_at",                     # note: as a unix time stamp
+          "version",                        # note: not supported on TankPublishedFile so always None
+          "version.Version.sg_status_list", # (also always none for TankPublishedFile)
           "created_by.HumanUser.image"
         
         This ensures consistency for any hooks implemented by users.

@@ -65,7 +65,7 @@ class SgLatestPublishModel(ShotgunOverlayModel):
         entity_item_hash = item.data(self.ASSOCIATED_TREE_VIEW_ITEM_ROLE)
         return self._associated_items.get(entity_item_hash)
 
-    def load_data(self, item, child_folders, show_sub_items, publish_filters):
+    def load_data(self, item, child_folders, show_sub_items, additional_sg_filters):
         """
         Clears the model and sets it up for a particular entity.
         Loads any cached data that exists.
@@ -76,7 +76,7 @@ class SgLatestPublishModel(ShotgunOverlayModel):
                               of folders and files.
         :param show_sub_items: Indicates whether or not to use the sub items mode. This mode shows all publishes
                                'below' the selected item in Shotgun and hides any folders items.
-        :param publish_filters: List of shotgun filters to add to the shotgun query when retrieving publishes.
+        :param additional_sg_filters: List of shotgun filters to add to the shotgun query when retrieving publishes.
         """
 
         app = sgtk.platform.current_bundle()
@@ -175,12 +175,18 @@ class SgLatestPublishModel(ShotgunOverlayModel):
         # now if sg_filters is not None (None indicates that no data should be fetched by the model),
         # add our external filter settings
         if sg_filters:
-            # first apply any global sg filters, as specified in the config
+            # first apply any global sg filters, as specified in the config that we should append
+            # to the main entity filters before getting publishes from shotgun. This may be stuff
+            # like 'only status appproved'
             pub_filters = app.get_setting("publish_filters", [])
             sg_filters.extend(pub_filters)
             
             # now, on top of that, apply any session specific filters
-            sg_filters.extend(publish_filters)
+            # these typically come from the treeview and are pulled from a per-tab config setting,
+            # allowing users to configure tabs with different publish filters, so that one
+            # tab can contain approved shot publishes, another can contain only items from 
+            # your current department, etc.
+            sg_filters.extend(additional_sg_filters)
 
         # now that we have establishes the sg filters and which
         # folders to load, set up the actual model

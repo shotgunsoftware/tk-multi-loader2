@@ -36,7 +36,7 @@ def create_overlayed_user_publish_thumbnail(publish_pixmap, user_pixmap):
         painter.save() 
         painter.setBrush(brush)
         painter.setPen(QtGui.QPen(QtCore.Qt.NoPen))
-        painter.drawRect(0, 0, 74, 74) 
+        painter.drawRect(0, 0, 75, 75) 
         painter.restore()
     
     if user_pixmap and not user_pixmap.isNull(): 

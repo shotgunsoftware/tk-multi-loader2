@@ -19,6 +19,12 @@ class SgPublishTypeModel(ShotgunOverlayModel):
     """
     This model holds all the publish types. It is connected to the filter UI where
     a user can choose which items to display.
+    
+    The model loads all publish type data from shotgun and then culls out values
+    not applicable to the current actions setup - basically, only types corresponding 
+    to the actions that have been configured will show up - nuke scripts wont show up in 
+    maya and vice versa. The model also handles duplicate values, (which is more common
+    with the old tank publish type which were per project).
     """
     
     SORT_KEY_ROLE = QtCore.Qt.UserRole + 102        # holds a sortable key
@@ -145,7 +151,8 @@ class SgPublishTypeModel(ShotgunOverlayModel):
             
             if item.checkState() == QtCore.Qt.Checked:
                 # get the shotgun id
-                type_ids.extend(item.get_sg_data()["ids"])
+                associated_sg_ids = item.get_sg_data()["ids"]
+                type_ids.extend(associated_sg_ids)
         
         return type_ids
         
@@ -168,21 +175,20 @@ class SgPublishTypeModel(ShotgunOverlayModel):
                 continue
             
             # get list of shotgun publish type ids associated with this 
-            sg_type_ids = shotgun_model.get_sg_data(item).get("ids")        
+            sg_type_ids = shotgun_model.get_sg_data(item)["ids"] 
             display_name = shotgun_model.get_sanitized_data(item, self.DISPLAY_NAME_ROLE)
             
             # check if any of the ids associated with this entry is in the the type_aggregates list
             # at the same time aggregate the totals so that if we have two "maya anim" active, we display
             # the total sum of publishes of both types in the aggregation summary
-            active = False
             total_matches = 0
             for type_id in sg_type_ids:
                 if type_id in type_aggregates:
-                    active = True
                     total_matches += type_aggregates[type_id]
                 
-            if active:
-                # this type is in the active list
+            if total_matches > 0:
+                # there are matches for this publish type! Add it to the active section
+                # of the filter list.
                 item.setData("a_%s" % display_name, SgPublishTypeModel.SORT_KEY_ROLE)                
                 item.setEnabled(True)
                 
@@ -226,12 +232,19 @@ class SgPublishTypeModel(ShotgunOverlayModel):
     def _before_data_processing(self, sg_data_list):
         """
         Called just after data has been retrieved from Shotgun but before any processing
-        takes place. This makes it possible for deriving classes to perform summaries, 
-        calculations and other manipulations of the data before it is passed on to the model
-        class. 
+        takes place. 
+
+        For the publish type model, this will cull out any publish types that are not relevant 
+        based on the action settings. So if you are in nuke, maya centric file types will not be shown.
         
-        :param sg_data_list: list of shotgun dictionaries, as retunrned by the find() call.
-        :returns: should return a list of shotgun dictionaries, on the same form as the input.
+        In addition, any two types having the same name will be collapsed into one, so that
+        you don't end up with dupes in the UI. As part of this collapse, a special field "ids"
+        is added to the list. This field contains a list of the publish ids associated with each
+        entry.
+        
+        :param sg_data_list: list of shotgun dictionaries, as returned by the find() call.
+        :returns: returns a list of shotgun dictionaries, on the same form as the input.
+                  
         """
         # go through each type and check if it is known by our action mappings
         sg_data_handled_types = {}

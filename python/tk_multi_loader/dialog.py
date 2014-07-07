@@ -866,8 +866,10 @@ class AppDialog(QtGui.QWidget):
                                     "are missing a '%s' key!" % (entities, k))
 
             # get optional publish_filter setting
+            # note: actual value in the yaml settings can be None, 
+            # that's why we cannot use e.get("publish_filters", []) 
             publish_filters = e.get("publish_filters")
-            if publish_filters is None:
+            if publish_filters is None: 
                 publish_filters = []
 
             # set up a bunch of stuff

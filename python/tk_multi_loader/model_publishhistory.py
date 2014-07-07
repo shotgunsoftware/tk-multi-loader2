@@ -44,10 +44,12 @@ class SgPublishHistoryModel(ShotgunOverlayModel):
 
     def load_data(self, sg_data):
         """
-        Load the details for the shotgun publish entity in sg_data
+        Load the details for the shotgun publish entity described by sg_data.
+        
+        :param sg_data: dictionary describing a publish in shotgun, including all the common 
+                        publish fields.
         """
-
-        # sg fields logic
+        
         app = sgtk.platform.current_bundle()
         publish_entity_type = sgtk.util.get_published_file_entity_type(app.sgtk)
 
@@ -74,7 +76,13 @@ class SgPublishHistoryModel(ShotgunOverlayModel):
                   "version.Version.sg_status_list",
                   "created_by.HumanUser.image"]
 
-        filters = [ ["name", "is", sg_data["name"] ],
+        # when we filter out which other publishes are associated with this one,
+        # to effectively get the "version history", we look for items
+        # which have the same project, same entity assocation, same name, same type 
+        # and the same task.
+        filters = [ ["project", "is", sg_data["project"] ],
+                    ["name", "is", sg_data["name"] ],
+                    ["task", "is", sg_data["task"] ],
                     ["entity", "is", sg_data["entity"] ],
                     [publish_type_field, "is", sg_data[publish_type_field] ],
                   ]

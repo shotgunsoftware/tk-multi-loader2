@@ -51,7 +51,7 @@ class SgLatestPublishModel(ShotgunOverlayModel):
                                      parent,
                                      overlay_widget,
                                      download_thumbs=app.get_setting("download_thumbnails"),
-                                     schema_generation=3)
+                                     schema_generation=4)
 
     ############################################################################################
     # public interface
@@ -65,12 +65,18 @@ class SgLatestPublishModel(ShotgunOverlayModel):
         entity_item_hash = item.data(self.ASSOCIATED_TREE_VIEW_ITEM_ROLE)
         return self._associated_items.get(entity_item_hash)
 
-    def load_data(self, item, child_folders, show_sub_items):
+    def load_data(self, item, child_folders, show_sub_items, additional_sg_filters):
         """
         Clears the model and sets it up for a particular entity.
         Loads any cached data that exists.
 
         :param item: Selected item in the treeview, None if nothing is selected.
+        :param child_folders: List of items ('folders') from the tree view. These are to be
+                              added to the model in addition to the publishes, so that you get a mix
+                              of folders and files.
+        :param show_sub_items: Indicates whether or not to use the sub items mode. This mode shows all publishes
+                               'below' the selected item in Shotgun and hides any folders items.
+        :param additional_sg_filters: List of shotgun filters to add to the shotgun query when retrieving publishes.
         """
 
         app = sgtk.platform.current_bundle()
@@ -165,6 +171,23 @@ class SgLatestPublishModel(ShotgunOverlayModel):
                         # is nothing that you could link up a publish to.
                         sg_filters = None
 
+
+        # now if sg_filters is not None (None indicates that no data should be fetched by the model),
+        # add our external filter settings
+        if sg_filters:
+            # first apply any global sg filters, as specified in the config that we should append
+            # to the main entity filters before getting publishes from shotgun. This may be stuff
+            # like 'only status appproved'
+            pub_filters = app.get_setting("publish_filters", [])
+            sg_filters.extend(pub_filters)
+            
+            # now, on top of that, apply any session specific filters
+            # these typically come from the treeview and are pulled from a per-tab config setting,
+            # allowing users to configure tabs with different publish filters, so that one
+            # tab can contain approved shot publishes, another can contain only items from 
+            # your current department, etc.
+            sg_filters.extend(additional_sg_filters)
+
         # now that we have establishes the sg filters and which
         # folders to load, set up the actual model
         self._do_load_data(sg_filters, child_folders)
@@ -190,6 +213,11 @@ class SgLatestPublishModel(ShotgunOverlayModel):
     def _do_load_data(self, sg_filters, treeview_folder_items):
         """
         Load and refresh data.
+        
+        :param sg_filters: Shotgun filters to use for the search.
+        :param child_folders: List of items ('folders') from the tree view. These are to be
+                              added to the model in addition to the publishes, so that you get a mix
+                              of folders and files.
         """
         # first figure out which fields to get from shotgun
         app = sgtk.platform.current_bundle()
@@ -199,13 +227,6 @@ class SgLatestPublishModel(ShotgunOverlayModel):
             self._publish_type_field = "published_file_type"
         else:
             self._publish_type_field = "tank_type"
-
-        # add external filters from config
-        if sg_filters:
-            app = sgtk.platform.current_bundle()
-            pub_filters = app.get_setting("publish_filters", [])
-            sg_filters.extend(pub_filters)
-
 
         publish_fields = [self._publish_type_field,
                           "name",
@@ -217,6 +238,7 @@ class SgLatestPublishModel(ShotgunOverlayModel):
                           "task",
                           "task.Task.sg_status_list",
                           "task.Task.due_date",
+                          "project",
                           "task.Task.content",
                           "created_by",
                           "created_at",

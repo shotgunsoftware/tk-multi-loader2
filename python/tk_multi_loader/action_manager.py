@@ -10,10 +10,12 @@
 
 import sgtk
 import hashlib
+import datetime
 import os
+import copy
 import sys
 from sgtk.platform.qt import QtCore, QtGui
-
+from tank_vendor import shotgun_api3
 from sgtk import TankError
 
 class ActionManager(object):
@@ -44,7 +46,34 @@ class ActionManager(object):
         """
         Returns a list of actions for a publish.
         
-        :param sg_data: shotgun data for a publish
+        Shotgun data representing a publish is passed in and forwarded on to hooks
+        to help them determine which actions may be applicable. This data should by convention
+        contain at least the following fields:
+                 
+          "published_file_type",
+          "tank_type"
+          "name",
+          "version_number",
+          "image",
+          "entity",
+          "path",
+          "description",
+          "task",
+          "task.Task.sg_status_list",
+          "task.Task.due_date",
+          "task.Task.content",
+          "created_by",
+          "created_at",                     # note: as a unix time stamp
+          "version",                        # note: not supported on TankPublishedFile so always None
+          "version.Version.sg_status_list", # (also always none for TankPublishedFile)
+          "created_by.HumanUser.image"
+        
+        This ensures consistency for any hooks implemented by users.
+        
+        :param sg_data: Shotgun data for a publish
+        :param ui_area: Indicates which part of the UI the request is coming from. 
+                        Currently one of UI_AREA_MAIN, UI_AREA_DETAILS and UI_AREA_HISTORY
+        :returns: List of QAction objects, ready to be parented to some QT Widgetry.
         """
         publish_type_dict = sg_data.get(self._publish_type_field)
         if publish_type_dict is None:
@@ -75,6 +104,13 @@ class ActionManager(object):
         else:
             raise TankError("Unsupported UI_AREA. Contact support.")
 
+        # convert created_at unix time stamp to shotgun std time stamp
+        unix_timestamp = sg_data.get("created_at")
+        if unix_timestamp:
+            sg_timestamp = datetime.datetime.fromtimestamp(unix_timestamp, 
+                                                           shotgun_api3.sg_timezone.LocalTimezone())
+            sg_data["created_at"] = sg_timestamp
+                    
         action_defs = []
         try:
             action_defs = self._app.execute_hook_method("actions_hook", 

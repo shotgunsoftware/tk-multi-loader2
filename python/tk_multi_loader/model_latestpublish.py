@@ -51,7 +51,7 @@ class SgLatestPublishModel(ShotgunOverlayModel):
                                      parent,
                                      overlay_widget,
                                      download_thumbs=app.get_setting("download_thumbnails"),
-                                     schema_generation=4)
+                                     schema_generation=5)
 
     ############################################################################################
     # public interface
@@ -449,25 +449,51 @@ class SgLatestPublishModel(ShotgunOverlayModel):
         type_id_aggregates = defaultdict(int)
 
         # FIRST PASS!
-        # get a dict with only the latest versions
+        # get a dict with only the latest versions, grouped by type and task
         # rely on the fact that versions are returned in asc order from sg.
         # (see filter query above)
+        #
+        # for example, if there are these publishes:
+        # name FOO, version 1, task ANIM, type XXX
+        # name FOO, version 2, task ANIM, type XXX
+        # name FOO, version 3, task ANIM, type XXX
+        # name FOO, version 1, task ANIM, type YYY
+        # name FOO, version 2, task ANIM, type YYY
+        # name FOO, version 5, task LAY,  type YYY
+        # name FOO, version 6, task LAY,  type YYY
+        # name FOO, version 7, task LAY,  type YYY
+        #
+        # three items should show up:
+        # - Foo v3 (type XXX)
+        # - Foo v2 (type YYY, task ANIM)
+        # - Foo v7 (type YYY, task LAY)
+                
+        # also, if there are cases where there are two items with the same name and the same type, 
+        # but with different tasks, indicate this with a special boolean flag
+                
         unique_data = {}
-
+        name_type_aggregates = defaultdict(int)
+        
         for sg_item in sg_data_list:
+            
+            # get the associated type
             type_id = None
             type_link = sg_item[self._publish_type_field]
-            type_name = "No Type"
             if type_link:
                 type_id = type_link["id"]
-                type_name = type_link["name"]
 
-            label = "%s, %s" % (sg_item["name"], type_name)
+            # also get the associated task
+            task_id = None
+            task_link = sg_item["task"]
+            if task_link:
+                task_id = task_link["id"]  
 
             # key publishes in dict by type and name
-            unique_data[ label ] = {"sg_item": sg_item, "type_id": type_id}
-
-
+            unique_data[ (sg_item["name"], type_id, task_id) ] = {"sg_item": sg_item, "type_id": type_id}
+            
+            # count how many items of this type we have
+            name_type_aggregates[ (sg_item["name"], type_id) ] += 1
+        
         # SECOND PASS
         # We now have the latest versions only
         # Go ahead count types for the aggregate
@@ -475,8 +501,21 @@ class SgLatestPublishModel(ShotgunOverlayModel):
         new_sg_data = []
         for second_pass_data in unique_data.values():
 
+            # get the shotgun data for this guy
+            sg_item = second_pass_data["sg_item"]
+            
+            # now add a flag to indicate if this item is "task unique" or not
+            # e.g. if there are other items in the listing with the same name 
+            # and same type but with a different task
+            if name_type_aggregates[ (sg_item["name"], second_pass_data["type_id"]) ] > 1:
+                # there are more than one item with this same name/type combo!
+                sg_item["task_uniqueness"] = False
+            else: 
+                # no other item with this task/name/type combo
+                sg_item["task_uniqueness"] = True
+                
             # append to new sg data
-            new_sg_data.append(second_pass_data["sg_item"])
+            new_sg_data.append(sg_item)
 
             # update our aggregate counts for the publish type view
             type_id = second_pass_data["type_id"]

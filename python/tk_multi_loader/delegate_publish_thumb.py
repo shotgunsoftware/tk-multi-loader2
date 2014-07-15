@@ -137,6 +137,24 @@ class SgPublishDelegate(shotgun_view.WidgetDelegate):
             if sg_data.get("version_number"):
                 name_str += " v%s" % sg_data.get("version_number")
 
+            # now we are tracking whether this item has a unique task/name/type combo
+            # or not via the specially injected task_uniqueness boolean.
+            # If this is true, that means that this is the only item in the listing
+            # with this name/type combo, and we can render its display name on two 
+            # lines, name first and then type, e.g.:
+            # MyScene, v3
+            # Maya Render
+            #
+            # However, there can be multiple *different* tasks which have the same 
+            # name/type combo - in this case, we want to display the task name too
+            # since this is what differentiates the data. In that case we display it:
+            # MyScene, v3 (Layout)
+            # Maya Render
+            #
+            if sg_data.get("task_uniqueness") == False and sg_data.get("task") is not None:
+                name_str += " (%s)" % sg_data["task"]["name"]
+
+
             if self._show_entity_instead_of_type:
 
                 # display this publish in sub items node

@@ -12,7 +12,7 @@
 Hook that loads defines all the available actions, broken down by publish type. 
 """
 import sgtk
-import nuke
+from pyfbsdk import FBApplication
 import os
 
 HookBaseClass = sgtk.get_hook_baseclass()

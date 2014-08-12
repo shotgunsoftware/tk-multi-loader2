@@ -62,10 +62,13 @@ configuration:
             Maya Scene: [reference, import]
             Rendered Image: [texture_node]
             Photoshop Image: [texture_node]
+            UDIM Image: [udim_texture_node]
         default_value_tk-motionbuilder:
             Motion Builder FBX: [import]
         default_value_tk-photoshop:
             Photoshop Image: [open_file]
+        default_value_tk-mari:
+            Alembic Cache: [geometry_import]
 
 
     entities:
@@ -130,7 +133,7 @@ description: "Locate published files and reference them into your scene."
 
 # Required minimum versions for this item to run
 requires_shotgun_version:
-requires_core_version: "v0.14.58"
+requires_core_version: "v0.14.66"
 requires_engine_version:
 
 # the frameworks required to run this app

@@ -13,6 +13,9 @@ Hook that loads defines all the available actions, broken down by publish type.
 """
 import sgtk
 import os
+import pymel.core as pm
+import maya.cmds as cmds
+import maya.mel as mel
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
@@ -76,14 +79,21 @@ class MayaActions(HookBaseClass):
                                       "caption": "Import into Scene", 
                                       "description": "This will import the item into the current scene."} )
 
-        if "texture_node" in actions:        
+        if "texture_node" in actions:
             action_instances.append( {"name": "texture_node",
                                       "params": None, 
                                       "caption": "Create Texture Node", 
-                                      "description": "Creates a file texture node for the selected item.."} )        
-    
+                                      "description": "Creates a file texture node for the selected item.."} )
+            
+        if "udim_texture_node" in actions:
+            # Special case handling for Mari UDIM textures as these currently only load into 
+            # Maya 2015 in a nice way!
+            if self._get_maya_version() >= 2015:
+                action_instances.append( {"name": "udim_texture_node",
+                                          "params": None, 
+                                          "caption": "Create Texture Node", 
+                                          "description": "Creates a file texture node for the selected item.."} )    
         return action_instances
-                
 
     def execute_action(self, name, params, sg_publish_data):
         """
@@ -110,6 +120,9 @@ class MayaActions(HookBaseClass):
         
         if name == "texture_node":
             self._create_texture_node(path, sg_publish_data)
+            
+        if name == "udim_texture_node":
+            self._create_udim_texture_node(path, sg_publish_data)
                         
            
     ##############################################################################################################
@@ -123,9 +136,6 @@ class MayaActions(HookBaseClass):
         :param path: Path to file.
         :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
         """
-        import pymel.core as pm
-        import maya.cmds as cmds
-
         if not os.path.exists(path):
             raise Exception("File not found on disk - '%s'" % path)
         
@@ -147,9 +157,6 @@ class MayaActions(HookBaseClass):
         :param path: Path to file.
         :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
         """
-        import pymel.core as pm
-        import maya.cmds as cmds
-
         if not os.path.exists(path):
             raise Exception("File not found on disk - '%s'" % path)
                 
@@ -165,12 +172,47 @@ class MayaActions(HookBaseClass):
         """
         Create a file texture node for a texture
         
-        :param path: Path to file.
-        :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
+        :param path:             Path to file.
+        :param sg_publish_data:  Shotgun data dictionary with all the standard publish fields.
+        :returns:                The newly created file node
         """
-        import pymel.core as pm
-        import maya.cmds as cmds        
-                
-        x = cmds.shadingNode('file', asTexture=True)
-        cmds.setAttr( "%s.fileTextureName" % x, path, type="string" )
+        file_node = cmds.shadingNode('file', asTexture=True)
+        cmds.setAttr( "%s.fileTextureName" % file_node, path, type="string" )
+        return file_node
+
+    def _create_udim_texture_node(self, path, sg_publish_data):
+        """
+        Create a file texture node for a UDIM (Mari) texture
+        
+        :param path:             Path to file.
+        :param sg_publish_data:  Shotgun data dictionary with all the standard publish fields.
+        :returns:                The newly created file node
+        """
+        # create the normal file node:
+        file_node = self._create_texture_node(path, sg_publish_data)
+        if file_node:
+            # path is a UDIM sequence so set the uv tiling mode to 3 ('UDIM (Mari)')
+            cmds.setAttr("%s.uvTilingMode" % file_node, 3)
+            # and generate a preview:
+            mel.eval("generateUvTilePreview %s" % file_node)
+        return file_node
+            
+    def _get_maya_version(self):
+        """
+        Determine and return the Maya version as an integer
+        
+        :returns:    The Maya major version
+        """
+        if not hasattr(self, "_maya_major_version"):
+            self._maya_major_version = 0
+            # get the maya version string:
+            maya_ver = cmds.about(version=True)
+            # handle a couple of different formats: 'Maya XXXX' & 'XXXX':
+            if maya_ver.startswith("Maya "):
+                maya_ver = maya_ver[5:]
+            # strip of any extra stuff including decimals:
+            major_version_number_str = maya_ver.split(" ")[0].split(".")[0]
+            if major_version_number_str and major_version_number_str.isdigit():
+                self._maya_major_version = int(major_version_number_str)
+        return self._maya_major_version
         

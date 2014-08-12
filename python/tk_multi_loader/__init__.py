@@ -8,6 +8,8 @@
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights 
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
+from .open_publish_form import open_publish_browser
+
 import sgtk
 from sgtk.platform.qt import QtCore, QtGui
 
@@ -41,3 +43,6 @@ def show_dialog(app):
         # wait a bit before show window
         QtCore.QTimer.singleShot(1400, w.show_help_popup)
         
+
+        
+    

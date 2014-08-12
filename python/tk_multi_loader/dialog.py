@@ -37,12 +37,16 @@ class AppDialog(QtGui.QWidget):
     Main dialog window for the App
     """
 
-    def __init__(self):
+    # signal emitted whenever the selected publish changes
+    # in either the main view or the details history view
+    selection_changed = QtCore.Signal()
+
+    def __init__(self, parent=None):
         """
         Constructor
         """
 
-        QtGui.QWidget.__init__(self)
+        QtGui.QWidget.__init__(self, parent)
 
         # create a settings manager where we can pull and push prefs later
         # prefs in this manager are shared
@@ -96,6 +100,14 @@ class AppDialog(QtGui.QWidget):
         self.ui.history_view.setModel(self._publish_history_proxy)
         self._history_delegate = SgPublishHistoryDelegate(self.ui.history_view, self._status_model, self._action_manager)
         self.ui.history_view.setItemDelegate(self._history_delegate)
+
+        # event handler for when the selection in the history view is changing
+        # note! Because of some GC issues (maya 2012 Pyside), need to first establish
+        # a direct reference to the selection model before we can set up any signal/slots
+        # against it
+        history_view_selection_model = self.ui.history_view.selectionModel()
+        self._dynamic_widgets.append(history_view_selection_model)
+        history_view_selection_model.selectionChanged.connect(self._on_history_selection)
 
         self._no_selection_pixmap = QtGui.QPixmap(":/res/no_item_selected_512x400.png")
 
@@ -214,6 +226,53 @@ class AppDialog(QtGui.QWidget):
         # trigger an initial evaluation of filter proxy model
         self._apply_type_filters_on_publishes()
 
+    @property
+    def selected_publishes(self):
+        """
+        Get the selected sg_publish details
+        """
+        # check to see if something is selected in the details history view:
+        selection_model = self.ui.history_view.selectionModel()
+        if selection_model.hasSelection():
+            # only handle single selection atm
+            proxy_index = selection_model.selection().indexes()[0]
+
+            # the incoming model index is an index into our proxy model
+            # before continuing, translate it to an index into the
+            # underlying model
+            source_index = proxy_index.model().mapToSource(proxy_index)
+
+            # now we have arrived at our model derived from StandardItemModel
+            # so let's retrieve the standarditem object associated with the index
+            item = source_index.model().itemFromIndex(source_index)
+        
+            sg_data = item.get_sg_data()
+            if sg_data:
+                return [sg_data]
+            
+        # nothing selected in the details view so check to see if something is selected 
+        # in the main publish view:
+        selection_model = self.ui.publish_view.selectionModel()
+        if selection_model.hasSelection():
+            # only handle single selection atm
+            proxy_index = selection_model.selection().indexes()[0]
+
+            # the incoming model index is an index into our proxy model
+            # before continuing, translate it to an index into the
+            # underlying model
+            source_index = proxy_index.model().mapToSource(proxy_index)
+
+            # now we have arrived at our model derived from StandardItemModel
+            # so let's retrieve the standarditem object associated with the index
+            item = source_index.model().itemFromIndex(source_index)
+        
+            sg_data = item.get_sg_data()
+            if sg_data and not item.data(SgLatestPublishModel.IS_FOLDER_ROLE):
+                return [sg_data]
+            
+        return []
+
+
 
     def closeEvent(self, event):
         """
@@ -265,6 +324,16 @@ class AppDialog(QtGui.QWidget):
 
     ########################################################################################
     # info bar related
+
+    def _on_history_selection(self, selected, deselected):
+        """
+        Called when the selection changes in the history view in the details panel
+        
+        :param selected:    Items that have been selected
+        :param deselected:  Items that have been deselected
+        """
+        # emit the selection_changed signal
+        self.selection_changed.emit()
 
     def _toggle_details_pane(self):
         """
@@ -672,6 +741,9 @@ class AppDialog(QtGui.QWidget):
             # so let's retrieve the standarditem object associated with the index
             item = source_index.model().itemFromIndex(source_index)
             self._setup_details_panel(item)
+
+        # emit the selection changed signal:
+        self.selection_changed.emit()
 
 
     def _on_publish_double_clicked(self, model_index):

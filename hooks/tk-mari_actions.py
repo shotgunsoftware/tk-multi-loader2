@@ -70,7 +70,7 @@ class MariActions(HookBaseClass):
             return []
 
         action_instances = []        
-        if "add_geometry" in actions:
+        if "geometry_import" in actions:
             
             # determine if we are loading a new piece of geometry or a new version of geometry
             # that has already been loaded:
@@ -82,17 +82,17 @@ class MariActions(HookBaseClass):
             elif geo:
                 # we already have one or more versions loaded for this geo so
                 # add an 'Add Version' action:
-                action_instances.append( {"name": "add_geo_version", 
+                action_instances.append( {"name": "geometry_version_import", 
                                           "params": {"geo":geo},
-                                          "caption": "Add Geometry Version", 
+                                          "caption": "Import Geometry Version", 
                                           "description": "This will add the version to the existing geometry in the current project."} )
             else:
                 # never loaded this geometry before so add an 'Add Geometry' 
                 # action:
-                action_instances.append( {"name": "add_geo", 
+                action_instances.append( {"name": "geometry_import", 
                                           "params": None,
-                                          "caption": "Add Geometry", 
-                                          "description": "This will add the geometry into the current project."} )        
+                                          "caption": "Import Geometry", 
+                                          "description": "This will import the geometry into the current project."} )        
         
         return action_instances
                 
@@ -111,9 +111,9 @@ class MariActions(HookBaseClass):
         app.log_debug("Execute action called for action %s. "
                       "Parameters: %s. Publish Data: %s" % (name, params, sg_publish_data))
         
-        if name == "add_geo":
+        if name == "geometry_import":
             self._import_geometry(sg_publish_data)
-        elif name == "add_geo_version":
+        elif name == "geometry_version_import":
             self._import_geometry_version(params["geo"], sg_publish_data)
                         
            

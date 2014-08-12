@@ -68,7 +68,7 @@ configuration:
         default_value_tk-photoshop:
             Photoshop Image: [open_file]
         default_value_tk-mari:
-            Alembic Cache: [add_geometry]
+            Alembic Cache: [geometry_import]
 
 
     entities:

@@ -43,6 +43,11 @@ class MultiLoader(sgtk.platform.Application):
         :param published_file_types:    If specified then the UI will only show publishes
                                         that matches these types - this overrides the setting
                                         from the configuration.
+        :returns:                       A list of Shotgun publish records for the publish(es)
+                                        that were selected in the UI.  Each record in the list
+                                        is garunteed to have a type and id but will usually
+                                        contain a much more complete list of fields from the
+                                        Shotgun PublishedFile entity
         """
         tk_multi_loader = self.import_module("tk_multi_loader")
         return tk_multi_loader.open_publish_browser(self, title, action, published_file_types)

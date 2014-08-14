@@ -151,11 +151,13 @@ class MariActions(HookBaseClass):
         mari_engine = self.parent.engine
         
         # set the geometry load options:
-        options = {
-            "CreateSelectionSets":mari.geo.SELECTION_GROUPS_CREATE_FROM_FACE_GROUPS,
-            "MergeType":mari.geo.MERGETYPE_JUST_MERGE_NODES,
-            "MappingScheme":mari.projects.UV_OR_PTEX
-        }
+        options = {}
+        # prefer uv (UDIM) over ptex
+        options["MappingScheme"] = mari.projects.UV_OR_PTEX
+        # create selection sets from face groups based on shader assignments
+        options["CreateSelectionSets"] = mari.geo.SELECTION_GROUPS_CREATE_FROM_FACE_GROUPS
+        # merge nodes within file but not all geometry into a single mesh
+        options["MergeType"] = mari.geo.MERGETYPE_JUST_MERGE_NODES        
         
         # specify objects to load from the published file - default (None) loads everything
         objects_to_load = None

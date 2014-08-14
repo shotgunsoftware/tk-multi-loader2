@@ -18,6 +18,11 @@ from .ui import resources_rc
 help_screen = sgtk.platform.import_framework("tk-framework-qtwidgets", "help_screen") 
 
 def show_dialog(app):
+    """
+    Show the main loader dialog
+    
+    :param app:    The parent App
+    """
     # defer imports so that the app works gracefully in batch modes
     from .dialog import AppDialog
     
@@ -28,9 +33,13 @@ def show_dialog(app):
     splash.show()
     QtCore.QCoreApplication.processEvents()
         
+    # create the action manager for the Loader UI:
+    from .loader_action_manager import LoaderActionManager
+    action_manager = LoaderActionManager()
+        
     # start ui
     ui_title = app.get_setting("title_name")
-    w = app.engine.show_dialog(ui_title, app, AppDialog)
+    w = app.engine.show_dialog(ui_title, app, AppDialog, action_manager)
     
     # attach splash screen to the main window to help GC
     w.__splash_screen = splash

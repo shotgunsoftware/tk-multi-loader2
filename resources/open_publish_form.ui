@@ -21,7 +21,7 @@
     <number>0</number>
    </property>
    <item>
-    <widget class="AppDialog" name="loader_form" native="true">
+    <widget class="QWidget" name="loader_form" native="true">
      <property name="styleSheet">
       <string notr="true">#loader_form {
 background-color: rgb(255, 128, 0);
@@ -96,14 +96,6 @@ background-color: rgb(255, 128, 0);
    </item>
   </layout>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>AppDialog</class>
-   <extends>QWidget</extends>
-   <header>..dialog</header>
-   <container>1</container>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections/>
 </ui>

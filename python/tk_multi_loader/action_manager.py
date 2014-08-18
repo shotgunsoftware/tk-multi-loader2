@@ -18,7 +18,7 @@ from sgtk.platform.qt import QtCore, QtGui
 from tank_vendor import shotgun_api3
 from sgtk import TankError
 
-class ActionManager(object):
+class ActionManager(QtCore.QObject):
     """
     Class that handles dishing out and executing QActions based on the hook configuration.
     """
@@ -31,6 +31,8 @@ class ActionManager(object):
         """
         Constructor
         """
+        QtCore.QObject.__init__(self)
+        
         self._app = sgtk.platform.current_bundle()
         
         # are we old school or new school with publishes?
@@ -137,7 +139,24 @@ class ActionManager(object):
             actions.append(a)
             
         return actions
-            
+
+    def get_default_action_for_publish(self, sg_data, ui_area):
+        """
+        Get the default action for the specified publish data.
+        
+        The default action is defined as the one that appears first in the list in the 
+        action mappings.
+
+        :param sg_data: Shotgun data for a publish
+        :param ui_area: Indicates which part of the UI the request is coming from. 
+                        Currently one of UI_AREA_MAIN, UI_AREA_DETAILS and UI_AREA_HISTORY
+        :returns:       The QAction object representing the default action for this publish
+        """
+        # this could probably be optimised but for now get all actions:
+        actions = self.get_actions_for_publish(sg_data, ui_area)
+        # and return the first one:
+        return actions[0] if actions else None
+
     def has_actions(self, publish_type):
         """
         Returns true if the given publish type has any actions associated with it.

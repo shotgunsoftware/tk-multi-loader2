@@ -33,14 +33,14 @@ class MultiLoader(sgtk.platform.Application):
         menu_options = { "short_name": self.get_setting("menu_name").replace(" ", "_") }
         self.engine.register_command(menu_caption, cb, menu_options)        
 
-    def open_publish(self, title="Open Publish", action="Open", published_file_types = []):
+    def open_publish(self, title="Open Publish", action="Open", publish_types = []):
         """
         Display the loader UI in an open-file style where a publish can be selected and the
         artist can then click the action button.  This will then return the selected publish.
 
         :param title:                   The title to be used for the dialog
         :param action:                  The label to use for the action button
-        :param published_file_types:    If specified then the UI will only show publishes
+        :param publish_types:           If specified then the UI will only show publishes
                                         that matches these types - this overrides the setting
                                         from the configuration.
         :returns:                       A list of Shotgun publish records for the publish(es)
@@ -50,4 +50,4 @@ class MultiLoader(sgtk.platform.Application):
                                         Shotgun PublishedFile entity
         """
         tk_multi_loader = self.import_module("tk_multi_loader")
-        return tk_multi_loader.open_publish_browser(self, title, action, published_file_types)
+        return tk_multi_loader.open_publish_browser(self, title, action, publish_types)

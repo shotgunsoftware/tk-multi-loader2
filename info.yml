@@ -53,6 +53,8 @@ configuration:
         default_value: {}
         default_value_tk-3dsmax:
             3dsmax Scene: [import, reference]
+        default_value_tk-3dsmax-plus:
+            3dsmax Scene: [import, reference]
         default_value_tk-houdini:
             Houdini Scene: [merge]
         default_value_tk-nuke:

@@ -13,6 +13,7 @@ Hook that loads defines all the available actions, broken down by publish type.
 """
 import sgtk
 import os
+import MaxPlus
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
@@ -113,7 +114,6 @@ class MaxActions(HookBaseClass):
         :param path: Path to file.
         :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
         """
-        import MaxPlus
         
         if not os.path.exists(path):
             raise Exception("File not found on disk - '%s'" % path)
@@ -136,7 +136,6 @@ class MaxActions(HookBaseClass):
         :param path: Path to file.
         :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
         """
-        import MaxPlus
         
         if not os.path.exists(path):
             raise Exception("File not found on disk - '%s'" % path)

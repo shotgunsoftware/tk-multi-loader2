@@ -19,7 +19,7 @@ from sgtk.platform.qt import QtCore, QtGui
 
 from .dialog import AppDialog
 from .ui.open_publish_form import Ui_OpenPublishForm
-from .open_publish_action_manager import OpenDialogActionManager
+from .open_publish_action_manager import OpenPublishActionManager
 
 def open_publish_browser(app, title, action, publish_types=None):
     """
@@ -34,9 +34,9 @@ def open_publish_browser(app, title, action, publish_types=None):
                             from the configuration.
     :returns:               A list of Shotgun publish records for the publish(es)
                             that were selected in the UI.  Each record in the list
-                            is garunteed to have a type and id but will usually
+                            is guaranteed to have a type and id but will usually
                             contain a much more complete list of fields from the
-                            Shotgun PublishedFile entity    
+                            Shotgun PublishedFile entity
     """
     from .open_publish_form import OpenPublishForm
     res, widget = app.engine.show_modal(title, app, OpenPublishForm, action, publish_types)
@@ -68,7 +68,7 @@ class OpenPublishForm(QtGui.QWidget):
         # is more limited than the regular action manager to avoid
         # the user being able to perform actions outside the scope of
         # opening a file!
-        action_manager = OpenDialogActionManager(publish_types)
+        action_manager = OpenPublishActionManager(publish_types)
         action_manager.default_action_triggered.connect(self._on_do_default_action)
         
         # set up the UI

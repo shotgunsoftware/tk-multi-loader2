@@ -16,10 +16,11 @@ loader UI.
 from sgtk.platform.qt import QtCore, QtGui
 from .action_manager import ActionManager
 
-class OpenDialogActionManager(ActionManager):
+class OpenPublishActionManager(ActionManager):
     """
     Specialisation of the base ActionManager class that limits the actions that the loader
-    can perform to just opening a publish.
+    can perform to just opening a publish.  This also provides a mechanism for the default
+    action (e.g. when double clicking on a publish) to signal the calling code.
     """
     
     # signal that is emitted when the default action is triggered
@@ -37,21 +38,6 @@ class OpenDialogActionManager(ActionManager):
         
         self.__publish_types = publish_types
     
-    def get_actions_for_publish(self, sg_data, ui_area):
-        """
-        Returns a list of actions for a publish.  Overrides the base
-        implementation as we don't want any regular actions presented
-        in the open dialog.
-        
-        :param sg_data: Shotgun data for a publish
-        :param ui_area: Indicates which part of the UI the request is coming from. 
-                        Currently one of UI_AREA_MAIN, UI_AREA_DETAILS and UI_AREA_HISTORY
-        :returns:       List of QAction objects, ready to be parented to some QT Widgetry.        
-        """
-        # returns an empty list so that the actions button isn't presented
-        # to the user
-        return []
-    
     def has_actions(self, publish_type):
         """
         Returns true if the given publish type has any actions associated with it.
@@ -63,17 +49,6 @@ class OpenDialogActionManager(ActionManager):
                                 handle this.        
         """
         return not self.__publish_types or publish_type in self.__publish_types
-    
-    def get_actions_for_folder(self, sg_data):
-        """
-        Returns a list of actions for a folder object.  Overrides the base 
-        implementation as we don't want any folder actions presented in the 
-        open dialog.
-        
-        :param sg_data: The data associated with this folder
-        :returns:       A list of actions that are available for this folder
-        """
-        return []
     
     def get_default_action_for_publish(self, sg_data, ui_area):
         """

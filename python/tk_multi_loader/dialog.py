@@ -16,7 +16,6 @@ from .model_entity import SgEntityModel
 from .model_latestpublish import SgLatestPublishModel
 from .model_publishtype import SgPublishTypeModel
 from .model_status import SgStatusModel
-from .action_manager import ActionManager
 from .proxymodel_latestpublish import SgLatestPublishProxyModel
 from .proxymodel_entity import SgEntityProxyModel
 from .delegate_publish_thumb import SgPublishDelegate
@@ -30,8 +29,6 @@ shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "sho
 settings = sgtk.platform.import_framework("tk-framework-shotgunutils", "settings")
 help_screen = sgtk.platform.import_framework("tk-framework-qtwidgets", "help_screen")
 
-
-
 class AppDialog(QtGui.QWidget):
     """
     Main dialog window for the App
@@ -41,7 +38,7 @@ class AppDialog(QtGui.QWidget):
     # in either the main view or the details history view
     selection_changed = QtCore.Signal()
 
-    def __init__(self, action_manager=None, parent=None):
+    def __init__(self, action_manager, parent=None):
         """
         Constructor
         
@@ -50,6 +47,8 @@ class AppDialog(QtGui.QWidget):
         :param parent:          The parent QWidget for this control
         """
         QtGui.QWidget.__init__(self, parent)
+
+        self._action_manager = action_manager
 
         # create a settings manager where we can pull and push prefs later
         # prefs in this manager are shared
@@ -73,7 +72,6 @@ class AppDialog(QtGui.QWidget):
         # hook a helper model tracking status codes so we
         # can use those in the UI
         self._status_model = SgStatusModel(self)
-        self._action_manager = action_manager or ActionManager()
 
         #################################################
         # details pane

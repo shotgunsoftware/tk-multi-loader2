@@ -16,7 +16,7 @@ class Ui_OpenPublishForm(object):
         self.verticalLayout.setSpacing(4)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout.setObjectName("verticalLayout")
-        self.loader_form = AppDialog(OpenPublishForm)
+        self.loader_form = QtGui.QWidget(OpenPublishForm)
         self.loader_form.setStyleSheet("#loader_form {\n"
 "background-color: rgb(255, 128, 0);\n"
 "}")
@@ -52,4 +52,3 @@ class Ui_OpenPublishForm(object):
         self.cancel_btn.setText(QtGui.QApplication.translate("OpenPublishForm", "Cancel", None, QtGui.QApplication.UnicodeUTF8))
         self.open_btn.setText(QtGui.QApplication.translate("OpenPublishForm", "Open", None, QtGui.QApplication.UnicodeUTF8))
 
-from ..dialog import AppDialog

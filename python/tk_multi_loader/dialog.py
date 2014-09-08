@@ -16,7 +16,6 @@ from .model_entity import SgEntityModel
 from .model_latestpublish import SgLatestPublishModel
 from .model_publishtype import SgPublishTypeModel
 from .model_status import SgStatusModel
-from .action_manager import ActionManager
 from .proxymodel_latestpublish import SgLatestPublishProxyModel
 from .proxymodel_entity import SgEntityProxyModel
 from .delegate_publish_thumb import SgPublishDelegate
@@ -30,8 +29,6 @@ shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "sho
 settings = sgtk.platform.import_framework("tk-framework-shotgunutils", "settings")
 help_screen = sgtk.platform.import_framework("tk-framework-qtwidgets", "help_screen")
 
-
-
 class AppDialog(QtGui.QWidget):
     """
     Main dialog window for the App
@@ -41,12 +38,17 @@ class AppDialog(QtGui.QWidget):
     # in either the main view or the details history view
     selection_changed = QtCore.Signal()
 
-    def __init__(self, parent=None):
+    def __init__(self, action_manager, parent=None):
         """
         Constructor
+        
+        :param action_manager:  The action manager to use - if not specified
+                                then the default will be used instead
+        :param parent:          The parent QWidget for this control
         """
-
         QtGui.QWidget.__init__(self, parent)
+
+        self._action_manager = action_manager
 
         # create a settings manager where we can pull and push prefs later
         # prefs in this manager are shared
@@ -70,7 +72,6 @@ class AppDialog(QtGui.QWidget):
         # hook a helper model tracking status codes so we
         # can use those in the UI
         self._status_model = SgStatusModel(self)
-        self._action_manager = ActionManager()
 
         #################################################
         # details pane
@@ -119,6 +120,9 @@ class AppDialog(QtGui.QWidget):
         self._refresh_history_action.triggered.connect(self._publish_history_model.async_refresh)
         self.ui.history_view.addAction(self._refresh_history_action)
         self.ui.history_view.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
+        
+        # if an item in the list is double clicked the default action is run
+        self.ui.history_view.doubleClicked.connect(self._on_history_double_clicked)
 
         #################################################
         # load and initialize cached publish type model
@@ -153,7 +157,7 @@ class AppDialog(QtGui.QWidget):
         # whenever the type list is checked, update the publish filters
         self._publish_type_model.itemChanged.connect(self._apply_type_filters_on_publishes)
 
-        # if an item in the table is double clicked ensure details are shown
+        # if an item in the table is double clicked the default action is run
         self.ui.publish_view.doubleClicked.connect(self._on_publish_double_clicked)
 
         # event handler for when the selection in the publish view is changing
@@ -334,6 +338,30 @@ class AppDialog(QtGui.QWidget):
         """
         # emit the selection_changed signal
         self.selection_changed.emit()
+
+    def _on_history_double_clicked(self, model_index):
+        """
+        When someone double clicks on a publish in the history view, run the 
+        default action
+        
+        :param model_index:    The model index of the item that was double clicked
+        """
+        # the incoming model index is an index into our proxy model
+        # before continuing, translate it to an index into the
+        # underlying model
+        proxy_model = model_index.model()
+        source_index = proxy_model.mapToSource(model_index)
+
+        # now we have arrived at our model derived from StandardItemModel
+        # so let's retrieve the standarditem object associated with the index
+        item = source_index.model().itemFromIndex(source_index)
+
+        # Run default action.
+        sg_item = shotgun_model.get_sg_data(model_index)
+        default_action = self._action_manager.get_default_action_for_publish(sg_item, 
+                                                                             self._action_manager.UI_AREA_HISTORY)
+        if default_action:
+            default_action.trigger()
 
     def _toggle_details_pane(self):
         """
@@ -745,7 +773,6 @@ class AppDialog(QtGui.QWidget):
         # emit the selection changed signal:
         self.selection_changed.emit()
 
-
     def _on_publish_double_clicked(self, model_index):
         """
         When someone double clicks on a publish, run the default action
@@ -770,13 +797,12 @@ class AppDialog(QtGui.QWidget):
             self._select_item_in_entity_tree(self._current_entity_preset, tree_view_item)
 
         else:
-            # Run default action. The default action is defined as the one that
-            # appears first in the list in the action mappings.
+            # Run default action.
             sg_item = shotgun_model.get_sg_data(model_index)
-            actions = self._action_manager.get_actions_for_publish(sg_item, self._action_manager.UI_AREA_MAIN)
-            if len(actions) > 0:
-                # run the first (primary) action returned
-                actions[0].trigger()
+            default_action = self._action_manager.get_default_action_for_publish(sg_item, 
+                                                                                 self._action_manager.UI_AREA_MAIN)
+            if default_action:
+                default_action.trigger()
 
     ########################################################################################
     # cog icon actions

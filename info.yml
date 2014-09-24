@@ -68,8 +68,8 @@ configuration:
         default_value_tk-motionbuilder:
             Motion Builder FBX: [import]
         default_value_tk-photoshop:
-            Photoshop Image: [add_to_layer]
-            Rendered Image: [add_to_layer]
+            Photoshop Image: [add_as_a_layer, open_file]
+            Rendered Image: [add_as_a_layer, open_file]
         default_value_tk-mari:
             Alembic Cache: [geometry_import]
 

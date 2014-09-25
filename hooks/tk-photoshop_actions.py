@@ -120,6 +120,7 @@ class PhotoshopActions(HookBaseClass):
         """
         Import contents of the given file into the scene.
         
+
         :param path: Path to file.
         :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
         """

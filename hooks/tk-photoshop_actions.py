@@ -13,8 +13,17 @@ Hook that loads defines all the available actions, broken down by publish type.
 """
 import sgtk
 import os
+from sgtk.platform.qt import QtGui
+
+from photoshop import RemoteObject, app as ph_app # Deambiguate code referencing toolkit app and Photoshop app.
+from photoshop.flexbase import requestStatic
 
 HookBaseClass = sgtk.get_hook_baseclass()
+
+# Name of available actions. Corresponds to both the environment config values and the action instance names.
+_ADD_AS_A_LAYER = "add_as_a_layer"
+_OPEN_FILE = "open_file"
+
 
 class PhotoshopActions(HookBaseClass):
     
@@ -64,12 +73,18 @@ class PhotoshopActions(HookBaseClass):
         
         action_instances = []
         
-        if "open_file" in actions:        
-            action_instances.append( {"name": "open_file",
-                                      "params": None, 
-                                      "caption": "Open File", 
-                                      "description": "This will open the file."} )        
-    
+        if _ADD_AS_A_LAYER in actions:
+            action_instances.append({"name": _ADD_AS_A_LAYER,
+                                     "params": None,
+                                     "caption": "Add as a Layer",
+                                     "description": "Adds a layer referencing the image to the current document."})
+
+        if _OPEN_FILE in actions:
+            action_instances.append({"name": _OPEN_FILE,
+                                     "params": None,
+                                     "caption": "Open File",
+                                     "description": "This will open the file."})
+
         return action_instances
                 
 
@@ -86,17 +101,21 @@ class PhotoshopActions(HookBaseClass):
         app = self.parent
         app.log_debug("Execute action called for action %s. "
                       "Parameters: %s. Publish Data: %s" % (name, params, sg_publish_data))
-        
+
         # resolve path
         path = self.get_publish_path(sg_publish_data)
-        
-        if name == "open_file":
-            self._open_file(path, sg_publish_data)
 
+        if not os.path.exists(path):
+            raise Exception("File not found on disk - '%s'" % path)
+
+        if name == _OPEN_FILE:
+            self._open_file(path, sg_publish_data)
+        if name == _ADD_AS_A_LAYER:
+            self._place_file(path, sg_publish_data)
 
     ##############################################################################################################
     # helper methods which can be subclassed in custom hooks to fine tune the behavior of things
-    
+
     def _open_file(self, path, sg_publish_data):
         """
         Import contents of the given file into the scene.
@@ -104,11 +123,56 @@ class PhotoshopActions(HookBaseClass):
         :param path: Path to file.
         :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
         """
-        if not os.path.exists(path):
-            raise Exception("File not found on disk - '%s'" % path)
-        
-        import photoshop        
-        f = photoshop.RemoteObject('flash.filesystem::File', path)
-        photoshop.app.load(f)        
+        f = RemoteObject('flash.filesystem::File', path)
+        ph_app.load(f)  
 
-        
+    def _place_file(self, path, sg_publish_data):
+        """
+        Import contents of the given file into the scene.
+
+        :param path: Path to file.
+        :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
+        """
+
+        # We can't import in an empty scene.
+        if not ph_app.activeDocument:
+            QtGui.QMessageBox.warning(None, "Add To Layer", "Please open a document first.")
+            return
+
+        # When File->Place'ing a PSD on top of another, here's what the Script Listener generates.
+        # (Download at http://helpx.adobe.com/photoshop/kb/plug-ins-photoshop-cs61.html#id_68969)
+        # // =======================================================
+        # var idPlc = charIDToTypeID("Plc ");
+        #     var placeActionDesc = new ActionDescriptor();
+        #     var idnull = charIDToTypeID("null");
+        #     placeActionDesc.putPath( idnull, new File("/Users/boismej/Documents/1.psd") );
+        #     var idFTcs = charIDToTypeID("FTcs");
+        #     var idQCSt = charIDToTypeID("QCSt");
+        #     var idQcsa = charIDToTypeID("Qcsa");
+        #     placeActionDesc.putEnumerated( idFTcs, idQCSt, idQcsa );
+        #     // ... I have omitted the transform parameters. We'll take the defaults for now.
+        # executeAction( idPlc, placeActionDesc, DialogModes.NO );
+
+        # Get some shortcuts to functions we need to use often.
+        stringIDToTypeID = ph_app.stringIDToTypeID
+
+        # For clarity sake, we'll use string IDs instead of charIDs. You can find the Photoshop Rosetta Stone here:
+        # http://www.pcpix.com/photoshop/enum.htm
+
+        # Create an action descriptor that will be used to identify which PSD to place in the current one.
+        placeActionDesc = RemoteObject("com.adobe.photoshop::ActionDescriptor")
+        placeActionDesc.putPath(stringIDToTypeID("null"), RemoteObject("flash.filesystem::File", path))
+
+        # FIXME: Not sure why these are set, but they are mandatory and seem to be transform related. Omitting them
+        # makes the Place action fail, even if we don't specify a transform. These flags seem to be poorly documented
+        # and code samples found on the web using the Place action uses them without any mention as to what they
+        # mean.
+        placeActionDesc.putEnumerated(
+            stringIDToTypeID("freeTransformCenterState"), stringIDToTypeID("quadCenterState"),
+            stringIDToTypeID("QCSAverage")
+        )
+
+        # Everything is setup. Adds the layer to the document.
+        ph_app.executeAction(
+            stringIDToTypeID("placeEvent"), placeActionDesc, requestStatic("com.adobe.photoshop.DialogModes", "NO")
+        )

@@ -98,7 +98,9 @@ class MaxActions(HookBaseClass):
         
         # resolve path
         path = self.get_publish_path(sg_publish_data)
-        
+
+        # Ticket #26834: Merge operation can cause dialogs to pop up, and closing the window results in a crash.
+        # So hide the window while the operations are occuring.
         app.engine._loader_dialog.hide()
         app.engine._loader_dialog.lower()
 
@@ -107,6 +109,7 @@ class MaxActions(HookBaseClass):
         elif name == "xref_scene":
             self._xref_scene(path, sg_publish_data)
 
+        # Restore the window after the operation is completed
         app.engine._loader_dialog.show()
         app.engine._loader_dialog.activateWindow(); # for Windows
         app.engine._loader_dialog.raise_();  # for MacOS

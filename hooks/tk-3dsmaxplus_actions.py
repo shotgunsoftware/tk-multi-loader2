@@ -14,6 +14,7 @@ Hook that loads defines all the available actions, broken down by publish type.
 import sgtk
 import os
 import MaxPlus
+from sgtk.platform.qt import QtCore, QtGui
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
@@ -98,11 +99,17 @@ class MaxActions(HookBaseClass):
         # resolve path
         path = self.get_publish_path(sg_publish_data)
         
+        app.engine._loader_dialog.hide()
+        app.engine._loader_dialog.lower()
+
         if name == "merge":
             self._merge(path, sg_publish_data)
         elif name == "xref_scene":
             self._xref_scene(path, sg_publish_data)
-        
+
+        app.engine._loader_dialog.show()
+        app.engine._loader_dialog.activateWindow(); # for Windows
+        app.engine._loader_dialog.raise_();  # for MacOS
     
     ##############################################################################################################
     # helper methods which can be subclassed in custom hooks to fine tune the behaviour of things
@@ -114,7 +121,7 @@ class MaxActions(HookBaseClass):
         :param path: Path to file.
         :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
         """
-        
+
         if not os.path.exists(path):
             raise Exception("File not found on disk - '%s'" % path)
         
@@ -126,8 +133,7 @@ class MaxActions(HookBaseClass):
                             "Supported file extensions are: %s" % (path, supported_file_exts))
         
         # Note: MaxPlus.FileManager.Merge() is not equivalent as it opens a dialog.
-        MaxPlus.Core.EvalMAXScript('mergeMAXFile(\"' + path.replace('\\', '/') + '\")')
-
+        MaxPlus.Core.EvalMAXScript('mergeMAXFile(\"' + path.replace('\\', '/') + '\")\n')
 
     def _xref_scene(self, path, sg_publish_data):
         """

@@ -32,7 +32,10 @@ def show_dialog(app):
     splash.setMask(splash_pix.mask())
     splash.show()
     QtCore.QCoreApplication.processEvents()
-        
+
+    # Keep pointer to dialog so as to be able to hide/show it in actions
+    app.engine._loader_dialog = splash
+
     # create the action manager for the Loader UI:
     from .loader_action_manager import LoaderActionManager
     action_manager = LoaderActionManager()

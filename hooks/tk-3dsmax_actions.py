@@ -109,8 +109,8 @@ class MaxActions(HookBaseClass):
         
         # Restore the window after the operation is completed
         app.engine._loader_dialog.show()
-        app.engine._loader_dialog.activateWindow(); # for Windows
-        app.engine._loader_dialog.raise_();  # for MacOS
+        app.engine._loader_dialog.activateWindow() # for Windows
+        app.engine._loader_dialog.raise_()  # for MacOS
     
     ##############################################################################################################
     # helper methods which can be subclassed in custom hooks to fine tune the behaviour of things

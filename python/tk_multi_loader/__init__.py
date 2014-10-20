@@ -33,9 +33,6 @@ def show_dialog(app):
     splash.show()
     QtCore.QCoreApplication.processEvents()
 
-    # Keep pointer to dialog so as to be able to hide/show it in actions
-    app.engine._loader_dialog = splash
-
     # create the action manager for the Loader UI:
     from .loader_action_manager import LoaderActionManager
     action_manager = LoaderActionManager()
@@ -43,6 +40,11 @@ def show_dialog(app):
     # start ui
     ui_title = app.get_setting("title_name")
     w = app.engine.show_dialog(ui_title, app, AppDialog, action_manager)
+
+    # Keep pointer to dialog so as to be able to hide/show it in actions
+    engine_name = app.engine.instance_name
+    if engine_name == "tk-3dsmax" or engine_name == "tk-3dsmaxplus":
+        app.engine._loader_dialog = w.window()
     
     # attach splash screen to the main window to help GC
     w.__splash_screen = splash

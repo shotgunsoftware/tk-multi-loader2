@@ -94,7 +94,7 @@ class MaxActions(HookBaseClass):
         app.log_debug("Execute action called for action %s. "
                       "Parameters: %s. Publish Data: %s" % (name, params, sg_publish_data))
         
-        # Ticket #26834: Merge operation can cause dialogs to pop up, and closing the window results in a crash.
+        # Merge operation can cause dialogs to pop up, and closing the window results in a crash.
         # So hide the window while the operations are occuring.
         app.engine._loader_dialog.hide()
         app.engine._loader_dialog.lower()

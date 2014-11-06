@@ -44,7 +44,7 @@ def show_dialog(app):
     # Keep pointer to dialog so as to be able to hide/show it in actions
     engine_name = app.engine.instance_name
     if engine_name == "tk-3dsmax" or engine_name == "tk-3dsmaxplus":
-        app.engine._loader_dialog = w.window()
+        app.engine.set_safe_modal_dialog(w.window())
     
     # attach splash screen to the main window to help GC
     w.__splash_screen = splash

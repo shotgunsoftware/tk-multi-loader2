@@ -98,20 +98,10 @@ class MaxActions(HookBaseClass):
         # resolve path
         path = self.get_publish_path(sg_publish_data)
 
-        # Merge operation can cause dialogs to pop up, and closing the window results in a crash.
-        # So hide the window while the operations are occuring.
-        app.engine._loader_dialog.hide()
-        app.engine._loader_dialog.lower()
-
         if name == "merge":
             self._merge(path, sg_publish_data)
         elif name == "xref_scene":
             self._xref_scene(path, sg_publish_data)
-
-        # Restore the window after the operation is completed
-        app.engine._loader_dialog.show()
-        app.engine._loader_dialog.activateWindow() # for Windows
-        app.engine._loader_dialog.raise_()  # for MacOS
     
     ##############################################################################################################
     # helper methods which can be subclassed in custom hooks to fine tune the behaviour of things
@@ -134,8 +124,10 @@ class MaxActions(HookBaseClass):
             raise Exception("Unsupported file extension for '%s'. "
                             "Supported file extensions are: %s" % (path, supported_file_exts))
         
+        app = self.parent
+
         # Note: MaxPlus.FileManager.Merge() is not equivalent as it opens a dialog.
-        MaxPlus.Core.EvalMAXScript('mergeMAXFile(\"' + path.replace('\\', '/') + '\")')
+        app.engine.safe_modal_maxscript_eval(lambda: MaxPlus.Core.EvalMAXScript('mergeMAXFile(\"' + path.replace('\\', '/') + '\")'))
 
     def _xref_scene(self, path, sg_publish_data):
         """
@@ -155,5 +147,7 @@ class MaxActions(HookBaseClass):
             raise Exception("Unsupported file extension for '%s'. "
                             "Supported file extensions are: %s" % (path, supported_file_exts))
 
+        app = self.parent
+
         # No direct equivalent found in MaxPlus. Would potentially need to get scene root node (INode) and use addNewXRef on that otherwise.
-        MaxPlus.Core.EvalMAXScript('xrefs.addNewXRefFile(\"' + path.replace('\\', '/') + '\")')
+        app.engine.safe_modal_maxscript_eval(lambda: MaxPlus.Core.EvalMAXScript('xrefs.addNewXRefFile(\"' + path.replace('\\', '/') + '\")'))

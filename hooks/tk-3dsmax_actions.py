@@ -101,7 +101,6 @@ class MaxActions(HookBaseClass):
             self._merge(path, sg_publish_data)
         elif name == "xref_scene":
             self._xref_scene(path, sg_publish_data)
-        
     
     ##############################################################################################################
     # helper methods which can be subclassed in custom hooks to fine tune the behaviour of things
@@ -125,7 +124,8 @@ class MaxActions(HookBaseClass):
             raise Exception("Unsupported file extension for '%s'. "
                             "Supported file extensions are: %s" % (path, supported_file_exts))
         
-        mxs.mergeMAXFile(path)
+        app = self.parent
+        app.engine.safe_dialog_exec(lambda: mxs.mergeMAXFile(path))
 
 
     def _xref_scene(self, path, sg_publish_data):
@@ -147,4 +147,5 @@ class MaxActions(HookBaseClass):
             raise Exception("Unsupported file extension for '%s'. "
                             "Supported file extensions are: %s" % (path, supported_file_exts))
         
-        mxs.xrefs.addNewXRefFile(path)
+        app = self.parent
+        app.engine.safe_dialog_exec(lambda: mxs.xrefs.addNewXRefFile(path))

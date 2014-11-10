@@ -32,7 +32,7 @@ def show_dialog(app):
     splash.setMask(splash_pix.mask())
     splash.show()
     QtCore.QCoreApplication.processEvents()
-        
+
     # create the action manager for the Loader UI:
     from .loader_action_manager import LoaderActionManager
     action_manager = LoaderActionManager()
@@ -40,6 +40,9 @@ def show_dialog(app):
     # start ui
     ui_title = app.get_setting("title_name")
     w = app.engine.show_dialog(ui_title, app, AppDialog, action_manager)
+
+    # Keep pointer to dialog so as to be able to hide/show it in actions
+    engine_name = app.engine.instance_name
     
     # attach splash screen to the main window to help GC
     w.__splash_screen = splash

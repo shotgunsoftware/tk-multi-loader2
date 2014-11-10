@@ -127,7 +127,7 @@ class MaxActions(HookBaseClass):
         app = self.parent
 
         # Note: MaxPlus.FileManager.Merge() is not equivalent as it opens a dialog.
-        app.engine.safe_modal_maxscript_eval(lambda: MaxPlus.Core.EvalMAXScript('mergeMAXFile(\"' + path.replace('\\', '/') + '\")'))
+        app.engine.safe_dialog_exec(lambda: MaxPlus.Core.EvalMAXScript('mergeMAXFile(\"' + path.replace('\\', '/') + '\")'))
 
     def _xref_scene(self, path, sg_publish_data):
         """
@@ -150,4 +150,4 @@ class MaxActions(HookBaseClass):
         app = self.parent
 
         # No direct equivalent found in MaxPlus. Would potentially need to get scene root node (INode) and use addNewXRef on that otherwise.
-        app.engine.safe_modal_maxscript_eval(lambda: MaxPlus.Core.EvalMAXScript('xrefs.addNewXRefFile(\"' + path.replace('\\', '/') + '\")'))
+        app.engine.safe_dialog_exec(lambda: MaxPlus.Core.EvalMAXScript('xrefs.addNewXRefFile(\"' + path.replace('\\', '/') + '\")'))

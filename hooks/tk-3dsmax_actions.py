@@ -125,7 +125,7 @@ class MaxActions(HookBaseClass):
                             "Supported file extensions are: %s" % (path, supported_file_exts))
         
         app = self.parent
-        app.engine.safe_modal_maxscript_eval(lambda: mxs.mergeMAXFile(path))
+        app.engine.safe_dialog_exec(lambda: mxs.mergeMAXFile(path))
 
 
     def _xref_scene(self, path, sg_publish_data):
@@ -148,4 +148,4 @@ class MaxActions(HookBaseClass):
                             "Supported file extensions are: %s" % (path, supported_file_exts))
         
         app = self.parent
-        app.engine.safe_modal_maxscript_eval(lambda: mxs.xrefs.addNewXRefFile(path))
+        app.engine.safe_dialog_exec(lambda: mxs.xrefs.addNewXRefFile(path))

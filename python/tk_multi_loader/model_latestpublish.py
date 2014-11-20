@@ -385,6 +385,13 @@ class SgLatestPublishModel(ShotgunOverlayModel):
         :param field: The Shotgun field which the thumbnail is associated with.
         :param path: A path on disk to the thumbnail. This is a file in jpeg format.
         """
+        
+        if field != "image":
+            # there may be other thumbnails being loaded in as part of the data flow
+            # (in particular, created_by.HumanUser.image) - these ones we just want to 
+            # ignore and not display.
+            return
+
         # pass the thumbnail through out special image compositing methods
         # before associating it with the model
         is_folder = item.data(SgLatestPublishModel.IS_FOLDER_ROLE)

@@ -18,6 +18,7 @@ import sgtk
 import sys
 import os
 
+
 class MultiLoader(sgtk.platform.Application):
     
     def init_app(self):

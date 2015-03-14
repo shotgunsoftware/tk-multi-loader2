@@ -285,6 +285,9 @@ background-image: url(:/res/right_arrow_pressed.png);
     <layout class="QVBoxLayout" name="middle_area">
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <property name="spacing">
+        <number>1</number>
+       </property>
        <item>
         <widget class="QLabel" name="entity_breadcrumbs">
          <property name="sizePolicy">
@@ -324,6 +327,43 @@ background-image: url(:/res/right_arrow_pressed.png);
         </spacer>
        </item>
        <item>
+        <widget class="QToolButton" name="thumbnail_mode">
+         <property name="toolTip">
+          <string>Thumbnail Mode</string>
+         </property>
+         <property name="text">
+          <string>...</string>
+         </property>
+         <property name="icon">
+          <iconset resource="resources.qrc">
+           <normaloff>:/res/mode_switch_thumb_active.png</normaloff>:/res/mode_switch_thumb_active.png</iconset>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QToolButton" name="list_mode">
+         <property name="toolTip">
+          <string>List Mode</string>
+         </property>
+         <property name="text">
+          <string>...</string>
+         </property>
+         <property name="icon">
+          <iconset resource="resources.qrc">
+           <normaloff>:/res/mode_switch_card.png</normaloff>:/res/mode_switch_card.png</iconset>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QToolButton" name="info">
          <property name="toolTip">
           <string>Use this button to &lt;i&gt;toggle details on and off&lt;/i&gt;. </string>
@@ -343,14 +383,8 @@ background-image: url(:/res/right_arrow_pressed.png);
        <property name="editTriggers">
         <set>QAbstractItemView::NoEditTriggers</set>
        </property>
-       <property name="movement">
-        <enum>QListView::Static</enum>
-       </property>
        <property name="resizeMode">
         <enum>QListView::Adjust</enum>
-       </property>
-       <property name="layoutMode">
-        <enum>QListView::Batched</enum>
        </property>
        <property name="spacing">
         <number>5</number>
@@ -359,9 +393,6 @@ background-image: url(:/res/right_arrow_pressed.png);
         <enum>QListView::IconMode</enum>
        </property>
        <property name="uniformItemSizes">
-        <bool>true</bool>
-       </property>
-       <property name="wordWrap">
         <bool>true</bool>
        </property>
       </widget>

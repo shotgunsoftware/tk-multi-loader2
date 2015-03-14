@@ -18,7 +18,8 @@ from .model_publishtype import SgPublishTypeModel
 from .model_status import SgStatusModel
 from .proxymodel_latestpublish import SgLatestPublishProxyModel
 from .proxymodel_entity import SgEntityProxyModel
-from .delegate_publish_thumb import SgPublishDelegate
+from .delegate_publish_thumb import SgPublishThumbDelegate
+from .delegate_publish_list import SgPublishListDelegate
 from .model_publishhistory import SgPublishHistoryModel
 from .delegate_publish_history import SgPublishHistoryDelegate
 
@@ -33,6 +34,9 @@ class AppDialog(QtGui.QWidget):
     """
     Main dialog window for the App
     """
+
+    # enum to control the mode of the main view
+    (MAIN_VIEW_LIST, MAIN_VIEW_THUMB) = range(2)
 
     # signal emitted whenever the selected publish changes
     # in either the main view or the details history view
@@ -57,7 +61,7 @@ class AppDialog(QtGui.QWidget):
         # set up the UI
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
-
+        
         #################################################
         # maintain a list where we keep a reference to
         # all the dynamic UI we create. This is to make
@@ -81,6 +85,9 @@ class AppDialog(QtGui.QWidget):
         self.ui.detail_actions_btn.setMenu(self._details_action_menu)
 
         self.ui.info.clicked.connect(self._toggle_details_pane)
+
+        self.ui.thumbnail_mode.clicked.connect(self._on_thumbnail_mode_clicked)
+        self.ui.list_mode.clicked.connect(self._on_list_mode_clicked)
 
         self._publish_history_model = SgPublishHistoryModel(self, self.ui.history_view)
 
@@ -150,9 +157,18 @@ class AppDialog(QtGui.QWidget):
         # hook up view -> proxy model -> model
         self.ui.publish_view.setModel(self._publish_proxy_model)
 
-        # tell our publish view to use a custom delegate to produce widgetry
-        self._publish_delegate = SgPublishDelegate(self.ui.publish_view, self._status_model, self._action_manager)
-        self.ui.publish_view.setItemDelegate(self._publish_delegate)
+        # set up custom delegates to use when drawing the main area
+        self._publish_thumb_delegate = SgPublishThumbDelegate(self.ui.publish_view, 
+                                                              self._status_model, 
+                                                              self._action_manager)
+
+        self._publish_list_delegate = SgPublishListDelegate(self.ui.publish_view, 
+                                                             self._status_model, 
+                                                             self._action_manager)
+        
+        # recall which the most recently mode used was and set that
+        main_view_mode = self._settings_manager.retrieve("main_view_mode", self.MAIN_VIEW_THUMB)
+        self._set_main_view_mode(main_view_mode)
 
         # whenever the type list is checked, update the publish filters
         self._publish_type_model.itemChanged.connect(self._apply_type_filters_on_publishes)
@@ -362,6 +378,46 @@ class AppDialog(QtGui.QWidget):
                                                                              self._action_manager.UI_AREA_HISTORY)
         if default_action:
             default_action.trigger()
+
+    def _on_thumbnail_mode_clicked(self):
+        """
+        Executed when someone clicks the thumbnail mode button
+        """
+        self._set_main_view_mode(self.MAIN_VIEW_THUMB)
+        
+    def _on_list_mode_clicked(self):
+        """
+        Executed when someone clicks the list mode button
+        """
+        self._set_main_view_mode(self.MAIN_VIEW_LIST)
+
+    def _set_main_view_mode(self, mode):
+        """
+        Sets up the view mode for the main view.
+        
+        :param mode: either MAIN_VIEW_LIST or MAIN_VIEW_THUMB
+        """
+        if mode == self.MAIN_VIEW_LIST:
+            self.ui.list_mode.setIcon(QtGui.QIcon(QtGui.QPixmap(":/res/mode_switch_card_active.png")))
+            self.ui.list_mode.setChecked(True)
+            self.ui.thumbnail_mode.setIcon(QtGui.QIcon(QtGui.QPixmap(":/res/mode_switch_thumb.png")))
+            self.ui.thumbnail_mode.setChecked(False)
+            self.ui.publish_view.setViewMode(QtGui.QListView.ListMode)
+            self.ui.publish_view.setItemDelegate(self._publish_list_delegate)            
+            
+        elif mode == self.MAIN_VIEW_THUMB:
+            self.ui.list_mode.setIcon(QtGui.QIcon(QtGui.QPixmap(":/res/mode_switch_card.png")))
+            self.ui.list_mode.setChecked(False)
+            self.ui.thumbnail_mode.setIcon(QtGui.QIcon(QtGui.QPixmap(":/res/mode_switch_thumb_active.png")))
+            self.ui.thumbnail_mode.setChecked(True)
+            self.ui.publish_view.setViewMode(QtGui.QListView.IconMode)
+            self.ui.publish_view.setItemDelegate(self._publish_thumb_delegate)
+            
+        else:
+            raise TankError("Undefined view mode!") 
+
+        self.ui.publish_view.selectionModel().clear()
+        self._settings_manager.store("main_view_mode", mode)
 
     def _toggle_details_pane(self):
         """
@@ -1278,14 +1334,17 @@ class AppDialog(QtGui.QWidget):
             if len(child_folders) > 0:
                 # delegates are rendered in a special way
                 # if we are on a non-leaf node in the tree (e.g there are subfolders)
-                self._publish_delegate.show_entity_instead_of_type(True)
+                self._publish_thumb_delegate.set_sub_items_mode(True)
+                self._publish_list_delegate.set_sub_items_mode(True)
             else:
                 # we are at leaf level and the subitems check box is checked
                 # render the cells
-                self._publish_delegate.show_entity_instead_of_type(False)
+                self._publish_thumb_delegate.set_sub_items_mode(False)
+                self._publish_list_delegate.set_sub_items_mode(False)
         else:
             self.ui.publish_view.setStyleSheet("")
-            self._publish_delegate.show_entity_instead_of_type(False)
+            self._publish_thumb_delegate.set_sub_items_mode(False)
+            self._publish_list_delegate.set_sub_items_mode(False)
 
         # now finally load up the data in the publish model
         publish_filters = self._entity_presets[self._current_entity_preset].publish_filters

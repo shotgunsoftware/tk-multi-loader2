@@ -16,35 +16,146 @@ from .model_latestpublish import SgLatestPublishModel
 shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model")
 shotgun_view = sgtk.platform.import_framework("tk-framework-qtwidgets", "shotgun_view")
 
+from .ui.widget_publish_thumb import Ui_PublishThumbWidget
 
-class SgPublishDelegate(shotgun_view.WidgetDelegate):
+
+class PublishThumbWidget(QtGui.QWidget):
+    """
+    Thumbnail style widget which contains an image and some 
+    text underneath. The widget scales gracefully.
+    
+    This class is typically used in conjunction with a QT View and the 
+    ShotgunDelegate class.     
+    """
+    
+    def __init__(self, parent):
+        """
+        Constructor
+        """
+        QtGui.QWidget.__init__(self, parent)
+
+        # make sure this widget isn't shown
+        self.setVisible(False)
+        
+        # set up the UI
+        self.ui = Ui_PublishThumbWidget() 
+        self.ui.setupUi(self)
+        
+        # set up an event filter to ensure that the thumbnails
+        # are scaled in a square fashion.
+        filter = ResizeEventFilter(self.ui.thumbnail)
+        filter.resized.connect(self.__on_thumb_resized)
+        self.ui.thumbnail.installEventFilter(filter)
+        
+        # set up action menu
+        self._menu = QtGui.QMenu()
+        self._actions = []
+        self.ui.button.setMenu(self._menu)
+        self.ui.button.setVisible(False)
+
+        # compute hilight colors
+        p = QtGui.QPalette()
+        highlight_col = p.color(QtGui.QPalette.Active, QtGui.QPalette.Highlight)
+        self._highlight_str = "rgb(%s, %s, %s)" % (highlight_col.red(), 
+                                                   highlight_col.green(), 
+                                                   highlight_col.blue())
+        self._transp_highlight_str = "rgba(%s, %s, %s, 25%%)" % (highlight_col.red(), 
+                                                                 highlight_col.green(), 
+                                                                 highlight_col.blue())
+        
+        
+    def set_actions(self, actions):
+        """
+        Adds a list of QActions to the actions menu.
+        """
+        if len(actions) == 0:
+            self.ui.button.setVisible(False)
+        else:
+            self.ui.button.setVisible(True)
+            self._actions = actions
+            for a in self._actions:
+                self._menu.addAction(a)
+    
+    def set_selected(self, selected):
+        """
+        Adjust the style sheet to indicate selection or not
+        """
+        if selected:
+            # make a border around the cell
+            self.ui.box.setStyleSheet("""#box {border-width: 2px; 
+                                                 border-color: %s; 
+                                                 border-style: solid; 
+                                                 background-color: %s}
+                                      """ % (self._highlight_str, self._transp_highlight_str))
+        else:
+            self.ui.box.setStyleSheet("")
+    
+    def set_thumbnail(self, pixmap):
+        """
+        Set a thumbnail given the current pixmap.
+        The pixmap must be 512x400 aspect ratio or it will appear squeezed
+        """
+        self.ui.thumbnail.setPixmap(pixmap)
+    
+    def set_text(self, header, body):
+        """
+        Populate three lines of text in the widget
+        """
+        msg = "<b>%s</b><br>%s" % (header, body)
+        self.ui.label.setText(msg)
+        self.setToolTip(msg)    
+
+    @staticmethod
+    def calculate_size(scale_factor):
+        """
+        Calculates and returns a suitable size for this widget given a scale factor
+        in pixels.
+        """        
+        # the thumbnail proportions are 512x400
+        # add another 34px for the height so the text can be rendered.
+        return QtCore.QSize(scale_factor, (scale_factor*0.78125)+34)
+        
+    def __on_thumb_resized(self):
+        """
+        Slot Called whenever the thumbnail area is being resized,
+        making sure that the label scales with the right aspect ratio.
+        """
+        new_size = self.ui.thumbnail.size()
+
+        # Aspect ratio of thumbs: 512/400 = 1.28
+        calc_height = 0.78125 * (float)(new_size.width())
+        
+        if abs(calc_height - new_size.height()) > 2: 
+            self.ui.thumbnail.resize(new_size.width(), calc_height)
+
+
+class SgPublishThumbDelegate(shotgun_view.WidgetDelegate):
     """
     Delegate which 'glues up' the ThumbWidget with a QT View.
     """
 
     def __init__(self, view, status_model, action_manager):
-        shotgun_view.WidgetDelegate.__init__(self, view)
         self._status_model = status_model
         self._action_manager = action_manager
         self._view = view
-        self._show_entity_instead_of_type = False
+        self._sub_items_mode = False
+        shotgun_view.WidgetDelegate.__init__(self, view)
 
-    def show_entity_instead_of_type(self, enabled):
+    def set_sub_items_mode(self, enabled):
         """
-        Enables rendering of cells in a non-standard way,
-        where the second line is not the type but instead
-        the linked entity. This is for example used when the
-        subfolders mode is enabled.
+        Enables rendering of cells in to work with the sub items
+        mode, where the result list will contain items from several
+        different folder levels.
 
         :param enabled: True if subitems mode is enabled, false if not
         """
-        self._show_entity_instead_of_type = enabled
+        self._sub_items_mode = enabled
 
     def _create_widget(self, parent):
         """
         Widget factory as required by base class
         """
-        return shotgun_view.ThumbWidget(parent)
+        return PublishThumbWidget(parent)
 
     def _on_before_selection(self, widget, model_index, style_options):
         """
@@ -155,7 +266,7 @@ class SgPublishDelegate(shotgun_view.WidgetDelegate):
                 name_str += " (%s)" % sg_data["task"]["name"]
 
 
-            if self._show_entity_instead_of_type:
+            if self._sub_items_mode:
 
                 # display this publish in sub items node
                 # in this case we want to display the following two lines
@@ -185,6 +296,26 @@ class SgPublishDelegate(shotgun_view.WidgetDelegate):
         """
         # base the size of each element off the icon size property of the view
         scale_factor = self._view.iconSize().width()
-        return shotgun_view.ThumbWidget.calculate_size(scale_factor)
+        return PublishThumbWidget.calculate_size(scale_factor)
 
+
+
+##################################################################################################
+# utility classes
+
+
+class ResizeEventFilter(QtCore.QObject):
+    """
+    Event filter which emits a resized signal whenever
+    the monitored widget resizes
+    """
+    resized = QtCore.Signal()
+
+    def eventFilter(self, obj, event):
+        # peek at the message
+        if event.type() == QtCore.QEvent.Resize:
+            # re-broadcast any resize events
+            self.resized.emit()
+        # pass it on!
+        return False
 

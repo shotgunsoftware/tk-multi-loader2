@@ -113,9 +113,8 @@ class AppDialog(QtGui.QWidget):
         # note! Because of some GC issues (maya 2012 Pyside), need to first establish
         # a direct reference to the selection model before we can set up any signal/slots
         # against it
-        history_view_selection_model = self.ui.history_view.selectionModel()
-        self._dynamic_widgets.append(history_view_selection_model)
-        history_view_selection_model.selectionChanged.connect(self._on_history_selection)
+        self._history_view_selection_model = self.ui.history_view.selectionModel()
+        self._history_view_selection_model.selectionChanged.connect(self._on_history_selection)
 
         self._no_selection_pixmap = QtGui.QPixmap(":/res/no_item_selected_512x400.png")
 
@@ -180,9 +179,8 @@ class AppDialog(QtGui.QWidget):
         # note! Because of some GC issues (maya 2012 Pyside), need to first establish
         # a direct reference to the selection model before we can set up any signal/slots
         # against it
-        publish_view_selection_model = self.ui.publish_view.selectionModel()
-        self._dynamic_widgets.append(publish_view_selection_model)
-        publish_view_selection_model.selectionChanged.connect(self._on_publish_selection)
+        self._publish_view_selection_model = self.ui.publish_view.selectionModel()
+        self._publish_view_selection_model.selectionChanged.connect(self._on_publish_selection)
 
         # set up right click menu for the main publish view
         self._refresh_action = QtGui.QAction("Refresh", self.ui.publish_view)
@@ -308,6 +306,12 @@ class AppDialog(QtGui.QWidget):
         QtCore.QCoreApplication.processEvents()
 
         try:
+            # clear the selection in the main views. 
+            # this is to avoid re-triggering selection
+            # as items are being removed in the models
+            self._history_view_selection_model.clear()
+            self._publish_view_selection_model.clear()
+            
             # disconnect some signals so we don't go all crazy when
             # the cascading model deletes begin as part of the destroy calls
             for p in self._entity_presets:

@@ -9,6 +9,7 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import sgtk
+import datetime
 from sgtk.platform.qt import QtCore, QtGui
 from .model_latestpublish import SgLatestPublishModel
 
@@ -103,16 +104,17 @@ class PublishThumbWidget(QtGui.QWidget):
         """
         self.ui.thumbnail.setPixmap(pixmap)
     
-    def set_text(self, header, body):
+    def set_text(self, header, body, tooltip):
         """
         Populate the lines of text in the widget
         
         :param header: Header text as string
         :param body: Body text as string
+        :param tooltip: Tooltip text
         """
         msg = "<b>%s</b><br>%s" % (header, body)
         self.ui.label.setText(msg)
-        self.setToolTip(msg)    
+        self.ui.thumbnail.setToolTip(tooltip)    
 
     @staticmethod
     def calculate_size(scale_factor):
@@ -225,6 +227,10 @@ class SgPublishThumbDelegate(shotgun_view.WidgetDelegate):
             thumb = icon.pixmap(512)
             widget.set_thumbnail(thumb)
 
+        header_text = ""
+        details_text = ""
+        tooltip = ""
+        
         if shotgun_model.get_sanitized_data(model_index, SgLatestPublishModel.IS_FOLDER_ROLE):
             # this is a folder item, injected into the publish model from the entity tree
 
@@ -239,7 +245,8 @@ class SgPublishThumbDelegate(shotgun_view.WidgetDelegate):
 
             if isinstance(field_value, dict) and "name" in field_value and "type" in field_value:
                 # intermediate node with entity link
-                widget.set_text(field_value["name"], field_value["type"])
+                header_text = field_value["name"]
+                details_text = field_value["type"]
 
             elif isinstance(field_value, list):
                 # this is a list of some sort. Loop over all elements and extract a comma separated list.
@@ -255,19 +262,60 @@ class SgPublishThumbDelegate(shotgun_view.WidgetDelegate):
                     else:
                         formatted_values.append(str(v))
 
-                widget.set_text(", ".join(formatted_values), "")
+                header_text = ", ".join(formatted_values)
 
             elif sg_data:
                 # this is a leaf node
-                widget.set_text(field_value, sg_data.get("type"))
+                header_text = field_value
+                details_text = sg_data.get("type")
 
             else:
                 # other value (e.g. intermediary non-entity link node like sg_asset_type)
-                widget.set_text(field_value, "")
+                header_text = field_value
 
 
         else:
             # this is a publish!
+
+            # example data:
+            
+            # {'code': 'aaa_00010_F004_C003_0228F8_v000.%04d.dpx',
+            #  'created_at': 1425378837.0,
+            #  'created_by': {'id': 42, 'name': 'Manne Ohrstrom', 'type': 'HumanUser'},
+            #  'created_by.HumanUser.image': 'https://...',
+            #  'description': 'testing testing, 1,2,3',
+            #  'entity': {'id': 1660, 'name': 'aaa_00010', 'type': 'Shot'},
+            #  'id': 1340,
+            #  'image': 'https:...',
+            #  'name': 'aaa_00010, F004_C003_0228F8',
+            #  'path': {'content_type': 'image/dpx',
+            #           'id': 24116,
+            #           'link_type': 'local',
+            #           'local_path': '/mnt/projects...',
+            #           'local_path_linux': '/mnt/projects...',
+            #           'local_path_mac': '/mnt/projects...',
+            #           'local_path_windows': 'z:\\mnt\\projects...',
+            #           'local_storage': {'id': 4,
+            #                             'name': 'primary',
+            #                             'type': 'LocalStorage'},
+            #           'name': 'aaa_00010_F004_C003_0228F8_v000.%04d.dpx',
+            #           'type': 'Attachment',
+            #           'url': 'file:///mnt/projects...'},
+            #  'project': {'id': 289, 'name': 'Climp', 'type': 'Project'},
+            #  'published_file_type': {'id': 53,
+            #                          'name': 'Flame Render',
+            #                          'type': 'PublishedFileType'},
+            #  'task': None,
+            #  'task.Task.content': None,
+            #  'task.Task.due_date': None,
+            #  'task.Task.sg_status_list': None,
+            #  'task_uniqueness': False,
+            #  'type': 'PublishedFile',
+            #  'version': {'id': 6697,
+            #              'name': 'aaa_00010_F004_C003_0228F8_v000',
+            #              'type': 'Version'},
+            #  'version.Version.sg_status_list': 'rev',
+            #  'version_number': 2}
 
             # get the name (lighting v3)
             name_str = "Unnamed"
@@ -294,7 +342,22 @@ class SgPublishThumbDelegate(shotgun_view.WidgetDelegate):
             if sg_data.get("task_uniqueness") == False and sg_data.get("task") is not None:
                 name_str += " (%s)" % sg_data["task"]["name"]
 
+            # make this the title of the card
+            header_text = name_str
 
+            # and set a tooltip
+            tooltip =  "<b>Name:</b> %s" % (sg_data.get("code") or "No name given.")
+            # Version 012 by John Smith at 2014-02-23 10:34            
+            created_unixtime = sg_data.get("created_at") or 0
+            date_str = datetime.datetime.fromtimestamp(created_unixtime).strftime('%Y-%m-%d %H:%M')
+            tooltip += "<br><br><b>Version:</b> %03d by %s at %s" % (sg_data.get("version_number"), 
+                                                             sg_data.get("created_by").get("name"),
+                                                             date_str)
+            tooltip += "<br><br><b>Path:</b> %s" % ((sg_data.get("path") or {}).get("local_path"))
+            tooltip += "<br><br><b>Description:</b> %s" % (sg_data.get("description") or "No description given.")        
+            
+            # check if we are in "deep mode". In that case, display the entity link info
+            # on the thumb card. Otherwise, display the type.
             if self._sub_items_mode:
 
                 # display this publish in sub items node
@@ -305,19 +368,19 @@ class SgPublishThumbDelegate(shotgun_view.WidgetDelegate):
                 # get the name of the associated entity
                 entity_link = sg_data.get("entity")
                 if entity_link is None:
-                    entity_str = "Unlinked"
+                    details_text = "Unlinked"
                 else:
-                    entity_str = "%s %s" % (entity_link["type"], entity_link["name"])
-
-                widget.set_text(name_str, entity_str)
+                    details_text = "%s %s" % (entity_link["type"], entity_link["name"])
 
             else:
                 # std publish - render with a name and a publish type
                 # main_body v3
                 # Render
-                pub_type_str = shotgun_model.get_sanitized_data(model_index,
+                details_text = shotgun_model.get_sanitized_data(model_index,
                                                                 SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE)
-                widget.set_text(name_str, pub_type_str)
+
+            
+        widget.set_text(header_text, details_text, tooltip)
 
     def sizeHint(self, style_options, model_index):
         """

@@ -21,17 +21,14 @@ from .ui.widget_publish_list import Ui_PublishListWidget
 
 class PublishListWidget(QtGui.QWidget):
     """
-    Simple list *item* widget which hosts a square thumbnail, header text
-    and body text. It has a fixed size. Multiple of these items are typically
-    put together inside a QListView to form a list.
-    
-    This class is typically used in conjunction with a QT View and the 
-    ShotgunDelegate class. 
+    Fixed height thin list item type widget, used for the list mode in the main loader view.
     """
     
     def __init__(self, parent):
         """
         Constructor
+        
+        :param parent: QT parent object
         """
         QtGui.QWidget.__init__(self, parent)
 
@@ -61,6 +58,8 @@ class PublishListWidget(QtGui.QWidget):
     def set_actions(self, actions):
         """
         Adds a list of QActions to add to the actions menu for this widget.
+        
+        :param actions: List of QActions to add
         """
         if len(actions) == 0:
             self.ui.button.setVisible(False)
@@ -73,6 +72,8 @@ class PublishListWidget(QtGui.QWidget):
     def set_selected(self, selected):
         """
         Adjust the style sheet to indicate selection or not
+        
+        :param selected: True if selected, false if not
         """
         if selected:
             self.ui.box.setStyleSheet("""#box {border-width: 2px; 
@@ -87,33 +88,50 @@ class PublishListWidget(QtGui.QWidget):
     def set_thumbnail(self, pixmap):
         """
         Set a thumbnail given the current pixmap.
-        The pixmap must be 100x100 or it will appear squeezed
+        The thumbnail must be 512x400px or similar aspect
+        not to be squeezed.
+        
+        :param pixmap: pixmap object to use
         """
         self.ui.thumbnail.setPixmap(pixmap)
             
-    def set_text(self, large_text, small_text):
+    def set_text(self, large_text, small_text, tooltip):
         """
         Populate the lines of text in the widget
+        
+        :param large_text: Header text as string
+        :param small_text: smaller text as string
+        :param tooltip: Tooltip text    
         """    
         self.ui.label_1.setText(large_text)
         self.ui.label_2.setText(small_text)
+        self.ui.label_1.setToolTip(tooltip)
+        self.ui.label_2.setToolTip(tooltip)
+        
 
     @staticmethod
     def calculate_size():
         """
         Calculates and returns a suitable size for this widget.
+        
+        :returns: Size of the widget
         """        
-        return QtCore.QSize(200, 55)
+        return QtCore.QSize(200, 56)
 
 
 
 class SgPublishListDelegate(shotgun_view.WidgetDelegate):
     """
-    Delegate which 'glues up' the ThumbWidget with a QT View.
+    Delegate which 'glues up' the List widget with a QT View.
     """
 
-    def __init__(self, view, status_model, action_manager):
-        self._status_model = status_model
+    def __init__(self, view, action_manager):
+        """
+        Constructor
+        
+        :param view: The view where this delegate is being used
+        :param action_manager: Action manager instance
+        """
         self._action_manager = action_manager
         self._view = view
         self._sub_items_mode = False
@@ -131,16 +149,24 @@ class SgPublishListDelegate(shotgun_view.WidgetDelegate):
 
     def _create_widget(self, parent):
         """
-        Widget factory as required by base class
+        Widget factory as required by base class. The base class will call this
+        when a widget is needed and then pass this widget in to the various callbacks.
+        
+        :param parent: Parent object for the widget
         """
         return PublishListWidget(parent)
 
     def _on_before_selection(self, widget, model_index, style_options):
         """
-        Called when the associated widget is being set up. Initialize
-        things that shall persist, for example action menu items.
+        Called when the associated widget is selected. This method 
+        implements all the setting up and initialization of the widget
+        that needs to take place prior to a user starting to interact with it.
+        
+        :param widget: The widget to operate on (created via _create_widget)
+        :param model_index: The model index to operate on
+        :param style_options: QT style options
         """
-        # do std drawing first
+        # first set up the basic 
         self._on_before_paint(widget, model_index, style_options)
 
         widget.set_selected(True)
@@ -165,7 +191,12 @@ class SgPublishListDelegate(shotgun_view.WidgetDelegate):
     def _on_before_paint(self, widget, model_index, style_options):
         """
         Called by the base class when the associated widget should be
-        painted in the view.
+        painted in the view. This method should implement setting of all
+        static elements (labels, pixmaps etc) but not dynamic ones (e.g. buttons)
+        
+        :param widget: The widget to operate on (created via _create_widget)
+        :param model_index: The model index to operate on
+        :param style_options: QT style options
         """
         icon = shotgun_model.get_sanitized_data(model_index, QtCore.Qt.DecorationRole)
         
@@ -219,7 +250,6 @@ class SgPublishListDelegate(shotgun_view.WidgetDelegate):
         # by default, just display the value 
         main_text = field_value
         small_text = ""
-        
 
         if isinstance(field_value, dict) and "name" in field_value and "type" in field_value:
             # intermediate node with entity link
@@ -252,7 +282,7 @@ class SgPublishListDelegate(shotgun_view.WidgetDelegate):
             main_text = "<b>%s</b> <b style='color:#2C93E2'>%s</b>" % (sg_data["type"], field_value)
             small_text = sg_data.get("description") or "No description given."
 
-        widget.set_text(main_text, small_text)
+        widget.set_text(main_text, small_text, tooltip="")
 
     def _format_publish(self, model_index, widget):
         """
@@ -302,7 +332,6 @@ class SgPublishListDelegate(shotgun_view.WidgetDelegate):
         #  'version.Version.sg_status_list': 'rev',
         #  'version_number': 2}
         
-
         # Publish Type / Publish Name
         sg_data = shotgun_model.get_sg_data(model_index)
         pub_type_str = shotgun_model.get_sanitized_data(model_index, SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE)
@@ -330,12 +359,20 @@ class SgPublishListDelegate(shotgun_view.WidgetDelegate):
                                                       sg_data.get("created_by").get("name"),
                                                       date_str)
         
-        widget.set_text(main_text, small_text)
+        # and set a tooltip
+        tooltip =  "<b>Name:</b> %s" % (sg_data.get("code") or "No name given.")
+        tooltip += "<br><br><b>Path:</b> %s" % ((sg_data.get("path") or {}).get("local_path"))
+        tooltip += "<br><br><b>Description:</b> %s" % (sg_data.get("description") or "No description given.")        
+
+        widget.set_text(main_text, small_text, tooltip)        
 
 
     def sizeHint(self, style_options, model_index):
         """
-        Base the size on the icon size property of the view
+        Specify the size of the item.
+        
+        :param style_options: QT style options
+        :param model_index: Model item to operate on
         """
         return PublishListWidget.calculate_size()
 

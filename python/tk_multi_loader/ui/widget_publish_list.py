@@ -11,7 +11,7 @@ from sgtk.platform.qt import QtCore, QtGui
 class Ui_PublishListWidget(object):
     def setupUi(self, PublishListWidget):
         PublishListWidget.setObjectName("PublishListWidget")
-        PublishListWidget.resize(438, 262)
+        PublishListWidget.resize(352, 48)
         self.horizontalLayout_3 = QtGui.QHBoxLayout(PublishListWidget)
         self.horizontalLayout_3.setSpacing(1)
         self.horizontalLayout_3.setContentsMargins(1, 1, 1, 1)

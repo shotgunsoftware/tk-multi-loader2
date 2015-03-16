@@ -21,17 +21,16 @@ from .ui.widget_publish_history import Ui_PublishHistoryWidget
 
 class PublishHistoryWidget(QtGui.QWidget):
     """
-    Simple list *item* widget which hosts a square thumbnail, header text
-    and body text. It has a fixed size. Multiple of these items are typically
-    put together inside a QListView to form a list.
-    
-    This class is typically used in conjunction with a QT View and the 
-    ShotgunDelegate class. 
+    Simple list item widget which hosts a square thumbnail, header text
+    and body text. It has a fixed size. Used with SgPublishHistoryDelegate
+    and used in the right hand side history UI. 
     """
     
     def __init__(self, parent):
         """
         Constructor
+        
+        :param parent: QT parent object
         """
         QtGui.QWidget.__init__(self, parent)
 
@@ -62,6 +61,8 @@ class PublishHistoryWidget(QtGui.QWidget):
     def set_actions(self, actions):
         """
         Adds a list of QActions to add to the actions menu for this widget.
+        
+        :param actions: List of QActions to add
         """
         if len(actions) == 0:
             self.ui.button.setVisible(False)
@@ -74,6 +75,8 @@ class PublishHistoryWidget(QtGui.QWidget):
     def set_selected(self, selected):
         """
         Adjust the style sheet to indicate selection or not
+        
+        :param selected: True if selected, false if not
         """
         if selected:
             self.ui.box.setStyleSheet("""#box {border-width: 2px; 
@@ -89,12 +92,17 @@ class PublishHistoryWidget(QtGui.QWidget):
         """
         Set a thumbnail given the current pixmap.
         The pixmap must be 100x100 or it will appear squeezed
+        
+        :param pixmap: pixmap object to use
         """
         self.ui.thumbnail.setPixmap(pixmap)
             
     def set_text(self, header, body):
         """
         Populate the lines of text in the widget
+        
+        :param header: Header text as string
+        :param body: Body text as string
         """
         self.setToolTip("%s<br>%s" % (header, body))        
         self.ui.header_label.setText(header)
@@ -104,6 +112,8 @@ class PublishHistoryWidget(QtGui.QWidget):
     def calculate_size():
         """
         Calculates and returns a suitable size for this widget.
+        
+        :returns: Size of the widget
         """        
         return QtCore.QSize(200, 90)
 
@@ -115,20 +125,34 @@ class SgPublishHistoryDelegate(shotgun_view.WidgetDelegate):
     """
 
     def __init__(self, view, status_model, action_manager):
+        """
+        Constructor
+        
+        :param view: The view where this delegate is being used
+        :param action_manager: Action manager instance
+        """                
         shotgun_view.WidgetDelegate.__init__(self, view)
         self._status_model = status_model
         self._action_manager = action_manager
         
     def _create_widget(self, parent):
         """
-        Widget factory as required by base class
+        Widget factory as required by base class. The base class will call this
+        when a widget is needed and then pass this widget in to the various callbacks.
+        
+        :param parent: Parent object for the widget
         """
         return PublishHistoryWidget(parent)
     
     def _on_before_selection(self, widget, model_index, style_options):
         """
-        Called when the associated widget is being set up. Initialize
-        things that shall persist, for example action menu items.
+        Called when the associated widget is selected. This method 
+        implements all the setting up and initialization of the widget
+        that needs to take place prior to a user starting to interact with it.
+        
+        :param widget: The widget to operate on (created via _create_widget)
+        :param model_index: The model index to operate on
+        :param style_options: QT style options
         """
         # do std drawing first
         self._on_before_paint(widget, model_index, style_options)        
@@ -157,8 +181,13 @@ class SgPublishHistoryDelegate(shotgun_view.WidgetDelegate):
     def _on_before_paint(self, widget, model_index, style_options):
         """
         Called by the base class when the associated widget should be
-        painted in the view.
-        """        
+        painted in the view. This method should implement setting of all
+        static elements (labels, pixmaps etc) but not dynamic ones (e.g. buttons)
+        
+        :param widget: The widget to operate on (created via _create_widget)
+        :param model_index: The model index to operate on
+        :param style_options: QT style options
+        """
         icon = shotgun_model.get_sanitized_data(model_index, QtCore.Qt.DecorationRole)
         if icon:
             thumb = icon.pixmap(512)
@@ -194,7 +223,10 @@ class SgPublishHistoryDelegate(shotgun_view.WidgetDelegate):
         
     def sizeHint(self, style_options, model_index):
         """
-        Base the size on the icon size property of the view
+        Specify the size of the item.
+        
+        :param style_options: QT style options
+        :param model_index: Model item to operate on
         """
         return PublishHistoryWidget.calculate_size()
              

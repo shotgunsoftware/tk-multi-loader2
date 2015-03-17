@@ -234,6 +234,9 @@ class AppDialog(QtGui.QWidget):
         show_details = self._settings_manager.retrieve("show_details", False)
         self._set_details_pane_visiblity(show_details)
 
+        # Add rdo custom UI
+        self._add_rdo_publish_search()
+
         # trigger an initial evaluation of filter proxy model
         self._apply_type_filters_on_publishes()
 
@@ -1158,6 +1161,77 @@ class AppDialog(QtGui.QWidget):
 
             self.ui.label_2.hide()
             self.ui.thumb_scale.hide()
+
+    def _add_rdo_publish_search(self):
+        '''
+        Add a search box to the middle area to filter the latest publishes
+        It's a ripoff the entity search box but hooked to publish proxy model
+        '''
+
+        hlayout = QtGui.QHBoxLayout()
+        self.ui.middle_area.insertLayout(1, hlayout,)
+
+        hlayout.addStretch(50)
+
+        # add search textfield
+        search = QtGui.QLineEdit()
+        search.setStyleSheet("QLineEdit{ border-width: 1px; "
+                                    "background-image: url(:/res/search.png);"
+                                    "background-repeat: no-repeat;"
+                                    "background-position: center left;"
+                                    "border-radius: 5px; "
+                                    "padding-left:20px;"
+                                    "margin:4px;"
+                                    "height:22px;"
+                                    "}")
+        search.setToolTip("Use the <i>search</i> field to narrow down the items displayed in the tree above.")
+
+        try:
+            # this was introduced in qt 4.7, so try to use it if we can... :)
+            search.setPlaceholderText("Search...")
+        except:
+            pass
+
+        hlayout.addWidget(search)
+
+        # and add a cancel search button, disabled by default
+        clear_search = QtGui.QToolButton()
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(":/res/clear_search.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        clear_search.setIcon(icon)
+        clear_search.setAutoRaise(True)
+        clear_search.clicked.connect( lambda editor=search: editor.setText("") )
+        clear_search.setToolTip("Click to clear your current search.")
+        hlayout.addWidget(clear_search)
+
+        search.textChanged.connect(lambda text, v=self.ui.publish_view, pm=self._publish_proxy_model: self._on_publish_search_text_changed(text, v, pm) )
+
+        self._dynamic_widgets.extend([hlayout, search, clear_search, icon])
+
+
+    def _on_publish_search_text_changed(self, pattern, list_view, proxy_model):
+        """
+        Triggered when the text in a search editor changes.
+
+        :param pattern: new contents of search box
+        :param list_view: associated list view.
+        :param proxy_model: associated proxy model
+        """
+        # tell proxy model to reevaulate itself given the new pattern.
+        proxy_model.setFilterFixedString(pattern)
+
+        # change UI decorations based on new pattern.
+        if pattern and len(pattern) > 0:
+            # indicate with a blue border that a search is active
+            list_view.setStyleSheet("""QListView { border-width: 3px;
+                                                   border-style: solid;
+                                                   border-color: #2C93E2; }
+                                       QListView::item { padding: 6px; }
+                                    """)
+        else:
+            # revert to default style sheet
+            list_view.setStyleSheet("QListView::item { padding: 6px; }")
+
 
     def _on_entity_profile_tab_clicked(self):
         """

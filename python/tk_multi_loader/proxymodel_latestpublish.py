@@ -43,16 +43,24 @@ class SgLatestPublishProxyModel(QtGui.QSortFilterProxyModel):
         This will check each row as it is passing through the proxy
         model and see if we should let it pass or not.    
         """
+        # get the search filter, as specified via setFilterFixedString()
+        search_exp = self.filterRegExp()
+        search_exp.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
+
+        model = self.sourceModel()
+
+        current_item = model.invisibleRootItem().child(source_row)  # assume non-tree structure
+        sg_data = current_item.get_sg_data()
+        publish_name = ''
+        if sg_data:
+            publish_name = sg_data.get('name')
         
+        is_folder = current_item.data(SgLatestPublishModel.IS_FOLDER_ROLE)
+
         if self._valid_type_ids is None:
             # accept all!
             return True
         
-        model = self.sourceModel()
-        
-        current_item = model.invisibleRootItem().child(source_row)  # assume non-tree structure
-        
-        is_folder = current_item.data(SgLatestPublishModel.IS_FOLDER_ROLE)
         
         if is_folder:
             return self._show_folders
@@ -61,10 +69,11 @@ class SgLatestPublishProxyModel(QtGui.QSortFilterProxyModel):
             # get the type id
             sg_type_id = current_item.data(SgLatestPublishModel.TYPE_ID_ROLE) 
             
+            # print publish_name, search_exp.indexIn(publish_name)
             if sg_type_id is None:
                 # no type. So always show.
                 return True
-            elif sg_type_id in self._valid_type_ids:
+            elif sg_type_id in self._valid_type_ids and search_exp.indexIn(publish_name) != -1:
                 return True
             else:
                 return False

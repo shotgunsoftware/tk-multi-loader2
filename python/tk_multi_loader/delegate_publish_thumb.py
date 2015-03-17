@@ -128,32 +128,7 @@ class SgPublishDelegate(shotgun_view.WidgetDelegate):
 
         else:
             # this is a publish!
-
-            # get the name (lighting v3)
-            name_str = "Unnamed"
-            if sg_data.get("name"):
-                name_str = sg_data.get("name")
-
-            if sg_data.get("version_number"):
-                name_str += " v%s" % sg_data.get("version_number")
-
-            # now we are tracking whether this item has a unique task/name/type combo
-            # or not via the specially injected task_uniqueness boolean.
-            # If this is true, that means that this is the only item in the listing
-            # with this name/type combo, and we can render its display name on two 
-            # lines, name first and then type, e.g.:
-            # MyScene, v3
-            # Maya Render
-            #
-            # However, there can be multiple *different* tasks which have the same 
-            # name/type combo - in this case, we want to display the task name too
-            # since this is what differentiates the data. In that case we display it:
-            # MyScene, v3 (Layout)
-            # Maya Render
-            #
-            if sg_data.get("task_uniqueness") == False and sg_data.get("task") is not None:
-                name_str += " (%s)" % sg_data["task"]["name"]
-
+            name_str = self._get_name_string(sg_data)
 
             if self._show_entity_instead_of_type:
 
@@ -177,7 +152,38 @@ class SgPublishDelegate(shotgun_view.WidgetDelegate):
                 # Render
                 pub_type_str = shotgun_model.get_sanitized_data(model_index,
                                                                 SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE)
-                widget.set_text(name_str, pub_type_str)
+                details_str = self._get_details_string(sg_data)
+                widget.set_text(name_str, '<br>'.join([pub_type_str, details_str]))
+
+    def _get_name_string(self, sg_data):
+        if sg_data.get("name"):
+            name_str = sg_data.get("name")
+
+        if sg_data.get("version_number"):
+            name_str += " v%s" % sg_data.get("version_number")
+
+        # now we are tracking whether this item has a unique task/name/type combo
+        # or not via the specially injected task_uniqueness boolean.
+        # If this is true, that means that this is the only item in the listing
+        # with this name/type combo, and we can render its display name on two 
+        # lines, name first and then type, e.g.:
+        # MyScene, v3
+        # Maya Render
+        #
+        # However, there can be multiple *different* tasks which have the same 
+        # name/type combo - in this case, we want to display the task name too
+        # since this is what differentiates the data. In that case we display it:
+        # MyScene, v3 (Layout)
+        # Maya Render
+        #
+        if sg_data.get("task_uniqueness") == False and sg_data.get("task") is not None:
+            name_str += " (%s)" % sg_data["task"]["name"]
+
+        return name_str
+
+    def _get_details_string(self, sg_data):
+        return ""
+
 
     def sizeHint(self, style_options, model_index):
         """
@@ -186,5 +192,6 @@ class SgPublishDelegate(shotgun_view.WidgetDelegate):
         # base the size of each element off the icon size property of the view
         scale_factor = self._view.iconSize().width()
         return shotgun_view.ThumbWidget.calculate_size(scale_factor)
+
 
 

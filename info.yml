@@ -24,6 +24,10 @@ configuration:
         default_value: "Loader"
         description: Name to appear on the title of the UI Dialog.
 
+    display_thumbnails:
+        type: bool
+        default_value: True
+        description: Show latest publish as thumbnails or as a vertical list.
 
     # hooks
     actions_hook:

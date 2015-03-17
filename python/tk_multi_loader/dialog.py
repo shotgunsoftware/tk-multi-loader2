@@ -18,6 +18,7 @@ from .model_publishtype import SgPublishTypeModel
 from .model_status import SgStatusModel
 from .proxymodel_latestpublish import SgLatestPublishProxyModel
 from .proxymodel_entity import SgEntityProxyModel
+from .delegate_publish_list import SgPublishListDelegate
 from .delegate_publish_thumb import SgPublishDelegate
 from .model_publishhistory import SgPublishHistoryModel
 from .delegate_publish_history import SgPublishHistoryDelegate
@@ -150,8 +151,14 @@ class AppDialog(QtGui.QWidget):
         # hook up view -> proxy model -> model
         self.ui.publish_view.setModel(self._publish_proxy_model)
 
+        # customize the list view before setting the delegate
+        self._add_rdo_list_view_mod()
+
         # tell our publish view to use a custom delegate to produce widgetry
-        self._publish_delegate = SgPublishDelegate(self.ui.publish_view, self._status_model, self._action_manager)
+        if self.ui.publish_view.ViewMode() == QtGui.QListView.IconMode:
+            self._publish_delegate = SgPublishDelegate(self.ui.publish_view, self._status_model, self._action_manager)
+        else:
+            self._publish_delegate = SgPublishListDelegate(self.ui.publish_view, self._status_model, self._action_manager)
         self.ui.publish_view.setItemDelegate(self._publish_delegate)
 
         # whenever the type list is checked, update the publish filters
@@ -1137,6 +1144,20 @@ class AppDialog(QtGui.QWidget):
             # revert to default style sheet
             tree_view.setStyleSheet("QTreeView::item { padding: 6px; }")
 
+    def _add_rdo_list_view_mod(self):
+        '''
+        Change the publish list view to ListMode instead of IconMode
+        and hide the scale control.
+        Make uses of the updated delegates to properly display items
+        according to the current Mode.
+        '''
+        if not sgtk.platform.current_bundle().get_setting("display_thumbnails"):
+            # Change the tree view to display item as a list
+            self.ui.publish_view.setSpacing(1)
+            self.ui.publish_view.setViewMode(QtGui.QListView.ListMode)
+
+            self.ui.label_2.hide()
+            self.ui.thumb_scale.hide()
 
     def _on_entity_profile_tab_clicked(self):
         """

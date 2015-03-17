@@ -479,7 +479,6 @@ class SgLatestPublishModel(ShotgunOverlayModel):
         # but with different tasks, indicate this with a special boolean flag
                 
         unique_data = {}
-        name_type_aggregates = defaultdict(int)
         
         for sg_item in sg_data_list:
             
@@ -489,17 +488,9 @@ class SgLatestPublishModel(ShotgunOverlayModel):
             if type_link:
                 type_id = type_link["id"]
 
-            # also get the associated task
-            task_id = None
-            task_link = sg_item["task"]
-            if task_link:
-                task_id = task_link["id"]  
-
             # key publishes in dict by type and name
-            unique_data[ (sg_item["name"], type_id, task_id) ] = {"sg_item": sg_item, "type_id": type_id}
+            unique_data[ (sg_item["name"], type_id) ] = {"sg_item": sg_item, "type_id": type_id}
             
-            # count how many items of this type we have
-            name_type_aggregates[ (sg_item["name"], type_id) ] += 1
         
         # SECOND PASS
         # We now have the latest versions only
@@ -511,16 +502,6 @@ class SgLatestPublishModel(ShotgunOverlayModel):
             # get the shotgun data for this guy
             sg_item = second_pass_data["sg_item"]
             
-            # now add a flag to indicate if this item is "task unique" or not
-            # e.g. if there are other items in the listing with the same name 
-            # and same type but with a different task
-            if name_type_aggregates[ (sg_item["name"], second_pass_data["type_id"]) ] > 1:
-                # there are more than one item with this same name/type combo!
-                sg_item["task_uniqueness"] = False
-            else: 
-                # no other item with this task/name/type combo
-                sg_item["task_uniqueness"] = True
-                
             # append to new sg data
             new_sg_data.append(sg_item)
 

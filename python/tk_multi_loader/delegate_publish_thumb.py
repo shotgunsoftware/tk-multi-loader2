@@ -12,6 +12,7 @@ import sgtk
 import datetime
 from sgtk.platform.qt import QtCore, QtGui
 from .model_latestpublish import SgLatestPublishModel
+from .utils import ResizeEventFilter
 
 # import the shotgun_model and view modules from the shotgun utils framework
 shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model")
@@ -393,37 +394,4 @@ class SgPublishThumbDelegate(shotgun_view.WidgetDelegate):
         scale_factor = self._view.iconSize().width()
         return PublishThumbWidget.calculate_size(scale_factor)
 
-
-
-##################################################################################################
-# utility classes
-
-
-class ResizeEventFilter(QtCore.QObject):
-    """
-    Event filter which emits a resized signal whenever
-    the monitored widget resizes
-    """
-    resized = QtCore.Signal()
-
-    def eventFilter(self, obj, event):
-        """
-        Event filter implementation.
-        For information, see the QT docs:
-        http://doc.qt.io/qt-4.8/qobject.html#eventFilter
-        
-        This will emit the resized signal (in this class)
-        whenever the linked up object is being resized.
-        
-        :param obj: The object that is being watched for events
-        :param event: Event object that the object has emitted
-        :returns: Always returns False to indicate that no events 
-                  should ever be discarded by the filter. 
-        """
-        # peek at the message
-        if event.type() == QtCore.QEvent.Resize:
-            # re-broadcast any resize events
-            self.resized.emit()
-        # pass it on!
-        return False
 

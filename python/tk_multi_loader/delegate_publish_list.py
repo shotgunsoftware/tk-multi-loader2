@@ -331,11 +331,10 @@ class SgPublishListDelegate(shotgun_view.WidgetDelegate):
         #  'version.Version.sg_status_list': 'rev',
         #  'version_number': 2}
         
-        # Publish Type / Publish Name
+        # Publish Name Version 002
         sg_data = shotgun_model.get_sg_data(model_index)
-        pub_type_str = shotgun_model.get_sanitized_data(model_index, SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE)
-        main_text = "<b>%s</b>" % pub_type_str 
-        main_text += " <b style='color:#2C93E2'>%s</b>" % (sg_data.get("name") or "Unnamed")
+        main_text = "<b>%s</b>" % (sg_data.get("name") or "Unnamed")
+        main_text += " Version %03d" % sg_data.get("version_number")        
 
         # If we are in "show subfolders mode, this line will contain
         # the entity information (because we are displaying info from several entities 
@@ -343,20 +342,25 @@ class SgPublishListDelegate(shotgun_view.WidgetDelegate):
         if self._sub_items_mode:
             # show items in subfolders mode enabled
             # get the name of the associated entity
-            main_text += "<br>"
+            
+            main_text += "  ("
+            
             entity_link = sg_data.get("entity")
             if entity_link:
-                main_text += "<b>%s</b> <b style='color:#2C93E2'>%s</b>" % (entity_link["type"], entity_link["name"])
+                main_text += "%s <span style='color:#2C93E2'>%s</span>" % (entity_link["type"], entity_link["name"])
 
             if sg_data.get("task") is not None:
                 main_text += ", Task %s" % sg_data["task"]["name"]
+                
+            main_text += ")"
 
-        # Version 012 by John Smith at 2014-02-23 10:34            
+        # Quicktime by John Smith at 2014-02-23 10:34
+        pub_type_str = shotgun_model.get_sanitized_data(model_index, SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE)            
         created_unixtime = sg_data.get("created_at") or 0
         date_str = datetime.datetime.fromtimestamp(created_unixtime).strftime('%Y-%m-%d %H:%M')
-        small_text = "Version %03d by %s at %s" % (sg_data.get("version_number"), 
-                                                   sg_data["created_by"].get("name"),
-                                                   date_str)
+        small_text = "<span style='color:#2C93E2'>%s</span> by %s at %s" % (pub_type_str, 
+                                                                            sg_data["created_by"].get("name"), 
+                                                                            date_str)
         
         # and set a tooltip
         tooltip =  "<b>Name:</b> %s" % (sg_data.get("code") or "No name given.")

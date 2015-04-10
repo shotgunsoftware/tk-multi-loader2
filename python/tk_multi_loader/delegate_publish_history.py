@@ -1,4 +1,4 @@
-# Copyright (c) 2013 Shotgun Software Inc.
+# Copyright (c) 2015 Shotgun Software Inc.
 # 
 # CONFIDENTIAL AND PROPRIETARY
 # 
@@ -215,7 +215,7 @@ class SgPublishHistoryDelegate(shotgun_view.WidgetDelegate):
             
         # set the little description bit next to the artist icon
         desc_str = sg_item.get("description") or "No Description Given"         
-        author_str = sg_item.get("created_by").get("name") or "Unspecified User"
+        author_str = sg_item["created_by"].get("name") or "Unspecified User"
         
         body_str = "<i>%s</i>: %s<br>" % (author_str, desc_str)
         widget.set_text(header_str, body_str)

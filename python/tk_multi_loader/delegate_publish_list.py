@@ -1,4 +1,4 @@
-# Copyright (c) 2013 Shotgun Software Inc.
+# Copyright (c) 2015 Shotgun Software Inc.
 #
 # CONFIDENTIAL AND PROPRIETARY
 #
@@ -166,7 +166,8 @@ class SgPublishListDelegate(shotgun_view.WidgetDelegate):
         :param model_index: The model index to operate on
         :param style_options: QT style options
         """
-        # first set up the basic 
+        # first run the basic paint method to make the element look like
+        # all other (unselected) items 
         self._on_before_paint(widget, model_index, style_options)
 
         widget.set_selected(True)
@@ -264,16 +265,14 @@ class SgPublishListDelegate(shotgun_view.WidgetDelegate):
             for v in field_value:
                 if isinstance(v, dict) and "name" in v and "type" in v:
                     # This is a link field
-                    if v.get("name"):
-                        formatted_values.append(v.get("name"))
+                    name = v["name"]
+                    if name:
+                        formatted_values.append(name)
                         formatted_types.add(v["type"])
                 else:
                     formatted_values.append(str(v))
             
-            if len(formatted_types) == 0:
-                types = ""
-            else:
-                types = ", ".join(list(formatted_types))
+            types = ", ".join(list(formatted_types))
             names = ", ".join(formatted_values)
             main_text = "<b>%s</b><br>%s" % (types, names)
 
@@ -356,8 +355,8 @@ class SgPublishListDelegate(shotgun_view.WidgetDelegate):
         created_unixtime = sg_data.get("created_at") or 0
         date_str = datetime.datetime.fromtimestamp(created_unixtime).strftime('%Y-%m-%d %H:%M')
         small_text = "Version %03d by %s at %s" % (sg_data.get("version_number"), 
-                                                      sg_data.get("created_by").get("name"),
-                                                      date_str)
+                                                   sg_data["created_by"].get("name"),
+                                                   date_str)
         
         # and set a tooltip
         tooltip =  "<b>Name:</b> %s" % (sg_data.get("code") or "No name given.")

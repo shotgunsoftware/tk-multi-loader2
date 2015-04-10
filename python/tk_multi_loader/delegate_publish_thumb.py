@@ -1,4 +1,4 @@
-# Copyright (c) 2013 Shotgun Software Inc.
+# Copyright (c) 2015 Shotgun Software Inc.
 #
 # CONFIDENTIAL AND PROPRIETARY
 #
@@ -407,6 +407,19 @@ class ResizeEventFilter(QtCore.QObject):
     resized = QtCore.Signal()
 
     def eventFilter(self, obj, event):
+        """
+        Event filter implementation.
+        For information, see the QT docs:
+        http://doc.qt.io/qt-4.8/qobject.html#eventFilter
+        
+        This will emit the resized signal (in this class)
+        whenever the linked up object is being resized.
+        
+        :param obj: The object that is being watched for events
+        :param event: Event object that the object has emitted
+        :returns: Always returns False to indicate that no events 
+                  should ever be discarded by the filter. 
+        """
         # peek at the message
         if event.type() == QtCore.QEvent.Resize:
             # re-broadcast any resize events

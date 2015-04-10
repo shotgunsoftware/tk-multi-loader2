@@ -1,4 +1,4 @@
-# Copyright (c) 2013 Shotgun Software Inc.
+# Copyright (c) 2015 Shotgun Software Inc.
 # 
 # CONFIDENTIAL AND PROPRIETARY
 # 
@@ -17,6 +17,107 @@ from sgtk.platform.qt import QtCore, QtGui
 shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model")
 shotgun_view = sgtk.platform.import_framework("tk-framework-qtwidgets", "shotgun_view")
 
+from .ui.widget_publish_history import Ui_PublishHistoryWidget
+
+class PublishHistoryWidget(QtGui.QWidget):
+    """
+    Simple list item widget which hosts a square thumbnail, header text
+    and body text. It has a fixed size. Used with SgPublishHistoryDelegate
+    and used in the right hand side history UI. 
+    """
+    
+    def __init__(self, parent):
+        """
+        Constructor
+        
+        :param parent: QT parent object
+        """
+        QtGui.QWidget.__init__(self, parent)
+
+        # make sure this widget isn't shown
+        self.setVisible(False)
+        
+        # set up the UI
+        self.ui = Ui_PublishHistoryWidget() 
+        self.ui.setupUi(self)
+        
+        # set up action menu
+        self._menu = QtGui.QMenu()   
+        self._actions = []             
+        self.ui.button.setMenu(self._menu)
+        self.ui.button.setVisible(False)
+        
+        # compute hilight colors
+        p = QtGui.QPalette()
+        highlight_col = p.color(QtGui.QPalette.Active, QtGui.QPalette.Highlight)
+        self._highlight_str = "rgb(%s, %s, %s)" % (highlight_col.red(), 
+                                                   highlight_col.green(), 
+                                                   highlight_col.blue())
+        self._transp_highlight_str = "rgba(%s, %s, %s, 25%%)" % (highlight_col.red(), 
+                                                                 highlight_col.green(), 
+                                                                 highlight_col.blue())
+        
+        
+    def set_actions(self, actions):
+        """
+        Adds a list of QActions to add to the actions menu for this widget.
+        
+        :param actions: List of QActions to add
+        """
+        if len(actions) == 0:
+            self.ui.button.setVisible(False)
+        else:
+            self.ui.button.setVisible(True)
+            self._actions = actions
+            for a in self._actions:
+                self._menu.addAction(a)
+                                    
+    def set_selected(self, selected):
+        """
+        Adjust the style sheet to indicate selection or not
+        
+        :param selected: True if selected, false if not
+        """
+        if selected:
+            self.ui.box.setStyleSheet("""#box {border-width: 2px; 
+                                                 border-color: %s; 
+                                                 border-style: solid; 
+                                                 background-color: %s}
+                                      """ % (self._highlight_str, self._transp_highlight_str))
+
+        else:
+            self.ui.box.setStyleSheet("")
+    
+    def set_thumbnail(self, pixmap):
+        """
+        Set a thumbnail given the current pixmap.
+        The pixmap must be 100x100 or it will appear squeezed
+        
+        :param pixmap: pixmap object to use
+        """
+        self.ui.thumbnail.setPixmap(pixmap)
+            
+    def set_text(self, header, body):
+        """
+        Populate the lines of text in the widget
+        
+        :param header: Header text as string
+        :param body: Body text as string
+        """
+        self.setToolTip("%s<br>%s" % (header, body))        
+        self.ui.header_label.setText(header)
+        self.ui.body_label.setText(body)
+
+    @staticmethod
+    def calculate_size():
+        """
+        Calculates and returns a suitable size for this widget.
+        
+        :returns: Size of the widget
+        """        
+        return QtCore.QSize(200, 90)
+
+
 
 class SgPublishHistoryDelegate(shotgun_view.WidgetDelegate):
     """
@@ -24,20 +125,34 @@ class SgPublishHistoryDelegate(shotgun_view.WidgetDelegate):
     """
 
     def __init__(self, view, status_model, action_manager):
+        """
+        Constructor
+        
+        :param view: The view where this delegate is being used
+        :param action_manager: Action manager instance
+        """                
         shotgun_view.WidgetDelegate.__init__(self, view)
         self._status_model = status_model
         self._action_manager = action_manager
         
     def _create_widget(self, parent):
         """
-        Widget factory as required by base class
+        Widget factory as required by base class. The base class will call this
+        when a widget is needed and then pass this widget in to the various callbacks.
+        
+        :param parent: Parent object for the widget
         """
-        return shotgun_view.ListWidget(parent)
+        return PublishHistoryWidget(parent)
     
     def _on_before_selection(self, widget, model_index, style_options):
         """
-        Called when the associated widget is being set up. Initialize
-        things that shall persist, for example action menu items.
+        Called when the associated widget is selected. This method 
+        implements all the setting up and initialization of the widget
+        that needs to take place prior to a user starting to interact with it.
+        
+        :param widget: The widget to operate on (created via _create_widget)
+        :param model_index: The model index to operate on
+        :param style_options: QT style options
         """
         # do std drawing first
         self._on_before_paint(widget, model_index, style_options)        
@@ -66,8 +181,13 @@ class SgPublishHistoryDelegate(shotgun_view.WidgetDelegate):
     def _on_before_paint(self, widget, model_index, style_options):
         """
         Called by the base class when the associated widget should be
-        painted in the view.
-        """        
+        painted in the view. This method should implement setting of all
+        static elements (labels, pixmaps etc) but not dynamic ones (e.g. buttons)
+        
+        :param widget: The widget to operate on (created via _create_widget)
+        :param model_index: The model index to operate on
+        :param style_options: QT style options
+        """
         icon = shotgun_model.get_sanitized_data(model_index, QtCore.Qt.DecorationRole)
         if icon:
             thumb = icon.pixmap(512)
@@ -84,9 +204,7 @@ class SgPublishHistoryDelegate(shotgun_view.WidgetDelegate):
         # v004 (2014-02-21 12:34)
 
         header_str = ""
-
-        if sg_item.get("version_number"):
-            header_str += "<b style='color:#2C93E2'>Version %03d</b>" % sg_item.get("version_number")
+        header_str += "<b style='color:#2C93E2'>Version %03d</b>" % (sg_item.get("version_number") or 0)
         
         try:
             created_unixtime = sg_item.get("created_at")
@@ -95,18 +213,9 @@ class SgPublishHistoryDelegate(shotgun_view.WidgetDelegate):
         except:
             pass
             
-            
         # set the little description bit next to the artist icon
-        if sg_item.get("description") is None:
-            desc_str = "No Description Given"
-        else:
-            desc_str = sg_item.get("description")
-        
-        if sg_item.get("created_by") is None:
-            author_str = "Unspecified User"
-        else:
-            author_str = "%s" % sg_item.get("created_by").get("name")
-
+        desc_str = sg_item.get("description") or "No Description Given"         
+        author_str = sg_item["created_by"].get("name") or "Unspecified User"
         
         body_str = "<i>%s</i>: %s<br>" % (author_str, desc_str)
         widget.set_text(header_str, body_str)
@@ -114,7 +223,10 @@ class SgPublishHistoryDelegate(shotgun_view.WidgetDelegate):
         
     def sizeHint(self, style_options, model_index):
         """
-        Base the size on the icon size property of the view
+        Specify the size of the item.
+        
+        :param style_options: QT style options
+        :param model_index: Model item to operate on
         """
-        return shotgun_view.ListWidget.calculate_size()
+        return PublishHistoryWidget.calculate_size()
              

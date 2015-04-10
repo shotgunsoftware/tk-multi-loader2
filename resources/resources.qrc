@@ -1,6 +1,9 @@
 <RCC>
   <qresource prefix="res">
-
+    <file>mode_switch_card_active.png</file>
+    <file>mode_switch_card.png</file>
+    <file>mode_switch_thumb_active.png</file>
+    <file>mode_switch_thumb.png</file>
     <file>search.png</file>
     <file>gear.png</file>
     <file>play_icon.png</file>
@@ -30,7 +33,6 @@
     <file>home_hover.png</file>
     <file>home_pressed.png</file>
     <file>clear_search.png</file>
-    
     <file>icon_Asset_dark.png</file>
     <file>icon_EventLogEntry_dark.png</file>
     <file>icon_Group_dark.png</file>
@@ -43,8 +45,5 @@
     <file>icon_Ticket_dark.png</file>
     <file>icon_Version_dark.png</file>
     <file>icon_Folder.png</file>
-    
-        
-
   </qresource>
 </RCC>

@@ -1,4 +1,4 @@
-# Copyright (c) 2013 Shotgun Software Inc.
+# Copyright (c) 2015 Shotgun Software Inc.
 # 
 # CONFIDENTIAL AND PROPRIETARY
 # 
@@ -17,6 +17,7 @@ from sgtk.platform.qt import QtCore, QtGui
 import sgtk
 import sys
 import os
+
 
 class MultiLoader(sgtk.platform.Application):
     

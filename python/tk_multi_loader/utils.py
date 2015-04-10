@@ -1,4 +1,4 @@
-# Copyright (c) 2013 Shotgun Software Inc.
+# Copyright (c) 2015 Shotgun Software Inc.
 # 
 # CONFIDENTIAL AND PROPRIETARY
 # 
@@ -10,6 +10,53 @@
 
 import sgtk
 from sgtk.platform.qt import QtCore, QtGui
+
+class ResizeEventFilter(QtCore.QObject):
+    """
+    Utility and helper.
+    
+    Event filter which emits a resized signal whenever
+    the monitored widget resizes.
+
+    You use it like this:
+    
+    # create the filter object. Typically, it's
+    # it's easiest to parent it to the object that is
+    # being monitored (in this case self.ui.thumbnail)
+    filter = ResizeEventFilter(self.ui.thumbnail)
+    
+    # now set up a signal/slot connection so that the 
+    # __on_thumb_resized slot gets called every time 
+    # the widget is resized
+    filter.resized.connect(self.__on_thumb_resized)
+    
+    # finally, install the event filter into the QT 
+    # event system
+    self.ui.thumbnail.installEventFilter(filter)
+    """
+    resized = QtCore.Signal()
+
+    def eventFilter(self, obj, event):
+        """
+        Event filter implementation.
+        For information, see the QT docs:
+        http://doc.qt.io/qt-4.8/qobject.html#eventFilter
+        
+        This will emit the resized signal (in this class)
+        whenever the linked up object is being resized.
+        
+        :param obj: The object that is being watched for events
+        :param event: Event object that the object has emitted
+        :returns: Always returns False to indicate that no events 
+                  should ever be discarded by the filter. 
+        """
+        # peek at the message
+        if event.type() == QtCore.QEvent.Resize:
+            # re-broadcast any resize events
+            self.resized.emit()
+        # pass it on!
+        return False
+
 
 def create_overlayed_user_publish_thumbnail(publish_pixmap, user_pixmap):
     """

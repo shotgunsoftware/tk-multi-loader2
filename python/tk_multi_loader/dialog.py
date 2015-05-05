@@ -22,6 +22,7 @@ from .delegate_publish_thumb import SgPublishThumbDelegate
 from .delegate_publish_list import SgPublishListDelegate
 from .model_publishhistory import SgPublishHistoryModel
 from .delegate_publish_history import SgPublishHistoryDelegate
+from .search_widget import SearchWidget
 
 from .ui.dialog import Ui_Dialog
 
@@ -183,6 +184,14 @@ class AppDialog(QtGui.QWidget):
         self._refresh_action.triggered.connect(self._publish_model.async_refresh)
         self.ui.publish_view.addAction(self._refresh_action)
         self.ui.publish_view.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
+
+        #################################################
+        # popdown publish filter widget for the main view
+        self._search_widget = SearchWidget(self.ui.publish_view)
+        # hook it up with the search button the main toolbar
+        self.ui.search_publishes.clicked.connect(self._search_widget.enable)
+        # hook it up so that it signals the publish proxy model whenever the filter changes
+        self._search_widget.filter_changed.connect(self._publish_proxy_model.set_search_query)
 
         #################################################
         # checkboxes, buttons etc

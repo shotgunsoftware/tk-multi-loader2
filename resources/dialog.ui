@@ -364,6 +364,17 @@ background-image: url(:/res/right_arrow_pressed.png);
         </widget>
        </item>
        <item>
+        <widget class="QToolButton" name="search_publishes">
+         <property name="toolTip">
+          <string>Search Publishes</string>
+         </property>
+         <property name="icon">
+          <iconset resource="resources.qrc">
+           <normaloff>:/res/search.png</normaloff>:/res/search.png</iconset>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QToolButton" name="info">
          <property name="toolTip">
           <string>Use this button to &lt;i&gt;toggle details on and off&lt;/i&gt;. </string>
@@ -377,9 +388,6 @@ background-image: url(:/res/right_arrow_pressed.png);
      </item>
      <item>
       <widget class="QListView" name="publish_view">
-       <property name="styleSheet">
-        <string notr="true"/>
-       </property>
        <property name="editTriggers">
         <set>QAbstractItemView::NoEditTriggers</set>
        </property>

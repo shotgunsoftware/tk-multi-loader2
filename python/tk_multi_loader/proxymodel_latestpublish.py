@@ -25,6 +25,16 @@ class SgLatestPublishProxyModel(QtGui.QSortFilterProxyModel):
         QtGui.QSortFilterProxyModel.__init__(self, parent)
         self._valid_type_ids = None
         self._show_folders = True
+        self._search_filter = ""
+        
+    def set_search_query(self, search_filter):
+        """
+        Specify a filter to use for searching
+        
+        :param search_filter: search filter string
+        """
+        self._search_filter = search_filter
+        self.invalidateFilter()
         
     def set_filter_by_type_ids(self, type_ids, show_folders):
         """
@@ -51,6 +61,10 @@ class SgLatestPublishProxyModel(QtGui.QSortFilterProxyModel):
         model = self.sourceModel()
         
         current_item = model.invisibleRootItem().child(source_row)  # assume non-tree structure
+        
+        if self._search_filter and self._search_filter not in current_item.text():
+            # item text is not matching search filter
+            return False
         
         is_folder = current_item.data(SgLatestPublishModel.IS_FOLDER_ROLE)
         

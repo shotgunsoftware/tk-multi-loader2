@@ -130,7 +130,21 @@ class NukeActions(HookBaseClass):
         
         (_, ext) = os.path.splitext(path)
 
-        valid_extensions = [".png", ".jpg", ".jpeg", ".exr", ".cin", ".dpx", ".tiff", ".tif", ".mov", ".psd"]
+        valid_extensions = [".png", 
+                            ".jpg", 
+                            ".jpeg", 
+                            ".exr", 
+                            ".cin", 
+                            ".dpx", 
+                            ".tiff", 
+                            ".tif", 
+                            ".mov", 
+                            ".psd",
+                            ".tga",
+                            ".ari",
+                            ".gif",
+                            ".iff",
+                            ".png"]
 
         if ext not in valid_extensions:
             raise Exception("Unsupported file extension for '%s'!" % path)

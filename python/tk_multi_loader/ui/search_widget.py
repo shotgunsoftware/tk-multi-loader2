@@ -11,7 +11,7 @@ from sgtk.platform.qt import QtCore, QtGui
 class Ui_SearchWidget(object):
     def setupUi(self, SearchWidget):
         SearchWidget.setObjectName("SearchWidget")
-        SearchWidget.resize(205, 50)
+        SearchWidget.resize(161, 50)
         self.horizontalLayout = QtGui.QHBoxLayout(SearchWidget)
         self.horizontalLayout.setSpacing(0)
         self.horizontalLayout.setContentsMargins(0, 0, 0, 0)

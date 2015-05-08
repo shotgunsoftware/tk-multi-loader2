@@ -82,32 +82,39 @@ class SearchWidget(QtGui.QWidget):
         parent.installEventFilter(filter)
 
         # set up signals and slots
-        self._ui.cancel.clicked.connect(self._on_cancel)
-        self._ui.search.textChanged.connect(self._on_text_changed)
+        self._ui.search.textChanged.connect(self._on_filter_changed)
 
-    def _on_text_changed(self, new_text):
+    def _on_filter_changed(self):
         """
         Callback for when the text changes
         
         :param new_text: The contents of the filter line edit box
         """
         # emit our custom signal
-        self.filter_changed.emit(new_text)
+        if self.isVisible():
+            # emit the search text that is in the view
+            search_text = self._ui.search.text()
+        else:
+            # widget is hidden - emit empty search text
+            search_text = ""
+        
+        self.filter_changed.emit(search_text)
 
-    def _on_cancel(self):
+    def disable(self):
         """
-        Callback for when the user presses the cancel button
+        Disable search widget and clear search query.
         """
         # hide and reset the search
         self.setVisible(False)
-        self._ui.search.setText("")
+        self._on_filter_changed()
 
     def enable(self):
         """
-        Turn on the search widget and focus the keyboard input on it.
+        Enable search widget and focus the keyboard input on it.
         """
         self.setVisible(True)
         self._ui.search.setFocus()
+        self._on_filter_changed()
     
     def _on_parent_resized(self):
         """

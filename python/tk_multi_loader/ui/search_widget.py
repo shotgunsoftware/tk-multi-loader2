@@ -26,13 +26,6 @@ class Ui_SearchWidget(object):
         self.search = QtGui.QLineEdit(self.group)
         self.search.setObjectName("search")
         self.horizontalLayout_2.addWidget(self.search)
-        self.cancel = QtGui.QToolButton(self.group)
-        icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(":/res/clear_search.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.cancel.setIcon(icon)
-        self.cancel.setAutoRaise(True)
-        self.cancel.setObjectName("cancel")
-        self.horizontalLayout_2.addWidget(self.cancel)
         self.horizontalLayout.addWidget(self.group)
 
         self.retranslateUi(SearchWidget)
@@ -40,7 +33,7 @@ class Ui_SearchWidget(object):
 
     def retranslateUi(self, SearchWidget):
         SearchWidget.setWindowTitle(QtGui.QApplication.translate("SearchWidget", "Form", None, QtGui.QApplication.UnicodeUTF8))
-        self.search.setPlaceholderText(QtGui.QApplication.translate("SearchWidget", "Search Publishes...", None, QtGui.QApplication.UnicodeUTF8))
-        self.cancel.setText(QtGui.QApplication.translate("SearchWidget", "...", None, QtGui.QApplication.UnicodeUTF8))
+        self.search.setToolTip(QtGui.QApplication.translate("SearchWidget", "Enter some text to filter the publishes shown in the view below.<br>\n"
+"Click the magnifying glass icon above to disable the filter.", None, QtGui.QApplication.UnicodeUTF8))
 
 from . import resources_rc

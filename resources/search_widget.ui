@@ -43,22 +43,9 @@
       </property>
       <item>
        <widget class="QLineEdit" name="search">
-        <property name="placeholderText">
-         <string>Search Publishes...</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QToolButton" name="cancel">
-        <property name="text">
-         <string>...</string>
-        </property>
-        <property name="icon">
-         <iconset resource="resources.qrc">
-          <normaloff>:/res/clear_search.png</normaloff>:/res/clear_search.png</iconset>
-        </property>
-        <property name="autoRaise">
-         <bool>true</bool>
+        <property name="toolTip">
+         <string>Enter some text to filter the publishes shown in the view below.&lt;br&gt;
+Click the magnifying glass icon above to disable the filter.</string>
         </property>
        </widget>
       </item>

@@ -189,7 +189,7 @@ class AppDialog(QtGui.QWidget):
         # popdown publish filter widget for the main view
         self._search_widget = SearchWidget(self.ui.publish_view)
         # hook it up with the search button the main toolbar
-        self.ui.search_publishes.clicked.connect(self._search_widget.enable)
+        self.ui.search_publishes.clicked.connect(self._on_publish_filter_clicked)
         # hook it up so that it signals the publish proxy model whenever the filter changes
         self._search_widget.filter_changed.connect(self._publish_proxy_model.set_search_query)
 
@@ -387,6 +387,15 @@ class AppDialog(QtGui.QWidget):
                                                                              self._action_manager.UI_AREA_HISTORY)
         if default_action:
             default_action.trigger()
+
+    def _on_publish_filter_clicked(self):
+        """
+        Executed when someone clicks the filter button in the main UI
+        """
+        if self.ui.search_publishes.isChecked():
+            self._search_widget.enable()
+        else:
+            self._search_widget.disable()
 
     def _on_thumbnail_mode_clicked(self):
         """

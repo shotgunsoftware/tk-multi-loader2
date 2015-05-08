@@ -403,11 +403,14 @@ background-image: url(:/res/right_arrow_pressed.png);
           </size>
          </property>
          <property name="toolTip">
-          <string>Search Publishes</string>
+          <string>Filter Publishes</string>
          </property>
          <property name="icon">
           <iconset resource="resources.qrc">
            <normaloff>:/res/search.png</normaloff>:/res/search.png</iconset>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
          </property>
         </widget>
        </item>

@@ -85,14 +85,20 @@ class SgLatestPublishProxyModel(QtGui.QSortFilterProxyModel):
             # selected leaf nodes in the left hand side tree or publishes:  
             # field_data: {'name': 'code', 'value': 'aaa_0030'}
             
-            sg_value = str(field_data.get("value"))
+            sg_value = field_data.get("value")
+            if isinstance(sg_value, dict) and "name" in sg_value:
+                # isolate the name field out of a link dict
+                sg_name_str = sg_value["name"]
+            else:
+                # if it is not a link dict, use the full value for filtering
+                sg_name_str = str(sg_value)
             
             # all input we are getting from pyside is as unicode objects
             # all data from shotgun is utf-8. By converting to utf-8,
             # filtering on items containing unicode text also work.
             search_str = self._search_filter.encode("UTF-8") 
             
-            if search_str not in sg_value: 
+            if search_str not in sg_name_str: 
                 # item text is not matching search filter
                 return False
         

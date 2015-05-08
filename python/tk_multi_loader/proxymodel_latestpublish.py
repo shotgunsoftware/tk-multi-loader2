@@ -13,6 +13,8 @@ from sgtk.platform.qt import QtCore, QtGui
 
 from .model_latestpublish import SgLatestPublishModel
 
+shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model")
+
 class SgLatestPublishProxyModel(QtGui.QSortFilterProxyModel):
     """
     Filter model to be used in conjunction with SgLatestPublishModel
@@ -62,23 +64,49 @@ class SgLatestPublishProxyModel(QtGui.QSortFilterProxyModel):
         
         current_item = model.invisibleRootItem().child(source_row)  # assume non-tree structure
         
-        if self._search_filter and self._search_filter not in current_item.text():
-            # item text is not matching search filter
-            return False
+        # first analyze any search filtering
+        if self._search_filter:
+            
+            # there is a search filter entered
+            field_data = shotgun_model.get_sanitized_data(current_item, 
+                                                          shotgun_model.ShotgunModel.SG_ASSOCIATED_FIELD_ROLE)
+            
+            # get the associated shotgun field with this node.
+            # this may have different values depending on what type of item
+            # is being displayed: 
+            
+            # intermediate nodes in the left hand side tree which aren't links 
+            # field_data: {'name': 'sg_asset_type', 'value': 'Character' }
+            
+            # intermediate nodes in the left hand side tree which are entity links
+            # field_data: {'name': 'sg_sequence', 'value': {'type': 'Sequence', 'id': 11, 'name': 'bunny_080'}}
+            
+            # selected leaf nodes in the left hand side tree or publishes:  
+            # field_data: {'name': 'code', 'value': 'aaa_0030'}
+            
+            sg_value = str(field_data.get("value"))
+            
+            # all input we are getting from pyside is as unicode objects
+            # all data from shotgun is utf-8. By converting to utf-8,
+            # filtering on items containing unicode text also work.
+            search_str = self._search_filter.encode("UTF-8") 
+            
+            if search_str not in sg_value: 
+                # item text is not matching search filter
+                return False
         
+        # now check if folders should be shown
         is_folder = current_item.data(SgLatestPublishModel.IS_FOLDER_ROLE)
-        
         if is_folder:
             return self._show_folders
             
+        # lastly, check out type filter checkboxes
+        sg_type_id = current_item.data(SgLatestPublishModel.TYPE_ID_ROLE) 
+        
+        if sg_type_id is None:
+            # no type. So always show.
+            return True
+        elif sg_type_id in self._valid_type_ids:
+            return True
         else:
-            # get the type id
-            sg_type_id = current_item.data(SgLatestPublishModel.TYPE_ID_ROLE) 
-            
-            if sg_type_id is None:
-                # no type. So always show.
-                return True
-            elif sg_type_id in self._valid_type_ids:
-                return True
-            else:
-                return False
+            return False

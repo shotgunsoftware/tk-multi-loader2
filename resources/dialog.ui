@@ -328,6 +328,12 @@ background-image: url(:/res/right_arrow_pressed.png);
        </item>
        <item>
         <widget class="QToolButton" name="thumbnail_mode">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>26</height>
+          </size>
+         </property>
          <property name="toolTip">
           <string>Thumbnail Mode</string>
          </property>
@@ -348,6 +354,12 @@ background-image: url(:/res/right_arrow_pressed.png);
        </item>
        <item>
         <widget class="QToolButton" name="list_mode">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>26</height>
+          </size>
+         </property>
          <property name="toolTip">
           <string>List Mode</string>
          </property>
@@ -364,7 +376,32 @@ background-image: url(:/res/right_arrow_pressed.png);
         </widget>
        </item>
        <item>
+        <widget class="QLabel" name="label_5">
+         <property name="minimumSize">
+          <size>
+           <width>5</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>5</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QToolButton" name="search_publishes">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>26</height>
+          </size>
+         </property>
          <property name="toolTip">
           <string>Search Publishes</string>
          </property>
@@ -376,6 +413,12 @@ background-image: url(:/res/right_arrow_pressed.png);
        </item>
        <item>
         <widget class="QToolButton" name="info">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>26</height>
+          </size>
+         </property>
          <property name="toolTip">
           <string>Use this button to &lt;i&gt;toggle details on and off&lt;/i&gt;. </string>
          </property>

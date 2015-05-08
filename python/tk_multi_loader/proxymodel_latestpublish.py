@@ -37,6 +37,7 @@ class SgLatestPublishProxyModel(QtGui.QSortFilterProxyModel):
         """
         self._search_filter = search_filter
         self.invalidateFilter()
+        self.filter_changed.emit()
         
     def set_filter_by_type_ids(self, type_ids, show_folders):
         """

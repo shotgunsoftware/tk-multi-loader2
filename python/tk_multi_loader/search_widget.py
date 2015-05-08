@@ -25,6 +25,10 @@ class SearchWidget(QtGui.QWidget):
     string is changed.
     """
     
+    # widget positioning offsets, relative to their parent widget
+    LEFT_SIDE_OFFSET = 30
+    TOP_OFFSET = 10
+    
     # signal emitted whenever the search filter changes
     filter_changed = QtCore.Signal(str)
     
@@ -123,6 +127,9 @@ class SearchWidget(QtGui.QWidget):
         """
         # offset the position in such a way that it looks like
         # it is "hanging down" from the adjacent window.
-        self.move(self.parentWidget().width()-self.width()-30,-10)
+        # these constants are purely aesthetic, decided after some 
+        # tweaking and trial and error.
+        self.move(self.parentWidget().width()-self.width()-self.LEFT_SIDE_OFFSET,
+                  -self.TOP_OFFSET)
 
 

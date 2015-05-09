@@ -433,22 +433,34 @@ background-image: url(:/res/right_arrow_pressed.png);
       </layout>
      </item>
      <item>
-      <widget class="QListView" name="publish_view">
-       <property name="editTriggers">
-        <set>QAbstractItemView::NoEditTriggers</set>
-       </property>
-       <property name="resizeMode">
-        <enum>QListView::Adjust</enum>
-       </property>
-       <property name="spacing">
-        <number>5</number>
-       </property>
-       <property name="viewMode">
-        <enum>QListView::IconMode</enum>
-       </property>
-       <property name="uniformItemSizes">
-        <bool>true</bool>
-       </property>
+      <widget class="QFrame" name="publish_frame">
+       <layout class="QHBoxLayout" name="horizontalLayout_7">
+        <property name="spacing">
+         <number>1</number>
+        </property>
+        <property name="margin">
+         <number>1</number>
+        </property>
+        <item>
+         <widget class="QListView" name="publish_view">
+          <property name="editTriggers">
+           <set>QAbstractItemView::NoEditTriggers</set>
+          </property>
+          <property name="resizeMode">
+           <enum>QListView::Adjust</enum>
+          </property>
+          <property name="spacing">
+           <number>5</number>
+          </property>
+          <property name="viewMode">
+           <enum>QListView::IconMode</enum>
+          </property>
+          <property name="uniformItemSizes">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </widget>
      </item>
      <item>
@@ -772,7 +784,6 @@ background-image: url(:/res/right_arrow_pressed.png);
   <tabstop>navigation_prev</tabstop>
   <tabstop>navigation_next</tabstop>
   <tabstop>publish_type_list</tabstop>
-  <tabstop>publish_view</tabstop>
   <tabstop>show_sub_items</tabstop>
   <tabstop>thumb_scale</tabstop>
   <tabstop>history_view</tabstop>

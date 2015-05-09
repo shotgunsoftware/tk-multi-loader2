@@ -400,10 +400,12 @@ class AppDialog(QtGui.QWidget):
     def _on_publish_filter_clicked(self):
         """
         Executed when someone clicks the filter button in the main UI
-        """
+        """        
         if self.ui.search_publishes.isChecked():
+            self.ui.search_publishes.setIcon(QtGui.QIcon(QtGui.QPixmap(":/res/search_active.png")))
             self._search_widget.enable()
         else:
+            self.ui.search_publishes.setIcon(QtGui.QIcon(QtGui.QPixmap(":/res/search.png")))
             self._search_widget.disable()
 
     def _on_thumbnail_mode_clicked(self):

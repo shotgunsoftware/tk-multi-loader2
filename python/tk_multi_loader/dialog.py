@@ -311,7 +311,7 @@ class AppDialog(QtGui.QWidget):
         Executed when the main dialog is closed.
         All worker threads and other things which need a proper shutdown
         need to be called here.
-        """
+        """        
         # display exit splash screen
         splash_pix = QtGui.QPixmap(":/res/exit_splash.png")
         splash = QtGui.QSplashScreen(splash_pix, QtCore.Qt.WindowStaysOnTopHint)
@@ -323,8 +323,12 @@ class AppDialog(QtGui.QWidget):
             # clear the selection in the main views. 
             # this is to avoid re-triggering selection
             # as items are being removed in the models
-            self._history_view_selection_model.clear()
-            self._publish_view_selection_model.clear()
+            #
+            # note that we pull out a fresh handle to the selection model
+            # as these objects sometimes are deleted internally in the view
+            # and therefore persisting python handles may not be valid 
+            self.ui.history_view.selectionModel().clear()
+            self.ui.publish_view.selectionModel().clear()        
             
             # disconnect some signals so we don't go all crazy when
             # the cascading model deletes begin as part of the destroy calls

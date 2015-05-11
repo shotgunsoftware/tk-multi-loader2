@@ -143,10 +143,9 @@ class NukeActions(HookBaseClass):
                             ".tga",
                             ".ari",
                             ".gif",
-                            ".iff",
-                            ".png"]
+                            ".iff"]
 
-        if ext not in valid_extensions:
+        if ext.lower() not in valid_extensions:
             raise Exception("Unsupported file extension for '%s'!" % path)
 
         # find the sequence range if it has one:

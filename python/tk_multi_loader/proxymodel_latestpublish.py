@@ -69,36 +69,14 @@ class SgLatestPublishProxyModel(QtGui.QSortFilterProxyModel):
         if self._search_filter:
             
             # there is a search filter entered
-            field_data = shotgun_model.get_sanitized_data(current_item, 
-                                                          shotgun_model.ShotgunModel.SG_ASSOCIATED_FIELD_ROLE)
-            
-            # get the associated shotgun field with this node.
-            # this may have different values depending on what type of item
-            # is being displayed: 
-            
-            # intermediate nodes in the left hand side tree which aren't links 
-            # field_data: {'name': 'sg_asset_type', 'value': 'Character' }
-            
-            # intermediate nodes in the left hand side tree which are entity links
-            # field_data: {'name': 'sg_sequence', 'value': {'type': 'Sequence', 'id': 11, 'name': 'bunny_080'}}
-            
-            # selected leaf nodes in the left hand side tree or publishes:  
-            # field_data: {'name': 'code', 'value': 'aaa_0030'}
-            
-            sg_value = field_data.get("value")
-            if isinstance(sg_value, dict) and "name" in sg_value:
-                # isolate the name field out of a link dict
-                sg_name_str = sg_value["name"]
-            else:
-                # if it is not a link dict, use the full value for filtering
-                sg_name_str = str(sg_value)
-            
+            field_data = shotgun_model.get_sanitized_data(current_item, SgLatestPublishModel.SEARCHABLE_NAME)
+                        
             # all input we are getting from pyside is as unicode objects
             # all data from shotgun is utf-8. By converting to utf-8,
             # filtering on items containing unicode text also work.
             search_str = self._search_filter.encode("UTF-8") 
             
-            if search_str not in sg_name_str: 
+            if search_str.lower() not in field_data.lower(): 
                 # item text is not matching search filter
                 return False
         

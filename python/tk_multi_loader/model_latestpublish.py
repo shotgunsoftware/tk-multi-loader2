@@ -32,6 +32,7 @@ class SgLatestPublishModel(ShotgunOverlayModel):
     IS_FOLDER_ROLE = QtCore.Qt.UserRole + 102
     ASSOCIATED_TREE_VIEW_ITEM_ROLE = QtCore.Qt.UserRole + 103
     PUBLISH_TYPE_NAME_ROLE = QtCore.Qt.UserRole + 104
+    SEARCHABLE_NAME = QtCore.Qt.UserRole + 105
 
     def __init__(self, parent, overlay_widget, publish_type_model):
         """
@@ -51,7 +52,7 @@ class SgLatestPublishModel(ShotgunOverlayModel):
                                      parent,
                                      overlay_widget,
                                      download_thumbs=app.get_setting("download_thumbnails"),
-                                     schema_generation=5)
+                                     schema_generation=6)
 
     ############################################################################################
     # public interface
@@ -287,6 +288,9 @@ class SgLatestPublishModel(ShotgunOverlayModel):
         self._folder_items = []
         self._associated_items = {}
 
+
+
+
         for tree_view_item in self._treeview_folder_items:
 
             # compute and store a hash for the tree view item so that we can access it later
@@ -294,6 +298,9 @@ class SgLatestPublishModel(ShotgunOverlayModel):
 
             # create an item in the publish item for each folder item in the tree view
             item = shotgun_model.ShotgunStandardItem(self._folder_icon, tree_view_item.text())
+            
+            # make the item searchable by name
+            item.setData(tree_view_item.text(), SgLatestPublishModel.SEARCHABLE_NAME)
 
             # all of the items created in this class get special role data assigned.
             item.setData(True, SgLatestPublishModel.IS_FOLDER_ROLE)
@@ -340,14 +347,28 @@ class SgLatestPublishModel(ShotgunOverlayModel):
         # indicate that shotgun data is NOT folder data
         item.setData(False, SgLatestPublishModel.IS_FOLDER_ROLE)
 
+        # start figuring out the searchable tokens for this item
+        search_str = "" 
+
         # add the associated publish type (both id and name) as special roles
         type_link = sg_data.get(self._publish_type_field)
         if type_link:
             item.setData(type_link["id"], SgLatestPublishModel.TYPE_ID_ROLE)
             item.setData(type_link["name"], SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE)
+            search_str += "%s " % type_link["name"]
         else:
             item.setData(None, SgLatestPublishModel.TYPE_ID_ROLE)
             item.setData("No Type", SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE)
+            
+        # add name and version to search string            
+        if sg_data.get("name"):
+            search_str += " %s" % sg_data["name"]
+        if sg_data.get("version_number"):
+            # add this in as "v012" to make it easy to search for say all versions 12 but
+            # exclude v112:s
+            search_str += " v%03d" % sg_data["version_number"]
+        item.setData(search_str, SgLatestPublishModel.SEARCHABLE_NAME)
+
 
 
 

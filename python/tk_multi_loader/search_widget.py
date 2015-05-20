@@ -26,7 +26,7 @@ class SearchWidget(QtGui.QWidget):
     """
     
     # widget positioning offsets, relative to their parent widget
-    LEFT_SIDE_OFFSET = 30
+    LEFT_SIDE_OFFSET = 88
     TOP_OFFSET = 10
     
     # signal emitted whenever the search filter changes

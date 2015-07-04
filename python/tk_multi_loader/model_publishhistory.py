@@ -36,7 +36,8 @@ class SgPublishHistoryModel(ShotgunOverlayModel):
                                      parent,
                                      overlay_widget,
                                      download_thumbs=app.get_setting("download_thumbnails"),
-                                     schema_generation=2)
+                                     schema_generation=2,
+                                     bg_thumbs=True)
 
 
     ############################################################################################
@@ -161,7 +162,7 @@ class SgPublishHistoryModel(ShotgunOverlayModel):
                                                               None)
         item.setIcon(QtGui.QIcon(thumb))
 
-    def _populate_thumbnail(self, item, field, path):
+    def _populate_thumbnail_image(self, item, field, image, path):
         """
         Called whenever a thumbnail for an item has arrived on disk. In the case of
         an already cached thumbnail, this may be called very soon after data has been

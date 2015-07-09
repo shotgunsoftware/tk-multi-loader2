@@ -105,11 +105,14 @@ def create_overlayed_user_publish_thumbnail(publish_pixmap, user_pixmap):
     
 
 
-def create_overlayed_folder_thumbnail(path):
+def create_overlayed_folder_thumbnail(image):
     """
-    Given a path to a shotgun thumbnail, create a folder icon
+    Given a shotgun thumbnail, create a folder icon
     with the thumbnail composited on top. This will return a
     512x400 pixmap object.
+    
+    :param image: QImage containing a thumbnail
+    :returns: QPixmap with a 512x400 px image
     """
     # folder icon size
     CANVAS_WIDTH = 512
@@ -125,13 +128,12 @@ def create_overlayed_folder_thumbnail(path):
 
     # looks like there are some pyside related memory issues here relating to 
     # referencing a resource and then operating on it. Just to be sure, make 
-    # make a full copy of the resource before starting to manipulate.    
-    res_base = QtGui.QPixmap(":/res/folder_512x400.png")
-    base_image = QtGui.QPixmap(res_base)
+    # make a full copy of the resource before starting to manipulate.
+    base_image = QtGui.QPixmap(":/res/folder_512x400.png")
     
     # now attempt to load the image
     # pixmap will be a null pixmap if load fails
-    thumb = QtGui.QPixmap(path)
+    thumb = QtGui.QPixmap.fromImage(image)
         
     if not thumb.isNull():
     
@@ -173,11 +175,15 @@ def create_overlayed_folder_thumbnail(path):
     
         
 
-def create_overlayed_publish_thumbnail(path):
+def create_overlayed_publish_thumbnail(image):
     """
-    Given a path to a shotgun thumbnail, create a publish icon
+    Given a shotgun thumbnail, create a publish icon
     with the thumbnail composited onto a centered otherwise empty canvas. 
     This will return a 512x400 pixmap object.
+    
+    
+    :param image: QImage containing a thumbnail
+    :returns: QPixmap with a 512x400 px image    
     """
 
     CANVAS_WIDTH = 512
@@ -190,7 +196,7 @@ def create_overlayed_publish_thumbnail(path):
     
     # now attempt to load the image
     # pixmap will be a null pixmap if load fails    
-    thumb = QtGui.QPixmap(path)
+    thumb = QtGui.QPixmap.fromImage(image)
     
     if not thumb.isNull():
             

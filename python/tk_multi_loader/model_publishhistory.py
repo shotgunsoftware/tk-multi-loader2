@@ -36,7 +36,8 @@ class SgPublishHistoryModel(ShotgunOverlayModel):
                                      parent,
                                      overlay_widget,
                                      download_thumbs=app.get_setting("download_thumbnails"),
-                                     schema_generation=2)
+                                     schema_generation=2,
+                                     bg_load_thumbs=True)
 
 
     ############################################################################################
@@ -161,7 +162,7 @@ class SgPublishHistoryModel(ShotgunOverlayModel):
                                                               None)
         item.setIcon(QtGui.QIcon(thumb))
 
-    def _populate_thumbnail(self, item, field, path):
+    def _populate_thumbnail_image(self, item, field, image, path):
         """
         Called whenever a thumbnail for an item has arrived on disk. In the case of
         an already cached thumbnail, this may be called very soon after data has been
@@ -184,10 +185,10 @@ class SgPublishHistoryModel(ShotgunOverlayModel):
         :param path: A path on disk to the thumbnail. This is a file in jpeg format.
         """
         if field == "image":
-            thumb = QtGui.QPixmap(path)
+            thumb = QtGui.QPixmap.fromImage(image)
             item.setData(thumb, SgPublishHistoryModel.PUBLISH_THUMB_ROLE)
         else:
-            thumb = QtGui.QPixmap(path)
+            thumb = QtGui.QPixmap.fromImage(image)
             item.setData(thumb, SgPublishHistoryModel.USER_THUMB_ROLE)
 
         # composite the user thumbnail and the publish thumb into a single image

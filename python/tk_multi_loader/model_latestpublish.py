@@ -52,7 +52,8 @@ class SgLatestPublishModel(ShotgunOverlayModel):
                                      parent,
                                      overlay_widget,
                                      download_thumbs=app.get_setting("download_thumbnails"),
-                                     schema_generation=6)
+                                     schema_generation=6,
+                                     bg_load_thumbs=True)
 
     ############################################################################################
     # public interface
@@ -384,7 +385,7 @@ class SgLatestPublishModel(ShotgunOverlayModel):
         # set up publishes with a "thumbnail loading" icon
         item.setIcon(self._loading_icon)
 
-    def _populate_thumbnail(self, item, field, path):
+    def _populate_thumbnail_image(self, item, field, image, path):
         """
         Called whenever a thumbnail for an item has arrived on disk. In the case of
         an already cached thumbnail, this may be called very soon after data has been
@@ -418,9 +419,9 @@ class SgLatestPublishModel(ShotgunOverlayModel):
         is_folder = item.data(SgLatestPublishModel.IS_FOLDER_ROLE)
         if is_folder:
             # composite the thumbnail nicely on top of the folder icon
-            thumb = utils.create_overlayed_folder_thumbnail(path)
+            thumb = utils.create_overlayed_folder_thumbnail(image)
         else:
-            thumb = utils.create_overlayed_publish_thumbnail(path)
+            thumb = utils.create_overlayed_publish_thumbnail(image)
         item.setIcon(QtGui.QIcon(thumb))
 
     def _before_data_processing(self, sg_data_list):

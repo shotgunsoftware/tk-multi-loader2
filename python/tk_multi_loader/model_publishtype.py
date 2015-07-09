@@ -41,7 +41,7 @@ class SgPublishTypeModel(ShotgunOverlayModel):
                                      overlay_widget, 
                                      download_thumbs=False,
                                      schema_generation=2,
-                                     bg_thumbs=True)
+                                     bg_load_thumbs=True)
         
         self._action_manager = action_manager
         self._settings_manager = settings_manager

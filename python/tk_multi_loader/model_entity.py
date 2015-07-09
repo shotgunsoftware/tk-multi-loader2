@@ -47,7 +47,7 @@ class SgEntityModel(ShotgunOverlayModel):
                                      overlay_widget, 
                                      download_thumbs=False, 
                                      schema_generation=4,
-                                     bg_thumbs=True)
+                                     bg_load_thumbs=True)
         fields=["image", "sg_status_list", "description"]
         self._load_data(entity_type, filters, hierarchy, fields)
     

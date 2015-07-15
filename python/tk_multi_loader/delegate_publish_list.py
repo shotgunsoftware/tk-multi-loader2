@@ -351,8 +351,12 @@ class SgPublishListDelegate(shotgun_view.WidgetDelegate):
 
             if sg_data.get("task") is not None:
                 main_text += ", Task %s" % sg_data["task"]["name"]
-                
+               
             main_text += ")"
+        elif sg_data.get("task") is not None:
+            # When not in subfolders mode always show Task info
+            # (similar to the logic in the thumbnail view, but always show)
+            main_text += "  (Task %s)" % sg_data["task"]["name"]
 
         # Quicktime by John Smith at 2014-02-23 10:34
         pub_type_str = shotgun_model.get_sanitized_data(model_index, SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE)            

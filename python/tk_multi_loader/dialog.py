@@ -209,6 +209,7 @@ class AppDialog(QtGui.QWidget):
         self.ui.navigation_home.clicked.connect(self._on_home_clicked)
         self.ui.navigation_prev.clicked.connect(self._on_back_clicked)
         self.ui.navigation_next.clicked.connect(self._on_forward_clicked)
+        self._first_home_click = {}
 
         #################################################
         # set up cog button actions
@@ -653,15 +654,23 @@ class AppDialog(QtGui.QWidget):
         # get entity portion of context
         ctx = sgtk.platform.current_bundle().context
         if ctx.entity:
-
             # now step through the profiles and find a matching entity
             for p in self._entity_presets:
+                if self._entity_presets[p].ignore_tab:
+                    continue
                 if self._entity_presets[p].entity_type == ctx.entity["type"]:
                     # found an at least partially matching entity profile.
                     found_preset = p
 
                     # now see if our context object also exists in the tree of this profile
                     model = self._entity_presets[p].model
+                    if not model._cache_loaded:
+                        #items in model are not not loaded yet, create callback and wait for it
+                        if self._first_home_click.get('call_from_load', False):
+                            self._first_home_click['model'] = model
+                            model.data_refreshed.connect(self.functionCB)
+                            return
+
                     item = model.item_from_entity(ctx.entity["type"], ctx.entity["id"])
 
                     if item is not None:
@@ -675,6 +684,12 @@ class AppDialog(QtGui.QWidget):
 
         # select it in the left hand side tree view
         self._select_item_in_entity_tree(found_preset, found_item)
+
+    def functionCB(self):
+        app = sgtk.platform.current_bundle()
+        self._first_home_click['model'].data_refreshed.disconnect(self.functionCB)
+        self._first_home_click = {}
+        self._on_home_clicked()
 
     def _on_back_clicked(self):
         """
@@ -966,7 +981,6 @@ class AppDialog(QtGui.QWidget):
         entities = app.get_setting("entities")
 
         for e in entities:
-
             # validate that the settings dict contains all items needed.
             for k in ["caption", "entity_type", "hierarchy", "filters"]:
                 if k not in e:
@@ -979,6 +993,8 @@ class AppDialog(QtGui.QWidget):
             publish_filters = e.get("publish_filters")
             if publish_filters is None: 
                 publish_filters = []
+
+            ignore_tab = e.get("ignore_tab", False)
 
             # set up a bunch of stuff
 
@@ -1110,7 +1126,8 @@ class AppDialog(QtGui.QWidget):
                               model, 
                               proxy_model, 
                               view,
-                              publish_filters)
+                              publish_filters,
+                              ignore_tab)
 
             self._entity_presets[preset_name] = ep
 
@@ -1119,6 +1136,7 @@ class AppDialog(QtGui.QWidget):
 
         # finalize initialization by clicking the home button, but only once the
         # data has properly arrived in the model.
+        self._first_home_click = {'call_from_load': True}
         self._on_home_clicked()
 
     def _on_search_text_changed(self, pattern, tree_view, proxy_model):
@@ -1472,10 +1490,11 @@ class EntityPreset(object):
     Little struct that represents one of the tabs / presets in the
     Left hand side entity tree view
     """
-    def __init__(self, name, entity_type, model, proxy_model, view, publish_filters):
+    def __init__(self, name, entity_type, model, proxy_model, view, publish_filters, ignore_tab):
         self.model = model
         self.proxy_model = proxy_model
         self.name = name
         self.view = view
         self.entity_type = entity_type
         self.publish_filters = publish_filters
+        self.ignore_tab = ignore_tab

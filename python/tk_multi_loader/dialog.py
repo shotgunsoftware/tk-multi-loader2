@@ -650,6 +650,7 @@ class AppDialog(QtGui.QWidget):
         # first, try to find the "home" item by looking at the current app context.
         found_preset = None
         found_item = None
+        found_model = None
 
         # get entity portion of context
         ctx = sgtk.platform.current_bundle().context
@@ -676,12 +677,17 @@ class AppDialog(QtGui.QWidget):
                     if item is not None:
                         # find an absolute match! Break the search.
                         found_item = item
+                        found_model = model
                         break
 
         if found_preset is None:
             # no suitable item found. Use the first tab
             found_preset = self.ui.entity_preset_tabs.tabText(0)
 
+        if found_model and found_item:
+            found_model.reSelector['entity'] = found_item.get_sg_data()
+            found_model.reSelector['found_preset'] = found_preset
+            found_model.reSelector['sel_func'] = self._select_item_in_entity_tree
         # select it in the left hand side tree view
         self._select_item_in_entity_tree(found_preset, found_item)
 
@@ -1480,7 +1486,6 @@ class AppDialog(QtGui.QWidget):
         breadcrumbs = " <span style='color:#2C93E2'>&#9656;</span> ".join( crumbs[::-1] )
 
         self.ui.entity_breadcrumbs.setText("<big>%s</big>" % breadcrumbs)
-
 
 ################################################################################################
 # Helper stuff

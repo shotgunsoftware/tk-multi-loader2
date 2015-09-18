@@ -237,6 +237,7 @@ class SgLatestPublishModel(ShotgunOverlayModel):
                           "entity",
                           "path",
                           "description",
+                          "sg_status_list",
                           "task",
                           "task.Task.sg_status_list",
                           "task.Task.due_date",

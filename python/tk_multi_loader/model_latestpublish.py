@@ -12,7 +12,7 @@ from collections import defaultdict
 from sgtk.platform.qt import QtCore, QtGui
 
 import sgtk
-from . import utils
+from . import utils, constants
 from .model_entity import SgEntityModel
 
 # import the shotgun_model module from the shotgun utils framework
@@ -230,25 +230,7 @@ class SgLatestPublishModel(ShotgunOverlayModel):
         else:
             self._publish_type_field = "tank_type"
 
-        publish_fields = [self._publish_type_field,
-                          "name",
-                          "version_number",
-                          "image",
-                          "entity",
-                          "path",
-                          "description",
-                          "task",
-                          "task.Task.sg_status_list",
-                          "task.Task.due_date",
-                          "project",
-                          "task.Task.content",
-                          "created_by",
-                          "created_at",
-                          "version", # note: not supported on TankPublishedFile so always None
-                          "version.Version.sg_status_list",
-                          "created_by.HumanUser.image"
-                          ]
-
+        publish_fields = [self._publish_type_field] + constants.PUBLISHED_FILES_FIELDS
 
         # first add our folders to the model
         # make gc happy by keeping handle to all items

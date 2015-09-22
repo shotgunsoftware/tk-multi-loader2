@@ -82,7 +82,6 @@ class SgPublishHistoryModel(ShotgunOverlayModel):
         # and the same task.
         filters = [ ["project", "is", sg_data["project"] ],
                     ["name", "is", sg_data["name"] ],
-                    ["task", "is", sg_data["task"] ],
                     ["entity", "is", sg_data["entity"] ],
                     [publish_type_field, "is", sg_data[publish_type_field] ],
                   ]

@@ -11,7 +11,7 @@
 import sgtk
 from sgtk.platform.qt import QtCore, QtGui
 
-from . import utils
+from . import utils, constants
 
 # import the shotgun_model module from the shotgun utils framework
 shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model")
@@ -60,22 +60,7 @@ class SgPublishHistoryModel(ShotgunOverlayModel):
             publish_type_field = "tank_type"
 
         # fields to pull down
-        fields = [publish_type_field,
-                  "name",
-                  "version_number",
-                  "image",
-                  "entity",
-                  "path",
-                  "description",
-                  "task",
-                  "task.Task.sg_status_list",
-                  "task.Task.due_date",
-                  "task.Task.content",
-                  "created_by",
-                  "created_at",
-                  "version", # note: not supported on TankPublishedFile so always None
-                  "version.Version.sg_status_list",
-                  "created_by.HumanUser.image"]
+        fields = [publish_type_field] + constants.PUBLISHED_FILES_FIELDS
 
         # when we filter out which other publishes are associated with this one,
         # to effectively get the "version history", we look for items

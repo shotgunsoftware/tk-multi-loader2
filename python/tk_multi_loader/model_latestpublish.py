@@ -418,7 +418,7 @@ class SgLatestPublishModel(ShotgunOverlayModel):
         """
         app = sgtk.platform.current_bundle()
 
-        # First, let the filter_publishes hook have a change to filter the list
+        # First, let the filter_publishes hook have a chance to filter the list
         # of publishes:
         sg_data_list = utils.filter_publishes(app, sg_data_list)
 

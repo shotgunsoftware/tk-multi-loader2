@@ -131,6 +131,19 @@ class SgPublishHistoryModel(ShotgunOverlayModel):
                                              sg_data["created_by"]["id"])
 
 
+    def _before_data_processing(self, sg_data_list):
+        """
+        Called just after data has been retrieved from Shotgun but before any processing
+        takes place. This makes it possible for deriving classes to perform summaries,
+        calculations and other manipulations of the data before it is passed on to the model
+        class.
+
+        :param sg_data_list: list of shotgun dictionaries, as returned by the find() call.
+        :returns: should return a list of shotgun dictionaries, on the same form as the input.
+        """
+        app = sgtk.platform.current_bundle()
+
+        return utils.filter_publishes(app, sg_data_list)
 
 
     def _populate_default_thumbnail(self, item):

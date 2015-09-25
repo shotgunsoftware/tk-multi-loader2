@@ -215,7 +215,7 @@ def create_overlayed_publish_thumbnail(image):
         painter.setRenderHint(QtGui.QPainter.Antialiasing)
         painter.setBrush(brush)
 
-        # figure out the offset height wise in order to center the thumb
+        # figure out the vertical offset in order to center the thumb
         height_difference = CANVAS_HEIGHT - thumb_scaled.height()
         width_difference = CANVAS_WIDTH - thumb_scaled.width()
 

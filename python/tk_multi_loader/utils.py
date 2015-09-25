@@ -238,3 +238,35 @@ def create_overlayed_publish_thumbnail(image):
     
     return base_image
     
+
+def filter_publishes(app, sg_data_list):
+    """
+    Filters a list of shotgun published files based on the filter_publishes hook.
+
+    :param app:           application that has the hook.
+    :param sg_data_list:  list of shotgun dictionaries, as returned by the find() call.
+    :returns:             list of filtered shotgun dictionaries, same form as the input.
+    """
+    try:
+        # Constructing a wrapper dictionary so that it's future proof to support returning
+        # additional information from the hook
+        hook_publish_list = [{"sg_publish":sg_data} for sg_data in sg_data_list]
+
+        hook_publish_list = app.execute_hook("filter_publishes_hook", publishes=hook_publish_list)
+        if not isinstance(hook_publish_list, list):
+            app.log_error("hook_filter_publishes returned an unexpected result type '%s' - ignoring!"
+                          % type(hook_publish_list).__name__)
+            hook_publish_list = []
+
+        # split back out publishes:
+        sg_data_list = []
+        for item in hook_publish_list:
+            sg_data = item.get("sg_publish")
+            if sg_data:
+                sg_data_list.append(sg_data)
+
+    except Exception:
+        app.log_exception("Failed to execute 'filter_publishes_hook'!")
+        sg_data_list = []
+
+    return sg_data_list

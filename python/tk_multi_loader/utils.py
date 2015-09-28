@@ -243,7 +243,7 @@ def filter_publishes(app, sg_data_list):
     Filters a list of shotgun published files based on the filter_publishes
     hook.
 
-    :param app:           application that has the hook.
+    :param app:           app that has the hook.
     :param sg_data_list:  list of shotgun dictionaries, as returned by the
                           find() call.
     :returns:             list of filtered shotgun dictionaries, same form as
@@ -271,7 +271,7 @@ def filter_publishes(app, sg_data_list):
             if sg_data:
                 sg_data_list.append(sg_data)
 
-    except Exception:
+    except:
         app.log_exception("Failed to execute 'filter_publishes_hook'!")
         sg_data_list = []
 

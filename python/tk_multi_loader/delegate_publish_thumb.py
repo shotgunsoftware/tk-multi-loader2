@@ -351,9 +351,17 @@ class SgPublishThumbDelegate(shotgun_view.WidgetDelegate):
             # Version 012 by John Smith at 2014-02-23 10:34            
             created_unixtime = sg_data.get("created_at") or 0
             date_str = datetime.datetime.fromtimestamp(created_unixtime).strftime('%Y-%m-%d %H:%M')
-            tooltip += "<br><br><b>Version:</b> %03d by %s at %s" % (sg_data.get("version_number"), 
-                                                             sg_data.get("created_by").get("name"),
-                                                             date_str)
+
+            # created_by is set to None if the user has been deleted.
+            if sg_data.get("created_by") and sg_data["created_by"].get("name"):
+                author_str = sg_data["created_by"].get("name")
+            else:
+                author_str = "Unspecified User"
+            tooltip += "<br><br><b>Version:</b> %03d by %s at %s" % (
+                sg_data.get("version_number"),
+                author_str,
+                date_str
+            )
             tooltip += "<br><br><b>Path:</b> %s" % ((sg_data.get("path") or {}).get("local_path"))
             tooltip += "<br><br><b>Description:</b> %s" % (sg_data.get("description") or "No description given.")        
             

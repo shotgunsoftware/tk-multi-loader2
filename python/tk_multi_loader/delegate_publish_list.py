@@ -362,8 +362,13 @@ class SgPublishListDelegate(shotgun_view.WidgetDelegate):
         pub_type_str = shotgun_model.get_sanitized_data(model_index, SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE)            
         created_unixtime = sg_data.get("created_at") or 0
         date_str = datetime.datetime.fromtimestamp(created_unixtime).strftime('%Y-%m-%d %H:%M')
+        # created_by is set to None if the user has been deleted.
+        if sg_data.get("created_by") and sg_data["created_by"].get("name"):
+            author_str = sg_data["created_by"].get("name")
+        else:
+            author_str = "Unspecified User"
         small_text = "<span style='color:#2C93E2'>%s</span> by %s at %s" % (pub_type_str, 
-                                                                            sg_data["created_by"].get("name"), 
+                                                                            author_str,
                                                                             date_str)
         
         # and set a tooltip

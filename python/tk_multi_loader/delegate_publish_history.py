@@ -214,9 +214,12 @@ class SgPublishHistoryDelegate(shotgun_view.WidgetDelegate):
             pass
             
         # set the little description bit next to the artist icon
-        desc_str = sg_item.get("description") or "No Description Given"         
-        author_str = sg_item["created_by"].get("name") or "Unspecified User"
-        
+        desc_str = sg_item.get("description") or "No Description Given"
+        # created_by is set to None if the user has been deleted.
+        if sg_item.get("created_by") and sg_item["created_by"].get("name"):
+            author_str = sg_item["created_by"].get("name")
+        else:
+            author_str = "Unspecified User"
         body_str = "<i>%s</i>: %s<br>" % (author_str, desc_str)
         widget.set_text(header_str, body_str)
         

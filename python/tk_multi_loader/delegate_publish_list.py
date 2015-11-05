@@ -15,7 +15,7 @@ from .model_latestpublish import SgLatestPublishModel
 
 # import the shotgun_model and view modules from the shotgun utils framework
 shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model")
-shotgun_view = sgtk.platform.import_framework("tk-framework-qtwidgets", "shotgun_view")
+shotgun_view = sgtk.platform.import_framework("tk-framework-qtwidgets", "views")
 
 from .ui.widget_publish_list import Ui_PublishListWidget
 
@@ -120,7 +120,7 @@ class PublishListWidget(QtGui.QWidget):
 
 
 
-class SgPublishListDelegate(shotgun_view.WidgetDelegate):
+class SgPublishListDelegate(shotgun_view.EditSelectedWidgetDelegate):
     """
     Delegate which 'glues up' the List widget with a QT View.
     """
@@ -135,7 +135,7 @@ class SgPublishListDelegate(shotgun_view.WidgetDelegate):
         self._action_manager = action_manager
         self._view = view
         self._sub_items_mode = False
-        shotgun_view.WidgetDelegate.__init__(self, view)
+        shotgun_view.EditSelectedWidgetDelegate.__init__(self, view)
 
     def set_sub_items_mode(self, enabled):
         """

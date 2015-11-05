@@ -32,7 +32,7 @@ class SgPublishTypeModel(ShotgunOverlayModel):
     
     FOLDERS_ITEM_TEXT = "Folders"
     
-    def __init__(self, parent, overlay_widget, action_manager, settings_manager):
+    def __init__(self, parent, overlay_widget, action_manager, settings_manager, bg_task_manager):
         """
         Constructor
         """
@@ -41,7 +41,8 @@ class SgPublishTypeModel(ShotgunOverlayModel):
                                      overlay_widget, 
                                      download_thumbs=False,
                                      schema_generation=2,
-                                     bg_load_thumbs=True)
+                                     bg_load_thumbs=True,
+                                     bg_task_manager=bg_task_manager)
         
         self._action_manager = action_manager
         self._settings_manager = settings_manager

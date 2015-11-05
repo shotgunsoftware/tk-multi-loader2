@@ -25,7 +25,7 @@ class SgPublishHistoryModel(ShotgunOverlayModel):
     USER_THUMB_ROLE = QtCore.Qt.UserRole + 101
     PUBLISH_THUMB_ROLE = QtCore.Qt.UserRole + 102
 
-    def __init__(self, parent, overlay_widget):
+    def __init__(self, parent, overlay_widget, bg_task_manager):
         """
         Constructor
         """
@@ -37,7 +37,8 @@ class SgPublishHistoryModel(ShotgunOverlayModel):
                                      overlay_widget,
                                      download_thumbs=app.get_setting("download_thumbnails"),
                                      schema_generation=2,
-                                     bg_load_thumbs=True)
+                                     bg_load_thumbs=True,
+                                     bg_task_manager=bg_task_manager)
 
 
     ############################################################################################

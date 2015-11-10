@@ -12,7 +12,7 @@ import sgtk
 from sgtk.platform.qt import QtCore, QtGui
 
 # import the shotgun_model module from the shotgun utils framework
-shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model") 
+shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model")
 ShotgunOverlayModel = shotgun_model.ShotgunOverlayModel 
 
 class SgEntityModel(ShotgunOverlayModel):
@@ -21,7 +21,7 @@ class SgEntityModel(ShotgunOverlayModel):
     on the left hand side.
     """
     
-    def __init__(self, parent, overlay_widget, entity_type, filters, hierarchy):
+    def __init__(self, parent, overlay_widget, entity_type, filters, hierarchy, bg_task_manager):
         """
         Constructor
         """
@@ -47,7 +47,8 @@ class SgEntityModel(ShotgunOverlayModel):
                                      overlay_widget, 
                                      download_thumbs=False, 
                                      schema_generation=4,
-                                     bg_load_thumbs=True)
+                                     bg_load_thumbs=True,
+                                     bg_task_manager=bg_task_manager)
         fields=["image", "sg_status_list", "description"]
         self._load_data(entity_type, filters, hierarchy, fields)
     

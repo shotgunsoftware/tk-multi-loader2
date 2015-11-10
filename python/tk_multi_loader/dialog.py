@@ -30,6 +30,7 @@ from .ui.dialog import Ui_Dialog
 shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model")
 settings = sgtk.platform.import_framework("tk-framework-shotgunutils", "settings")
 help_screen = sgtk.platform.import_framework("tk-framework-qtwidgets", "help_screen")
+task_manager = sgtk.platform.import_framework("tk-framework-shotgunutils", "task_manager")
 
 class AppDialog(QtGui.QWidget):
     """
@@ -59,6 +60,11 @@ class AppDialog(QtGui.QWidget):
         # prefs in this manager are shared
         self._settings_manager = settings.UserSettings(sgtk.platform.current_bundle())
 
+        # create a background task manager
+        self._task_manager = task_manager.BackgroundTaskManager(self, 
+                                                                start_processing=True, 
+                                                                max_threads=2)
+
         # set up the UI
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
@@ -76,7 +82,7 @@ class AppDialog(QtGui.QWidget):
         #################################################
         # hook a helper model tracking status codes so we
         # can use those in the UI
-        self._status_model = SgStatusModel(self)
+        self._status_model = SgStatusModel(self, self._task_manager)
 
         #################################################
         # details pane
@@ -90,7 +96,9 @@ class AppDialog(QtGui.QWidget):
         self.ui.thumbnail_mode.clicked.connect(self._on_thumbnail_mode_clicked)
         self.ui.list_mode.clicked.connect(self._on_list_mode_clicked)
 
-        self._publish_history_model = SgPublishHistoryModel(self, self.ui.history_view)
+        self._publish_history_model = SgPublishHistoryModel(self, 
+                                                            self.ui.history_view,
+                                                            self._task_manager)
 
         self._publish_history_proxy = QtGui.QSortFilterProxyModel(self)
         self._publish_history_proxy.setSourceModel(self._publish_history_model)
@@ -136,12 +144,16 @@ class AppDialog(QtGui.QWidget):
         self._publish_type_model = SgPublishTypeModel(self,
                                                       self.ui.publish_type_list,
                                                       self._action_manager,
-                                                      self._settings_manager)
+                                                      self._settings_manager,
+                                                      self._task_manager)
         self.ui.publish_type_list.setModel(self._publish_type_model)
 
         #################################################
         # setup publish model
-        self._publish_model = SgLatestPublishModel(self, self.ui.publish_view, self._publish_type_model)
+        self._publish_model = SgLatestPublishModel(self, 
+                                                   self.ui.publish_view, 
+                                                   self._publish_type_model,
+                                                   self._task_manager)
 
         # set up a proxy model to cull results based on type selection
         self._publish_proxy_model = SgLatestPublishProxyModel(self)
@@ -336,12 +348,7 @@ class AppDialog(QtGui.QWidget):
                 self._entity_presets[p].view.selectionModel().selectionChanged.disconnect(self._on_treeview_item_selected)
 
             # gracefully close all connections
-            self._publish_model.destroy()
-            self._publish_history_model.destroy()
-            self._publish_type_model.destroy()
-            self._status_model.destroy()
-            for p in self._entity_presets:
-                self._entity_presets[p].model.destroy()
+            self._task_manager.shut_down()
 
         except:
             app = sgtk.platform.current_bundle()
@@ -945,7 +952,7 @@ class AppDialog(QtGui.QWidget):
 
             model = current_idx.model()
 
-            if not isinstance( model, SgEntityModel ):
+            if not isinstance(model, SgEntityModel):
                 # proxy model!
                 current_idx = model.mapToSource(current_idx)
 
@@ -1133,7 +1140,12 @@ class AppDialog(QtGui.QWidget):
             hlayout.addWidget(clear_search)
 
             # set up data backend
-            model = SgEntityModel(self, view, sg_entity_type, e["filters"], e["hierarchy"])
+            model = SgEntityModel(self, 
+                                  view, 
+                                  sg_entity_type, 
+                                  e["filters"], 
+                                  e["hierarchy"],
+                                  self._task_manager)
 
             # set up right click menu
             action_ea = QtGui.QAction("Expand All Folders", view)

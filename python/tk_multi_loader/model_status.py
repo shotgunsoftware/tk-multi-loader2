@@ -20,12 +20,15 @@ class SgStatusModel(ShotgunModel):
     This model represents status codes.
     """
     
-    def __init__(self, parent):
+    def __init__(self, parent, bg_task_manager):
         """
         Constructor
         """
         # folder icon
-        ShotgunModel.__init__(self, parent, download_thumbs=False)
+        ShotgunModel.__init__(self, 
+                              parent, 
+                              download_thumbs=False, 
+                              bg_task_manager=bg_task_manager)
         fields=["bg_color", "icon", "code", "name"]
         self._load_data("Status", [], ["code"], fields)
         self._refresh_data()

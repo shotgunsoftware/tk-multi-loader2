@@ -13,7 +13,6 @@ from sgtk.platform.qt import QtCore, QtGui
 
 import sgtk
 from . import utils, constants
-from .model_entity import SgEntityModel
 
 # import the shotgun_model module from the shotgun utils framework
 shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model")
@@ -34,7 +33,7 @@ class SgLatestPublishModel(ShotgunOverlayModel):
     PUBLISH_TYPE_NAME_ROLE = QtCore.Qt.UserRole + 104
     SEARCHABLE_NAME = QtCore.Qt.UserRole + 105
 
-    def __init__(self, parent, overlay_widget, publish_type_model):
+    def __init__(self, parent, overlay_widget, publish_type_model, bg_task_manager):
         """
         Model which represents the latest publishes for an entity
         """
@@ -53,7 +52,8 @@ class SgLatestPublishModel(ShotgunOverlayModel):
                                      overlay_widget,
                                      download_thumbs=app.get_setting("download_thumbnails"),
                                      schema_generation=6,
-                                     bg_load_thumbs=True)
+                                     bg_load_thumbs=True,
+                                     bg_task_manager=bg_task_manager)
 
     ############################################################################################
     # public interface
@@ -271,9 +271,6 @@ class SgLatestPublishModel(ShotgunOverlayModel):
         self._folder_items = []
         self._associated_items = {}
 
-
-
-
         for tree_view_item in self._treeview_folder_items:
 
             # compute and store a hash for the tree view item so that we can access it later
@@ -351,9 +348,6 @@ class SgLatestPublishModel(ShotgunOverlayModel):
             # exclude v112:s
             search_str += " v%03d" % sg_data["version_number"]
         item.setData(search_str, SgLatestPublishModel.SEARCHABLE_NAME)
-
-
-
 
     def _populate_default_thumbnail(self, item):
         """

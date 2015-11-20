@@ -33,6 +33,8 @@ help_screen = sgtk.platform.import_framework("tk-framework-qtwidgets", "help_scr
 overlay_widget = sgtk.platform.import_framework("tk-framework-qtwidgets", "overlay_widget")
 task_manager = sgtk.platform.import_framework("tk-framework-shotgunutils", "task_manager")
 
+ShotgunModelOverlayWidget = overlay_widget.ShotgunModelOverlayWidget
+
 class AppDialog(QtGui.QWidget):
     """
     Main dialog window for the App
@@ -99,7 +101,8 @@ class AppDialog(QtGui.QWidget):
 
         self._publish_history_model = SgPublishHistoryModel(self, self._task_manager)
 
-        self._publish_history_model_overlay = overlay_widget.ShotgunModelOverlayWidget(self._publish_history_model, self.ui.history_view)
+        self._publish_history_model_overlay = ShotgunModelOverlayWidget(self._publish_history_model, 
+                                                                        self.ui.history_view)
 
         self._publish_history_proxy = QtGui.QSortFilterProxyModel(self)
         self._publish_history_proxy.setSourceModel(self._publish_history_model)
@@ -149,7 +152,8 @@ class AppDialog(QtGui.QWidget):
                                                       self._task_manager)
         self.ui.publish_type_list.setModel(self._publish_type_model)
         
-        self._publish_type_overlay = overlay_widget.ShotgunModelOverlayWidget(self._publish_type_model, self.ui.publish_type_list)
+        self._publish_type_overlay = ShotgunModelOverlayWidget(self._publish_type_model, 
+                                                               self.ui.publish_type_list)
 
         #################################################
         # setup publish model
@@ -157,7 +161,8 @@ class AppDialog(QtGui.QWidget):
                                                    self._publish_type_model,
                                                    self._task_manager)
 
-        self._publish_main_overlay = overlay_widget.ShotgunModelOverlayWidget(self._publish_model, self.ui.publish_view)
+        self._publish_main_overlay = ShotgunModelOverlayWidget(self._publish_model, 
+                                                               self.ui.publish_view)
 
         # set up a proxy model to cull results based on type selection
         self._publish_proxy_model = SgLatestPublishProxyModel(self)
@@ -1155,7 +1160,7 @@ class AppDialog(QtGui.QWidget):
                                   e["hierarchy"],
                                   self._task_manager)
             
-            overlay = overlay_widget.ShotgunModelOverlayWidget(model, view)
+            overlay = ShotgunModelOverlayWidget(model, view)
 
             # set up right click menu
             action_ea = QtGui.QAction("Expand All Folders", view)

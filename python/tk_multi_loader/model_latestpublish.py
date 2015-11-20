@@ -16,9 +16,9 @@ from . import utils, constants
 
 # import the shotgun_model module from the shotgun utils framework
 shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model")
-ShotgunOverlayModel = shotgun_model.ShotgunOverlayModel
+ShotgunModel = shotgun_model.ShotgunModel
 
-class SgLatestPublishModel(ShotgunOverlayModel):
+class SgLatestPublishModel(ShotgunModel):
 
     """
     Model which handles the main spreadsheet view which displays the latest version of all
@@ -33,12 +33,11 @@ class SgLatestPublishModel(ShotgunOverlayModel):
     PUBLISH_TYPE_NAME_ROLE = QtCore.Qt.UserRole + 104
     SEARCHABLE_NAME = QtCore.Qt.UserRole + 105
 
-    def __init__(self, parent, overlay_widget, publish_type_model, bg_task_manager):
+    def __init__(self, parent, publish_type_model, bg_task_manager):
         """
         Model which represents the latest publishes for an entity
         """
         self._publish_type_model = publish_type_model
-        self._no_pubs_found_icon = QtGui.QPixmap(":/res/no_publishes_found.png")
         self._folder_icon = QtGui.QIcon(QtGui.QPixmap(":/res/folder_512x400.png"))
         self._loading_icon = QtGui.QIcon(QtGui.QPixmap(":/res/loading_512x400.png"))
 
@@ -47,13 +46,12 @@ class SgLatestPublishModel(ShotgunOverlayModel):
         app = sgtk.platform.current_bundle()
 
         # init base class
-        ShotgunOverlayModel.__init__(self,
-                                     parent,
-                                     overlay_widget,
-                                     download_thumbs=app.get_setting("download_thumbnails"),
-                                     schema_generation=6,
-                                     bg_load_thumbs=True,
-                                     bg_task_manager=bg_task_manager)
+        ShotgunModel.__init__(self,
+                              parent,
+                              download_thumbs=app.get_setting("download_thumbnails"),
+                             schema_generation=6,
+                             bg_load_thumbs=True,
+                             bg_task_manager=bg_task_manager)
 
     ############################################################################################
     # public interface
@@ -194,15 +192,6 @@ class SgLatestPublishModel(ShotgunOverlayModel):
         # folders to load, set up the actual model
         self._do_load_data(sg_filters, child_folders)
 
-    def toggle_not_found_overlay(self, show):
-        """
-        Displays the items not found overlay.
-        """
-        if show:
-            self._show_overlay_pixmap(self._no_pubs_found_icon)
-        else:
-            self._hide_overlay_info()
-
     def async_refresh(self):
         """
         Refresh the current data set
@@ -237,12 +226,12 @@ class SgLatestPublishModel(ShotgunOverlayModel):
         self._treeview_folder_items = treeview_folder_items
 
         # load cached data
-        ShotgunOverlayModel._load_data(self,
-                                       entity_type=publish_entity_type,
-                                       filters=sg_filters,
-                                       hierarchy=["code"],
-                                       fields=publish_fields,
-                                       order=[{"field_name":"created_at", "direction":"asc"}])
+        ShotgunModel._load_data(self,
+                               entity_type=publish_entity_type,
+                               filters=sg_filters,
+                               hierarchy=["code"],
+                               fields=publish_fields,
+                               order=[{"field_name":"created_at", "direction":"asc"}])
 
         # now calculate type aggregates
         type_id_aggregates = defaultdict(int)

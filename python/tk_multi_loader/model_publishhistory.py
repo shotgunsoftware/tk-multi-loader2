@@ -15,9 +15,9 @@ from . import utils, constants
 
 # import the shotgun_model module from the shotgun utils framework
 shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model")
-ShotgunOverlayModel = shotgun_model.ShotgunOverlayModel
+ShotgunModel = shotgun_model.ShotgunModel
 
-class SgPublishHistoryModel(ShotgunOverlayModel):
+class SgPublishHistoryModel(ShotgunModel):
     """
     This model represents the version history for a publish.
     """
@@ -25,20 +25,19 @@ class SgPublishHistoryModel(ShotgunOverlayModel):
     USER_THUMB_ROLE = QtCore.Qt.UserRole + 101
     PUBLISH_THUMB_ROLE = QtCore.Qt.UserRole + 102
 
-    def __init__(self, parent, overlay_widget, bg_task_manager):
+    def __init__(self, parent, bg_task_manager):
         """
         Constructor
         """
         # folder icon
         self._loading_icon = QtGui.QPixmap(":/res/loading_100x100.png")
         app = sgtk.platform.current_bundle()
-        ShotgunOverlayModel.__init__(self,
-                                     parent,
-                                     overlay_widget,
-                                     download_thumbs=app.get_setting("download_thumbnails"),
-                                     schema_generation=2,
-                                     bg_load_thumbs=True,
-                                     bg_task_manager=bg_task_manager)
+        ShotgunModel.__init__(self,
+                              parent,
+                              download_thumbs=app.get_setting("download_thumbnails"),
+                              schema_generation=2,
+                              bg_load_thumbs=True,
+                              bg_task_manager=bg_task_manager)
 
 
     ############################################################################################
@@ -79,11 +78,11 @@ class SgPublishHistoryModel(ShotgunOverlayModel):
         pub_filters = app.get_setting("publish_filters", [])
         filters.extend(pub_filters)
 
-        ShotgunOverlayModel._load_data(self,
-                                       entity_type=publish_entity_type,
-                                       filters=filters,
-                                       hierarchy=["version_number"],
-                                       fields=fields)
+        ShotgunModel._load_data(self,
+                                entity_type=publish_entity_type,
+                                filters=filters,
+                                hierarchy=["version_number"],
+                                fields=fields)
 
         self._refresh_data()
 

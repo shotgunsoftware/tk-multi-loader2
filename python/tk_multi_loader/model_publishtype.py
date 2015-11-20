@@ -13,9 +13,9 @@ from sgtk.platform.qt import QtCore, QtGui
 
 # import the shotgun_model module from the shotgun utils framework
 shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model") 
-ShotgunOverlayModel = shotgun_model.ShotgunOverlayModel 
+ShotgunModel = shotgun_model.ShotgunModel 
 
-class SgPublishTypeModel(ShotgunOverlayModel):
+class SgPublishTypeModel(ShotgunModel):
     """
     This model holds all the publish types. It is connected to the filter UI where
     a user can choose which items to display.
@@ -32,17 +32,16 @@ class SgPublishTypeModel(ShotgunOverlayModel):
     
     FOLDERS_ITEM_TEXT = "Folders"
     
-    def __init__(self, parent, overlay_widget, action_manager, settings_manager, bg_task_manager):
+    def __init__(self, parent, action_manager, settings_manager, bg_task_manager):
         """
         Constructor
         """
-        ShotgunOverlayModel.__init__(self, 
-                                     parent, 
-                                     overlay_widget, 
-                                     download_thumbs=False,
-                                     schema_generation=2,
-                                     bg_load_thumbs=True,
-                                     bg_task_manager=bg_task_manager)
+        ShotgunModel.__init__(self, 
+                             parent,  
+                             download_thumbs=False,
+                             schema_generation=2,
+                             bg_load_thumbs=True,
+                             bg_task_manager=bg_task_manager)
         
         self._action_manager = action_manager
         self._settings_manager = settings_manager
@@ -73,12 +72,12 @@ class SgPublishTypeModel(ShotgunOverlayModel):
         # action mappings - whenever these change, the cache data is also affected. 
         mappings_str = str(app.get_setting("action_mappings"))
                 
-        ShotgunOverlayModel._load_data(self, 
-                                       entity_type=publish_type_field, 
-                                       filters=[], 
-                                       hierarchy=["code"], 
-                                       fields=["code", "id"],
-                                       seed=mappings_str)
+        ShotgunModel._load_data(self, 
+                                entity_type=publish_type_field, 
+                                filters=[], 
+                                hierarchy=["code"], 
+                                fields=["code", "id"],
+                                seed=mappings_str)
         
         # and finally ask model to refresh itself
         self._refresh_data()
@@ -100,7 +99,7 @@ class SgPublishTypeModel(ShotgunOverlayModel):
         self._settings_manager.store("deselected_pub_types_v2", val, self._settings_manager.SCOPE_INSTANCE)
         
         # call base class
-        ShotgunOverlayModel.destroy(self)
+        ShotgunModel.destroy(self)
 
     def select_none(self):
         """

@@ -13,15 +13,18 @@ from sgtk.platform.qt import QtCore, QtGui
 
 # import the shotgun_model module from the shotgun utils framework
 shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model")
-ShotgunOverlayModel = shotgun_model.ShotgunOverlayModel 
+ShotgunModel = shotgun_model.ShotgunModel 
 
-class SgEntityModel(ShotgunOverlayModel):
+
+
+
+class SgEntityModel(ShotgunModel):
     """
     This model represents the data which is displayed inside one of the treeview tabs
     on the left hand side.
     """
     
-    def __init__(self, parent, overlay_widget, entity_type, filters, hierarchy, bg_task_manager):
+    def __init__(self, parent, entity_type, filters, hierarchy, bg_task_manager):
         """
         Constructor
         """
@@ -42,15 +45,18 @@ class SgEntityModel(ShotgunOverlayModel):
         self._entity_icons["Ticket"] = QtGui.QIcon(QtGui.QPixmap(":/res/icon_Ticket_dark.png"))
         self._entity_icons["Version"] = QtGui.QIcon(QtGui.QPixmap(":/res/icon_Version_dark.png"))
         
-        ShotgunOverlayModel.__init__(self, 
-                                     parent, 
-                                     overlay_widget, 
-                                     download_thumbs=False, 
-                                     schema_generation=4,
-                                     bg_load_thumbs=True,
-                                     bg_task_manager=bg_task_manager)
+        ShotgunModel.__init__(self,
+                              parent,
+                             download_thumbs=False, 
+                             schema_generation=4,
+                             bg_load_thumbs=True,
+                             bg_task_manager=bg_task_manager)
         fields=["image", "sg_status_list", "description"]
         self._load_data(entity_type, filters, hierarchy, fields)
+        
+        
+        
+        
     
     ############################################################################################
     # public methods

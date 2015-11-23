@@ -30,7 +30,10 @@ from .ui.dialog import Ui_Dialog
 shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model")
 settings = sgtk.platform.import_framework("tk-framework-shotgunutils", "settings")
 help_screen = sgtk.platform.import_framework("tk-framework-qtwidgets", "help_screen")
+overlay_widget = sgtk.platform.import_framework("tk-framework-qtwidgets", "overlay_widget")
 task_manager = sgtk.platform.import_framework("tk-framework-shotgunutils", "task_manager")
+
+ShotgunModelOverlayWidget = overlay_widget.ShotgunModelOverlayWidget
 
 class AppDialog(QtGui.QWidget):
     """
@@ -96,9 +99,10 @@ class AppDialog(QtGui.QWidget):
         self.ui.thumbnail_mode.clicked.connect(self._on_thumbnail_mode_clicked)
         self.ui.list_mode.clicked.connect(self._on_list_mode_clicked)
 
-        self._publish_history_model = SgPublishHistoryModel(self, 
-                                                            self.ui.history_view,
-                                                            self._task_manager)
+        self._publish_history_model = SgPublishHistoryModel(self, self._task_manager)
+
+        self._publish_history_model_overlay = ShotgunModelOverlayWidget(self._publish_history_model, 
+                                                                        self.ui.history_view)
 
         self._publish_history_proxy = QtGui.QSortFilterProxyModel(self)
         self._publish_history_proxy.setSourceModel(self._publish_history_model)
@@ -126,6 +130,7 @@ class AppDialog(QtGui.QWidget):
         self._history_view_selection_model.selectionChanged.connect(self._on_history_selection)
 
         self._no_selection_pixmap = QtGui.QPixmap(":/res/no_item_selected_512x400.png")
+        self._no_pubs_found_icon = QtGui.QPixmap(":/res/no_publishes_found.png")
 
         self.ui.detail_playback_btn.clicked.connect(self._on_detail_version_playback)
         self._current_version_detail_playback_url = None
@@ -142,18 +147,22 @@ class AppDialog(QtGui.QWidget):
         #################################################
         # load and initialize cached publish type model
         self._publish_type_model = SgPublishTypeModel(self,
-                                                      self.ui.publish_type_list,
                                                       self._action_manager,
                                                       self._settings_manager,
                                                       self._task_manager)
         self.ui.publish_type_list.setModel(self._publish_type_model)
+        
+        self._publish_type_overlay = ShotgunModelOverlayWidget(self._publish_type_model, 
+                                                               self.ui.publish_type_list)
 
         #################################################
         # setup publish model
         self._publish_model = SgLatestPublishModel(self, 
-                                                   self.ui.publish_view, 
                                                    self._publish_type_model,
                                                    self._task_manager)
+
+        self._publish_main_overlay = ShotgunModelOverlayWidget(self._publish_model, 
+                                                               self.ui.publish_view)
 
         # set up a proxy model to cull results based on type selection
         self._publish_proxy_model = SgLatestPublishProxyModel(self)
@@ -805,8 +814,13 @@ class AppDialog(QtGui.QWidget):
         """
         # if no publish items are visible, display not found overlay
         num_pub_items = self._publish_proxy_model.rowCount()
-        self._publish_model.toggle_not_found_overlay(num_pub_items == 0)
-
+        
+        if num_pub_items == 0:
+            # show 'nothing found' image
+            self._publish_main_overlay.show_message_pixmap(self._no_pubs_found_icon)
+        else:
+            self._publish_main_overlay.hide()            
+        
     def _on_show_subitems_toggled(self):
         """
         Triggered when the show sub items checkbox is clicked
@@ -1141,11 +1155,12 @@ class AppDialog(QtGui.QWidget):
 
             # set up data backend
             model = SgEntityModel(self, 
-                                  view, 
                                   sg_entity_type, 
                                   e["filters"], 
                                   e["hierarchy"],
                                   self._task_manager)
+            
+            overlay = ShotgunModelOverlayWidget(model, view)
 
             # set up right click menu
             action_ea = QtGui.QAction("Expand All Folders", view)
@@ -1168,6 +1183,7 @@ class AppDialog(QtGui.QWidget):
                                            search,
                                            clear_search,
                                            view,
+                                           overlay,
                                            action_ea,
                                            action_ca,
                                            action_refresh] )

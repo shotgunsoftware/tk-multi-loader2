@@ -43,12 +43,6 @@ class PublishThumbWidget(QtGui.QWidget):
         self.ui = Ui_PublishThumbWidget() 
         self.ui.setupUi(self)
         
-        # set up an event filter to ensure that the thumbnails
-        # are scaled in a square fashion.
-        filter = ResizeEventFilter(self.ui.thumbnail)
-        filter.resized.connect(self.__on_thumb_resized)
-        self.ui.thumbnail.installEventFilter(filter)
-        
         # set up action menu
         self._menu = QtGui.QMenu()
         self._actions = []
@@ -64,7 +58,6 @@ class PublishThumbWidget(QtGui.QWidget):
         self._transp_highlight_str = "rgba(%s, %s, %s, 25%%)" % (highlight_col.red(), 
                                                                  highlight_col.green(), 
                                                                  highlight_col.blue())
-        
         
     def set_actions(self, actions):
         """
@@ -129,18 +122,6 @@ class PublishThumbWidget(QtGui.QWidget):
         # add another 34px for the height so the text can be rendered.
         return QtCore.QSize(scale_factor, (scale_factor*0.78125)+34)
         
-    def __on_thumb_resized(self):
-        """
-        Slot Called whenever the thumbnail area is being resized,
-        making sure that the label scales with the right aspect ratio.
-        """
-        new_size = self.ui.thumbnail.size()
-
-        # Aspect ratio of thumbs: 512/400 = 1.28
-        calc_height = 0.78125 * (float)(new_size.width())
-        
-        if abs(calc_height - new_size.height()) > 2: 
-            self.ui.thumbnail.resize(new_size.width(), calc_height)
 
 
 class SgPublishThumbDelegate(shotgun_view.EditSelectedWidgetDelegate):

@@ -65,6 +65,8 @@ class PublishListWidget(QtGui.QWidget):
             self.ui.button.setVisible(False)
         else:
             self.ui.button.setVisible(True)
+
+            # keep a reference to the actions so that they do not get GCed
             self._actions = actions
             for a in self._actions:
                 self._menu.addAction(a)

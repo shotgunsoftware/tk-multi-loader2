@@ -32,7 +32,14 @@ class MultiLoader(sgtk.platform.Application):
         cb = lambda : tk_multi_loader.show_dialog(self)
         menu_caption = "%s..." % self.get_setting("menu_name")
         menu_options = { "short_name": self.get_setting("menu_name").replace(" ", "_") }
-        self.engine.register_command(menu_caption, cb, menu_options)        
+        self.engine.register_command(menu_caption, cb, menu_options)
+
+    @property
+    def context_change_allowed(self):
+        """
+        Specifies that context changes are allowed.
+        """
+        return True
 
     def open_publish(self, title="Open Publish", action="Open", publish_types = []):
         """

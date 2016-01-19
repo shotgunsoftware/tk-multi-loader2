@@ -69,6 +69,21 @@ class HoudiniActions(HookBaseClass):
                                       "params": None,
                                       "caption": "Merge", 
                                       "description": "This will merge the item into the scene."} )        
+        if "import" in actions:
+            action_instances.append({
+                "name": "import",
+                "params": None,
+                "caption": "Import",
+                "description": "Import the Alembic cache file into a geometry network.",
+            })
+
+        if "import_archive" in actions:
+            action_instances.append({
+                "name": "import_archive",
+                "params": None,
+                "caption": "Import Archive",
+                "description": "Import the Alembic cache into the object level.",
+            })
     
         return action_instances
                 
@@ -92,6 +107,12 @@ class HoudiniActions(HookBaseClass):
         
         if name == "merge":
             self._merge(path, sg_publish_data)
+
+        if name == "import":
+            self._import(path, sg_publish_data)
+
+        if name == "import_archive":
+            self._import_archive(path, sg_publish_data)
                         
            
     ##############################################################################################################
@@ -116,4 +137,46 @@ class HoudiniActions(HookBaseClass):
         hou.hipFile.merge(path,
                           node_pattern="*",
                           overwrite_on_conflict=False,
-                          ignore_load_warnings=False)       
+                          ignore_load_warnings=False) 
+
+
+    ##############################################################################################################
+    def _import(self, path, sg_publish_data):
+
+        import hou
+        app = self.parent
+
+        name = sg_publish_data.get("name", "alembic")
+        path = self.get_publish_path(sg_publish_data)
+
+        obj_context = hou.node("/obj")
+        app.log_debug("Creating geo: %s" % (name,))
+        geo_node = obj_context.createNode("geo", name)
+
+        # delete the default nodes created in the geo
+        for child in geo_node.children():
+            child.destroy()
+
+        app.log_debug("Creating alembic sop: %s" % (name,))
+        alembic_sop = geo_node.createNode("alembic", name)
+        app.log_debug("Setting alembic sop path: %s" % (path,))
+        alembic_sop.parm("fileName").set(path)
+        alembic_sop.parm("reload").pressButton()
+
+
+    ##############################################################################################################
+    def _import_archive(self, path, sg_publish_data):
+
+        import hou
+        app = self.parent
+
+        name = sg_publish_data.get("name", "alembicarchive")
+        path = self.get_publish_path(sg_publish_data)
+
+        obj_context = hou.node("/obj")
+        app.log_debug("Creating alembic archive: %s" % (name,))
+        archive_node = obj_context.createNode("alembicarchive", name)
+        archive_node.parm("fileName").set(path)
+        archive_node.parm("buildHierarchy").pressButton()
+
+

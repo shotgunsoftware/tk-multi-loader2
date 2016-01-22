@@ -142,6 +142,12 @@ class HoudiniActions(HookBaseClass):
 
     ##############################################################################################################
     def _import(self, path, sg_publish_data):
+        """Import the supplied path as a geo/alembic sop.
+        
+        :param str path: The path to the file to import.
+        :param dict sg_publish_data: The publish data for the supplied path.
+        
+        """
 
         import hou
         app = self.parent
@@ -149,9 +155,15 @@ class HoudiniActions(HookBaseClass):
         name = sg_publish_data.get("name", "alembic")
         path = self.get_publish_path(sg_publish_data)
 
-        obj_context = hou.node("/obj")
+        obj_context = _get_current_context("/obj")
         app.log_debug("Creating geo: %s" % (name,))
-        geo_node = obj_context.createNode("geo", name)
+
+        try:
+            geo_node = obj_context.createNode("geo", name)
+        except hou.OperationFailed:
+            # failed to create the node in this context, create at top-level
+            obj_context = hou.node("/obj")
+            geo_node = obj_context.createNode("geo", name)
 
         # delete the default nodes created in the geo
         for child in geo_node.children():
@@ -163,9 +175,17 @@ class HoudiniActions(HookBaseClass):
         alembic_sop.parm("fileName").set(path)
         alembic_sop.parm("reload").pressButton()
 
+        _show_node(alembic_sop)
+
 
     ##############################################################################################################
     def _import_archive(self, path, sg_publish_data):
+        """Import the supplied path as an alembiccache node.
+        
+        :param str path: The path to the file to import.
+        :param dict sg_publish_data: The publish data for the supplied path.
+        
+        """
 
         import hou
         app = self.parent
@@ -173,10 +193,91 @@ class HoudiniActions(HookBaseClass):
         name = sg_publish_data.get("name", "alembicarchive")
         path = self.get_publish_path(sg_publish_data)
 
-        obj_context = hou.node("/obj")
+        obj_context = _get_current_context("/obj")
         app.log_debug("Creating alembic archive: %s" % (name,))
-        archive_node = obj_context.createNode("alembicarchive", name)
+
+        try:
+            archive_node = obj_context.createNode("alembicarchive", name)
+        except hou.OperationFailed:
+            # failed to create in current context, create at top-level
+            obj_context = hou.node("/obj")
+            archive_node = obj_context.createNode("alembicarchive", name)
+
         archive_node.parm("fileName").set(path)
         archive_node.parm("buildHierarchy").pressButton()
 
+        _show_node(archive_node)
 
+
+##############################################################################################################
+def _get_current_context(context_type):
+    """Attempts to return the current node context.
+
+    :param str context_type: Return a full context under this context type.
+        Example: "/obj"
+
+    Looks for a current network pane tab displaying the supplied context type.
+    Returns the full context being displayed in that network editor.
+
+    """
+
+    import hou
+
+    # default to the top level context type
+    context = hou.node(context_type)
+
+    network_tab = _get_current_network_panetab(context_type)
+    if network_tab:
+        context = network_tab.pwd()
+    
+    return context
+
+
+##############################################################################################################
+def _get_current_network_panetab(context_type):
+    """Attempt to retrieve the current network pane tab.
+
+    :param str context_type: Search for a network pane showing this context
+        type. Example: "/obj"
+
+    """
+    
+    import hou
+    network_tab = None
+
+    # there doesn't seem to be a way to know the current context "type" since
+    # there could be multiple network panels open with different contexts
+    # displayed. so for now, loop over pane tabs and find a network editor in
+    # the specified context type that is the current tab in its pane. hopefully
+    # that's the one the user is looking at.
+    for panetab in hou.ui.paneTabs():
+        if (isinstance(panetab, hou.NetworkEditor) and 
+            panetab.pwd().path().startswith(context_type) and
+            panetab.isCurrentTab()):
+
+            network_tab = panetab
+            break
+
+    return network_tab
+
+
+##############################################################################################################
+def _show_node(node):
+    """Frame the supplied node in the current network pane.
+    
+    :param hou.Node node: The node to frame in the current network pane.
+    
+    """
+
+    context_type = "/" + node.path().split("/")[0] 
+    network_tab = _get_current_network_panetab(context_type)
+
+    if not network_tab:
+        return
+
+    # select the node and frame it
+    node.setSelected(True, clear_all_selected=True)
+    network_tab.cd(node.parent().path())
+    network_tab.frameSelection()
+
+    

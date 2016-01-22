@@ -156,7 +156,6 @@ class HoudiniActions(HookBaseClass):
         path = self.get_publish_path(sg_publish_data)
 
         obj_context = _get_current_context("/obj")
-        app.log_debug("Creating geo: %s" % (name,))
 
         try:
             geo_node = obj_context.createNode("geo", name)
@@ -165,14 +164,18 @@ class HoudiniActions(HookBaseClass):
             obj_context = hou.node("/obj")
             geo_node = obj_context.createNode("geo", name)
 
+        app.log_debug("Created geo node: %s" % (geo_node.path(),))
+
         # delete the default nodes created in the geo
         for child in geo_node.children():
             child.destroy()
 
-        app.log_debug("Creating alembic sop: %s" % (name,))
         alembic_sop = geo_node.createNode("alembic", name)
-        app.log_debug("Setting alembic sop path: %s" % (path,))
         alembic_sop.parm("fileName").set(path)
+        app.log_debug(
+            "Creating alembic sop: %s\n  path: '%s' " % 
+            (alembic_sop.path(), path)
+        )
         alembic_sop.parm("reload").pressButton()
 
         _show_node(alembic_sop)
@@ -194,7 +197,6 @@ class HoudiniActions(HookBaseClass):
         path = self.get_publish_path(sg_publish_data)
 
         obj_context = _get_current_context("/obj")
-        app.log_debug("Creating alembic archive: %s" % (name,))
 
         try:
             archive_node = obj_context.createNode("alembicarchive", name)
@@ -202,6 +204,9 @@ class HoudiniActions(HookBaseClass):
             # failed to create in current context, create at top-level
             obj_context = hou.node("/obj")
             archive_node = obj_context.createNode("alembicarchive", name)
+
+        app.log_debug(
+            "Created alembicarchive node: %s" % (archive_node.path(),))
 
         archive_node.parm("fileName").set(path)
         archive_node.parm("buildHierarchy").pressButton()

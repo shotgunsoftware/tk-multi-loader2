@@ -155,6 +155,9 @@ class HoudiniActions(HookBaseClass):
         name = sg_publish_data.get("name", "alembic")
         path = self.get_publish_path(sg_publish_data)
 
+        # houdini doesn't like UNC paths.
+        path = path.replace("\\", "/")
+
         obj_context = _get_current_context("/obj")
 
         try:
@@ -195,6 +198,9 @@ class HoudiniActions(HookBaseClass):
 
         name = sg_publish_data.get("name", "alembicarchive")
         path = self.get_publish_path(sg_publish_data)
+
+        # houdini doesn't like UNC paths.
+        path = path.replace("\\", "/")
 
         obj_context = _get_current_context("/obj")
 
@@ -256,7 +262,7 @@ def _get_current_network_panetab(context_type):
     # the specified context type that is the current tab in its pane. hopefully
     # that's the one the user is looking at.
     for panetab in hou.ui.paneTabs():
-        if (isinstance(panetab, hou.NetworkEditor) and 
+        if (isinstance(panetab, hou.NetworkEditor) and
             panetab.pwd().path().startswith(context_type) and
             panetab.isCurrentTab()):
 

@@ -77,14 +77,6 @@ class HoudiniActions(HookBaseClass):
                 "description": "Import the Alembic cache file into a geometry network.",
             })
 
-        if "import_archive" in actions:
-            action_instances.append({
-                "name": "import_archive",
-                "params": None,
-                "caption": "Import Archive",
-                "description": "Import the Alembic cache into the object level.",
-            })
-    
         return action_instances
                 
 
@@ -111,10 +103,7 @@ class HoudiniActions(HookBaseClass):
         if name == "import":
             self._import(path, sg_publish_data)
 
-        if name == "import_archive":
-            self._import_archive(path, sg_publish_data)
-                        
-           
+
     ##############################################################################################################
     # helper methods which can be subclassed in custom hooks to fine tune the behaviour of things
     
@@ -182,42 +171,6 @@ class HoudiniActions(HookBaseClass):
         alembic_sop.parm("reload").pressButton()
 
         _show_node(alembic_sop)
-
-
-    ##############################################################################################################
-    def _import_archive(self, path, sg_publish_data):
-        """Import the supplied path as an alembiccache node.
-        
-        :param str path: The path to the file to import.
-        :param dict sg_publish_data: The publish data for the supplied path.
-        
-        """
-
-        import hou
-        app = self.parent
-
-        name = sg_publish_data.get("name", "alembicarchive")
-        path = self.get_publish_path(sg_publish_data)
-
-        # houdini doesn't like UNC paths.
-        path = path.replace("\\", "/")
-
-        obj_context = _get_current_context("/obj")
-
-        try:
-            archive_node = obj_context.createNode("alembicarchive", name)
-        except hou.OperationFailed:
-            # failed to create in current context, create at top-level
-            obj_context = hou.node("/obj")
-            archive_node = obj_context.createNode("alembicarchive", name)
-
-        app.log_debug(
-            "Created alembicarchive node: %s" % (archive_node.path(),))
-
-        archive_node.parm("fileName").set(path)
-        archive_node.parm("buildHierarchy").pressButton()
-
-        _show_node(archive_node)
 
 
 ##############################################################################################################

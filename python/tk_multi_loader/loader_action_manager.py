@@ -204,6 +204,8 @@ class LoaderActionManager(ActionManager):
         except Exception, e:
             self._app.log_exception("Could not execute execute_action hook.")
             QtGui.QMessageBox.critical(None, "Hook Error", "Error: %s" % e)
+        else:
+            self._app.log_metric("%s action" % (action_name,))
     
     def _show_in_sg(self, entity):
         """

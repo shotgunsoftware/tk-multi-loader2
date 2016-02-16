@@ -139,6 +139,8 @@ requires_shotgun_version:
 requires_core_version: "v0.16.32"
 requires_engine_version:
 
+# XXX will require core that supports metrics logging
+
 # the frameworks required to run this app
 frameworks:
     - {"name": "tk-framework-shotgunutils", "version": "v4.x.x"}

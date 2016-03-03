@@ -32,6 +32,7 @@ settings = sgtk.platform.import_framework("tk-framework-shotgunutils", "settings
 help_screen = sgtk.platform.import_framework("tk-framework-qtwidgets", "help_screen")
 overlay_widget = sgtk.platform.import_framework("tk-framework-qtwidgets", "overlay_widget")
 task_manager = sgtk.platform.import_framework("tk-framework-shotgunutils", "task_manager")
+shotgun_globals = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_globals")
 
 ShotgunModelOverlayWidget = overlay_widget.ShotgunModelOverlayWidget
 
@@ -67,6 +68,8 @@ class AppDialog(QtGui.QWidget):
         self._task_manager = task_manager.BackgroundTaskManager(self, 
                                                                 start_processing=True, 
                                                                 max_threads=2)
+
+        shotgun_globals.register_bg_task_manager(self._task_manager)
 
         # set up the UI
         self.ui = Ui_Dialog()
@@ -357,6 +360,7 @@ class AppDialog(QtGui.QWidget):
                 self._entity_presets[p].view.selectionModel().selectionChanged.disconnect(self._on_treeview_item_selected)
 
             # gracefully close all connections
+            shotgun_globals.unregister_bg_task_manager(self._task_manager)
             self._task_manager.shut_down()
 
         except:

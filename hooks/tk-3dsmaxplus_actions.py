@@ -98,13 +98,34 @@ class MaxActions(HookBaseClass):
         # resolve path
         path = self.get_publish_path(sg_publish_data)
 
-        if name == "merge":
+        # If this is an Alembic cache, then we can import that.
+        if path.endswith(".abc"):
+            self._import_alembic(path)
+        elif name == "merge":
             self._merge(path, sg_publish_data)
         elif name == "xref_scene":
             self._xref_scene(path, sg_publish_data)
     
     ##############################################################################################################
     # helper methods which can be subclassed in custom hooks to fine tune the behaviour of things
+
+    def _import_alembic(self, path):
+        """
+        Imports the given Alembic cache into the scene.
+
+        :param path: Path to .abc file.
+        """
+        # Note that this is assuming Z-Up data. That means this will
+        # work properly for .abc files exported from 3ds Max, but
+        # will likely NOT be correct when importing .abc files from
+        # DCC applications that operate in a Y-Up coordinate system.
+        # The fix for that would be to set AlembicImport.ZUp to false
+        # via maxscript prior to running the importFile.
+        self.parent.engine.safe_dialog_exec(
+            lambda: MaxPlus.Core.EvalMAXScript(
+                "importFile @\"%s\" #noPrompt" % path
+            )
+        )
     
     def _merge(self, path, sg_publish_data):
         """

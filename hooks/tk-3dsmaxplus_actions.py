@@ -100,7 +100,11 @@ class MaxActions(HookBaseClass):
 
         # If this is an Alembic cache, then we can import that.
         if path.endswith(".abc"):
-            self._import_alembic(path)
+            # Note that native Alembic support is only available in Max 2016+.
+            if app.engine._max_version_to_year(app.engine._get_max_version()) >= 2016:
+                self._import_alembic(path)
+            else:
+                app.log_warning("Alembic imports are not available in Max 2015, skipping.")
         elif name == "merge":
             self._merge(path, sg_publish_data)
         elif name == "xref_scene":

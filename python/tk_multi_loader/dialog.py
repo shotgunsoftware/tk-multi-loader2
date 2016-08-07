@@ -1095,6 +1095,11 @@ class AppDialog(QtGui.QWidget):
                         field = app.context.entity
                     elif field == "{context.project}":
                         field = app.context.project
+                    elif field == "{context.project.id}":
+                        if app.context.project:
+                            field = app.context.project.get("id")
+                        else:
+                            field = None
                     elif field == "{context.step}":
                         field = app.context.step
                     elif field == "{context.task}":

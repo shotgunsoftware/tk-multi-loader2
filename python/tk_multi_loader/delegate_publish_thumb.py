@@ -331,7 +331,11 @@ class SgPublishThumbDelegate(shotgun_view.EditSelectedWidgetDelegate):
             tooltip =  "<b>Name:</b> %s" % (sg_data.get("code") or "No name given.")
             # Version 012 by John Smith at 2014-02-23 10:34            
             created_unixtime = sg_data.get("created_at") or 0
-            date_str = datetime.datetime.fromtimestamp(created_unixtime).strftime('%Y-%m-%d %H:%M')
+
+            if isinstance(created_unixtime, datetime.datetime):
+                date_str = created_unixtime.strftime('%Y-%m-%d %H:%M')
+            else:
+                date_str = datetime.datetime.fromtimestamp(str(created_unixtime)).strftime('%Y-%m-%d %H:%M')
 
             # created_by is set to None if the user has been deleted.
             if sg_data.get("created_by") and sg_data["created_by"].get("name"):

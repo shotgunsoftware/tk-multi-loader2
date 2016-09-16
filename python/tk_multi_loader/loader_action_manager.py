@@ -107,7 +107,9 @@ class LoaderActionManager(ActionManager):
 
         # convert created_at unix time stamp to shotgun std time stamp
         unix_timestamp = sg_data.get("created_at")
-        if unix_timestamp:
+        if unix_timestamp and isinstance(unix_timestamp, datetime.datetime):
+            sg_data["created_at"] = unix_timestamp
+        elif unix_timestamp:
             sg_timestamp = datetime.datetime.fromtimestamp(unix_timestamp, 
                                                            shotgun_api3.sg_timezone.LocalTimezone())
             sg_data["created_at"] = sg_timestamp

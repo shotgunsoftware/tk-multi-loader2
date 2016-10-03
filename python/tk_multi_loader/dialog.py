@@ -172,6 +172,7 @@ class AppDialog(QtGui.QWidget):
         # set up a proxy model to cull results based on type selection
         self._publish_proxy_model = SgLatestPublishProxyModel(self)
         self._publish_proxy_model.setSourceModel(self._publish_model)
+        search.textChanged.connect(lambda text, v=view, pm=proxy_model: self._on_search_text_changed(text, v, pm) )
 
         # whenever the number of columns change in the proxy model
         # check if we should display the "sorry, no publishes found" overlay

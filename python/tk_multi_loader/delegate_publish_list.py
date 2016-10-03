@@ -224,9 +224,7 @@ class SgPublishListDelegate(PublishDelegate):
         small_text = "<span style='color:#2C93E2'>%s</span> by %s at %s" % (pub_type_str, 
                                                                             author_str,
                                                                             date_str)
-        small_text += "<br><b>Description:</b> %s" % (sg_data.get("description") or "No description given")
-
-        widget.set_text(main_text, small_text)        
+        widget.set_text(main_text, small_text)
 
     def sizeHint(self, style_options, model_index):
         """

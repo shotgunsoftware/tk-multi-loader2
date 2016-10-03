@@ -172,7 +172,6 @@ class AppDialog(QtGui.QWidget):
         # set up a proxy model to cull results based on type selection
         self._publish_proxy_model = SgLatestPublishProxyModel(self)
         self._publish_proxy_model.setSourceModel(self._publish_model)
-        search.textChanged.connect(lambda text, v=view, pm=proxy_model: self._on_search_text_changed(text, v, pm) )
 
         # whenever the number of columns change in the proxy model
         # check if we should display the "sorry, no publishes found" overlay
@@ -556,6 +555,12 @@ class AppDialog(QtGui.QWidget):
             # hide actions and playback stuff
             self.ui.detail_actions_btn.setVisible(is_publish)
             self.ui.detail_playback_btn.setVisible(is_publish)
+
+        def __clear_publish_history(pixmap):
+            self._publish_history_model.clear()
+            self.ui.details_header.setText("")
+            self.ui.details_image.setPixmap(pixmap)
+            __set_publish_ui_visibility(False)
 
         # note - before the UI has been shown, querying isVisible on the actual
         # widget doesn't work here so use member variable to track state instead
@@ -1200,6 +1205,7 @@ class AppDialog(QtGui.QWidget):
             # set up proxy model that we connect our search to
             proxy_model = SgEntityProxyModel(self)
             proxy_model.setSourceModel(model)
+            search.textChanged.connect(lambda text, v=view, pm=proxy_model: self._on_search_text_changed(text, v, pm) )
 
             self._dynamic_widgets.extend([model, proxy_model])
 

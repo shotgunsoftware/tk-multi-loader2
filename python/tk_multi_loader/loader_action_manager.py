@@ -68,7 +68,7 @@ class LoaderActionManager(ActionManager):
         actions = mappings.get(publish_type, [])
         
         if len(actions) == 0:
-            return []
+            return {}
         
         # cool so we have one or more actions for this publish type.
         # resolve UI area

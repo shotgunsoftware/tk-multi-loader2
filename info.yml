@@ -143,7 +143,3 @@ requires_engine_version:
 frameworks:
     - {"name": "tk-framework-shotgunutils", "version": "v4.x.x"}
     - {"name": "tk-framework-qtwidgets", "version": "v2.x.x"}
-<<<<<<< HEAD
-=======
-    - {"name": "tk-framework-rdo", 'version': "v0.0.x"}
->>>>>>> dev_multiselection

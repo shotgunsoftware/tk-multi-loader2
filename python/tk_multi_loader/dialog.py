@@ -33,7 +33,7 @@ settings = sgtk.platform.import_framework("tk-framework-shotgunutils", "settings
 help_screen = sgtk.platform.import_framework("tk-framework-qtwidgets", "help_screen")
 overlay_widget = sgtk.platform.import_framework("tk-framework-qtwidgets", "overlay_widget")
 task_manager = sgtk.platform.import_framework("tk-framework-shotgunutils", "task_manager")
-app = sgtk.platform.current_bundle()
+shotgun_globals = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_globals")
 
 ShotgunModelOverlayWidget = overlay_widget.ShotgunModelOverlayWidget
 
@@ -210,7 +210,7 @@ class AppDialog(QtGui.QWidget):
         self._refresh_action = QtGui.QAction("Refresh", self.ui.publish_view)
         self._refresh_action.triggered.connect(self._publish_model.async_refresh)
         self.ui.publish_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.ui.publish_view.customContextMenuRequested.connect(self._show_pub
+        self.ui.publish_view.customContextMenuRequested.connect(self._show_publish_actions)
 
         #################################################
         # popdown publish filter widget for the main view
@@ -1503,7 +1503,7 @@ class EntityPreset(object):
     Little struct that represents one of the tabs / presets in the
     Left hand side entity tree view
     """
-    def __init__(self, name, entity_type, model, proxy_model, view, publish_filters:
+    def __init__(self, name, entity_type, model, proxy_model, view, publish_filters):
         self.model = model
         self.proxy_model = proxy_model
         self.name = name

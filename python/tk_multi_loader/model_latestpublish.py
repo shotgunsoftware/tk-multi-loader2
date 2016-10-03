@@ -12,6 +12,7 @@ from collections import defaultdict
 from sgtk.platform.qt import QtCore, QtGui
 
 import sgtk
+import datetime
 from . import utils, constants
 
 # import the shotgun_model module from the shotgun utils framework
@@ -40,7 +41,6 @@ class SgLatestPublishModel(ShotgunModel):
         self._publish_type_model = publish_type_model
         self._folder_icon = QtGui.QIcon(QtGui.QPixmap(":/res/folder_512x400.png"))
         self._loading_icon = QtGui.QIcon(QtGui.QPixmap(":/res/loading_512x400.png"))
-
         self._associated_items = {}
 
         app = sgtk.platform.current_bundle()
@@ -197,6 +197,38 @@ class SgLatestPublishModel(ShotgunModel):
         Refresh the current data set
         """
         self._refresh_data()
+
+    def _set_tooltip(self, item, sg_item):
+        """
+        Sets a tooltip for this model item.
+
+        :param item: ShotgunStandardItem associated with the publish.
+        :param sg_item: Publish information from Shotgun.
+        """
+        tooltip = "<b>Name:</b> %s" % (sg_item.get("code") or "No name given.")
+
+        # Version 012 by John Smith at 2014-02-23 10:34
+        if not isinstance(sg_item.get("created_at"), datetime.datetime):
+            created_unixtime = sg_item.get("created_at") or 0
+            date_str = datetime.datetime.fromtimestamp(created_unixtime).strftime('%Y-%m-%d %H:%M')
+        else:
+            date_str = sg_item.get("created_at").strftime('%Y-%m-%d %H:%M')
+
+        # created_by is set to None if the user has been deleted.
+        if sg_item.get("created_by") and sg_item["created_by"].get("name"):
+            author_str = sg_item["created_by"].get("name")
+        else:
+            author_str = "Unspecified User"
+
+        tooltip += "<br><br><b>Version:</b> %03d by %s at %s" % (
+            sg_item.get("version_number"),
+            author_str,
+            date_str
+        )
+        tooltip += "<br><br><b>Path:</b> %s" % ((sg_item.get("path") or {}).get("local_path"))
+        tooltip += "<br><br><b>Description:</b> %s" % (sg_item.get("description") or "No description given.")
+
+        item.setToolTip(tooltip)
 
     ############################################################################################
     # private methods
@@ -499,7 +531,3 @@ class SgLatestPublishModel(ShotgunModel):
         self._publish_type_model.set_active_types( type_id_aggregates )
 
         return new_sg_data
-
-
-
-

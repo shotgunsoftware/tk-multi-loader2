@@ -156,8 +156,7 @@ class SgPublishTypeModel(ShotgunModel):
                 type_ids.extend(associated_sg_ids)
         
         return type_ids
-        
-        
+               
     def set_active_types(self, type_aggregates):
         """
         Specifies which types are currently active. Also adjust the sort role,
@@ -186,7 +185,7 @@ class SgPublishTypeModel(ShotgunModel):
             for type_id in sg_type_ids:
                 if type_id in type_aggregates:
                     total_matches += type_aggregates[type_id]
-                
+
             if total_matches > 0:
                 # there are matches for this publish type! Add it to the active section
                 # of the filter list.

@@ -27,12 +27,11 @@ class ActionManager(QtCore.QObject):
         """
         QtCore.QObject.__init__(self)
 
-    def get_actions_for_publish(self, sg_data, ui_area):
+    def get_actions_for_publishes(self, sg_data, ui_area):
         """
-        Returns a list of actions for a publish.  Overrides the base
-        implementation as we don't want any regular actions presented
-        in the open dialog.
-        
+        Returns a list of actions for a list of publishes. Returns nothing
+        because we don't want any regular actions presented in the open dialog.
+
         :param sg_data: Shotgun data for a publish
         :param ui_area: Indicates which part of the UI the request is coming from. 
                         Currently one of UI_AREA_MAIN, UI_AREA_DETAILS and UI_AREA_HISTORY

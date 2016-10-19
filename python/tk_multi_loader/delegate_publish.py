@@ -143,6 +143,16 @@ class PublishDelegate(shotgun_view.EditSelectedWidgetDelegate):
         elif is_folder:
             # a folder widget with shotgun data
             widget.set_actions(self._action_manager.get_actions_for_folder(sg_item))
+        else:
+            actions = self._action_manager.get_actions_for_publish(sg_item, self._action_manager.UI_AREA_MAIN)
+            widget.set_actions(actions)
+            # If there is only one selected item and there are actions for it, update the
+            # delegate's tooltip to mention what a double click can achieve.
+            if len(self._view.selectionModel().selectedIndexes()) == 1 and len(actions) > 0:
+                primary_action = actions[0]
+                widget.setToolTip(
+                    "Double click for the <i>%s</i> action." % primary_action.text()
+                )
 
     def _on_before_paint(self, widget, model_index, style_options):
         """

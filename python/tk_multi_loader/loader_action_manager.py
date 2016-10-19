@@ -43,14 +43,14 @@ class LoaderActionManager(ActionManager):
             self._publish_type_field = "tank_type"
         
     
-    def _get_named_actions_for_publish(self, sg_data, ui_area):
+    def _get_actions_for_publish(self, sg_data, ui_area):
         """
-        Retrieves the dictionary of actions for a given publish.
+        Retrieves the list of actions for a given publish.
 
         :param sg_data: Publish to retrieve actions for
         :param ui_area: Indicates which part of the UI the request is coming from.
                         Currently one of UI_AREA_MAIN, UI_AREA_DETAILS and UI_AREA_HISTORY
-        :return: Dictionary of actions indexed by their name.
+        :return: List of actions.
         """
 
         # Figure out the type of the publish
@@ -68,7 +68,7 @@ class LoaderActionManager(ActionManager):
         actions = mappings.get(publish_type, [])
         
         if len(actions) == 0:
-            return {}
+            return []
         
         # cool so we have one or more actions for this publish type.
         # resolve UI area
@@ -84,25 +84,22 @@ class LoaderActionManager(ActionManager):
         # convert created_at unix time stamp to shotgun time stamp
         unix_timestamp = sg_data.get("created_at")
         if isinstance(unix_timestamp, float):
-            sg_timestamp = datetime.datetime.fromtimestamp(unix_timestamp, 
+            sg_timestamp = datetime.datetime.fromtimestamp(unix_timestamp,
                                                            shotgun_api3.sg_timezone.LocalTimezone())
             sg_data["created_at"] = sg_timestamp
 
-        action_defs_dict = {}
+        action_defs = []
         try:
             # call out to hook to give us the specifics.
-            action_defs_list = self._app.execute_hook_method("actions_hook",
-                                                       "generate_actions",
-                                                       sg_publish_data=sg_data,
-                                                       actions=actions,
-                                                       ui_area=ui_area_str)
-            for action_def in action_defs_list:
-                action_defs_dict[action_def["name"]] = action_def
-
+            action_defs = self._app.execute_hook_method("actions_hook",
+                                                        "generate_actions",
+                                                        sg_publish_data=sg_data,
+                                                        actions=actions,
+                                                        ui_area=ui_area_str)
         except Exception:
             self._app.log_exception("Could not execute generate_actions hook.")
 
-        return action_defs_dict
+        return action_defs
 
     def get_actions_for_publishes(self, sg_data_list, ui_area):
         """
@@ -143,20 +140,29 @@ class LoaderActionManager(ActionManager):
 
         # We are going to do an intersection of all the entities' actions. We'll pick the actions from
         # the first item to initialize the intersection...
-        first_entity_actions = self._get_named_actions_for_publish(sg_data_list[0], ui_area)
+        first_entity_actions = self._get_actions_for_publish(sg_data_list[0], ui_area)
 
+        # Dictionary of all actions that are common to all publishes in the selection.
+        # The key is the action name, the value is the a list of data pairs. Each data pair
+        # holds the Shotgun Item the action is for and the action description.
         intersection_actions_per_name = dict(
-            [(action_name, [(sg_data_list[0], action)]) for action_name, action in first_entity_actions.iteritems()]
+            [(action["name"], [(sg_data_list[0], action)]) for action in first_entity_actions]
         )
 
         # ... and then we'll remove actions from that set as we encounter entities without those actions.
 
-        # So, for each entity in the selection...
+        # So, for each publishes in the selection after the first one...
         for sg_data in sg_data_list[1:]:
 
-            # Get all the actions for the current publish
-            publish_actions = self._get_named_actions_for_publish(
+            # Get all the actions for a publish.
+            publish_actions = self._get_actions_for_publish(
                 sg_data, self.UI_AREA_DETAILS
+            )
+
+            # Turn the list of actions into a dictionary of actions using the key
+            # as the name.
+            publish_actions = dict(
+                [(action["name"], action) for action in publish_actions]
             )
 
             # Check if the actions from the intersection are available for this publish
@@ -175,10 +181,24 @@ class LoaderActionManager(ActionManager):
             if not intersection_actions_per_name:
                 break
 
+        # We need to order the resulting intersection like the actions were returned
+        # originally, so muscle memory is intact. This whole sorting business would have
+        # been a lot simpler if the _get_actions_for_publish method could have returned
+        # an ordered dictionary, which is python 2.7 only!
+        intersection_actions = []
+        # Go through the original list
+        for action in first_entity_actions:
+            # If that action is still present in the intersection, add it to the final
+            # list of actions
+            if action["name"] in intersection_actions_per_name:
+                intersection_actions.append(
+                    intersection_actions_per_name[action["name"]]
+                )
+
         # For every actions in the intersection, create an associated QAction with appropriate callback
         # and hook parameters.
-        actions = []
-        for action_list in intersection_actions_per_name.values():
+        qt_actions = []
+        for action_list in intersection_actions:
 
             # We need to title the action, so pick the caption and description of the first item.
             _, first_action_def = action_list[0]
@@ -197,9 +217,9 @@ class LoaderActionManager(ActionManager):
             a.triggered[()].connect(
                 lambda n=name, data_list=pairs: self._execute_hook(n, data_list)
             )
-            actions.append(a)
+            qt_actions.append(a)
 
-        return actions
+        return qt_actions
 
     def get_actions_for_publish(self, sg_data, ui_area):
         """

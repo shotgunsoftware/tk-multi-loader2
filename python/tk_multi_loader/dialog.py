@@ -484,7 +484,8 @@ class AppDialog(QtGui.QWidget):
             self.ui.thumbnail_mode.setIcon(QtGui.QIcon(QtGui.QPixmap(":/res/mode_switch_thumb.png")))
             self.ui.thumbnail_mode.setChecked(False)
             self.ui.publish_view.setViewMode(QtGui.QListView.ListMode)
-            
+            self.ui.publish_view.setItemDelegate(self._publish_list_delegate)
+            self._show_thumb_scale(False)
         elif mode == self.MAIN_VIEW_THUMB:
             self.ui.list_mode.setIcon(QtGui.QIcon(QtGui.QPixmap(":/res/mode_switch_card.png")))
             self.ui.list_mode.setChecked(False)
@@ -492,12 +493,21 @@ class AppDialog(QtGui.QWidget):
             self.ui.thumbnail_mode.setChecked(True)
             self.ui.publish_view.setViewMode(QtGui.QListView.IconMode)
             self.ui.publish_view.setItemDelegate(self._publish_thumb_delegate)
-            
+            self._show_thumb_scale(True)
         else:
             raise TankError("Undefined view mode!") 
 
         self.ui.publish_view.selectionModel().clear()
         self._settings_manager.store("main_view_mode", mode)
+
+    def _show_thumb_scale(self, is_visible):
+        """
+        Shows or hides the scale widgets.
+
+        :param bool is_visible: If True, scale slider will be shown.
+        """
+        self.ui.thumb_scale.setVisible(is_visible)
+        self.ui.scale_label.setVisible(is_visible)
 
     def _toggle_details_pane(self):
         """

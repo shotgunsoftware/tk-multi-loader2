@@ -1018,7 +1018,10 @@ class AppDialog(QtGui.QWidget):
                     # first switch the tab widget around but without triggering event
                     # code (this would mean an infinite loop!)
                     self._disable_tab_event_handler = True
-                    self.ui.entity_preset_tabs.setCurrentIndex(idx)
+                    try:
+                        self.ui.entity_preset_tabs.setCurrentIndex(idx)
+                    finally:
+                        self._disable_tab_event_handler = False
                     # now run the logic for the switching
                     self._switch_profile_tab(idx, combo_operation_mode)
 
@@ -1268,11 +1271,8 @@ class AppDialog(QtGui.QWidget):
         """
         Called when someone clicks one of the profile tabs
         """
-        # get the name of the clicked tab
-        curr_tab_index = self.ui.entity_preset_tabs.currentIndex()
-        if self._disable_tab_event_handler:
-            self._disable_tab_event_handler = False
-        else:
+        if not self._disable_tab_event_handler:
+            curr_tab_index = self.ui.entity_preset_tabs.currentIndex()
             self._switch_profile_tab(curr_tab_index, False)
 
     def _switch_profile_tab(self, new_index, combo_operation_mode):

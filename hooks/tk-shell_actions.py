@@ -67,68 +67,65 @@ class ShellActions(HookBaseClass):
 
         # For the sake of easy test, we'll reuse Maya publish types.
 
-        if "reference" in actions:
-            action_instances.append({"name": "reference",
-                                     "params": None,
-                                     "caption": "Create Reference",
-                                     "description": "This will add the item to the scene as a standard reference."})
+        if "debug_action_1" in actions:
+            action_instances.append({"name": "debug_action_1",
+                                     "params": "Debug Action 1 'params'",
+                                     "caption": "Debug Action 1",
+                                     "description": "Executes Debug Action 1."})
 
-        if "import" in actions:
-            action_instances.append({"name": "import",
-                                     "params": None,
-                                     "caption": "Import into Scene",
-                                     "description": "This will import the item into the current scene."})
+        if "debug_action_2" in actions:
+            action_instances.append({"name": "debug_action_2",
+                                     "params": "Debug Action 2 'params'",
+                                     "caption": "Debug Action 2",
+                                     "description": "Executes Debug Action 2."})
 
-        if "texture_node" in actions:
-            action_instances.append({"name": "texture_node",
-                                     "params": None,
-                                     "caption": "Create Texture Node",
-                                     "description": "Creates a file texture node for the selected item.."})
+        if "debug_action_3" in actions:
+            action_instances.append({"name": "debug_action_3",
+                                     "params": "Debug Action 3 'params'",
+                                     "caption": "Debug Action 3",
+                                     "description": "Executes Debug Action 3."})
 
-        if "udim_texture_node" in actions:
-            action_instances.append({"name": "udim_texture_node",
-                                     "params": None,
-                                     "caption": "Create Texture Node",
-                                     "description": "Creates a file texture node for the selected item.."})
+        if "debug_action_4" in actions:
+            action_instances.append({"name": "debug_action_4",
+                                     "params": "Debug Action 4 'params'",
+                                     "caption": "Debug Action 4",
+                                     "description": "Executes Debug Action 4."})
         return action_instances
 
-    EXECUTING_SELECTION = "Executing action '%s' on the selection"
-
-    def execute_action_on_selection(self, name, action_params):
+    def execute_multiple_actions(self, actions):
         """
-        Execute the specified action on a list of items.
-        The default implementation dispatches each item from ``action_params`` to
+        Executes the specified action on a list of items.
+
+        The default implementation dispatches each item from ``actions`` to
         the ``execute_action`` method.
-        The ``action_params`` will take the following layout:
-        .. code-block::
-            [
-                (
-                    {"type": "PublishedFile", "id": 3, ...},
-                    # Value returned in the "params" field of "generate_actions" return value>
-                ),
-                # Tuples for the other items in the selection.
-            ]
+
+        The ``actions`` is a list of dictionaries holding all the actions to execute.
+        Each entry will have the following values:
+
+            name: Name of the action to execute
+            sg_publish_data: Publish information coming from Shotgun
+            params: Parameters passed down from the generate_actions hook.
+
         .. note::
             This is the default entry point for the hook. It reuses the ``execute_action``
             method for backward compatibility with hooks written for the previous
             version of the loader.
+
         .. note::
             The hook will stop applying the actions on the selection if an error
             is raised midway through.
-        :param str name: Name of the action that is about to be executed.
-        :param list action_params: Tuples of publish data and the action's parameters.
+
+        :param list actions: Action dictionaries.
         """
+        app = self.parent
+        app.log_info("Executing action '%s' on the selection")
         # Helps to visually scope selections
-        title = self.EXECUTING_SELECTION % name
-        print "=" * len(title)
-        print title
-
         # Execute each action.
-        for sg_publish_data, params in action_params:
+        for single_action in actions:
+            name = single_action["name"]
+            sg_publish_data = single_action["sg_publish_data"]
+            params = single_action["params"]
             self.execute_action(name, params, sg_publish_data)
-
-            # Help to visually scope individual publishes
-            print "-" * len(title)
 
     def execute_action(self, name, params, sg_publish_data):
         """
@@ -140,5 +137,12 @@ class ShellActions(HookBaseClass):
         :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
         :returns: No return value expected.
         """
-        print "Parameters: %s" % pprint.pformat(params)
-        print "Publish data: %s" % pprint.pformat(sg_publish_data)
+        app = self.parent
+        app.log_info("Action Name: %s" % name)
+        app.log_info("Parameters:")
+        for l in pprint.pformat(params, indent=4).split("\n"):
+            app.log_info(l)
+        app.log_info("Publish data:")
+        for l in pprint.pformat(sg_publish_data, indent=4).split("\n"):
+            app.log_info(l)
+        app.log_info("=" * 20)

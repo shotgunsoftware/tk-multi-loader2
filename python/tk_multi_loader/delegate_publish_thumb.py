@@ -30,8 +30,6 @@ class PublishThumbWidget(PublishWidget):
     
     def __init__(self, parent):
         """
-        Constructor
-        
         :param parent: QT parent object
         """
         PublishWidget.__init__(self, Ui_PublishThumbWidget, parent)
@@ -60,6 +58,9 @@ class PublishThumbWidget(PublishWidget):
         
 
 class SgPublishThumbDelegate(PublishDelegate):
+    """
+    Delegate which 'glues up' the Thumb widget with a QT View.
+    """
 
     def _create_widget(self, parent):
         """
@@ -71,7 +72,12 @@ class SgPublishThumbDelegate(PublishDelegate):
         return PublishThumbWidget(parent)
 
     def _format_folder(self, model_index, widget):
+        """
+        Formats the associated widget as a folder item.
 
+        :param model_index: Index of the item being drawn by the delegate.
+        :param widget: Qt widget created by the delegate for rendering.
+        """
         # this is a publish!
         sg_data = shotgun_model.get_sg_data(model_index)
 
@@ -122,6 +128,13 @@ class SgPublishThumbDelegate(PublishDelegate):
         widget.set_text(header_text, details_text)
 
     def _format_publish(self, model_index, widget):
+        """
+        Formats the associated widget as a publish.
+
+        :param model_index: Index of the item being drawn by the delegate.
+        :param widget: Qt widget created by the delegate for rendering.
+        """
+
         # this is a publish!
         sg_data = shotgun_model.get_sg_data(model_index)
 

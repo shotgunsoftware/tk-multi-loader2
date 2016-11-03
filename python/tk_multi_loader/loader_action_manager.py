@@ -211,11 +211,17 @@ class LoaderActionManager(ActionManager):
 
             # Create a list that contains return every (publish info, hook param) pairs for invoking
             # the hook.
-            pairs = [(sg_data, action_def["params"]) for (sg_data, action_def) in action_list]
+            actions = [
+                {
+                    "sg_publish_data": sg_data,
+                    "name": name,
+                    "params": action_def["params"]
+                } for (sg_data, action_def) in action_list
+            ]
 
-            # Bind all the pairs to a single invocation of the _execute_hook.
+            # Bind all the action params to a single invocation of the _execute_hook.
             a.triggered[()].connect(
-                lambda n=name, data_list=pairs: self._execute_hook(n, data_list)
+                lambda actions=actions: self._execute_hook(actions)
             )
             qt_actions.append(a)
 
@@ -278,7 +284,7 @@ class LoaderActionManager(ActionManager):
     ########################################################################################
     # callbacks
 
-    def _execute_hook(self, action_name, data_pairs):
+    def _execute_hook(self, actions):
         """
         callback - executes a hook
         """
@@ -286,15 +292,14 @@ class LoaderActionManager(ActionManager):
 
         try:
             self._app.execute_hook_method("actions_hook",
-                                          "execute_action_on_selection",
-                                          name=action_name,
-                                          action_params=data_pairs)
+                                          "execute_multiple_actions",
+                                          actions=actions)
         except Exception, e:
             self._app.log_exception("Could not execute execute_action hook.")
             QtGui.QMessageBox.critical(None, "Hook Error", "Error: %s" % e)
         else:
             try:
-                self._app.log_metric("%s action" % (action_name,))
+                self._app.log_metric("%s action" % (actions[0]["action_name"],))
             except:
                 # ignore all errors. ex: using a core that doesn't support metrics
                 pass

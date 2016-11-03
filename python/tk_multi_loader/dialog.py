@@ -567,6 +567,11 @@ class AppDialog(QtGui.QWidget):
             self.ui.detail_playback_btn.setVisible(is_publish)
 
         def __clear_publish_history(pixmap):
+            """
+            Helper method that clears the history view on the right hand side.
+
+            :param pixmap: image to set at the top of the history view.
+            """
             self._publish_history_model.clear()
             self.ui.details_header.setText("")
             self.ui.details_image.setPixmap(pixmap)

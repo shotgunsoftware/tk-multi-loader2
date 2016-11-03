@@ -80,23 +80,19 @@ class MaxActions(HookBaseClass):
         
         return action_instances
 
-    def execute_action_on_selection(self, name, action_params):
+    def execute_multiple_actions(self, actions):
         """
         Executes the specified action on a list of items.
 
-        The default implementation dispatches each item from ``action_params`` to
+        The default implementation dispatches each item from ``actions`` to
         the ``execute_action`` method.
 
-        The ``action_params`` will take the following layout:
+        The ``actions`` is a list of dictionaries holding all the actions to execute.
+        Each entry will have the following values:
 
-        .. code-block::
-            [
-                (
-                    {"type": "PublishedFile", "id": 3, ...},
-                    # Value returned in the "params" field of "generate_actions" return value>
-                ),
-                # Tuples for the other items in the selection.
-            ]
+            name: Name of the action to execute
+            sg_publish_data: Publish information coming from Shotgun
+            params: Parameters passed down from the generate_actions hook.
 
         .. note::
             This is the default entry point for the hook. It reuses the ``execute_action``
@@ -107,10 +103,12 @@ class MaxActions(HookBaseClass):
             The hook will stop applying the actions on the selection if an error
             is raised midway through.
 
-        :param str name: Name of the action that is about to be executed.
-        :param list action_params: Tuples of publish data and the action's parameters.
+        :param list actions: Action dictionaries.
         """
-        for sg_publish_data, params in action_params:
+        for single_action in actions:
+            name = single_action["name"]
+            sg_publish_data = single_action["sg_publish_data"]
+            params = single_action["params"]
             self.execute_action(name, params, sg_publish_data)
 
     def execute_action(self, name, params, sg_publish_data):

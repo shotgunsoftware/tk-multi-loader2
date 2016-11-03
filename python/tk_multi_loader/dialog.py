@@ -133,7 +133,7 @@ class AppDialog(QtGui.QWidget):
         self._history_view_selection_model = self.ui.history_view.selectionModel()
         self._history_view_selection_model.selectionChanged.connect(self._on_history_selection)
 
-        self._too_many_publishes_pixmap = QtGui.QPixmap(":/res/too_many_publishes_512x400.png")
+        self._multiple_publishes_pixmap = QtGui.QPixmap(":/res/multiple_publishes_512x400.png")
         self._no_selection_pixmap = QtGui.QPixmap(":/res/no_item_selected_512x400.png")
         self._no_pubs_found_icon = QtGui.QPixmap(":/res/no_publishes_found.png")
 
@@ -585,7 +585,7 @@ class AppDialog(QtGui.QWidget):
         if len(items) == 0:
             __clear_publish_history(self._no_selection_pixmap)
         elif len(items) > 1:
-            __clear_publish_history(self._too_many_publishes_pixmap)
+            __clear_publish_history(self._multiple_publishes_pixmap)
         else:
 
             model_index = items[0]

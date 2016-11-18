@@ -17,15 +17,20 @@ class SgEntityProxyModel(QtGui.QSortFilterProxyModel):
     """
     Filter model to be used in conjunction with SgEntityModel
     """
-    
+
     def __init__(self, parent):
         QtGui.QSortFilterProxyModel.__init__(self, parent)
-        
+
         # to avoid n^2 characteristics, cache computations
-        # as we go through and recurse down. 
+        # as we go through and recurse down.
         self._cache = {}
         self._cache_hits = 0
-        
+
+        # set proxy to auto sort alphabetically
+        self.setDynamicSortFilter(True)
+        self.sort(0, QtCore.Qt.AscendingOrder)
+
+
     def _matching_r(self, search_exp, item):
         """
         Recursive matching.
@@ -33,12 +38,12 @@ class SgEntityProxyModel(QtGui.QSortFilterProxyModel):
         # use the python memory address as a key - both
         # for performance and to avoid keeping references to items
         item_hash = str(id(item))
-        
+
         # check cache - did we already compute the cull state of this node?
         if item_hash in self._cache:
             self._cache_hits += 1
-            return self._cache[item_hash]        
-        
+            return self._cache[item_hash]
+
         # evaluate this node
         if search_exp.indexIn(item.text()) != -1:
             # item is matching - exit early - no need
@@ -46,7 +51,7 @@ class SgEntityProxyModel(QtGui.QSortFilterProxyModel):
             # we know we want to show this node
             self._cache[item_hash] = True
             return True
-            
+
         # the node wasn't a direct match - however we still
         # want to show it if any of its *children* are matching
         # so recurse down...
@@ -56,12 +61,12 @@ class SgEntityProxyModel(QtGui.QSortFilterProxyModel):
                 # exit early as soon as we find a match for performance
                 self._cache[item] = True
                 return True
-        
+
         # no sub nodes matches. Keep this result in the cache so that next
         # time we need to compute it, we don't need to :)
         self._cache[item_hash] = False
         return False
-        
+
     def setFilterFixedString(self, pattern):
         """
         Overridden from base class.
@@ -73,13 +78,13 @@ class SgEntityProxyModel(QtGui.QSortFilterProxyModel):
         if cache_len > 0:
             ratio = (float)(self._cache_hits) / (float)(cache_len) * 100.0
             app.log_debug("Search efficiency: %s items %4f%% cache hit ratio." % (cache_len, ratio))
-        
-        self._cache_hits = 0        
+
+        self._cache_hits = 0
         self._cache = {}
-        
+
         # call base class
         return QtGui.QSortFilterProxyModel.setFilterFixedString(self, pattern)
-        
+
     def filterAcceptsRow(self, source_row, source_parent_idx):
         """
         Overridden from base class.
@@ -87,14 +92,14 @@ class SgEntityProxyModel(QtGui.QSortFilterProxyModel):
         # get the search filter, as specified via setFilterFixedString()
         search_exp = self.filterRegExp()
         search_exp.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
-        
+
         # if there is no search criteria, exit early!
         if search_exp.isEmpty():
             return True
 
-        # look at the node and all its children to see if we should keep or cull.        
+        # look at the node and all its children to see if we should keep or cull.
         model = self.sourceModel()
-        
+
         # get the actual model index we are testing
         if not source_parent_idx.isValid():
             # top level item
@@ -103,7 +108,7 @@ class SgEntityProxyModel(QtGui.QSortFilterProxyModel):
             # child item
             item_model_idx = source_parent_idx.child(source_row, 0)
             item = model.itemFromIndex(item_model_idx)
-        
+
         # evaluate recursive match
         return self._matching_r(search_exp, item)
-        
+

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'dialog.ui'
 #
-#      by: pyside-uic 0.2.13 running on PySide 1.1.1
+#      by: pyside-uic 0.2.15 running on PySide 1.2.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -231,11 +231,11 @@ class Ui_Dialog(object):
         self.horizontalLayout_4.addWidget(self.show_sub_items)
         spacerItem1 = QtGui.QSpacerItem(128, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.horizontalLayout_4.addItem(spacerItem1)
-        self.label_2 = QtGui.QLabel(Dialog)
-        self.label_2.setText("")
-        self.label_2.setPixmap(QtGui.QPixmap(":/res/search.png"))
-        self.label_2.setObjectName("label_2")
-        self.horizontalLayout_4.addWidget(self.label_2)
+        self.scale_label = QtGui.QLabel(Dialog)
+        self.scale_label.setText("")
+        self.scale_label.setPixmap(QtGui.QPixmap(":/res/search.png"))
+        self.scale_label.setObjectName("scale_label")
+        self.horizontalLayout_4.addWidget(self.scale_label)
         self.thumb_scale = QtGui.QSlider(Dialog)
         self.thumb_scale.setMinimumSize(QtCore.QSize(100, 0))
         self.thumb_scale.setMaximumSize(QtCore.QSize(100, 16777215))

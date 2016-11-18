@@ -95,6 +95,37 @@ class MayaActions(HookBaseClass):
                                           "description": "Creates a file texture node for the selected item.."} )    
         return action_instances
 
+    def execute_multiple_actions(self, actions):
+        """
+        Executes the specified action on a list of items.
+
+        The default implementation dispatches each item from ``actions`` to
+        the ``execute_action`` method.
+
+        The ``actions`` is a list of dictionaries holding all the actions to execute.
+        Each entry will have the following values:
+
+            name: Name of the action to execute
+            sg_publish_data: Publish information coming from Shotgun
+            params: Parameters passed down from the generate_actions hook.
+
+        .. note::
+            This is the default entry point for the hook. It reuses the ``execute_action``
+            method for backward compatibility with hooks written for the previous
+            version of the loader.
+
+        .. note::
+            The hook will stop applying the actions on the selection if an error
+            is raised midway through.
+
+        :param list actions: Action dictionaries.
+        """
+        for single_action in actions:
+            name = single_action["name"]
+            sg_publish_data = single_action["sg_publish_data"]
+            params = single_action["params"]
+            self.execute_action(name, params, sg_publish_data)
+
     def execute_action(self, name, params, sg_publish_data):
         """
         Execute a given action. The data sent to this be method will

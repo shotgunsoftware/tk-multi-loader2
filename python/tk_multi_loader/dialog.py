@@ -8,6 +8,7 @@
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
+
 import sgtk
 from sgtk import TankError
 from sgtk.platform.qt import QtCore, QtGui
@@ -132,6 +133,7 @@ class AppDialog(QtGui.QWidget):
         self._history_view_selection_model = self.ui.history_view.selectionModel()
         self._history_view_selection_model.selectionChanged.connect(self._on_history_selection)
 
+        self._multiple_publishes_pixmap = QtGui.QPixmap(":/res/multiple_publishes_512x400.png")
         self._no_selection_pixmap = QtGui.QPixmap(":/res/no_item_selected_512x400.png")
         self._no_pubs_found_icon = QtGui.QPixmap(":/res/no_publishes_found.png")
 
@@ -200,14 +202,15 @@ class AppDialog(QtGui.QWidget):
         # note! Because of some GC issues (maya 2012 Pyside), need to first establish
         # a direct reference to the selection model before we can set up any signal/slots
         # against it
+        self.ui.publish_view.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
         self._publish_view_selection_model = self.ui.publish_view.selectionModel()
         self._publish_view_selection_model.selectionChanged.connect(self._on_publish_selection)
 
         # set up right click menu for the main publish view
         self._refresh_action = QtGui.QAction("Refresh", self.ui.publish_view)
         self._refresh_action.triggered.connect(self._publish_model.async_refresh)
-        self.ui.publish_view.addAction(self._refresh_action)
-        self.ui.publish_view.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
+        self.ui.publish_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.ui.publish_view.customContextMenuRequested.connect(self._show_publish_actions)
 
         #################################################
         # popdown publish filter widget for the main view
@@ -282,6 +285,27 @@ class AppDialog(QtGui.QWidget):
         # trigger an initial evaluation of filter proxy model
         self._apply_type_filters_on_publishes()
 
+    def _show_publish_actions(self, pos):
+        """
+        Shows the actions for the current publish selection.
+
+        :param pos: Local coordinates inside the viewport when the context menu was requested.
+        """
+
+        # Build a menu with all the actions.
+        menu = QtGui.QMenu(self)
+        actions = self._action_manager.get_actions_for_publishes(
+            self.selected_publishes, self._action_manager.UI_AREA_MAIN
+        )
+        menu.addActions(actions)
+
+        # Qt is our friend here. If there are no actions available, the separator won't be added, yay!
+        menu.addSeparator()
+        menu.addAction(self._refresh_action)
+
+        # Wait for the user to pick something.
+        menu.exec_(self.ui.publish_view.mapToGlobal(pos))
+
     @property
     def selected_publishes(self):
         """
@@ -305,28 +329,32 @@ class AppDialog(QtGui.QWidget):
             sg_data = item.get_sg_data()
             if sg_data:
                 return [sg_data]
-            
+
+        sg_data_list = []
+
         # nothing selected in the details view so check to see if something is selected 
         # in the main publish view:
         selection_model = self.ui.publish_view.selectionModel()
         if selection_model.hasSelection():
-            # only handle single selection atm
-            proxy_index = selection_model.selection().indexes()[0]
 
-            # the incoming model index is an index into our proxy model
-            # before continuing, translate it to an index into the
-            # underlying model
-            source_index = proxy_index.model().mapToSource(proxy_index)
+            for proxy_index in selection_model.selection().indexes():
 
-            # now we have arrived at our model derived from StandardItemModel
-            # so let's retrieve the standarditem object associated with the index
-            item = source_index.model().itemFromIndex(source_index)
-        
-            sg_data = item.get_sg_data()
-            if sg_data and not item.data(SgLatestPublishModel.IS_FOLDER_ROLE):
-                return [sg_data]
-            
-        return []
+                # the incoming model index is an index into our proxy model
+                # before continuing, translate it to an index into the
+                # underlying model
+                source_index = proxy_index.model().mapToSource(proxy_index)
+
+                # now we have arrived at our model derived from StandardItemModel
+                # so let's retrieve the standarditem object associated with the index
+                item = source_index.model().itemFromIndex(source_index)
+
+                sg_data = item.get_sg_data()
+
+                sg_data = item.get_sg_data()
+                if sg_data and not item.data(SgLatestPublishModel.IS_FOLDER_ROLE):
+                    sg_data_list.append(sg_data)
+
+        return sg_data_list
 
 
 
@@ -456,8 +484,8 @@ class AppDialog(QtGui.QWidget):
             self.ui.thumbnail_mode.setIcon(QtGui.QIcon(QtGui.QPixmap(":/res/mode_switch_thumb.png")))
             self.ui.thumbnail_mode.setChecked(False)
             self.ui.publish_view.setViewMode(QtGui.QListView.ListMode)
-            self.ui.publish_view.setItemDelegate(self._publish_list_delegate)            
-            
+            self.ui.publish_view.setItemDelegate(self._publish_list_delegate)
+            self._show_thumb_scale(False)
         elif mode == self.MAIN_VIEW_THUMB:
             self.ui.list_mode.setIcon(QtGui.QIcon(QtGui.QPixmap(":/res/mode_switch_card.png")))
             self.ui.list_mode.setChecked(False)
@@ -465,12 +493,21 @@ class AppDialog(QtGui.QWidget):
             self.ui.thumbnail_mode.setChecked(True)
             self.ui.publish_view.setViewMode(QtGui.QListView.IconMode)
             self.ui.publish_view.setItemDelegate(self._publish_thumb_delegate)
-            
+            self._show_thumb_scale(True)
         else:
             raise TankError("Undefined view mode!") 
 
         self.ui.publish_view.selectionModel().clear()
         self._settings_manager.store("main_view_mode", mode)
+
+    def _show_thumb_scale(self, is_visible):
+        """
+        Shows or hides the scale widgets.
+
+        :param bool is_visible: If True, scale slider will be shown.
+        """
+        self.ui.thumb_scale.setVisible(is_visible)
+        self.ui.scale_label.setVisible(is_visible)
 
     def _toggle_details_pane(self):
         """
@@ -504,29 +541,9 @@ class AppDialog(QtGui.QWidget):
             # section is focused on this
             selection_model = self.ui.publish_view.selectionModel()
 
-            if selection_model.hasSelection():
+            self._setup_details_panel(selection_model.selectedIndexes())
 
-                current_proxy_model_idx = selection_model.selection().indexes()[0]
-
-                # the incoming model index is an index into our proxy model
-                # before continuing, translate it to an index into the
-                # underlying model
-                proxy_model = current_proxy_model_idx.model()
-                source_index = proxy_model.mapToSource(current_proxy_model_idx)
-
-                # now we have arrived at our model derived from StandardItemModel
-                # so let's retrieve the standarditem object associated with the index
-                item = source_index.model().itemFromIndex(source_index)
-
-                self._setup_details_panel(item)
-
-            else:
-                self._setup_details_panel(None)
-
-
-
-
-    def _setup_details_panel(self, item):
+    def _setup_details_panel(self, items):
         """
         Sets up the details panel with info for a given item.
         """
@@ -549,19 +566,39 @@ class AppDialog(QtGui.QWidget):
             self.ui.detail_actions_btn.setVisible(is_publish)
             self.ui.detail_playback_btn.setVisible(is_publish)
 
+        def __clear_publish_history(pixmap):
+            """
+            Helper method that clears the history view on the right hand side.
+
+            :param pixmap: image to set at the top of the history view.
+            """
+            self._publish_history_model.clear()
+            self.ui.details_header.setText("")
+            self.ui.details_image.setPixmap(pixmap)
+            __set_publish_ui_visibility(False)
+
         # note - before the UI has been shown, querying isVisible on the actual
         # widget doesn't work here so use member variable to track state instead
         if not self._details_pane_visible:
             return
 
-        if item is None:
-            # display a 'please select something' message in the thumb area
-            self._publish_history_model.clear()
-            self.ui.details_header.setText("")
-            self.ui.details_image.setPixmap(self._no_selection_pixmap)
-            __set_publish_ui_visibility(False)
-
+        if len(items) == 0:
+            __clear_publish_history(self._no_selection_pixmap)
+        elif len(items) > 1:
+            __clear_publish_history(self._multiple_publishes_pixmap)
         else:
+
+            model_index = items[0]
+            # the incoming model index is an index into our proxy model
+            # before continuing, translate it to an index into the
+            # underlying model
+            proxy_model = model_index.model()
+            source_index = proxy_model.mapToSource(model_index)
+
+            # now we have arrived at our model derived from StandardItemModel
+            # so let's retrieve the standarditem object associated with the index
+            item = source_index.model().itemFromIndex(source_index)
+
             # render out details
             thumb_pixmap = item.icon().pixmap(512)
             self.ui.details_image.setPixmap(thumb_pixmap)
@@ -752,7 +789,6 @@ class AppDialog(QtGui.QWidget):
         # get entity portion of context
         ctx = sgtk.platform.current_bundle().context
         if ctx.entity:
-
             # now step through the profiles and find a matching entity
             for p in self._entity_presets:
                 if self._entity_presets[p].entity_type == ctx.entity["type"]:
@@ -809,6 +845,7 @@ class AppDialog(QtGui.QWidget):
         show_folders = self._publish_type_model.get_show_folders()
         self._publish_proxy_model.set_filter_by_type_ids(sg_type_ids, show_folders)
 
+
     ########################################################################################
     # publish view
 
@@ -863,26 +900,12 @@ class AppDialog(QtGui.QWidget):
         """
         Signal triggered when someone changes the selection in the main publish area
         """
-
-        selected_indexes = selected.indexes()
+        selected_indexes = self.ui.publish_view.selectionModel().selectedIndexes()
 
         if len(selected_indexes) == 0:
-            self._setup_details_panel(None)
-
+            self._setup_details_panel([])
         else:
-            # get the currently selected model index
-            model_index = selected_indexes[0]
-
-            # the incoming model index is an index into our proxy model
-            # before continuing, translate it to an index into the
-            # underlying model
-            proxy_model = model_index.model()
-            source_index = proxy_model.mapToSource(model_index)
-
-            # now we have arrived at our model derived from StandardItemModel
-            # so let's retrieve the standarditem object associated with the index
-            item = source_index.model().itemFromIndex(source_index)
-            self._setup_details_panel(item)
+            self._setup_details_panel(selected_indexes)
 
         # emit the selection changed signal:
         self.selection_changed.emit()
@@ -1319,7 +1342,7 @@ class AppDialog(QtGui.QWidget):
             self._add_history_record(self._current_entity_preset, selected_item)
 
             # tell details view to clear
-            self._setup_details_panel(None)
+            self._setup_details_panel([])
 
             # tell the publish view to change
             self._load_publishes_for_entity_item(selected_item)
@@ -1339,7 +1362,7 @@ class AppDialog(QtGui.QWidget):
         self._add_history_record(self._current_entity_preset, selected_item)
 
         # tell details panel to clear itself
-        self._setup_details_panel(None)
+        self._setup_details_panel([])
 
         # tell publish UI to update itself
         self._load_publishes_for_entity_item(selected_item)
@@ -1496,7 +1519,6 @@ class AppDialog(QtGui.QWidget):
         breadcrumbs = " <span style='color:#2C93E2'>&#9656;</span> ".join( crumbs[::-1] )
 
         self.ui.entity_breadcrumbs.setText("<big>%s</big>" % breadcrumbs)
-
 
 ################################################################################################
 # Helper stuff

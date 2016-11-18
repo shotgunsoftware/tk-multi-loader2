@@ -15,7 +15,10 @@ shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "sho
 
 class SgEntityProxyModel(QtGui.QSortFilterProxyModel):
     """
-    Filter model to be used in conjunction with SgEntityModel
+    Filter model to be used in conjunction with SgEntityModel,
+    left hand side loader tree views and the search input box
+    in the UI. This proxy model sorts items in alphabetical order
+    and culls entries based on the current search phrase.
     """
 
     def __init__(self, parent):

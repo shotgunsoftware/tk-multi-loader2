@@ -71,3 +71,10 @@ class OpenPublishActionManager(ActionManager):
         action.triggered[()].connect(default_action_cb)
         
         return action
+
+    def get_actions_for_publish(self, sg_data, ui_area):
+        """
+        See documentation for get_actions_for_publish. The functionality is the same, but only for
+        a single publish.
+        """
+        return self.get_actions_for_publishes([sg_data], ui_area)

@@ -30,6 +30,7 @@ class SgEntityProxyModel(QtGui.QSortFilterProxyModel):
         self._cache_hits = 0
 
         # set proxy to auto sort alphabetically
+        self.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
         self.setDynamicSortFilter(True)
         self.sort(0, QtCore.Qt.AscendingOrder)
 

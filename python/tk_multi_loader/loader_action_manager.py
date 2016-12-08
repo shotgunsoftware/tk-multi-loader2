@@ -268,18 +268,33 @@ class LoaderActionManager(ActionManager):
         
     def get_actions_for_folder(self, sg_data):
         """
-        Returns a list of actions for a folder object.
+        Returns a list of actions for a folder widget.
+
+        This method is called at runtime when a folder widget with Shotgun data is selected.
+
+        :param sg_data: Standard Shotgun entity dictionary with keys type, id and name.
+        :return: List of QAction instances.
         """
-        fs = QtGui.QAction("Show in the file system", None)
-        fs.triggered[()].connect(lambda f=sg_data: self._show_in_fs(f))
-        
+
+        actions = []
+
+        # Find paths associated with the Shotgun entity.
+        paths = self._app.sgtk.paths_from_entity(sg_data["type"], sg_data["id"])
+        # Add the action only when there are some paths.
+        if paths:
+            fs = QtGui.QAction("Show in the file system", None)
+            fs.triggered[()].connect(lambda f=paths: self._show_in_fs(f))
+            actions.append(fs)
+
         sg = QtGui.QAction("Show details in Shotgun", None)
         sg.triggered[()].connect(lambda f=sg_data: self._show_in_sg(f))
+        actions.append(sg)
 
         sr = QtGui.QAction("Show in Screening Room", None)
         sr.triggered[()].connect(lambda f=sg_data: self._show_in_sr(f))
-        
-        return [fs, sg, sr]
+        actions.append(sr)
+
+        return actions
     
     ########################################################################################
     # callbacks
@@ -324,13 +339,13 @@ class LoaderActionManager(ActionManager):
                                                                       entity["id"])                    
         QtGui.QDesktopServices.openUrl(QtCore.QUrl(url))
     
-    def _show_in_fs(self, entity):
+    def _show_in_fs(self, paths):
         """
-        Callback - Shows a shotgun entity in the file system
+        Callback - Shows Shotgun entity paths in the file system.
         
-        :param entity: std sg entity dict with keys type, id and name
+        :param paths: List of paths associated with a Shotgun entity.
         """
-        paths = self._app.sgtk.paths_from_entity(entity["type"], entity["id"])    
+
         for disk_location in paths:
                 
             # get the setting        
@@ -349,4 +364,3 @@ class LoaderActionManager(ActionManager):
             exit_code = os.system(cmd)
             if exit_code != 0:
                 self._engine.log_error("Failed to launch '%s'!" % cmd)
-    

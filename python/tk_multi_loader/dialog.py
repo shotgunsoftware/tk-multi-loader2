@@ -1276,7 +1276,9 @@ class AppDialog(QtGui.QWidget):
         proxy_model.setFilterFixedString(pattern)
 
         # change UI decorations based on new pattern.
-        if pattern and len(pattern) > 0:
+        # for performance, make sure filtering only kicks in
+        # once we have typed at least one character
+        if pattern and len(pattern) > 1:
             # indicate with a blue border that a search is active
             tree_view.setStyleSheet("""QTreeView { border-width: 3px;
                                                    border-style: solid;

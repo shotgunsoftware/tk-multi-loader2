@@ -96,8 +96,8 @@ class LoaderActionManager(ActionManager):
                                                         sg_publish_data=sg_data,
                                                         actions=actions,
                                                         ui_area=ui_area_str)
-        except Exception:
-            self._app.log_exception("Could not execute generate_actions hook.")
+        except Exception, e:
+            self._app.log_exception("Could not execute generate_actions hook: %s" % e)
 
         return action_defs
 
@@ -310,8 +310,12 @@ class LoaderActionManager(ActionManager):
                                           "execute_multiple_actions",
                                           actions=actions)
         except Exception, e:
-            self._app.log_exception("Could not execute execute_action hook.")
-            QtGui.QMessageBox.critical(None, "Hook Error", "Error: %s" % e)
+            self._app.log_exception("Could not execute execute_action hook: %s" % e)
+            QtGui.QMessageBox.critical(
+                QtGui.QApplication.activeWindow(),
+                "Hook Error",
+                "Error: %s" % e,
+            )
         else:
             try:
                 self._app.log_metric("%s action" % (actions[0]["action_name"],))

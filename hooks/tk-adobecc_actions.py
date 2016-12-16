@@ -11,8 +11,10 @@
 """
 Hook that loads defines all the available actions, broken down by publish type. 
 """
-import sgtk
+
 import os
+
+import sgtk
 from sgtk.platform.qt import QtGui
 
 HookBaseClass = sgtk.get_hook_baseclass()
@@ -154,8 +156,10 @@ class PhotoshopActions(HookBaseClass):
         :param sg_publish_data: Shotgun data dictionary with all the standard
                                 publish fields.
         """
+        path = "/".join(path.split(os.path.sep))
+        self.parent.log_debug("Opening file: %s" % path)
         file = self.parent.engine.adobe.File(path)
-        self.parent.engine.adobe.app.open(file)
+        self.parent.engine.adobe.app.load(file)
 
     def _place_file(self, path, sg_publish_data):
         """
@@ -165,10 +169,11 @@ class PhotoshopActions(HookBaseClass):
         :param sg_publish_data: Shotgun data dictionary with all the standard
                                 publish fields.
         """
+        path = "/".join(path.split(os.path.sep))
         adobe = self.parent.engine.adobe
 
         # We can't import in an empty scene.
-        if not adobe.activeDocument:
+        if not adobe.app.activeDocument:
             QtGui.QMessageBox.warning(
                 None,
                 "Add To Layer",
@@ -179,7 +184,7 @@ class PhotoshopActions(HookBaseClass):
         # When File->Place'ing a PSD on top of another, here's what the Script Listener generates.
         # (Download at http://helpx.adobe.com/photoshop/kb/plug-ins-photoshop-cs61.html#id_68969)
         # // =======================================================
-        # var idPlc = charIDToTypeID("Plc ");
+        #     var idPlc = charIDToTypeID("Plc ");
         #     var placeActionDesc = new ActionDescriptor();
         #     var idnull = charIDToTypeID("null");
         #     placeActionDesc.putPath( idnull, new File("/Users/boismej/Documents/1.psd") );
@@ -209,8 +214,8 @@ class PhotoshopActions(HookBaseClass):
         )
 
         # Everything is setup. Adds the layer to the document.
-        adobe.app.executeAction(
-            adobe.charIDToTypeID("idPlc"), # placeEvent
+        adobe.executeAction(
+            adobe.charIDToTypeID("Plc "), # placeEvent
             action_desc,
             adobe.DialogModes.NO,
         )

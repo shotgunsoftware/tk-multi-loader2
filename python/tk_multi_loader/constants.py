@@ -32,3 +32,7 @@ PUBLISHED_FILES_FIELDS = ["name",
                           "version.Version.sg_status_list",
                           "created_by.HumanUser.image"
                           ]
+
+# left hand side tree view search only kicks in
+# after a certain number have been typed in.
+TREE_SEARCH_TRIGGER_LENGTH = 2

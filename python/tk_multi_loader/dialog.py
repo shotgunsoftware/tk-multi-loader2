@@ -1280,7 +1280,7 @@ class AppDialog(QtGui.QWidget):
         # change UI decorations based on new pattern.
         # for performance, make sure filtering only kicks in
         # once we have typed at least one character
-        if pattern and len(pattern) > constants.TREE_SEARCH_TRIGGER_LENGTH:
+        if pattern and len(pattern) >= constants.TREE_SEARCH_TRIGGER_LENGTH:
             # indicate with a blue border that a search is active
             tree_view.setStyleSheet("""QTreeView { border-width: 3px;
                                                    border-style: solid;

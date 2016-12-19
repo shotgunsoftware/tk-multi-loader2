@@ -88,22 +88,14 @@ class SgEntityProxyModel(QtGui.QSortFilterProxyModel):
         self._cache_hits = 0
         self._cache = {}
 
-        if len(pattern) > constants.TREE_SEARCH_TRIGGER_LENGTH:
+        if len(pattern) >= constants.TREE_SEARCH_TRIGGER_LENGTH:
             # we have a search filter that is longer than one character.
             # start filtering. Before we can filter, ensure that the entire
             # data set is loaded in the tree.
 
-            def __fetch_more_r(index):
-                if self.canFetchMore(index):
-                    self.fetchMore(index)
-                for idx in range(self.rowCount(index)):
-                    child_idx = self.index(idx, 0, index)
-                    __fetch_more_r(child_idx)
-
-            root_index = self.sourceModel().invisibleRootItem().index()
-
+            # ensure model is fully loaded before we attempt any searching
             app.log_debug("Loading up all nodes in tree so we can search...")
-            __fetch_more_r(self.mapFromSource(root_index))
+            self.sourceModel().ensure_data_is_loaded()
             app.log_debug("...done")
 
             # call base class

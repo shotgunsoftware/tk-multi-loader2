@@ -35,4 +35,4 @@ PUBLISHED_FILES_FIELDS = ["name",
 
 # left hand side tree view search only kicks in
 # after a certain number have been typed in.
-TREE_SEARCH_TRIGGER_LENGTH = 1
+TREE_SEARCH_TRIGGER_LENGTH = 2

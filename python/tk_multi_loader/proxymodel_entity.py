@@ -11,6 +11,8 @@
 import sgtk
 from sgtk.platform.qt import QtCore, QtGui
 
+from . import constants
+
 shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model")
 
 class SgEntityProxyModel(QtGui.QSortFilterProxyModel):
@@ -86,8 +88,21 @@ class SgEntityProxyModel(QtGui.QSortFilterProxyModel):
         self._cache_hits = 0
         self._cache = {}
 
-        # call base class
-        return QtGui.QSortFilterProxyModel.setFilterFixedString(self, pattern)
+        if len(pattern) >= constants.TREE_SEARCH_TRIGGER_LENGTH:
+            # we have a search filter that is longer than one character.
+            # start filtering. Before we can filter, ensure that the entire
+            # data set is loaded in the tree.
+
+            # ensure model is fully loaded before we attempt any searching
+            app.log_debug("Loading up all nodes in tree so we can search...")
+            self.sourceModel().ensure_data_is_loaded()
+            app.log_debug("...done")
+
+            # call base class
+            return QtGui.QSortFilterProxyModel.setFilterFixedString(self, pattern)
+
+        else:
+            return QtGui.QSortFilterProxyModel.setFilterFixedString(self, "")
 
     def filterAcceptsRow(self, source_row, source_parent_idx):
         """

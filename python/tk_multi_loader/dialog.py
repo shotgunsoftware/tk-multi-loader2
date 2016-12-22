@@ -25,6 +25,8 @@ from .model_publishhistory import SgPublishHistoryModel
 from .delegate_publish_history import SgPublishHistoryDelegate
 from .search_widget import SearchWidget
 
+from . import constants
+
 from .ui.dialog import Ui_Dialog
 
 # import frameworks
@@ -1276,7 +1278,9 @@ class AppDialog(QtGui.QWidget):
         proxy_model.setFilterFixedString(pattern)
 
         # change UI decorations based on new pattern.
-        if pattern and len(pattern) > 0:
+        # for performance, make sure filtering only kicks in
+        # once we have typed a couple of characters
+        if pattern and len(pattern) >= constants.TREE_SEARCH_TRIGGER_LENGTH:
             # indicate with a blue border that a search is active
             tree_view.setStyleSheet("""QTreeView { border-width: 3px;
                                                    border-style: solid;

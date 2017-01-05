@@ -96,8 +96,8 @@ class LoaderActionManager(ActionManager):
                                                         sg_publish_data=sg_data,
                                                         actions=actions,
                                                         ui_area=ui_area_str)
-        except Exception, e:
-            self._app.log_exception("Could not execute generate_actions hook: %s" % e)
+        except Exception:
+            self._app.log_exception("Could not execute generate_actions hook.")
 
         return action_defs
 

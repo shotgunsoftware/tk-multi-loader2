@@ -14,6 +14,7 @@ from sgtk.platform.qt import QtCore, QtGui
 import sgtk
 import datetime
 from . import utils, constants
+from . import model_item_data
 
 # import the shotgun_model module from the shotgun utils framework
 shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model")
@@ -135,16 +136,8 @@ class SgLatestPublishModel(ShotgunModel):
                 # for leaf nodes and for tree nodes which are connected to an entity,
                 # show matches.
 
-                # get the field data associated with the node
-                # this is shotgun field name and value for the tree item
-                # for a leaf node, it is typically code: foo
-                # for a sequence intermedaite node its sg_sequence: {sg link dict}
-                # for a status intermediate node, it may be: sg_status: ip
-                field_data = shotgun_model.get_sanitized_data(item, self.SG_ASSOCIATED_FIELD_ROLE)
-
-                # for leaf nodes, we also have the full sg data
-                # note that for intermediate nodes, this is None
-                sg_data = item.get_sg_data()
+                # Extract the Shotgun data and field value from the node item.
+                (sg_data, field_value) = model_item_data.get_item_data(item)
 
                 if sg_data:
                     # leaf node!
@@ -156,9 +149,7 @@ class SgLatestPublishModel(ShotgunModel):
                         sg_filters = [["entity", "is", {"type": sg_data["type"], "id": sg_data["id"]} ]]
 
                 else:
-                    # intermediate node. Get the field data
-                    field_name = field_data["name"]
-                    field_value = field_data["value"]
+                    # intermediate node.
 
                     if isinstance(field_value, dict) and "name" in field_value and "type" in field_value:
                         # this is an intermediate node like a sequence or an asset which
@@ -309,22 +300,25 @@ class SgLatestPublishModel(ShotgunModel):
             # associate the tree view node hash with this node.
             item.setData(tree_view_item_hash, SgLatestPublishModel.ASSOCIATED_TREE_VIEW_ITEM_ROLE)
 
-            # copy across the std fields SG_ASSOCIATED_FIELD_ROLE and SG_DATA_ROLE
-            tree_item_sg_data = tree_view_item.get_sg_data()
-            item.setData(tree_item_sg_data, SgLatestPublishModel.SG_DATA_ROLE)
+            # Extract the Shotgun data and field value from the tree view item.
+            (tree_view_sg_data, field_value) = model_item_data.get_item_data(tree_view_item)
 
-            tree_item_field_data = tree_view_item.data(shotgun_model.ShotgunModel.SG_ASSOCIATED_FIELD_ROLE)
-            item.setData(tree_item_field_data, SgLatestPublishModel.SG_ASSOCIATED_FIELD_ROLE)
+            # Rebuild tree view item field data.
+            # Since we do not care about the "name" value, arbitrarily use "data".
+            tree_view_field_data = {"name": "data", "value": field_value}
+
+            # copy across the std fields SG_ASSOCIATED_FIELD_ROLE and SG_DATA_ROLE
+            item.setData(tree_view_sg_data, SgLatestPublishModel.SG_DATA_ROLE)
+            item.setData(tree_view_field_data, SgLatestPublishModel.SG_ASSOCIATED_FIELD_ROLE)
 
             # see if we can get a thumbnail for this node!
-            treeview_sg_data = tree_view_item.get_sg_data()
-            if treeview_sg_data and treeview_sg_data.get("image"):
+            if tree_view_sg_data and tree_view_sg_data.get("image"):
                 # there is a thumbnail for this item!
                 self._request_thumbnail_download(item,
                                                  "image",
-                                                 treeview_sg_data["image"],
-                                                 treeview_sg_data["type"],
-                                                 treeview_sg_data["id"])
+                                                 tree_view_sg_data["image"],
+                                                 tree_view_sg_data["type"],
+                                                 tree_view_sg_data["id"])
             self.appendRow(item)
 
             # help GC

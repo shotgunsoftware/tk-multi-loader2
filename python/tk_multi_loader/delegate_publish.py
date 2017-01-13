@@ -58,11 +58,14 @@ class PublishWidget(QtGui.QWidget):
 
     def set_button_visible(self, is_visible):
         """
-        Show or hides the action button.
+        Shows or hides the action button when its menu is not empty.
 
         :param is_visible: If True, button will be shown, hidden otherwise.
         """
-        self.ui.button.setVisible(is_visible)
+        if self.ui.button.menu().isEmpty():
+            self.ui.button.setVisible(False)
+        else:
+            self.ui.button.setVisible(is_visible)
 
     def set_selected(self, selected):
         """

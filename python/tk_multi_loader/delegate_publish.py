@@ -46,6 +46,15 @@ class PublishWidget(QtGui.QWidget):
                                                                  highlight_col.green(),
                                                                  highlight_col.blue())
 
+    @property
+    def action_menu_is_empty(self):
+        """
+        Checks if the action menu is empty or not.
+
+        :returns: ``True`` when the action menu is empty; ``False``otherwise.
+        """
+        return self.ui.button.menu().isEmpty()
+
     def set_actions(self, actions):
         """
         Add a list of QActions to add to the actions menu for this widget.
@@ -58,14 +67,11 @@ class PublishWidget(QtGui.QWidget):
 
     def set_button_visible(self, is_visible):
         """
-        Shows or hides the action button when its menu is not empty.
+        Shows or hides the action button.
 
         :param is_visible: If True, button will be shown, hidden otherwise.
         """
-        if self.ui.button.menu().isEmpty():
-            self.ui.button.setVisible(False)
-        else:
-            self.ui.button.setVisible(is_visible)
+        self.ui.button.setVisible(is_visible)
 
     def set_selected(self, selected):
         """
@@ -142,7 +148,7 @@ class PublishDelegate(shotgun_view.EditSelectedWidgetDelegate):
         is_folder = shotgun_model.get_sanitized_data(model_index, SgLatestPublishModel.IS_FOLDER_ROLE)
         if sg_item is None:
             # an intermediate folder widget with no shotgun data
-            return
+            pass
         elif is_folder:
             # a folder widget with shotgun data
             widget.set_actions(self._action_manager.get_actions_for_folder(sg_item))
@@ -156,6 +162,10 @@ class PublishDelegate(shotgun_view.EditSelectedWidgetDelegate):
                 widget.setToolTip(
                     "Double click for the <i>%s</i> action." % primary_action.text()
                 )
+
+        # Hide the widget action menu when it is empty.
+        if widget.action_menu_is_empty:
+            widget.set_button_visible(False)
 
     def _on_before_paint(self, widget, model_index, style_options):
         """

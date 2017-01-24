@@ -1467,6 +1467,13 @@ class AppDialog(QtGui.QWidget):
         # update breadcrumbs
         self._populate_entity_breadcrumbs(selected_item)
 
+        # when an item in the treeview is selected, the child
+        # nodes are displayed in the main view, so make sure
+        # they are loaded.
+        model = self._entity_presets[self._current_entity_preset].model
+        if selected_item and model.canFetchMore(selected_item.index()):
+            model.fetchMore(selected_item.index())
+
         # notify history
         self._add_history_record(self._current_entity_preset, selected_item)
 

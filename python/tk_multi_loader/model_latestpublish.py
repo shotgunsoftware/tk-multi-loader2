@@ -303,9 +303,10 @@ class SgLatestPublishModel(ShotgunModel):
             # Extract the Shotgun data and field value from the tree view item.
             (tree_view_sg_data, field_value) = model_item_data.get_item_data(tree_view_item)
 
-            # Rebuild tree view item field data.
-            # Since we do not care about the "name" value, arbitrarily use "data".
-            tree_view_field_data = {"name": "data", "value": field_value}
+            # Rebuild field data with the field value.
+            # Since this data will be consumed by SgPublishListDelegate._format_folder() and
+            # SgPublishThumbDelegate._format_folder(), key "value" is the only key needed.
+            tree_view_field_data = {"value": field_value}
 
             # copy across the std fields SG_ASSOCIATED_FIELD_ROLE and SG_DATA_ROLE
             item.setData(tree_view_sg_data, SgLatestPublishModel.SG_DATA_ROLE)

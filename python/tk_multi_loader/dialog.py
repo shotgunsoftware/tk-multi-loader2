@@ -13,6 +13,7 @@ import sgtk
 from sgtk import TankError
 from sgtk.platform.qt import QtCore, QtGui
 
+from .model_hierarchy import SgHierarchyModel
 from .model_entity import SgEntityModel
 from .model_latestpublish import SgLatestPublishModel
 from .model_publishtype import SgPublishTypeModel
@@ -32,7 +33,6 @@ from .ui.dialog import Ui_Dialog
 
 # import frameworks
 shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model")
-shotgun_fields = sgtk.platform.import_framework("tk-framework-qtwidgets", "shotgun_fields")
 settings = sgtk.platform.import_framework("tk-framework-shotgunutils", "settings")
 help_screen = sgtk.platform.import_framework("tk-framework-qtwidgets", "help_screen")
 overlay_widget = sgtk.platform.import_framework("tk-framework-qtwidgets", "overlay_widget")
@@ -997,7 +997,7 @@ class AppDialog(QtGui.QWidget):
 
             model = current_idx.model()
 
-            if not isinstance(model, (shotgun_model.SimpleShotgunHierarchyModel, SgEntityModel)):
+            if not isinstance(model, (SgHierarchyModel, SgEntityModel)):
                 # proxy model!
                 current_idx = model.mapToSource(current_idx)
 
@@ -1097,58 +1097,69 @@ class AppDialog(QtGui.QWidget):
         based on the config.
         """
         app = sgtk.platform.current_bundle()
-        entities = app.get_setting("entities")
 
-        for e in entities:
+        for setting_dict in app.get_setting("entities"):
 
-            # Validate that the settings dictionary contains all items needed.
+            # Validate that the setting dictionary contains all items needed.
+            # Here is an example of Hierarchy setting dictionary:
+            #     {'caption': 'Project',
+            #      'type':    'Hierarchy',
+            #      'root':    '/Project/{context.project.id}'}
+            # Here is an example of Query setting dictionary:
+            #     {'caption':     'My Tasks',
+            #      'type':        'Query',
+            #      'entity_type': 'Task',
+            #      'hierarchy':   ['project', 'entity', 'content'],
+            #      'filters':     [['task_assignees', 'is', '{context.user}'],
+            #                      ['project.Project.sg_status', 'is', 'Active']]}
 
-            k_error_msg = "Configuration error: One or more items in %s are missing a '%s' key!"
-            v_error_msg = "Configuration error: One or more items in %s have an invalid '%s' value for '%s' key!"
+            key_error_msg = "Configuration error: 'entities' item %s is missing key '%s'!"
+            value_error_msg = "Configuration error: 'entities' item %s key '%s' has an invalid value '%s'!"
 
-            k = "caption"
-            if k not in e:
-                raise TankError(k_error_msg % (entities, k))
+            key = "caption"
+            if key not in setting_dict:
+                raise TankError(key_error_msg % (setting_dict, key))
 
-            preset_name = e["caption"]
+            preset_name = setting_dict["caption"]
 
-            k = "type"
-            if k in e:
-                v = e[k]
-                if v not in ("Hierarchy", "Query"):
-                    raise TankError(v_error_msg % (entities, v, k))
-                model_type_hierarchy = (v == "Hierarchy")
+            key = "type"
+            if key in setting_dict:
+                value = setting_dict[key]
+                if value not in ("Hierarchy", "Query"):
+                    raise TankError(value_error_msg % (setting_dict, key, value))
+                type_hierarchy = (value == "Hierarchy")
             else:
-                model_type_hierarchy = False
+                # When the type is not given, default to "Query".
+                type_hierarchy = False
 
-            if model_type_hierarchy:
+            if type_hierarchy:
 
-                k = "root"
-                if k not in e:
-                    raise TankError(k_error_msg % (entities, k))
+                key = "root"
+                if key not in setting_dict:
+                    raise TankError(key_error_msg % (setting_dict, key))
 
                 sg_entity_type = "Project"
 
             else:
 
-                for k in ("entity_type", "hierarchy", "filters"):
-                    if k not in e:
-                        raise TankError(k_error_msg % (entities, k))
+                for key in ("entity_type", "hierarchy", "filters"):
+                    if key not in setting_dict:
+                        raise TankError(key_error_msg % (setting_dict, key))
 
-                sg_entity_type = e["entity_type"]
+                sg_entity_type = setting_dict["entity_type"]
 
             # get optional publish_filter setting
             # note: actual value in the yaml settings can be None, 
-            # that's why we cannot use e.get("publish_filters", []) 
-            publish_filters = e.get("publish_filters")
+            # that's why we cannot use setting_dict.get("publish_filters", [])
+            publish_filters = setting_dict.get("publish_filters")
             if publish_filters is None: 
                 publish_filters = []
 
             # Create the model.
-            if model_type_hierarchy:
-                (model, proxy_model) = self._setup_hierarchy_model(app, e["root"])
+            if type_hierarchy:
+                (model, proxy_model) = self._setup_hierarchy_model(app, setting_dict["root"])
             else:
-                (model, proxy_model) = self._setup_query_model(app, e)
+                (model, proxy_model) = self._setup_query_model(app, setting_dict)
 
             # Add a new tab and its layout to the main tab bar.
             tab = QtGui.QWidget()
@@ -1177,7 +1188,7 @@ class AppDialog(QtGui.QWidget):
                                           layout,
                                           view])
 
-            if not model_type_hierarchy:
+            if not type_hierarchy:
 
                 # Add a layout to host search.
                 search_layout = QtGui.QHBoxLayout()
@@ -1230,7 +1241,7 @@ class AppDialog(QtGui.QWidget):
             action_ca = QtGui.QAction("Collapse All Folders", view)
             action_ca.triggered.connect(view.collapseAll)
             view.addAction(action_ca)
-            if model_type_hierarchy:
+            if type_hierarchy:
                 action_refresh = QtGui.QAction("Reload", view)
                 action_refresh.triggered.connect(model.reload_data)
             else:
@@ -1287,7 +1298,7 @@ class AppDialog(QtGui.QWidget):
             root = None
 
         # Construct the hierarchy model.
-        model = shotgun_model.SimpleShotgunHierarchyModel(self, bg_task_manager=self._task_manager)
+        model = SgHierarchyModel(self, bg_task_manager=self._task_manager)
 
         # Create a proxy model.
         proxy_model = QtGui.QSortFilterProxyModel(self)
@@ -1297,48 +1308,32 @@ class AppDialog(QtGui.QWidget):
         proxy_model.sort(0)
         proxy_model.setDynamicSortFilter(True)
 
-        # The field manager handles retrieving widgets for Shotgun field types.
-        # It needs time to initialize itself, after which the widgets can begin to be populated.
-        # "PublishedFile.entity" means build a hierarchy that leads to
-        # entities that are linked via the PublishedFile.entity field.
-        entity_fields = {"Asset": [ # Fields usually added by the configuration setting.
-                                    "code",
-                                    "project",
-                                    "sg_asset_type",
-                                    # Fields also added when constructing an SgEntityModel.
-                                    "description",
-                                    "image",
-                                    "sg_status_list"],
-                         "Shot":  [ # Fields usually added by the configuration setting.
-                                    "code",
-                                    "project",
-                                    "sg_sequence",
-                                    # Fields also added when constructing an SgEntityModel.
-                                    "description",
-                                    "image",
-                                    "sg_status_list"]
-                         }
-        self._field_manager = shotgun_fields.ShotgunFieldManager(self, bg_task_manager=self._task_manager)
-        self._field_manager.initialized.connect(lambda: model.load_data("PublishedFile.entity",
-                                                                        path=root,
-                                                                        entity_fields=entity_fields))
-        self._field_manager.initialize()
+        # We need to provide a dictionary that identifies what additional fields to include
+        # for the loaded hierarchy leaf entities in addition to "id" and "type".
+        # When available, these fields will be used to add info in the detail panel.
+        # TODO: Our entity type list for entities with publishes should be retrieved from the settings.
+        entity_fields = {}
+        for entity_type in ["Asset", "Shot"]:
+            entity_fields[entity_type] = ["code", "description", "image", "sg_status_list"]
+
+        # Load a hierarchy that leads to entities that are linked via the "PublishedFile.entity" field.
+        model.load_data("PublishedFile.entity", path=root, entity_fields=entity_fields)
 
         return (model, proxy_model)
 
-    def _setup_query_model(self, app, e):
+    def _setup_query_model(self, app, setting_dict):
         """
         Create the model and proxy model required by a query type configuration setting.
 
         :param app: :class:`Application`, :class:`Engine` or :class:`Framework` bundle instance
                     associated with the loader.
-        :param e: Configuration setting dictionary for a tab.
+        :param setting_dict: Configuration setting dictionary for a tab.
         :return: Created `(model, proxy model)`.
         """
 
         # Resolve any magic tokens in the filters.
         resolved_filters = []
-        for filter in e["filters"]:
+        for filter in setting_dict["filters"]:
             resolved_filter = []
             for field in filter:
                 if field == "{context.entity}":
@@ -1358,13 +1353,13 @@ class AppDialog(QtGui.QWidget):
                     field = app.context.user
                 resolved_filter.append(field)
             resolved_filters.append(resolved_filter)
-        e["filters"] = resolved_filters
+        setting_dict["filters"] = resolved_filters
 
         # Construct the query model.
         model = SgEntityModel(self,
-                              e["entity_type"],
-                              e["filters"],
-                              e["hierarchy"],
+                              setting_dict["entity_type"],
+                              setting_dict["filters"],
+                              setting_dict["hierarchy"],
                               self._task_manager)
 
         # Create a proxy model.
@@ -1426,9 +1421,10 @@ class AppDialog(QtGui.QWidget):
         self._current_entity_preset = curr_tab_name
 
         if self._history_navigation_mode == False:
-            # when we are not navigating back and forth as part of
-            # history navigation, ask the currently visible
-            # view to (background async) refresh its data
+            # When we are not navigating back and forth as part of history navigation,
+            # ask the currently visible view to (background async) refresh its data.
+            # Refreshing the data only makes sense for SgEntityModel based tabs since
+            # SgHierarchyModel does not yet support this kind of functionality.
             model = self._entity_presets[self._current_entity_preset].model
             if isinstance(model, SgEntityModel):
                 model.async_refresh()

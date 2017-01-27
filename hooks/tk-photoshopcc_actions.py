@@ -173,7 +173,9 @@ class PhotoshopActions(HookBaseClass):
         adobe = self.parent.engine.adobe
 
         # We can't import in an empty scene.
-        if not adobe.app.activeDocument:
+        try:
+            adobe.app.activeDocument
+        except RuntimeError:
             QtGui.QMessageBox.warning(
                 None,
                 "Add To Layer",

@@ -871,8 +871,10 @@ class AppDialog(QtGui.QWidget):
         Triggered when the show sub items checkbox is clicked
         """
 
-        # check if we should pop up that help screen
-        if self.ui.show_sub_items.isChecked():
+        # Check if we should pop up that help screen.
+        # The hierarchy model cannot handle "Show items in subfolders" mode.
+        if self.ui.show_sub_items.isChecked() and \
+           not isinstance(self._entity_presets[self._current_entity_preset].model, SgHierarchyModel):
             subitems_shown = self._settings_manager.retrieve("subitems_shown",
                                                              False,
                                                              self._settings_manager.SCOPE_ENGINE)
@@ -1182,11 +1184,7 @@ class AppDialog(QtGui.QWidget):
             view.setModel(proxy_model)
 
             # Keep a handle to all the new Qt objects, otherwise the GC may not work.
-            self._dynamic_widgets.extend([model,
-                                          proxy_model,
-                                          tab,
-                                          layout,
-                                          view])
+            self._dynamic_widgets.extend([model, proxy_model, tab, layout, view])
 
             if not type_hierarchy:
 
@@ -1229,25 +1227,62 @@ class AppDialog(QtGui.QWidget):
                 search.textChanged.connect(lambda text, v=view, pm=proxy_model: self._on_search_text_changed(text, v, pm))
 
                 # Keep a handle to all the new Qt objects, otherwise the GC may not work.
-                self._dynamic_widgets.extend([search_layout,
-                                              search,
-                                              clear_search,
-                                              icon])
+                self._dynamic_widgets.extend([search_layout, search, clear_search, icon])
+
+            # We need to handle tool tip display ourselves for action context menus.
+            def action_hovered(action):
+                tip = action.toolTip()
+                if tip == action.text():
+                    QtGui.QToolTip.hideText()
+                else:
+                    QtGui.QToolTip.showText(QtGui.QCursor.pos(), tip)
 
             # Set up a view right click menu.
-            action_ea = QtGui.QAction("Expand All Folders", view)
-            action_ea.triggered.connect(view.expandAll)
-            view.addAction(action_ea)
-            action_ca = QtGui.QAction("Collapse All Folders", view)
-            action_ca.triggered.connect(view.collapseAll)
-            view.addAction(action_ca)
             if type_hierarchy:
-                action_refresh = QtGui.QAction("Reload", view)
-                action_refresh.triggered.connect(model.reload_data)
+
+                action_ca = QtGui.QAction("Collapse All Folders", view)
+                action_ca.hovered.connect(lambda: action_hovered(action_ca))
+                action_ca.triggered.connect(view.collapseAll)
+                view.addAction(action_ca)
+
+                action_reset = QtGui.QAction("Reset", view)
+                action_reset.setToolTip(
+                    "<nobr>Reset the tree to its Shotgun hierarchy root collapsed state.</nobr><br><br>"
+                    "Any existing data contained in the tree will be cleared, "
+                    "affecting selection and other related states, and "
+                    "available cached data will be immediately reloaded.<br><br>"
+                    "The rest of the data will be lazy-loaded when navigating down the tree."
+                )
+                action_reset.hovered.connect(lambda: action_hovered(action_reset))
+                action_reset.triggered.connect(model.reload_data)
+                view.addAction(action_reset)
+
             else:
+
+                action_ea = QtGui.QAction("Expand All Folders", view)
+                action_ea.hovered.connect(lambda: action_hovered(action_ea))
+                action_ea.triggered.connect(view.expandAll)
+                view.addAction(action_ea)
+
+                action_ca = QtGui.QAction("Collapse All Folders", view)
+                action_ca.hovered.connect(lambda: action_hovered(action_ca))
+                action_ca.triggered.connect(view.collapseAll)
+                view.addAction(action_ca)
+
                 action_refresh = QtGui.QAction("Refresh", view)
+                action_refresh.setToolTip(
+                    "<nobr>Refresh the tree data to ensure it is up to date with Shotgun.</nobr><br><br>"
+                    "Since this action is done in the background, the tree update "
+                    "will be applied whenever the data is returned from Shotgun.<br><br>"
+                    "When data has been added, it will be added into the existing tree "
+                    "without affecting selection and other related states.<br><br>"
+                    "When data has been modified or deleted, a tree rebuild will be done, "
+                    "affecting selection and other related states."
+                )
+                action_refresh.hovered.connect(lambda: action_hovered(action_refresh))
                 action_refresh.triggered.connect(model.async_refresh)
-            view.addAction(action_refresh)
+                view.addAction(action_refresh)
+
             view.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
 
             # Set up an on-select callback.
@@ -1257,11 +1292,7 @@ class AppDialog(QtGui.QWidget):
             overlay = ShotgunModelOverlayWidget(model, view)
 
             # Keep a handle to all the new Qt objects, otherwise the GC may not work.
-            self._dynamic_widgets.extend([action_ea,
-                                          action_ca,
-                                          action_refresh,
-                                          selection_model,
-                                          overlay])
+            self._dynamic_widgets.extend([action_ea, action_ca, action_refresh, selection_model, overlay])
 
             # Store all these objects keyed by the caption.
             ep = EntityPreset(preset_name,
@@ -1297,8 +1328,9 @@ class AppDialog(QtGui.QWidget):
         else:
             root = None
 
-        # Construct the hierarchy model.
-        model = SgHierarchyModel(self, bg_task_manager=self._task_manager)
+        # Construct the hierarchy model and load a hierarchy that leads
+        # to entities that are linked via the "PublishedFile.entity" field.
+        model = SgHierarchyModel(self, path=root, bg_task_manager=self._task_manager)
 
         # Create a proxy model.
         proxy_model = QtGui.QSortFilterProxyModel(self)
@@ -1307,17 +1339,6 @@ class AppDialog(QtGui.QWidget):
         # Impose and keep the sorting order on the default display role text.
         proxy_model.sort(0)
         proxy_model.setDynamicSortFilter(True)
-
-        # We need to provide a dictionary that identifies what additional fields to include
-        # for the loaded hierarchy leaf entities in addition to "id" and "type".
-        # When available, these fields will be used to add info in the detail panel.
-        # TODO: Our entity type list for entities with publishes should be retrieved from the settings.
-        entity_fields = {}
-        for entity_type in ["Asset", "Shot"]:
-            entity_fields[entity_type] = ["code", "description", "image", "sg_status_list"]
-
-        # Load a hierarchy that leads to entities that are linked via the "PublishedFile.entity" field.
-        model.load_data("PublishedFile.entity", path=root, entity_fields=entity_fields)
 
         return (model, proxy_model)
 
@@ -1419,6 +1440,12 @@ class AppDialog(QtGui.QWidget):
 
         # and set up which our currently visible preset is
         self._current_entity_preset = curr_tab_name
+
+        # The hierarchy model cannot handle "Show items in subfolders" mode.
+        if isinstance(self._entity_presets[self._current_entity_preset].model, SgHierarchyModel):
+            self.ui.show_sub_items.hide()
+        else:
+            self.ui.show_sub_items.show()
 
         if self._history_navigation_mode == False:
             # When we are not navigating back and forth as part of history navigation,
@@ -1534,8 +1561,10 @@ class AppDialog(QtGui.QWidget):
                 i = self._entity_presets[self._current_entity_preset].model.itemFromIndex(child_idx)
                 child_folders.append(i)
 
-        # is the show child folders checked?
-        show_sub_items = self.ui.show_sub_items.isChecked()
+        # Is the show child folders checked?
+        # The hierarchy model cannot handle "Show items in subfolders" mode.
+        show_sub_items = self.ui.show_sub_items.isChecked() and \
+                         not isinstance(self._entity_presets[self._current_entity_preset].model, SgHierarchyModel)
 
         if show_sub_items:
             # indicate this with a special background color

@@ -19,6 +19,7 @@ shotgun_view = sgtk.platform.import_framework("tk-framework-qtwidgets", "views")
 
 from .ui.widget_publish_list import Ui_PublishListWidget
 from .delegate_publish import PublishWidget, PublishDelegate
+from . import model_item_data
 
 class PublishListWidget(PublishWidget):
     """
@@ -73,36 +74,12 @@ class SgPublishListDelegate(PublishDelegate):
         
         :param model_index: Model index to process
         :param widget: widget to adjust
-        """        
-        sg_data = shotgun_model.get_sg_data(model_index)
-        field_data = shotgun_model.get_sanitized_data(model_index, 
-                                                      shotgun_model.ShotgunModel.SG_ASSOCIATED_FIELD_ROLE)
+        """
 
-        # examples of data. In the examples below, when we say "node", this 
-        # means a node in the tree structure in the left hand side tree
-        
-        # intermediate node which isn't a link 
-        # field_data: {'name': 'sg_asset_type', 'value': 'Character' }
-        # sg_data:    None
-        
-        # intermediate node which is an entity
-        # field_data: {'name': 'sg_sequence', 'value': {'type': 'Sequence', 'id': 11, 'name': 'bunny_080'}}
-        # sg_data:    None
-        
-        # leaf node:  
-        # field_data: {'name': 'code', 'value': 'aaa_0030'}
-        # sg_data: {'code': 'aaa_00030',
-        #           'description': 'Created by the Shotgun Flame exporter.',
-        #           'id': 1662,
-        #           'image': 'https://....',
-        #           'project': {'id': 289, 'name': 'Climp', 'type': 'Project'},
-        #           'sg_sequence': {'id': 202, 'name': 'aaa', 'type': 'Sequence'},
-        #           'sg_status_list': 'wtg',
-        #           'type': 'Shot'}
-        
-        field_value = field_data["value"]
-        
-        # by default, just display the value 
+        # Extract the Shotgun data and field value from the model index.
+        (sg_data, field_value) = model_item_data.get_item_data(model_index)
+
+        # by default, just display the value
         main_text = field_value
         small_text = ""
 
@@ -115,7 +92,7 @@ class SgPublishListDelegate(PublishDelegate):
             # this can be a multi link field but also a field like a tags field or a non-entity link type field.
             formatted_values = []
             formatted_types = set()
-            
+
             for v in field_value:
                 if isinstance(v, dict) and "name" in v and "type" in v:
                     # This is a link field
@@ -125,7 +102,7 @@ class SgPublishListDelegate(PublishDelegate):
                         formatted_types.add(v["type"])
                 else:
                     formatted_values.append(str(v))
-            
+
             types = ", ".join(list(formatted_types))
             names = ", ".join(formatted_values)
             main_text = "<b>%s</b><br>%s" % (types, names)

@@ -310,8 +310,12 @@ class LoaderActionManager(ActionManager):
                                           "execute_multiple_actions",
                                           actions=actions)
         except Exception, e:
-            self._app.log_exception("Could not execute execute_action hook.")
-            QtGui.QMessageBox.critical(None, "Hook Error", "Error: %s" % e)
+            self._app.log_exception("Could not execute execute_action hook: %s" % e)
+            QtGui.QMessageBox.critical(
+                QtGui.QApplication.activeWindow(),
+                "Hook Error",
+                "Error: %s" % e,
+            )
         else:
             try:
                 self._app.log_metric("%s action" % (actions[0]["action_name"],))

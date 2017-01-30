@@ -31,7 +31,20 @@ class MultiLoader(sgtk.platform.Application):
         # register command
         cb = lambda : tk_multi_loader.show_dialog(self)
         menu_caption = "%s..." % self.get_setting("menu_name")
-        menu_options = { "short_name": self.get_setting("menu_name").replace(" ", "_") }
+        menu_options = {
+            "short_name": self.get_setting("menu_name").replace(" ", "_"),
+
+            # dark themed icon for engines that recognize this format
+            "icons": {
+                "dark": {
+                    "png": os.path.join(
+                        os.path.dirname(__file__),
+                        "resources",
+                        "load_menu_icon.png",
+                    ),
+                }
+            }
+        }
         self.engine.register_command(menu_caption, cb, menu_options)
 
     @property

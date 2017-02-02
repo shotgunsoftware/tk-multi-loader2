@@ -20,7 +20,6 @@ shotgun_view = sgtk.platform.import_framework("tk-framework-qtwidgets", "views")
 
 from .ui.widget_publish_thumb import Ui_PublishThumbWidget
 from .delegate_publish import PublishWidget, PublishDelegate
-from . import model_item_data
 
 class PublishThumbWidget(PublishWidget):
     """
@@ -79,12 +78,22 @@ class SgPublishThumbDelegate(PublishDelegate):
         :param model_index: Index of the item being drawn by the delegate.
         :param widget: Qt widget created by the delegate for rendering.
         """
-
-        # Extract the Shotgun data and field value from the model index.
-        (sg_data, field_value) = model_item_data.get_item_data(model_index)
+        # this is a publish!
+        sg_data = shotgun_model.get_sg_data(model_index)
 
         header_text = ""
         details_text = ""
+
+        # this is a folder item, injected into the publish model from the entity tree
+
+        field_data = shotgun_model.get_sanitized_data(model_index,
+                                                      shotgun_model.ShotgunModel.SG_ASSOCIATED_FIELD_ROLE)
+        # examples of data:
+        # intermediate node: {'name': 'sg_asset_type', 'value': 'Character' }
+        # intermediate node: {'name': 'sg_sequence',   'value': {'type': 'Sequence', 'id': 11, 'name': 'bunny_080'}}
+        # leaf node:         {'name': 'code',          'value': 'mystuff'}
+
+        field_value = field_data["value"]
 
         if isinstance(field_value, dict) and "name" in field_value and "type" in field_value:
             # intermediate node with entity link

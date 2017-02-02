@@ -1244,6 +1244,7 @@ class AppDialog(QtGui.QWidget):
                 action_ca.hovered.connect(lambda: action_hovered(action_ca))
                 action_ca.triggered.connect(view.collapseAll)
                 view.addAction(action_ca)
+                self._dynamic_widgets.append(action_ca)
 
                 action_reset = QtGui.QAction("Reset", view)
                 action_reset.setToolTip(
@@ -1256,6 +1257,7 @@ class AppDialog(QtGui.QWidget):
                 action_reset.hovered.connect(lambda: action_hovered(action_reset))
                 action_reset.triggered.connect(model.reload_data)
                 view.addAction(action_reset)
+                self._dynamic_widgets.append(action_reset)
 
             else:
 
@@ -1263,11 +1265,13 @@ class AppDialog(QtGui.QWidget):
                 action_ea.hovered.connect(lambda: action_hovered(action_ea))
                 action_ea.triggered.connect(view.expandAll)
                 view.addAction(action_ea)
+                self._dynamic_widgets.append(action_ea)
 
                 action_ca = QtGui.QAction("Collapse All Folders", view)
                 action_ca.hovered.connect(lambda: action_hovered(action_ca))
                 action_ca.triggered.connect(view.collapseAll)
                 view.addAction(action_ca)
+                self._dynamic_widgets.append(action_ca)
 
                 action_refresh = QtGui.QAction("Refresh", view)
                 action_refresh.setToolTip(
@@ -1282,17 +1286,18 @@ class AppDialog(QtGui.QWidget):
                 action_refresh.hovered.connect(lambda: action_hovered(action_refresh))
                 action_refresh.triggered.connect(model.async_refresh)
                 view.addAction(action_refresh)
+                self._dynamic_widgets.append(action_refresh)
 
             view.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
 
             # Set up an on-select callback.
             selection_model = view.selectionModel()
+            self._dynamic_widgets.append(selection_model)
+
             selection_model.selectionChanged.connect(self._on_treeview_item_selected)
 
             overlay = ShotgunModelOverlayWidget(model, view)
-
-            # Keep a handle to all the new Qt objects, otherwise the GC may not work.
-            self._dynamic_widgets.extend([action_ea, action_ca, action_refresh, selection_model, overlay])
+            self._dynamic_widgets.append(overlay)
 
             # Store all these objects keyed by the caption.
             ep = EntityPreset(preset_name,

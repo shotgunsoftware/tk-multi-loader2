@@ -81,22 +81,6 @@ configuration:
               root: "/Project/{context.project.id}"
               publish_filters: []
 
-            - caption: Assets
-              type: Query
-              entity_type: Asset
-              publish_filters: []
-              filters:
-              - ["project", "is", "{context.project}"]
-              hierarchy: [sg_asset_type, code]
-
-            - caption: Shots
-              type: Query
-              entity_type: Shot
-              publish_filters: []
-              filters:
-              - ["project", "is", "{context.project}"]
-              hierarchy: [sg_sequence, code]
-
             - caption: My Tasks
               type: Query
               entity_type: Task

@@ -41,8 +41,7 @@ class LoaderActionManager(ActionManager):
             self._publish_type_field = "published_file_type"
         else:
             self._publish_type_field = "tank_type"
-        
-    
+
     def _get_actions_for_publish(self, sg_data, ui_area):
         """
         Retrieves the list of actions for a given publish.
@@ -265,7 +264,47 @@ class LoaderActionManager(ActionManager):
         my_mappings = mappings.get(publish_type, [])
         
         return len(my_mappings) > 0
-        
+
+    def _get_actions_for_folder(self, sg_data):
+        """
+        Retrieves the list of actions for a given folder.
+
+        :param sg_data: Publish to retrieve actions for
+        :return: List of actions.
+        """
+
+        publish_type = sg_data.get('type', None)
+
+        # check if we have logic configured to handle this publish type.
+        mappings = self._app.get_setting("entity_mappings")
+
+        # returns a structure on the form
+        # { "Shot": ["reference", "import"] }
+        actions = mappings.get(publish_type, [])
+
+        if len(actions) == 0:
+            return []
+
+        # convert created_at unix time stamp to shotgun time stamp
+        unix_timestamp = sg_data.get("created_at")
+        if isinstance(unix_timestamp, float):
+            sg_timestamp = datetime.datetime.fromtimestamp(unix_timestamp,
+                                                           shotgun_api3.sg_timezone.LocalTimezone())
+            sg_data["created_at"] = sg_timestamp
+
+        action_defs = []
+        try:
+            # call out to hook to give us the specifics.
+            action_defs = self._app.execute_hook_method("actions_hook",
+                                                        "generate_actions",
+                                                        sg_publish_data=sg_data,
+                                                        actions=actions,
+                                                        ui_area='main')  # folder options only found in main ui area
+        except Exception:
+            self._app.log_exception("Could not execute generate_actions hook.")
+
+        return action_defs
+
     def get_actions_for_folder(self, sg_data):
         """
         Returns a list of actions for a folder widget.
@@ -276,7 +315,41 @@ class LoaderActionManager(ActionManager):
         :return: List of QAction instances.
         """
 
-        actions = []
+        qt_actions = []
+
+        # If the selection is empty, we skip this and append default actions
+        if len(sg_data) != 0:
+
+            # Gets the actions for the folder
+            entity_actions = self._get_actions_for_folder(sg_data)
+
+            # For every actions in the intersection, create an associated QAction with appropriate callback
+            # and hook parameters.
+            for action in entity_actions:
+
+                # We need to title the action, so pick the caption and description of the first item.
+                name = action["name"]
+                caption = action["caption"]
+                description = action["description"]
+
+                a = QtGui.QAction(caption, None)
+                a.setToolTip(description)
+
+                # Create a list that contains return every (folder info, hook param) pairs for invoking
+                # the hook.
+                actions = [
+                    {
+                        "sg_publish_data": sg_data,  # keep sg_publish_data name for back comp
+                        "name": name,
+                        "params": action["params"]
+                    }
+                ]
+
+                # Bind all the action params to a single invocation of the _execute_hook.
+                a.triggered[()].connect(
+                    lambda actions=actions: self._execute_hook(actions)
+                )
+                qt_actions.append(a)
 
         # Find paths associated with the Shotgun entity.
         paths = self._app.sgtk.paths_from_entity(sg_data["type"], sg_data["id"])
@@ -284,18 +357,18 @@ class LoaderActionManager(ActionManager):
         if paths:
             fs = QtGui.QAction("Show in the file system", None)
             fs.triggered[()].connect(lambda f=paths: self._show_in_fs(f))
-            actions.append(fs)
+            qt_actions.append(fs)
 
         sg = QtGui.QAction("Show details in Shotgun", None)
         sg.triggered[()].connect(lambda f=sg_data: self._show_in_sg(f))
-        actions.append(sg)
+        qt_actions.append(sg)
 
         sr = QtGui.QAction("Show in Screening Room", None)
         sr.triggered[()].connect(lambda f=sg_data: self._show_in_sr(f))
-        actions.append(sr)
+        qt_actions.append(sr)
 
-        return actions
-    
+        return qt_actions
+
     ########################################################################################
     # callbacks
 

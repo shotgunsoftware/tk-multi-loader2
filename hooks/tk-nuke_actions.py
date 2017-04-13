@@ -183,11 +183,11 @@ class NukeActions(HookBaseClass):
         if ext.lower() not in valid_extensions:
             raise Exception("Unsupported file extension for '%s'!" % path)
 
-        # This form will extract the format and frame range from the file
-        # itself. We can also see if there's a matching template and override
-        # the frame range, but this should handle the zero config case. This
-        # will also automatically extract the format and frame range for movie
-        # files.
+        # `nuke.createNode()` will extract the format and frame range from the
+        # file itself (if possible), whereas `nuke.nodes.Read()` won't. We'll
+        # also check to see if there's a matching template and override the
+        # frame range, but this should handle the zero config case. This will
+        # also automatically extract the format and frame range for movie files.
         read_node = nuke.createNode("Read")
         read_node["file"].fromUserText(path)
 

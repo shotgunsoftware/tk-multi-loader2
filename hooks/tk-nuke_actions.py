@@ -161,8 +161,8 @@ class NukeActions(HookBaseClass):
         (_, ext) = os.path.splitext(path)
 
         # If this is an Alembic cache, use a ReadGeo2 and we're done.
-        if ext.lower() == '.abc':
-            nuke.createNode('ReadGeo2', 'file {%s}' % path)
+        if ext.lower() == ".abc":
+            nuke.createNode("ReadGeo2", "file {%s}" % path)
             return
 
         valid_extensions = [".png", 
@@ -183,15 +183,21 @@ class NukeActions(HookBaseClass):
         if ext.lower() not in valid_extensions:
             raise Exception("Unsupported file extension for '%s'!" % path)
 
+        # `nuke.createNode()` will extract the format and frame range from the
+        # file itself (if possible), whereas `nuke.nodes.Read()` won't. We'll
+        # also check to see if there's a matching template and override the
+        # frame range, but this should handle the zero config case. This will
+        # also automatically extract the format and frame range for movie files.
+        read_node = nuke.createNode("Read")
+        read_node["file"].fromUserText(path)
+
         # find the sequence range if it has one:
         seq_range = self._find_sequence_range(path)
-        
-        # create the read node
+
         if seq_range:
-            nuke.nodes.Read(file=path, first=seq_range[0], last=seq_range[1])
-        else:
-            nuke.nodes.Read(file=path)
-                    
+            # override the detected frame range.
+            read_node["first"].setValue(seq_range[0])
+            read_node["last"].setValue(seq_range[1])
 
     def _find_sequence_range(self, path):
         """
@@ -208,7 +214,7 @@ class NukeActions(HookBaseClass):
         template = None
         try:
             template = self.parent.sgtk.template_from_path(path)
-        except TankError:
+        except sgtk.TankError:
             pass
         
         if not template:

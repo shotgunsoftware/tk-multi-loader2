@@ -11,8 +11,9 @@
 """
 Hook that loads defines all the available actions, broken down by publish type. 
 """
-import sgtk
 import os
+import re
+import sgtk
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
@@ -77,6 +78,14 @@ class HoudiniActions(HookBaseClass):
                 "description": "Import the Alembic cache file into a geometry network.",
             })
 
+        if "file_cop" in actions:
+            action_instances.append({
+                "name": "file_cop",
+                "params": None,
+                "caption": "File COP",
+                "description": "Load an image or image sequence via File COP.",
+            })
+
         return action_instances
 
     def execute_multiple_actions(self, actions):
@@ -133,6 +142,8 @@ class HoudiniActions(HookBaseClass):
         if name == "import":
             self._import(path, sg_publish_data)
 
+        if name == "file_cop":
+            self._file_cop(path, sg_publish_data)
 
     ##############################################################################################################
     # helper methods which can be subclassed in custom hooks to fine tune the behaviour of things
@@ -202,6 +213,68 @@ class HoudiniActions(HookBaseClass):
 
         _show_node(alembic_sop)
 
+    ##############################################################################################################
+    def _file_cop(self, path, sg_publish_data):
+        """Read the supplied path as a file COP.
+
+        :param str path: The path to the file to import.
+        :param dict sg_publish_data: The publish data for the supplied path.
+
+        """
+
+        import hou
+        app = self.parent
+
+        publish_name = sg_publish_data.get("name", "published_file")
+
+        # we'll use the publish name for the file cop node name, but we need to
+        # remove non alphanumeric characers from the string (houdini node names
+        # must be alphanumeric). first, build a regex to match non alpha-numeric
+        # characters. Then use it to replace any matches with an underscore
+        pattern = re.compile('[\W_]+', re.UNICODE)
+        publish_name = pattern.sub('_', publish_name)
+
+        # get the publish path
+        path = self.get_publish_path(sg_publish_data)
+
+        # houdini doesn't like UNC paths.
+        path = path.replace("\\", "/")
+
+        img_context = _get_current_context("/img")
+
+        try:
+            file_cop = img_context.createNode("file", publish_name)
+        except hou.OperationFailed:
+            # failed to create the node in the current context.
+            img_context = hou.node("/img")
+
+            comps = [c for c in img_context.children()
+                if c.type().name() == "img"]
+
+            if comps:
+                # if there are comp networks, just pick the first one
+                img_network = comps[0]
+            else:
+                # if not, create one at the /img and then add the file cop
+                img_network = img_context.createNode("img", "comp1")
+
+            file_cop = img_network.createNode("file", publish_name)
+
+        # replace any %0#d format string with the corresponding houdini frame
+        # env variable. example %04d => $F4
+        frame_pattern = re.compile("(%0(\d)d)")
+        frame_match = re.search(frame_pattern, path)
+        if frame_match:
+            full_frame_spec = frame_match.group(1)
+            padding = frame_match.group(2)
+            path = path.replace(full_frame_spec, "$F%s" % (padding,))
+
+        file_cop.parm("filename1").set(path)
+        app.log_debug(
+            "Created file COP: %s\n  path: '%s' " % (file_cop.path(), path))
+        file_cop.parm("reload").pressButton()
+
+        _show_node(file_cop)
 
 ##############################################################################################################
 def _get_current_context(context_type):

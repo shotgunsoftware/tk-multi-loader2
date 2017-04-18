@@ -1345,7 +1345,22 @@ class AppDialog(QtGui.QWidget):
         proxy_model.sort(0)
         proxy_model.setDynamicSortFilter(True)
 
+        # When clicking on a node, we fetch all the nodes under it so we can populate the
+        # right hand-side. Make sure we are notified when the child come back so we can load
+        # publishes for the current item.
+        model.data_refreshed.connect(self._hierarchy_refreshed)
+
         return (model, proxy_model)
+
+    def _hierarchy_refreshed(self):
+        """
+        Signal triggered when someone changes the selection in a treeview.
+        """
+
+        selected_item = self._get_selected_entity()
+
+        # tell publish UI to update itself
+        self._load_publishes_for_entity_item(selected_item)
 
     def _setup_query_model(self, app, setting_dict):
         """

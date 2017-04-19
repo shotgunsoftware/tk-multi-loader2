@@ -81,11 +81,7 @@ class LoaderActionManager(ActionManager):
             raise TankError("Unsupported UI_AREA. Contact support.")
 
         # convert created_at unix time stamp to shotgun time stamp
-        unix_timestamp = sg_data.get("created_at")
-        if isinstance(unix_timestamp, float):
-            sg_timestamp = datetime.datetime.fromtimestamp(unix_timestamp,
-                                                           shotgun_api3.sg_timezone.LocalTimezone())
-            sg_data["created_at"] = sg_timestamp
+        self._fix_timestamp(sg_data)
 
         action_defs = []
         try:
@@ -273,7 +269,7 @@ class LoaderActionManager(ActionManager):
         :return: List of actions.
         """
 
-        publish_type = sg_data.get('type', None)
+        publish_type = sg_data.get("type", None)
 
         # check if we have logic configured to handle this publish type.
         mappings = self._app.get_setting("entity_mappings")
@@ -286,11 +282,7 @@ class LoaderActionManager(ActionManager):
             return []
 
         # convert created_at unix time stamp to shotgun time stamp
-        unix_timestamp = sg_data.get("created_at")
-        if isinstance(unix_timestamp, float):
-            sg_timestamp = datetime.datetime.fromtimestamp(unix_timestamp,
-                                                           shotgun_api3.sg_timezone.LocalTimezone())
-            sg_data["created_at"] = sg_timestamp
+        self._fix_timestamp(sg_data)
 
         action_defs = []
         try:
@@ -299,7 +291,7 @@ class LoaderActionManager(ActionManager):
                                                         "generate_actions",
                                                         sg_publish_data=sg_data,
                                                         actions=actions,
-                                                        ui_area='main')  # folder options only found in main ui area
+                                                        ui_area="main")  # folder options only found in main ui area
         except Exception:
             self._app.log_exception("Could not execute generate_actions hook.")
 
@@ -317,13 +309,14 @@ class LoaderActionManager(ActionManager):
 
         qt_actions = []
 
-        # If the selection is empty, we skip this and append default actions
+        # If the selection is not empty, we add custom actions and then
+        # move on to add default actions
         if len(sg_data) != 0:
 
             # Gets the actions for the folder
             entity_actions = self._get_actions_for_folder(sg_data)
 
-            # For every actions in the intersection, create an associated QAction with appropriate callback
+            # For every action, create an associated QAction with appropriate callback
             # and hook parameters.
             for action in entity_actions:
 
@@ -368,6 +361,21 @@ class LoaderActionManager(ActionManager):
         qt_actions.append(sr)
 
         return qt_actions
+
+    @staticmethod
+    def _fix_timestamp(sg_data):
+        """
+        Convert created_at unix time stamp in sg_data to shotgun time stamp.
+
+        :param sg_data: Standard Shotgun entity dictionary with keys type, id and name.
+        """
+
+        unix_timestamp = sg_data.get("created_at")
+        if isinstance(unix_timestamp, float):
+            sg_timestamp = datetime.datetime.fromtimestamp(
+                unix_timestamp, shotgun_api3.sg_timezone.LocalTimezone()
+            )
+            sg_data["created_at"] = sg_timestamp
 
     ########################################################################################
     # callbacks

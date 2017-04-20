@@ -36,6 +36,7 @@ shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "sho
 settings = sgtk.platform.import_framework("tk-framework-shotgunutils", "settings")
 help_screen = sgtk.platform.import_framework("tk-framework-qtwidgets", "help_screen")
 overlay_widget = sgtk.platform.import_framework("tk-framework-qtwidgets", "overlay_widget")
+shotgun_search_widget = sgtk.platform.import_framework("tk-framework-qtwidgets", "shotgun_search_widget")
 task_manager = sgtk.platform.import_framework("tk-framework-shotgunutils", "task_manager")
 shotgun_globals = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_globals")
 
@@ -1229,6 +1230,22 @@ class AppDialog(QtGui.QWidget):
                 # Keep a handle to all the new Qt objects, otherwise the GC may not work.
                 self._dynamic_widgets.extend([search_layout, search, clear_search, icon])
 
+            else:
+
+                search = shotgun_search_widget.HierarchicalSearchWidget(tab)
+
+                search.set_search_root(sgtk.platform.current_engine().context.project)
+                search.node_activated.connect(
+                    lambda entity_type, entity_id, name, path, incremental_paths,
+                    view=view, proxy_model=proxy_model: self._node_activated(
+                        entity_type, entity_id, name, path, incremental_paths,
+                        view, proxy_model
+                    )
+                )
+                search.set_bg_task_manager(self._task_manager)
+
+                layout.addWidget(search)
+
             # We need to handle tool tip display ourselves for action context menus.
             def action_hovered(action):
                 tip = action.toolTip()
@@ -1381,6 +1398,12 @@ class AppDialog(QtGui.QWidget):
 
         # tell publish UI to update itself
         self._load_publishes_for_entity_item(selected_item)
+
+    def _node_activated(self, entity_type, entity_id, name, label_path, incremental_paths, view, proxy_model):
+        print entity_type, entity_id, name
+        print label_path
+        print incremental_paths
+        print view, proxy_model
 
     def _setup_query_model(self, app, setting_dict):
         """

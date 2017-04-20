@@ -44,13 +44,9 @@ class SgHierarchyModel(SimpleShotgunHierarchyModel):
 
         SimpleShotgunHierarchyModel.__init__(self, parent, bg_task_manager=bg_task_manager)
 
-        # We need to provide a dictionary that identifies what additional fields to include
-        # for the loaded hierarchy leaf entities in addition to "id" and "type".
-        # When they are available for an entity, these fields will be used to add info in the detail panel.
-        # TODO: Our entity type list for entities with publishes should be retrieved from somewhere.
-        entity_fields = {}
-        for entity_type in ["Asset", "Shot"]:
-            entity_fields[entity_type] = ["code", "description", "image", "sg_status_list"]
+        entity_fields = {
+            "__all__": ["code", "description", "image", "sg_status_list"]
+        }
 
         # Load a hierarchy that leads to entities that are linked via the "PublishedFile.entity" field.
         self.load_data("PublishedFile.entity", path=path, entity_fields=entity_fields)

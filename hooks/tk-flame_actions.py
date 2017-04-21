@@ -143,7 +143,7 @@ class FlameActions(HookBaseClass):
                       "Parameters: %s. Publish Data: %s" % (name, params, sg_publish_data))
 
         if name == "batch_group":
-            self._import_batch_group(sg_publish_data)
+            self._import_batch_group(sg_publish_data, batch=True)
 
         if name == "comped_batch_group":
             self._import_batch_group(sg_publish_data, comp=True)
@@ -207,9 +207,9 @@ class FlameActions(HookBaseClass):
         # If the root_path exists and we can access it
         write_file_config = None
         if root_path and os.path.exists(root_path):
-
+            pass
             # Gets the sequence name
-            seq_name = sg_info['sg_sequence']['name']
+            #seq_name = sg_info['sg_sequence']['name']
             #write_file_config = self._generate_write_file_params()
 
         self._generate_batch_group(
@@ -286,7 +286,33 @@ class FlameActions(HookBaseClass):
             None  # Default argument that will be passed to path if it isn't found
         )
 
-        flame.batch.import_clip(path, SCHEMATIC_REEL)
+        # Eliminates PublishedFiles with an invalid local path
+        if path and os.path.exists(path):
+            flame.batch.import_clip(path, SCHEMATIC_REEL)
+        elif '%' in path:
+            # Special case parsing for frames, attempts to expand
+            temp_filters = [["id", "is", sg_publish_data['version']['id']]]
+            temp_fields = ['frame_range']
+            temp_type = 'Version'
+
+            temp_info = self.parent.shotgun.find_one(
+                temp_type, filters=temp_filters, fields=temp_fields
+            )
+
+            print 'happens'
+            # Unfortunately, we can't do simple formatting here as %<num>d
+            # old style Python formatting does not support getting a frame
+            # range. Thus we need to parse it ourselves
+            new_path = self._handle_frame_range(
+                path, temp_info['frame_range']
+            )
+
+            print 'happens'
+
+            if new_path and len(new_path) != 0:
+                path = new_path
+
+            flame.batch.import_clip(path, SCHEMATIC_REEL)
 
     ##############################################################################################################
     # helper methods responsible for the basic Flame Python API operations
@@ -342,12 +368,15 @@ class FlameActions(HookBaseClass):
                     temp_type, filters=temp_filters, fields=temp_fields
                 )
 
+                print 'happens'
                 # Unfortunately, we can't do simple formatting here as %<num>d
                 # old style Python formatting does not support getting a frame
                 # range. Thus we need to parse it ourselves
                 new_path = self._handle_frame_range(
                     path, temp_info['frame_range']
                 )
+
+                print 'happens'
 
                 if new_path and len(new_path) != 0:
                     path = new_path
@@ -557,14 +586,16 @@ class FlameActions(HookBaseClass):
             raise Exception("No ranges found")
 
         # Cuts off everything after the position of the formatting char.
-        path_end = path[path.find('%')]
+        path_end = path[path.find('%'):]
 
         # Get the formatting alone
         formatting_str = path_end[:path_end.find('d')+1]
 
         # Gets the formatted frames numbers
-        start_frame = formatting_str % ranges[0]
-        end_frame = formatting_str % ranges[1]
+	print formatting_str
+	print ranges
+        start_frame = formatting_str % int(ranges[0])
+        end_frame = formatting_str % int(ranges[1])
 
         # Generates back the frame range, now formatted
         frame_range = '[{}-{}]'.format(

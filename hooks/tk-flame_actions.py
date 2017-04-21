@@ -255,8 +255,6 @@ class FlameActions(HookBaseClass):
             # If we don't have either we give up
             return False
 
-        print '--- batch_path: {}\n'.format(batch_path)
-
         # Only load the batch if it exists
         if batch_path and os.path.exists(batch_path):
             self._load_batch_setup(batch_path)
@@ -276,8 +274,6 @@ class FlameActions(HookBaseClass):
         import flame
 
         flame.batch.go_to()
-
-        print sg_publish_data
 
         # Makes sure that we have at least some local_path set
         path = next(
@@ -373,8 +369,6 @@ class FlameActions(HookBaseClass):
                 new_path = self._handle_frame_range(
                     path, temp_info['frame_range']
                 )
-
-                print 'happens'
 
                 if new_path and len(new_path) != 0:
                     path = new_path
@@ -590,8 +584,6 @@ class FlameActions(HookBaseClass):
         formatting_str = path_end[:path_end.find('d')+1]
 
         # Gets the formatted frames numbers
-	print formatting_str
-	print ranges
         start_frame = formatting_str % int(ranges[0])
         end_frame = formatting_str % int(ranges[1])
 

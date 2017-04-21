@@ -299,7 +299,6 @@ class FlameActions(HookBaseClass):
                 temp_type, filters=temp_filters, fields=temp_fields
             )
 
-            print 'happens'
             # Unfortunately, we can't do simple formatting here as %<num>d
             # old style Python formatting does not support getting a frame
             # range. Thus we need to parse it ourselves
@@ -341,7 +340,7 @@ class FlameActions(HookBaseClass):
 
             # Eliminates PublishedFiles without a specified path or published_file_type, or not supported type
             if 'path' not in info or 'published_file_type' not in info \
-                    or info['published_file_type']['name'] is 'Flame Batch':
+                    or info['published_file_type']['name'] == 'Flame Batch File':
                 continue
 
             # Makes sure that we have at least some local_path set
@@ -368,7 +367,6 @@ class FlameActions(HookBaseClass):
                     temp_type, filters=temp_filters, fields=temp_fields
                 )
 
-                print 'happens'
                 # Unfortunately, we can't do simple formatting here as %<num>d
                 # old style Python formatting does not support getting a frame
                 # range. Thus we need to parse it ourselves

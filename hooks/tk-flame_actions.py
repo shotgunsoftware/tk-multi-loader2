@@ -17,6 +17,8 @@ import os
 HookBaseClass = sgtk.get_hook_baseclass()
 
 
+SCHEMATIC_REEL = 'Schematic Reel 1'
+
 class FlameActions(HookBaseClass):
 
     ##############################################################################################################
@@ -87,12 +89,11 @@ class FlameActions(HookBaseClass):
                                      "description": "This will create a " 
                                                     "Comped Batch Group " 
                                                     "using"})
-
         if "clip" in actions:
             action_instances.append({"name": "clip",
                                      "params": None,
-                                     "caption": "Import image",
-                                     "description": "This will import the image to the current Batch Group."})
+                                     "caption": "Import clip",
+                                     "description": "This will import the clip to the current Batch Group."})
 
         return action_instances
 
@@ -145,13 +146,13 @@ class FlameActions(HookBaseClass):
             self._import_batch_group(sg_publish_data)
 
         if name == "comped_batch_group":
-            self._create_comped_batch_group(sg_publish_data)
+            self._import_batch_group(sg_publish_data, comp=True)
 
         if name == "clip":
-            self._create_texture_node(sg_publish_data)
+            self._import_clip(sg_publish_data)
 
         if name == "batch_file":
-            self._create_batch_file(sg_publish_data)
+            self._create_batch_file(sg_publish_data=sg_publish_data)
 
 
     ##############################################################################################################
@@ -191,13 +192,8 @@ class FlameActions(HookBaseClass):
 
         # If Batch loading is enabled, try to do that
         if batch:
-            batch_path = self._get_batch_path_from_published_files(
-                sg_info['sg_published_files']
-            )
-
-            if batch_path:
-                self._load_batch_setup(batch_path)
-                # Once the batch is loaded, skip the rest as we no longer need it
+            # If the operation succeeds, skip the rest
+            if self._create_batch_file(sg_info=sg_info):
                 return
 
         # First loop populates the list of valid published files in the shot
@@ -225,25 +221,72 @@ class FlameActions(HookBaseClass):
             write_file_config=None
         )
 
-    def _create_batch_file(self, sg_publish_data):
-        import flame
-
-        print sg_publish_data['path']['url']
-
-
-    def _create_texture_node(self, sg_publish_data):
+    def _create_batch_file(self, sg_info=None, sg_publish_data=None):
         """
-        Create a file texture node for a texture
+        Imports a Batch Group from Shotgun into Flame.
+        
+        :param sg_info: Shotgun data dictionary with info on the publishes.
+        :param sg_publish_data: Shotgun data dictionary with standard info.
+        :type sg_info: dict
+        :returns: Whether or not the operation succeeded. 
+        :rtype: bool
+        
+        """
+
+        # Defines the batch+path right away
+        batch_path = None
+
+        # If we have sg_publish_data, we can get the path of the shot directly
+        if not sg_info and sg_publish_data:
+            # Gets sg_info from sg_publish_data
+            batch_path = next(
+                (sg_publish_data['path'][p] for p in (
+                    'local_path', 'local_path_linux',
+                    'local_path_mac', 'local_path_windows')
+                if (p in sg_publish_data['path'] and sg_publish_data['path'][p] is not None)),
+                None  # Default argument that will be passed to path if it isn't found
+            )
+        elif sg_info:
+            # Otherwise determines it from the published files in the Shot
+            batch_path = self._get_batch_path_from_published_files(
+                sg_info['sg_published_files']
+            )
+        else:
+            # If we don't have either we give up
+            return False
+
+        print '--- batch_path: {}\n'.format(batch_path)
+
+        # Only load the batch if it exists
+        if batch_path and os.path.exists(batch_path):
+            self._load_batch_setup(batch_path)
+            # Once the batch is loaded, skip the rest as we no longer need it
+            return True
+        else:
+            return False
+
+    def _import_clip(self, sg_publish_data):
+        """
+        Imports a clip to the current Batch Group.
 
         :param sg_publish_data:  Shotgun data dictionary with all the standard publish fields.
-        :returns:                The newly created file node
+        :type sg_publish_data: dict
         """
 
         import flame
 
-        path = sg_publish_data['path']['url']
+        flame.batch.go_to()
 
-        clip = flame.batch.import_clip(path, "Schematic Reel 3")
+        print sg_publish_data
+
+        # Makes sure that we have at least some local_path set
+        path = next(
+            (sg_publish_data['path'][p] for p in ('local_path', 'local_path_linux', 'local_path_windows', 'local_path_mac')
+             if (p in sg_publish_data['path'] and sg_publish_data['path'][p] is not None)),
+            None  # Default argument that will be passed to path if it isn't found
+        )
+
+        flame.batch.import_clip(path, SCHEMATIC_REEL)
 
     ##############################################################################################################
     # helper methods responsible for the basic Flame Python API operations
@@ -333,7 +376,9 @@ class FlameActions(HookBaseClass):
             sg_fields = ['path', 'published_file_type']
             sg_type = 'PublishedFile'
 
-            info = self.parent.shotgun.find_one(sg_type, filters=sg_filters, fields=sg_fields)
+            info = self.parent.shotgun.find_one(sg_type,
+                                                filters=sg_filters,
+                                                fields=sg_fields)
 
             if 'path' not in info or 'published_file_type' not in info \
                     or info['published_file_type']['name'] != 'Flame Batch File':
@@ -431,7 +476,7 @@ class FlameActions(HookBaseClass):
         for path in file_paths:
 
             # Creates the node from the path
-            node = flame.batch.import_clip(path['path'], 'Schematic Reel 1')
+            node = flame.batch.import_clip(path['path'], SCHEMATIC_REEL)
             # @TODO Set up some import params here
 
             # Checks that the node was created
@@ -530,8 +575,12 @@ class FlameActions(HookBaseClass):
         return path.replace(formatting_str, frame_range)
 
     @staticmethod
-    def _generate_write_file_params(root, seq_name, shot_name, prev_version):
-        """Generates params based on a root path, a shot name, and a sequence name."""
+    def _generate_write_file_params(root, cut_in, cut_out, seq_name, shot_name, prev_version):
+        """Generates params for use with the write file node.
+        
+        
+        
+        """
 
         write_file_info = {}
 
@@ -546,5 +595,15 @@ class FlameActions(HookBaseClass):
         write_file_info['media_path'] = media_path
         write_file_info['clip'] = clip
         write_file_info['setup'] = setup
+
+        # Sets clip and include setup
+        write_file_info['create_clip'] = 1
+        write_file_info['include_setup'] = 1
+
+        # Sets up range
+        write_file_info['range_start'] = cut_in
+        write_file_info['range_end'] = cut_out
+
+        # Sets up version name
 
         return write_file_info

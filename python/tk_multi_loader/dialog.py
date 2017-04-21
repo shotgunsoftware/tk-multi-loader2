@@ -1189,6 +1189,15 @@ class AppDialog(QtGui.QWidget):
 
             if not type_hierarchy:
 
+                # FIXME: We should probably remove all of this block in favor of something like
+                # search = SearchWidget(tab)
+                # search.setToolTip("Use the <i>search</i> field to narrow down the items displayed in the tree above.")
+                # search_layout.addWidget(search)
+                # search.set_placeholder_text("Search...")
+                # search.search_changed.connect(
+                #     lambda text, v=view, pm=proxy_model: self._on_search_text_changed(text, v, pm)
+                # )
+
                 # Add a layout to host search.
                 search_layout = QtGui.QHBoxLayout()
                 layout.addLayout(search_layout)
@@ -1231,20 +1240,33 @@ class AppDialog(QtGui.QWidget):
                 self._dynamic_widgets.extend([search_layout, search, clear_search, icon])
 
             else:
-
+                print 0
                 search = shotgun_search_widget.HierarchicalSearchWidget(tab)
 
-                search.set_search_root(sgtk.platform.current_engine().context.project)
+                search.search_root = sgtk.platform.current_engine().context.project
+
+                print 1
+                # When a selection is made, we are only interested into the paths to the node so we can refresh
+                # the model and expand the item.
                 search.node_activated.connect(
-                    lambda entity_type, entity_id, name, path, incremental_paths,
-                    view=view, proxy_model=proxy_model: self._node_activated(
-                        entity_type, entity_id, name, path, incremental_paths,
-                        view, proxy_model
+                    lambda entity_type, entity_id, name, path_label, incremental_paths, view=view, proxy_model=proxy_model: 
+                        self._node_activated(incremental_paths, view, proxy_model)
+                )
+                print 2
+                # When getting back the model items that were loaded, we will need the view and proxy model
+                # to expand the item.
+                model.items_from_paths_ready.connect(
+                    lambda job_id, model_items, view=view, proxy_model=proxy_model: self._items_from_paths_ready(
+                        job_id, model_items[-1], view, proxy_model
                     )
                 )
+                print 3
                 search.set_bg_task_manager(self._task_manager)
-
+                print 4
                 layout.addWidget(search)
+                print 5
+
+                self._dynamic_widgets.extend([search])
 
             # We need to handle tool tip display ourselves for action context menus.
             def action_hovered(action):
@@ -1399,11 +1421,21 @@ class AppDialog(QtGui.QWidget):
         # tell publish UI to update itself
         self._load_publishes_for_entity_item(selected_item)
 
-    def _node_activated(self, entity_type, entity_id, name, label_path, incremental_paths, view, proxy_model):
-        print entity_type, entity_id, name
-        print label_path
-        print incremental_paths
-        print view, proxy_model
+    def _node_activated(self, incremental_paths, view, proxy_model):
+        # Asynchronously retrieve the nodes that lead to the item we picked.
+        source_model = proxy_model.sourceModel()
+        self._last_search_job_id = source_model.async_items_from_paths(incremental_paths)
+        # If items are already ready, map the item directly.
+        if self._last_search_job_id is None:
+            self._items_from_paths_ready(
+                self._last_search_job_id, source_model.item_from_path(incremental_paths[-1]), view, proxy_model
+            )
+
+    def _items_from_paths_ready(self, job_id, item, view, proxy_model):
+        if self._last_search_job_id == job_id:
+            # Get the last path's  index, which is the leaf node
+            proxy_idx = proxy_model.mapFromSource(item.index())
+            view.setCurrentIndex(proxy_idx)
 
     def _setup_query_model(self, app, setting_dict):
         """

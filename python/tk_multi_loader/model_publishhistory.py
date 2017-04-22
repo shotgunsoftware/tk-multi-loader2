@@ -73,6 +73,15 @@ class SgPublishHistoryModel(ShotgunModel):
                     [publish_type_field, "is", sg_data[publish_type_field] ],
                   ]
 
+        # ignore publishes without a status. with zero config, it is very easy
+        # to publish the same path multiple times. we warn in the publisher that
+        # previous publishes of the same path will not be visible in the loader
+        # to avoid confusion. when publishing a path that has already been
+        # published, the publish app will clear the status of previous
+        # publishes. this additional filter brings means the loader will only
+        # show the last publish of a particular file.
+        filters.append(["sg_status_list", "is_not", None])
+
         # add external filters from config
         app = sgtk.platform.current_bundle()
         pub_filters = app.get_setting("publish_filters", [])

@@ -74,8 +74,14 @@ class NukeActions(HookBaseClass):
             action_instances.append( {"name": "script_import",
                                       "params": None, 
                                       "caption": "Import Contents", 
-                                      "description": "This will import all the nodes into the current scene."} )        
-    
+                                      "description": "This will import all the nodes into the current scene."} )
+
+        if "open_project" in actions:
+            action_instances.append( {"name": "open_project",
+                                      "params": None,
+                                      "caption": "Open Project",
+                                      "description": "This will open the Nuke Studio project in the current session."} )
+
         return action_instances
 
     def execute_multiple_actions(self, actions):
@@ -132,7 +138,10 @@ class NukeActions(HookBaseClass):
         
         if name == "script_import":
             self._import_script(path, sg_publish_data)
-           
+
+        if name == "open_project":
+            self._open_project(path, sg_publish_data)
+
     ##############################################################################################################
     # helper methods which can be subclassed in custom hooks to fine tune the behavior of things
     
@@ -146,9 +155,29 @@ class NukeActions(HookBaseClass):
         import nuke
         if not os.path.exists(path):
             raise Exception("File not found on disk - '%s'" % path)
-        
+
         nuke.nodePaste(path)
-                
+
+    def _open_project(self, path, sg_publish_data):
+        """
+        Open the nuke studio project.
+
+        :param path: Path to file.
+        :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
+        """
+
+        if not os.path.exists(path):
+            raise Exception("File not found on disk - '%s'" % path)
+
+        import nuke
+
+        if not nuke.env.get("studio"):
+            # can't import the project unless nuke studio is running
+            raise Exception("Nuke Studio is required to open the project.")
+
+        import hiero
+        hiero.core.openProject(path)
+
     def _create_read_node(self, path, sg_publish_data):
         """
         Create a read node representing the publish.

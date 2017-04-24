@@ -1164,7 +1164,8 @@ class AppDialog(QtGui.QWidget):
 
             # Create the model.
             if type_hierarchy:
-                (model, proxy_model) = self._setup_hierarchy_model(app, setting_dict["root"])
+                entity_root = self._get_entity_root(setting_dict["root"])
+                (model, proxy_model) = self._setup_hierarchy_model(app, entity_root)
             else:
                 (model, proxy_model) = self._setup_query_model(app, setting_dict)
 
@@ -1246,21 +1247,21 @@ class AppDialog(QtGui.QWidget):
             else:
                 search = shotgun_search_widget.HierarchicalSearchWidget(tab)
 
-                search.search_root = sgtk.platform.current_engine().context.project
+                search.search_root = entity_root
 
                 # When a selection is made, we are only interested into the paths to the node so we can refresh
                 # the model and expand the item.
-                # search.node_activated.connect(
-                #     lambda entity_type, entity_id, name, path_label, incremental_paths, view=view, proxy_model=proxy_model: 
-                #         self._node_activated(incremental_paths, view, proxy_model)
-                # )
+                search.node_activated.connect(
+                    lambda entity_type, entity_id, name, path_label, incremental_paths, view=view, proxy_model=proxy_model: 
+                        self._node_activated(incremental_paths, view, proxy_model)
+                )
                 # When getting back the model items that were loaded, we will need the view and proxy model
                 # to expand the item.
-                # model.items_from_paths_ready.connect(
-                #     lambda job_id, model_items, view=view, proxy_model=proxy_model: self._items_from_paths_ready(
-                #         job_id, model_items[-1], view, proxy_model
-                #     )
-                # )
+                model.deep_load_completed.connect(
+                    lambda item, view=view, proxy_model=proxy_model: self._deep_load_completed(
+                        item, view, proxy_model
+                    )
+                )
                 search.set_bg_task_manager(self._task_manager)
                 layout.addWidget(search)
 
@@ -1456,21 +1457,20 @@ class AppDialog(QtGui.QWidget):
         self._load_publishes_for_entity_item(selected_item)
 
     def _node_activated(self, incremental_paths, view, proxy_model):
-        # Asynchronously retrieve the nodes that lead to the item we picked.
+        """
+        Called when a user picks a result from the search widget.
+        """
         source_model = proxy_model.sourceModel()
-        # Skip the project id
-        self._last_search_job_id = source_model.async_items_from_paths(incremental_paths[1:])
-        # If items are already ready, map the item directly.
-        if self._last_search_job_id is None:
-            self._items_from_paths_ready(
-                self._last_search_job_id, source_model.item_from_path(incremental_paths[-1]), view, proxy_model
-            )
+        # Asynchronously retrieve the nodes that lead to the item we picked.
+        source_model.async_deep_load(incremental_paths)
 
-    def _items_from_paths_ready(self, job_id, item, view, proxy_model):
-        if self._last_search_job_id == job_id:
-            # Get the last path's  index, which is the leaf node
-            proxy_idx = proxy_model.mapFromSource(item.index())
-            view.setCurrentIndex(proxy_idx)
+    def _deep_load_completed(self, item, view, proxy_model):
+        """
+        Called when the last node from the deep load is loaded.
+        """
+        # Ask the view to set the current index.
+        proxy_idx = proxy_model.mapFromSource(item.index())
+        view.setCurrentIndex(proxy_idx)
 
     def _setup_query_model(self, app, setting_dict):
         """

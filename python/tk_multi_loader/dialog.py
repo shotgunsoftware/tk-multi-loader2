@@ -62,233 +62,237 @@ class AppDialog(QtGui.QWidget):
                                 then the default will be used instead
         :param parent:          The parent QWidget for this control
         """
-        QtGui.QWidget.__init__(self, parent)
+        try:
+            QtGui.QWidget.__init__(self, parent)
+            self._action_manager = action_manager
 
-        self._action_manager = action_manager
+            # create a settings manager where we can pull and push prefs later
+            # prefs in this manager are shared
+            self._settings_manager = settings.UserSettings(sgtk.platform.current_bundle())
 
-        # create a settings manager where we can pull and push prefs later
-        # prefs in this manager are shared
-        self._settings_manager = settings.UserSettings(sgtk.platform.current_bundle())
+            # create a background task manager
+            self._task_manager = task_manager.BackgroundTaskManager(self, 
+                                                                    start_processing=True, 
+                                                                    max_threads=2)
 
-        # create a background task manager
-        self._task_manager = task_manager.BackgroundTaskManager(self, 
-                                                                start_processing=True, 
-                                                                max_threads=2)
+            shotgun_globals.register_bg_task_manager(self._task_manager)
 
-        shotgun_globals.register_bg_task_manager(self._task_manager)
+            # set up the UI
+            self.ui = Ui_Dialog()
+            self.ui.setupUi(self)
 
-        # set up the UI
-        self.ui = Ui_Dialog()
-        self.ui.setupUi(self)
+            #################################################
+            # maintain a list where we keep a reference to
+            # all the dynamic UI we create. This is to make
+            # the GC happy.
+            self._dynamic_widgets = []
 
-        #################################################
-        # maintain a list where we keep a reference to
-        # all the dynamic UI we create. This is to make
-        # the GC happy.
-        self._dynamic_widgets = []
+            # maintain a special flag so that we can switch profile
+            # tabs without triggering events
+            self._disable_tab_event_handler = False
 
-        # maintain a special flag so that we can switch profile
-        # tabs without triggering events
-        self._disable_tab_event_handler = False
+            #################################################
+            # hook a helper model tracking status codes so we
+            # can use those in the UI
+            self._status_model = SgStatusModel(self, self._task_manager)
 
-        #################################################
-        # hook a helper model tracking status codes so we
-        # can use those in the UI
-        self._status_model = SgStatusModel(self, self._task_manager)
+            #################################################
+            # details pane
+            self._details_pane_visible = False
 
-        #################################################
-        # details pane
-        self._details_pane_visible = False
+            self._details_action_menu = QtGui.QMenu()
+            self.ui.detail_actions_btn.setMenu(self._details_action_menu)
 
-        self._details_action_menu = QtGui.QMenu()
-        self.ui.detail_actions_btn.setMenu(self._details_action_menu)
+            self.ui.info.clicked.connect(self._toggle_details_pane)
 
-        self.ui.info.clicked.connect(self._toggle_details_pane)
+            self.ui.thumbnail_mode.clicked.connect(self._on_thumbnail_mode_clicked)
+            self.ui.list_mode.clicked.connect(self._on_list_mode_clicked)
 
-        self.ui.thumbnail_mode.clicked.connect(self._on_thumbnail_mode_clicked)
-        self.ui.list_mode.clicked.connect(self._on_list_mode_clicked)
+            self._publish_history_model = SgPublishHistoryModel(self, self._task_manager)
 
-        self._publish_history_model = SgPublishHistoryModel(self, self._task_manager)
+            self._publish_history_model_overlay = ShotgunModelOverlayWidget(self._publish_history_model, 
+                                                                            self.ui.history_view)
 
-        self._publish_history_model_overlay = ShotgunModelOverlayWidget(self._publish_history_model, 
-                                                                        self.ui.history_view)
+            self._publish_history_proxy = QtGui.QSortFilterProxyModel(self)
+            self._publish_history_proxy.setSourceModel(self._publish_history_model)
 
-        self._publish_history_proxy = QtGui.QSortFilterProxyModel(self)
-        self._publish_history_proxy.setSourceModel(self._publish_history_model)
+            # now use the proxy model to sort the data to ensure
+            # higher version numbers appear earlier in the list
+            # the history model is set up so that the default display
+            # role contains the version number field in shotgun.
+            # This field is what the proxy model sorts by default
+            # We set the dynamic filter to true, meaning QT will keep
+            # continously sorting. And then tell it to use column 0
+            # (we only have one column in our models) and descending order.
+            self._publish_history_proxy.setDynamicSortFilter(True)
+            self._publish_history_proxy.sort(0, QtCore.Qt.DescendingOrder)
 
-        # now use the proxy model to sort the data to ensure
-        # higher version numbers appear earlier in the list
-        # the history model is set up so that the default display
-        # role contains the version number field in shotgun.
-        # This field is what the proxy model sorts by default
-        # We set the dynamic filter to true, meaning QT will keep
-        # continously sorting. And then tell it to use column 0
-        # (we only have one column in our models) and descending order.
-        self._publish_history_proxy.setDynamicSortFilter(True)
-        self._publish_history_proxy.sort(0, QtCore.Qt.DescendingOrder)
+            self.ui.history_view.setModel(self._publish_history_proxy)
+            self._history_delegate = SgPublishHistoryDelegate(self.ui.history_view, self._status_model, self._action_manager)
+            self.ui.history_view.setItemDelegate(self._history_delegate)
 
-        self.ui.history_view.setModel(self._publish_history_proxy)
-        self._history_delegate = SgPublishHistoryDelegate(self.ui.history_view, self._status_model, self._action_manager)
-        self.ui.history_view.setItemDelegate(self._history_delegate)
+            # event handler for when the selection in the history view is changing
+            # note! Because of some GC issues (maya 2012 Pyside), need to first establish
+            # a direct reference to the selection model before we can set up any signal/slots
+            # against it
+            self._history_view_selection_model = self.ui.history_view.selectionModel()
+            self._history_view_selection_model.selectionChanged.connect(self._on_history_selection)
 
-        # event handler for when the selection in the history view is changing
-        # note! Because of some GC issues (maya 2012 Pyside), need to first establish
-        # a direct reference to the selection model before we can set up any signal/slots
-        # against it
-        self._history_view_selection_model = self.ui.history_view.selectionModel()
-        self._history_view_selection_model.selectionChanged.connect(self._on_history_selection)
+            self._multiple_publishes_pixmap = QtGui.QPixmap(":/res/multiple_publishes_512x400.png")
+            self._no_selection_pixmap = QtGui.QPixmap(":/res/no_item_selected_512x400.png")
+            self._no_pubs_found_icon = QtGui.QPixmap(":/res/no_publishes_found.png")
 
-        self._multiple_publishes_pixmap = QtGui.QPixmap(":/res/multiple_publishes_512x400.png")
-        self._no_selection_pixmap = QtGui.QPixmap(":/res/no_item_selected_512x400.png")
-        self._no_pubs_found_icon = QtGui.QPixmap(":/res/no_publishes_found.png")
+            self.ui.detail_playback_btn.clicked.connect(self._on_detail_version_playback)
+            self._current_version_detail_playback_url = None
 
-        self.ui.detail_playback_btn.clicked.connect(self._on_detail_version_playback)
-        self._current_version_detail_playback_url = None
+            # set up right click menu for the main publish view
+            self._refresh_history_action = QtGui.QAction("Refresh", self.ui.history_view)
+            self._refresh_history_action.triggered.connect(self._publish_history_model.async_refresh)
+            self.ui.history_view.addAction(self._refresh_history_action)
+            self.ui.history_view.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
+            
+            # if an item in the list is double clicked the default action is run
+            self.ui.history_view.doubleClicked.connect(self._on_history_double_clicked)
 
-        # set up right click menu for the main publish view
-        self._refresh_history_action = QtGui.QAction("Refresh", self.ui.history_view)
-        self._refresh_history_action.triggered.connect(self._publish_history_model.async_refresh)
-        self.ui.history_view.addAction(self._refresh_history_action)
-        self.ui.history_view.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
-        
-        # if an item in the list is double clicked the default action is run
-        self.ui.history_view.doubleClicked.connect(self._on_history_double_clicked)
+            #################################################
+            # load and initialize cached publish type model
+            self._publish_type_model = SgPublishTypeModel(self,
+                                                          self._action_manager,
+                                                          self._settings_manager,
+                                                          self._task_manager)
+            self.ui.publish_type_list.setModel(self._publish_type_model)
+            
+            self._publish_type_overlay = ShotgunModelOverlayWidget(self._publish_type_model, 
+                                                                   self.ui.publish_type_list)
 
-        #################################################
-        # load and initialize cached publish type model
-        self._publish_type_model = SgPublishTypeModel(self,
-                                                      self._action_manager,
-                                                      self._settings_manager,
-                                                      self._task_manager)
-        self.ui.publish_type_list.setModel(self._publish_type_model)
-        
-        self._publish_type_overlay = ShotgunModelOverlayWidget(self._publish_type_model, 
-                                                               self.ui.publish_type_list)
+            #################################################
+            # setup publish model
+            self._publish_model = SgLatestPublishModel(self, 
+                                                       self._publish_type_model,
+                                                       self._task_manager)
 
-        #################################################
-        # setup publish model
-        self._publish_model = SgLatestPublishModel(self, 
-                                                   self._publish_type_model,
-                                                   self._task_manager)
+            self._publish_main_overlay = ShotgunModelOverlayWidget(self._publish_model, 
+                                                                   self.ui.publish_view)
 
-        self._publish_main_overlay = ShotgunModelOverlayWidget(self._publish_model, 
-                                                               self.ui.publish_view)
+            # set up a proxy model to cull results based on type selection
+            self._publish_proxy_model = SgLatestPublishProxyModel(self)
+            self._publish_proxy_model.setSourceModel(self._publish_model)
 
-        # set up a proxy model to cull results based on type selection
-        self._publish_proxy_model = SgLatestPublishProxyModel(self)
-        self._publish_proxy_model.setSourceModel(self._publish_model)
-
-        # whenever the number of columns change in the proxy model
-        # check if we should display the "sorry, no publishes found" overlay
-        self._publish_model.cache_loaded.connect(self._on_publish_content_change)
-        self._publish_model.data_refreshed.connect(self._on_publish_content_change)
-        self._publish_proxy_model.filter_changed.connect(self._on_publish_content_change)
+            # whenever the number of columns change in the proxy model
+            # check if we should display the "sorry, no publishes found" overlay
+            self._publish_model.cache_loaded.connect(self._on_publish_content_change)
+            self._publish_model.data_refreshed.connect(self._on_publish_content_change)
+            self._publish_proxy_model.filter_changed.connect(self._on_publish_content_change)
 
 
-        # hook up view -> proxy model -> model
-        self.ui.publish_view.setModel(self._publish_proxy_model)
+            # hook up view -> proxy model -> model
+            self.ui.publish_view.setModel(self._publish_proxy_model)
 
-        # set up custom delegates to use when drawing the main area
-        self._publish_thumb_delegate = SgPublishThumbDelegate(self.ui.publish_view, self._action_manager)
+            # set up custom delegates to use when drawing the main area
+            self._publish_thumb_delegate = SgPublishThumbDelegate(self.ui.publish_view, self._action_manager)
 
-        self._publish_list_delegate = SgPublishListDelegate(self.ui.publish_view, self._action_manager)
-        
-        # recall which the most recently mode used was and set that
-        main_view_mode = self._settings_manager.retrieve("main_view_mode", self.MAIN_VIEW_THUMB)
-        self._set_main_view_mode(main_view_mode)
+            self._publish_list_delegate = SgPublishListDelegate(self.ui.publish_view, self._action_manager)
+            
+            # recall which the most recently mode used was and set that
+            main_view_mode = self._settings_manager.retrieve("main_view_mode", self.MAIN_VIEW_THUMB)
+            self._set_main_view_mode(main_view_mode)
 
-        # whenever the type list is checked, update the publish filters
-        self._publish_type_model.itemChanged.connect(self._apply_type_filters_on_publishes)
+            # whenever the type list is checked, update the publish filters
+            self._publish_type_model.itemChanged.connect(self._apply_type_filters_on_publishes)
 
-        # if an item in the table is double clicked the default action is run
-        self.ui.publish_view.doubleClicked.connect(self._on_publish_double_clicked)
+            # if an item in the table is double clicked the default action is run
+            self.ui.publish_view.doubleClicked.connect(self._on_publish_double_clicked)
 
-        # event handler for when the selection in the publish view is changing
-        # note! Because of some GC issues (maya 2012 Pyside), need to first establish
-        # a direct reference to the selection model before we can set up any signal/slots
-        # against it
-        self.ui.publish_view.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
-        self._publish_view_selection_model = self.ui.publish_view.selectionModel()
-        self._publish_view_selection_model.selectionChanged.connect(self._on_publish_selection)
+            # event handler for when the selection in the publish view is changing
+            # note! Because of some GC issues (maya 2012 Pyside), need to first establish
+            # a direct reference to the selection model before we can set up any signal/slots
+            # against it
+            self.ui.publish_view.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
+            self._publish_view_selection_model = self.ui.publish_view.selectionModel()
+            self._publish_view_selection_model.selectionChanged.connect(self._on_publish_selection)
 
-        # set up right click menu for the main publish view
-        self._refresh_action = QtGui.QAction("Refresh", self.ui.publish_view)
-        self._refresh_action.triggered.connect(self._publish_model.async_refresh)
-        self.ui.publish_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.ui.publish_view.customContextMenuRequested.connect(self._show_publish_actions)
+            # set up right click menu for the main publish view
+            self._refresh_action = QtGui.QAction("Refresh", self.ui.publish_view)
+            self._refresh_action.triggered.connect(self._publish_model.async_refresh)
+            self.ui.publish_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+            self.ui.publish_view.customContextMenuRequested.connect(self._show_publish_actions)
 
-        #################################################
-        # popdown publish filter widget for the main view
-        # note:
-        # we parent the widget to a frame that flows around the 
-        # main publish area - this is in order to avoid a scenario
-        # where the overlay that sometimes pops up on top of the 
-        # publish area and the search widget would be competing
-        # for the same z-index. The result in some of these cases 
-        # is that the search widget is hidden under the "publishes
-        # not found" overlay. By having it parented to the frame 
-        # instead, it will always be above the overlay.
-        self._search_widget = SearchWidget(self.ui.publish_frame)
-        # hook it up with the search button the main toolbar
-        self.ui.search_publishes.clicked.connect(self._on_publish_filter_clicked)
-        # hook it up so that it signals the publish proxy model whenever the filter changes
-        self._search_widget.filter_changed.connect(self._publish_proxy_model.set_search_query)
+            #################################################
+            # popdown publish filter widget for the main view
+            # note:
+            # we parent the widget to a frame that flows around the 
+            # main publish area - this is in order to avoid a scenario
+            # where the overlay that sometimes pops up on top of the 
+            # publish area and the search widget would be competing
+            # for the same z-index. The result in some of these cases 
+            # is that the search widget is hidden under the "publishes
+            # not found" overlay. By having it parented to the frame 
+            # instead, it will always be above the overlay.
+            self._search_widget = SearchWidget(self.ui.publish_frame)
+            # hook it up with the search button the main toolbar
+            self.ui.search_publishes.clicked.connect(self._on_publish_filter_clicked)
+            # hook it up so that it signals the publish proxy model whenever the filter changes
+            self._search_widget.filter_changed.connect(self._publish_proxy_model.set_search_query)
 
-        #################################################
-        # checkboxes, buttons etc
-        self.ui.show_sub_items.toggled.connect(self._on_show_subitems_toggled)
+            #################################################
+            # checkboxes, buttons etc
+            self.ui.show_sub_items.toggled.connect(self._on_show_subitems_toggled)
 
-        self.ui.check_all.clicked.connect(self._publish_type_model.select_all)
-        self.ui.check_none.clicked.connect(self._publish_type_model.select_none)
+            self.ui.check_all.clicked.connect(self._publish_type_model.select_all)
+            self.ui.check_none.clicked.connect(self._publish_type_model.select_none)
 
-        #################################################
-        # thumb scaling
-        scale_val = self._settings_manager.retrieve("thumb_size_scale", 140)
-        # position both slider and view
-        self.ui.thumb_scale.setValue(scale_val)
-        self.ui.publish_view.setIconSize(QtCore.QSize(scale_val, scale_val))
-        # and track subsequent changes
-        self.ui.thumb_scale.valueChanged.connect(self._on_thumb_size_slider_change)
+            #################################################
+            # thumb scaling
+            scale_val = self._settings_manager.retrieve("thumb_size_scale", 140)
+            # position both slider and view
+            self.ui.thumb_scale.setValue(scale_val)
+            self.ui.publish_view.setIconSize(QtCore.QSize(scale_val, scale_val))
+            # and track subsequent changes
+            self.ui.thumb_scale.valueChanged.connect(self._on_thumb_size_slider_change)
 
-        #################################################
-        # setup history
+            #################################################
+            # setup history
 
-        self._history = []
-        self._history_index = 0
-        # state flag used by history tracker to indicate that the
-        # current navigation operation is happen as a part of a
-        # back/forward operation and not part of a user's click
-        self._history_navigation_mode = False
-        self.ui.navigation_home.clicked.connect(self._on_home_clicked)
-        self.ui.navigation_prev.clicked.connect(self._on_back_clicked)
-        self.ui.navigation_next.clicked.connect(self._on_forward_clicked)
+            self._history = []
+            self._history_index = 0
+            # state flag used by history tracker to indicate that the
+            # current navigation operation is happen as a part of a
+            # back/forward operation and not part of a user's click
+            self._history_navigation_mode = False
+            self.ui.navigation_home.clicked.connect(self._on_home_clicked)
+            self.ui.navigation_prev.clicked.connect(self._on_back_clicked)
+            self.ui.navigation_next.clicked.connect(self._on_forward_clicked)
 
-        #################################################
-        # set up cog button actions
-        self._help_action = QtGui.QAction("Show Help Screen", self)
-        self._help_action.triggered.connect(self.show_help_popup)
-        self.ui.cog_button.addAction(self._help_action)
+            #################################################
+            # set up cog button actions
+            self._help_action = QtGui.QAction("Show Help Screen", self)
+            self._help_action.triggered.connect(self.show_help_popup)
+            self.ui.cog_button.addAction(self._help_action)
 
-        self._doc_action = QtGui.QAction("View Documentation", self)
-        self._doc_action.triggered.connect(self._on_doc_action)
-        self.ui.cog_button.addAction(self._doc_action)
+            self._doc_action = QtGui.QAction("View Documentation", self)
+            self._doc_action.triggered.connect(self._on_doc_action)
+            self.ui.cog_button.addAction(self._doc_action)
 
-        self._reload_action = QtGui.QAction("Reload", self)
-        self._reload_action.triggered.connect(self._on_reload_action)
-        self.ui.cog_button.addAction(self._reload_action)
+            self._reload_action = QtGui.QAction("Reload", self)
+            self._reload_action.triggered.connect(self._on_reload_action)
+            self.ui.cog_button.addAction(self._reload_action)
 
-        #################################################
-        # set up preset tabs and load and init tree views
-        self._entity_presets = {}
-        self._current_entity_preset = None
-        self._load_entity_presets()
+            #################################################
+            # set up preset tabs and load and init tree views
+            self._entity_presets = {}
+            self._current_entity_preset = None
 
-        # load visibility state for details pane
-        show_details = self._settings_manager.retrieve("show_details", False)
-        self._set_details_pane_visiblity(show_details)
+            self._load_entity_presets()
 
-        # trigger an initial evaluation of filter proxy model
-        self._apply_type_filters_on_publishes()
+            # load visibility state for details pane
+            show_details = self._settings_manager.retrieve("show_details", False)
+            self._set_details_pane_visiblity(show_details)
+
+            # trigger an initial evaluation of filter proxy model
+            self._apply_type_filters_on_publishes()
+        except Exception as e:
+            import traceback
+            print traceback.format_exc()
 
     def _show_publish_actions(self, pos):
         """
@@ -1240,31 +1244,25 @@ class AppDialog(QtGui.QWidget):
                 self._dynamic_widgets.extend([search_layout, search, clear_search, icon])
 
             else:
-                print 0
                 search = shotgun_search_widget.HierarchicalSearchWidget(tab)
 
                 search.search_root = sgtk.platform.current_engine().context.project
 
-                print 1
                 # When a selection is made, we are only interested into the paths to the node so we can refresh
                 # the model and expand the item.
-                search.node_activated.connect(
-                    lambda entity_type, entity_id, name, path_label, incremental_paths, view=view, proxy_model=proxy_model: 
-                        self._node_activated(incremental_paths, view, proxy_model)
-                )
-                print 2
+                # search.node_activated.connect(
+                #     lambda entity_type, entity_id, name, path_label, incremental_paths, view=view, proxy_model=proxy_model: 
+                #         self._node_activated(incremental_paths, view, proxy_model)
+                # )
                 # When getting back the model items that were loaded, we will need the view and proxy model
                 # to expand the item.
-                model.items_from_paths_ready.connect(
-                    lambda job_id, model_items, view=view, proxy_model=proxy_model: self._items_from_paths_ready(
-                        job_id, model_items[-1], view, proxy_model
-                    )
-                )
-                print 3
+                # model.items_from_paths_ready.connect(
+                #     lambda job_id, model_items, view=view, proxy_model=proxy_model: self._items_from_paths_ready(
+                #         job_id, model_items[-1], view, proxy_model
+                #     )
+                # )
                 search.set_bg_task_manager(self._task_manager)
-                print 4
                 layout.addWidget(search)
-                print 5
 
                 self._dynamic_widgets.extend([search])
 
@@ -1355,6 +1353,46 @@ class AppDialog(QtGui.QWidget):
         # data has properly arrived in the model.
         self._on_home_clicked()
 
+    def _get_entity_root(self, root):
+        """
+        Translates the string from the settings into an entity.
+
+        :param str root: Can be '{context.project} or empty.
+
+        :returns: Entity that will be used for the root.
+        """
+
+        app = sgtk.platform.current_bundle()
+
+        # FIXME: API doesn't support non-project entities as the root yet.
+        # if root == "{context.entity}":
+        #     if app.context.entity:
+        #         return app.context.entity
+        #     else:
+        #         app.log_warning(
+        #             "There is no entity in the current context %s. "
+        #             "Hierarchy will default to project." % app.context
+        #         )
+        #         root = "{context.project}"
+
+        if root == "{context.project}":
+            if app.context.project:
+                return app.context.project
+            else:
+                app.log_warning(
+                    "There is no project in the current context %s. "
+                    "Hierarchy will default to site." % app.context
+                )
+                root = None
+
+        if root is not None:
+            app.log_warning(
+                "Unknown root was specified: %s. "
+                "Hierarchy will default to site." % root
+            )
+
+        return None
+
     def _setup_hierarchy_model(self, app, root):
         """
         Create the model and proxy model required by a hierarchy type configuration setting.
@@ -1366,15 +1404,11 @@ class AppDialog(QtGui.QWidget):
         """
 
         # Resolve any magic tokens in the root.
-        if app.context.project:
-            project_id = app.context.project.get("id")
-            root = root.replace("{context.project.id}", str(project_id))
-        else:
-            root = None
+        root_entity = self._get_entity_root(root)
 
         # Construct the hierarchy model and load a hierarchy that leads
         # to entities that are linked via the "PublishedFile.entity" field.
-        model = SgHierarchyModel(self, path=root, bg_task_manager=self._task_manager)
+        model = SgHierarchyModel(self, root_entity=root_entity, bg_task_manager=self._task_manager)
 
         # Create a proxy model.
         proxy_model = QtGui.QSortFilterProxyModel(self)
@@ -1424,7 +1458,8 @@ class AppDialog(QtGui.QWidget):
     def _node_activated(self, incremental_paths, view, proxy_model):
         # Asynchronously retrieve the nodes that lead to the item we picked.
         source_model = proxy_model.sourceModel()
-        self._last_search_job_id = source_model.async_items_from_paths(incremental_paths)
+        # Skip the project id
+        self._last_search_job_id = source_model.async_items_from_paths(incremental_paths[1:])
         # If items are already ready, map the item directly.
         if self._last_search_job_id is None:
             self._items_from_paths_ready(

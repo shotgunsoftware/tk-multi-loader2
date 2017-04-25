@@ -1257,8 +1257,8 @@ class AppDialog(QtGui.QWidget):
                 )
                 # When getting back the model items that were loaded, we will need the view and proxy model
                 # to expand the item.
-                model.deep_load_completed.connect(
-                    lambda item, view=view, proxy_model=proxy_model: self._deep_load_completed(
+                model.async_load_completed.connect(
+                    lambda item, view=view, proxy_model=proxy_model: self._async_load_completed(
                         item, view, proxy_model
                     )
                 )
@@ -1462,9 +1462,9 @@ class AppDialog(QtGui.QWidget):
         """
         source_model = proxy_model.sourceModel()
         # Asynchronously retrieve the nodes that lead to the item we picked.
-        source_model.async_deep_load(incremental_paths)
+        source_model.async_load_paths(incremental_paths)
 
-    def _deep_load_completed(self, item, view, proxy_model):
+    def _async_load_completed(self, item, view, proxy_model):
         """
         Called when the last node from the deep load is loaded.
         """

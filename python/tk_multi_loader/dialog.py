@@ -904,7 +904,7 @@ class AppDialog(QtGui.QWidget):
 
     def _on_publish_selection(self, selected, deselected):
         """
-        Signal triggered when someone changes the selection in the main publish area
+        Slot triggered when someone changes the selection in the main publish area
         """
         selected_indexes = self.ui.publish_view.selectionModel().selectedIndexes()
 
@@ -1345,7 +1345,22 @@ class AppDialog(QtGui.QWidget):
         proxy_model.sort(0)
         proxy_model.setDynamicSortFilter(True)
 
+        # When clicking on a node, we fetch all the nodes under it so we can populate the
+        # right hand-side. Make sure we are notified when the child come back so we can load
+        # publishes for the current item.
+        model.data_refreshed.connect(self._hierarchy_refreshed)
+
         return (model, proxy_model)
+
+    def _hierarchy_refreshed(self):
+        """
+        Slot triggered when the hierarchy model has been refreshed. This allows to show all the
+        folder items in the right-hand side for the current selection.
+        """
+        selected_item = self._get_selected_entity()
+
+        # tell publish UI to update itself
+        self._load_publishes_for_entity_item(selected_item)
 
     def _setup_query_model(self, app, setting_dict):
         """
@@ -1491,7 +1506,7 @@ class AppDialog(QtGui.QWidget):
 
     def _on_treeview_item_selected(self):
         """
-        Signal triggered when someone changes the selection in a treeview.
+        Slot triggered when someone changes the selection in a treeview.
         """
 
         selected_item = self._get_selected_entity()

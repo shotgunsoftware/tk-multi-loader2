@@ -1428,7 +1428,7 @@ class AppDialog(QtGui.QWidget):
 
     def _hierarchy_refreshed(self):
         """
-        Signal triggered when someone changes the selection in a treeview.
+        Slot triggered when the hierarchy model has been refreshed. This allows to show all the
         """
 
         selected_item = self._get_selected_entity()

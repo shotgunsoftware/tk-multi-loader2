@@ -904,7 +904,7 @@ class AppDialog(QtGui.QWidget):
 
     def _on_publish_selection(self, selected, deselected):
         """
-        Signal triggered when someone changes the selection in the main publish area
+        Slot triggered when someone changes the selection in the main publish area
         """
         selected_indexes = self.ui.publish_view.selectionModel().selectedIndexes()
 
@@ -1354,7 +1354,7 @@ class AppDialog(QtGui.QWidget):
 
     def _hierarchy_refreshed(self):
         """
-        Signal triggered when the hierarchy model has been refreshed. This allows to show all the
+        Slot triggered when the hierarchy model has been refreshed. This allows to show all the
         folder items in the right-hand side for the current selection.
         """
         selected_item = self._get_selected_entity()
@@ -1506,7 +1506,7 @@ class AppDialog(QtGui.QWidget):
 
     def _on_treeview_item_selected(self):
         """
-        Signal triggered when someone changes the selection in a treeview.
+        Slot triggered when someone changes the selection in a treeview.
         """
 
         selected_item = self._get_selected_entity()

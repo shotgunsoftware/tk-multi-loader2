@@ -16,7 +16,9 @@ import os
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
-
+# Defines the Schematic Reel we will use
+# Ideally this wouldn't be hardcoded, but there exists no way currently
+# to import clips without specifying a schematic reel
 SCHEMATIC_REEL = 'Schematic Reel 1'
 
 class FlameActions(HookBaseClass):
@@ -302,8 +304,6 @@ class FlameActions(HookBaseClass):
                 path, temp_info['frame_range']
             )
 
-            print 'happens'
-
             if new_path and len(new_path) != 0:
                 path = new_path
 
@@ -521,6 +521,7 @@ class FlameActions(HookBaseClass):
             # Connects the previous node to a Write File node
             write_node = flame.batch.create_node('Write File')
 
+            # @TODO Set up some write file params here
             if write_file_config:
 
                 for key, value in write_file_config.iteritems():
@@ -528,8 +529,6 @@ class FlameActions(HookBaseClass):
                     setattr(write_node, key, value)
 
             flame.batch.connect_nodes(prev_node, 'Default', write_node, 'Front')
-
-            # @TODO Set up some write file params here
 
         # Organize call to let Flame take care of making things look pretty
         flame.batch.organize()
@@ -598,7 +597,6 @@ class FlameActions(HookBaseClass):
     @staticmethod
     def _generate_write_file_params(root, cut_in, cut_out, seq_name, shot_name, prev_version):
         """Generates params for use with the write file node.
-        
         
         
         """

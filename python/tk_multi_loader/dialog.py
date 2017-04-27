@@ -785,7 +785,7 @@ class AppDialog(QtGui.QWidget):
 
     def _on_home_clicked(self):
         """
-        User clicks the home button. The code will always try to match 
+        User clicks the home button.
         """
         # first, try to find the "home" item by looking at the current app context.
         found_preset = None
@@ -822,7 +822,7 @@ class AppDialog(QtGui.QWidget):
             # We're about to programmatically set the tab and then the item, so inform
             # the tab switcher that this is a combo operation and shouldn't be tracked
             # by the history.
-            self._select_tab(found_hierarchy_preset, combo_operation_mode=True)
+            self._select_tab(found_hierarchy_preset, track_in_history=False)
             # Kick off an async load of an entity, which in the context of the loader
             # is always meant to switch select that item.
             preset.model.async_item_from_entity(ctx.entity)
@@ -1029,7 +1029,14 @@ class AppDialog(QtGui.QWidget):
 
         return selected_item
 
-    def _select_tab(self, tab_caption, combo_operation_mode):
+    def _select_tab(self, tab_caption, track_in_history):
+        """
+        Programmatically selects a tab based on the requested caption.
+
+        :param str tab_caption: Name of the tab to bring forward.
+        :param track_in_history: If ``True``, the tab switch will be registered in the
+            history.
+        """
         if tab_caption != self._current_entity_preset:
             for idx in range(self.ui.entity_preset_tabs.count()):
                 tab_name = self.ui.entity_preset_tabs.tabText(idx)
@@ -1044,7 +1051,7 @@ class AppDialog(QtGui.QWidget):
                     finally:
                         self._disable_tab_event_handler = False
                     # now run the logic for the switching
-                    self._switch_profile_tab(idx, combo_operation_mode)
+                    self._switch_profile_tab(idx, track_in_history)
 
     def _select_item_in_entity_tree(self, tab_caption, item):
         """
@@ -1063,7 +1070,7 @@ class AppDialog(QtGui.QWidget):
         # 3) we are on the wrong tab and need to switch but there is no item to select
 
         # Phase 1 - first check if we need to switch tabs
-        self._select_tab(tab_caption, item is not None)
+        self._select_tab(tab_caption, item is None)
 
         # Phase 2 - Now select and zoom onto the item
         view = self._entity_presets[self._current_entity_preset].view
@@ -1560,16 +1567,15 @@ class AppDialog(QtGui.QWidget):
         """
         if not self._disable_tab_event_handler:
             curr_tab_index = self.ui.entity_preset_tabs.currentIndex()
-            self._switch_profile_tab(curr_tab_index, False)
+            self._switch_profile_tab(curr_tab_index, track_in_history=True)
 
-    def _switch_profile_tab(self, new_index, combo_operation_mode):
+    def _switch_profile_tab(self, new_index, track_in_history):
         """
         Switches to use the specified profile tab.
 
         :param new_index: tab index to switch to
-        :param combo_operation_mode: hint to this method that if set to True,
-                                     this tab switch is part of a sequence of
-                                     operations and not stand alone.
+        :param track_in_history: Hint to this method that the actions should be tracked in the
+            history.
         """
         # qt returns unicode/qstring here so force to str
         curr_tab_name = shotgun_model.sanitize_qt(self.ui.entity_preset_tabs.tabText(new_index))

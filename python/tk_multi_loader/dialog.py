@@ -36,6 +36,7 @@ shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "sho
 settings = sgtk.platform.import_framework("tk-framework-shotgunutils", "settings")
 help_screen = sgtk.platform.import_framework("tk-framework-qtwidgets", "help_screen")
 overlay_widget = sgtk.platform.import_framework("tk-framework-qtwidgets", "overlay_widget")
+shotgun_search_widget = sgtk.platform.import_framework("tk-framework-qtwidgets", "shotgun_search_widget")
 task_manager = sgtk.platform.import_framework("tk-framework-shotgunutils", "task_manager")
 shotgun_globals = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_globals")
 
@@ -62,7 +63,6 @@ class AppDialog(QtGui.QWidget):
         :param parent:          The parent QWidget for this control
         """
         QtGui.QWidget.__init__(self, parent)
-
         self._action_manager = action_manager
 
         # create a settings manager where we can pull and push prefs later
@@ -109,7 +109,7 @@ class AppDialog(QtGui.QWidget):
 
         self._publish_history_model = SgPublishHistoryModel(self, self._task_manager)
 
-        self._publish_history_model_overlay = ShotgunModelOverlayWidget(self._publish_history_model, 
+        self._publish_history_model_overlay = ShotgunModelOverlayWidget(self._publish_history_model,
                                                                         self.ui.history_view)
 
         self._publish_history_proxy = QtGui.QSortFilterProxyModel(self)
@@ -280,6 +280,7 @@ class AppDialog(QtGui.QWidget):
         # set up preset tabs and load and init tree views
         self._entity_presets = {}
         self._current_entity_preset = None
+
         self._load_entity_presets()
 
         # load visibility state for details pane
@@ -784,36 +785,55 @@ class AppDialog(QtGui.QWidget):
 
     def _on_home_clicked(self):
         """
-        User clicks the home button
+        User clicks the home button.
         """
         # first, try to find the "home" item by looking at the current app context.
         found_preset = None
+        found_hierarchy_preset = None
         found_item = None
 
         # get entity portion of context
         ctx = sgtk.platform.current_bundle().context
+
         if ctx.entity:
             # now step through the profiles and find a matching entity
-            for p in self._entity_presets:
-                if self._entity_presets[p].entity_type == ctx.entity["type"]:
-                    # found an at least partially matching entity profile.
-                    found_preset = p
+            for preset_index, preset in self._entity_presets.iteritems():
 
-                    # now see if our context object also exists in the tree of this profile
-                    model = self._entity_presets[p].model
-                    item = model.item_from_entity(ctx.entity["type"], ctx.entity["id"])
+                if isinstance(preset.model, SgHierarchyModel):
+                    # Found a hierarchy model, we select it right away, since it contains the
+                    # entire project, no need to scan for other tabs.
+                    found_hierarchy_preset = preset_index
+                    break
+                else:
+                    if preset.entity_type == ctx.entity["type"]:
+                        # found an at least partially matching entity profile.
+                        found_preset = preset_index
 
-                    if item is not None:
-                        # find an absolute match! Break the search.
-                        found_item = item
-                        break
+                        # now see if our context object also exists in the tree of this profile
+                        model = preset.model
+                        item = model.item_from_entity(ctx.entity["type"], ctx.entity["id"])
 
-        if found_preset is None:
-            # no suitable item found. Use the first tab
-            found_preset = self.ui.entity_preset_tabs.tabText(0)
+                        if item is not None:
+                            # find an absolute match! Break the search.
+                            found_item = item
+                            break
 
-        # select it in the left hand side tree view
-        self._select_item_in_entity_tree(found_preset, found_item)
+        if found_hierarchy_preset:
+            # We're about to programmatically set the tab and then the item, so inform
+            # the tab switcher that this is a combo operation and shouldn't be tracked
+            # by the history.
+            self._select_tab(found_hierarchy_preset, track_in_history=False)
+            # Kick off an async load of an entity, which in the context of the loader
+            # is always meant to switch select that item.
+            preset.model.async_item_from_entity(ctx.entity)
+            return
+        else:
+            if found_preset is None:
+                # no suitable item found. Use the first tab
+                found_preset = self.ui.entity_preset_tabs.tabText(0)
+
+            # select it in the left hand side tree view
+            self._select_item_in_entity_tree(found_preset, found_item)
 
     def _on_back_clicked(self):
         """
@@ -1009,6 +1029,30 @@ class AppDialog(QtGui.QWidget):
 
         return selected_item
 
+    def _select_tab(self, tab_caption, track_in_history):
+        """
+        Programmatically selects a tab based on the requested caption.
+
+        :param str tab_caption: Name of the tab to bring forward.
+        :param track_in_history: If ``True``, the tab switch will be registered in the
+            history.
+        """
+        if tab_caption != self._current_entity_preset:
+            for idx in range(self.ui.entity_preset_tabs.count()):
+                tab_name = self.ui.entity_preset_tabs.tabText(idx)
+                if tab_name == tab_caption:
+                    # found the new tab index we should set! now switch tabs.
+                    #
+                    # first switch the tab widget around but without triggering event
+                    # code (this would mean an infinite loop!)
+                    self._disable_tab_event_handler = True
+                    try:
+                        self.ui.entity_preset_tabs.setCurrentIndex(idx)
+                    finally:
+                        self._disable_tab_event_handler = False
+                    # now run the logic for the switching
+                    self._switch_profile_tab(idx, track_in_history)
+
     def _select_item_in_entity_tree(self, tab_caption, item):
         """
         Select an item in the entity tree, ensure the tab
@@ -1026,33 +1070,7 @@ class AppDialog(QtGui.QWidget):
         # 3) we are on the wrong tab and need to switch but there is no item to select
 
         # Phase 1 - first check if we need to switch tabs
-        if tab_caption != self._current_entity_preset:
-            for idx in range(self.ui.entity_preset_tabs.count()):
-                tab_name = self.ui.entity_preset_tabs.tabText(idx)
-                if tab_name == tab_caption:
-                    # found the new tab index we should set! now switch tabs.
-                    #
-                    # Note! In the second case above, where we are first switching
-                    # tabs and then selecting an item, we don't want to store for example
-                    # history crumbs twice - so we pass a special flag to the set tab
-                    # method to tell it that the tab switch is merely part of a
-                    # combo operation...
-                    #
-                    if item is not None:
-                        # hint to tab event handler that there is more processing happening...
-                        combo_operation_mode = True
-                    else:
-                        combo_operation_mode = False
-
-                    # first switch the tab widget around but without triggering event
-                    # code (this would mean an infinite loop!)
-                    self._disable_tab_event_handler = True
-                    try:
-                        self.ui.entity_preset_tabs.setCurrentIndex(idx)
-                    finally:
-                        self._disable_tab_event_handler = False
-                    # now run the logic for the switching
-                    self._switch_profile_tab(idx, combo_operation_mode)
+        self._select_tab(tab_caption, item is None)
 
         # Phase 2 - Now select and zoom onto the item
         view = self._entity_presets[self._current_entity_preset].view
@@ -1075,7 +1093,7 @@ class AppDialog(QtGui.QWidget):
 
             else:
                 # we are about to select a new item in the tree view!
-                # when we pass selection indicies into the view, must first convert them
+                # when we pass selection indices into the view, must first convert them
                 # from deep model index into proxy model index style indicies
                 proxy_index = view.model().mapFromSource(item.index())
                 # and now perform view operations
@@ -1159,7 +1177,8 @@ class AppDialog(QtGui.QWidget):
 
             # Create the model.
             if type_hierarchy:
-                (model, proxy_model) = self._setup_hierarchy_model(app, setting_dict["root"])
+                entity_root = self._get_entity_root(setting_dict["root"])
+                (model, proxy_model) = self._setup_hierarchy_model(app, entity_root)
             else:
                 (model, proxy_model) = self._setup_query_model(app, setting_dict)
 
@@ -1187,6 +1206,16 @@ class AppDialog(QtGui.QWidget):
             self._dynamic_widgets.extend([model, proxy_model, tab, layout, view])
 
             if not type_hierarchy:
+
+                # FIXME: We should probably remove all of this block in favor of something like. Doesn't quite
+                # work at the moment so I'm leaving it as a suggestion to a future reader.
+                # search = SearchWidget(tab)
+                # search.setToolTip("Use the <i>search</i> field to narrow down the items displayed in the tree above.")
+                # search_layout.addWidget(search)
+                # search.set_placeholder_text("Search...")
+                # search.search_changed.connect(
+                #     lambda text, v=view, pm=proxy_model: self._on_search_text_changed(text, v, pm)
+                # )
 
                 # Add a layout to host search.
                 search_layout = QtGui.QHBoxLayout()
@@ -1228,6 +1257,29 @@ class AppDialog(QtGui.QWidget):
 
                 # Keep a handle to all the new Qt objects, otherwise the GC may not work.
                 self._dynamic_widgets.extend([search_layout, search, clear_search, icon])
+
+            else:
+                search = shotgun_search_widget.HierarchicalSearchWidget(tab)
+
+                search.search_root = entity_root
+
+                # When a selection is made, we are only interested into the paths to the node so we can refresh
+                # the model and expand the item.
+                search.node_activated.connect(
+                    lambda entity_type, entity_id, name, path_label, incremental_paths, view=view, proxy_model=proxy_model: 
+                        self._node_activated(incremental_paths, view, proxy_model)
+                )
+                # When getting back the model items that were loaded, we will need the view and proxy model
+                # to expand the item.
+                model.async_item_retrieval_completed.connect(
+                    lambda item, view=view, proxy_model=proxy_model: self._async_item_retrieval_completed(
+                        item, view, proxy_model
+                    )
+                )
+                search.set_bg_task_manager(self._task_manager)
+                layout.addWidget(search)
+
+                self._dynamic_widgets.extend([search])
 
             # We need to handle tool tip display ourselves for action context menus.
             def action_hovered(action):
@@ -1316,6 +1368,46 @@ class AppDialog(QtGui.QWidget):
         # data has properly arrived in the model.
         self._on_home_clicked()
 
+    def _get_entity_root(self, root):
+        """
+        Translates the string from the settings into an entity.
+
+        :param str root: Can be '{context.project} or empty.
+
+        :returns: Entity that will be used for the root.
+        """
+
+        app = sgtk.platform.current_bundle()
+
+        # FIXME: API doesn't support non-project entities as the root yet.
+        # if root == "{context.entity}":
+        #     if app.context.entity:
+        #         return app.context.entity
+        #     else:
+        #         app.log_warning(
+        #             "There is no entity in the current context %s. "
+        #             "Hierarchy will default to project." % app.context
+        #         )
+        #         root = "{context.project}"
+
+        if root == "{context.project}":
+            if app.context.project:
+                return app.context.project
+            else:
+                app.log_warning(
+                    "There is no project in the current context %s. "
+                    "Hierarchy will default to site." % app.context
+                )
+                root = None
+
+        if root is not None:
+            app.log_warning(
+                "Unknown root was specified: %s. "
+                "Hierarchy will default to site." % root
+            )
+
+        return None
+
     def _setup_hierarchy_model(self, app, root):
         """
         Create the model and proxy model required by a hierarchy type configuration setting.
@@ -1327,15 +1419,11 @@ class AppDialog(QtGui.QWidget):
         """
 
         # Resolve any magic tokens in the root.
-        if app.context.project:
-            project_id = app.context.project.get("id")
-            root = root.replace("{context.project.id}", str(project_id))
-        else:
-            root = None
+        root_entity = self._get_entity_root(root)
 
         # Construct the hierarchy model and load a hierarchy that leads
         # to entities that are linked via the "PublishedFile.entity" field.
-        model = SgHierarchyModel(self, path=root, bg_task_manager=self._task_manager)
+        model = SgHierarchyModel(self, root_entity=root_entity, bg_task_manager=self._task_manager)
 
         # Create a proxy model.
         proxy_model = QtGui.QSortFilterProxyModel(self)
@@ -1355,12 +1443,48 @@ class AppDialog(QtGui.QWidget):
     def _hierarchy_refreshed(self):
         """
         Slot triggered when the hierarchy model has been refreshed. This allows to show all the
+        """
+
+        selected_item = self._get_selected_entity()
+
+        # tell publish UI to update itself
+        self._load_publishes_for_entity_item(selected_item)
+
+    def _hierarchy_refreshed(self):
+        """
+        Slot triggered when the hierarchy model has been refreshed. This allows to show all the
         folder items in the right-hand side for the current selection.
         """
         selected_item = self._get_selected_entity()
 
         # tell publish UI to update itself
         self._load_publishes_for_entity_item(selected_item)
+
+    def _hierarchy_refreshed(self):
+        """
+        Slot triggered when the hierarchy model has been refreshed. This allows to show all the
+        folder items in the right-hand side for the current selection.
+        """
+        selected_item = self._get_selected_entity()
+
+        # tell publish UI to update itself
+        self._load_publishes_for_entity_item(selected_item)
+
+    def _node_activated(self, incremental_paths, view, proxy_model):
+        """
+        Called when a user picks a result from the search widget.
+        """
+        source_model = proxy_model.sourceModel()
+        # Asynchronously retrieve the nodes that lead to the item we picked.
+        source_model.async_item_from_paths(incremental_paths)
+
+    def _async_item_retrieval_completed(self, item, view, proxy_model):
+        """
+        Called when the last node from the deep load is loaded.
+        """
+        # Ask the view to set the current index.
+        proxy_idx = proxy_model.mapFromSource(item.index())
+        view.setCurrentIndex(proxy_idx)
 
     def _setup_query_model(self, app, setting_dict):
         """
@@ -1444,16 +1568,15 @@ class AppDialog(QtGui.QWidget):
         """
         if not self._disable_tab_event_handler:
             curr_tab_index = self.ui.entity_preset_tabs.currentIndex()
-            self._switch_profile_tab(curr_tab_index, False)
+            self._switch_profile_tab(curr_tab_index, track_in_history=True)
 
-    def _switch_profile_tab(self, new_index, combo_operation_mode):
+    def _switch_profile_tab(self, new_index, track_in_history):
         """
         Switches to use the specified profile tab.
 
         :param new_index: tab index to switch to
-        :param combo_operation_mode: hint to this method that if set to True,
-                                     this tab switch is part of a sequence of
-                                     operations and not stand alone.
+        :param track_in_history: Hint to this method that the actions should be tracked in the
+            history.
         """
         # qt returns unicode/qstring here so force to str
         curr_tab_name = shotgun_model.sanitize_qt(self.ui.entity_preset_tabs.tabText(new_index))

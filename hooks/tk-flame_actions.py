@@ -179,8 +179,8 @@ class FlameActions(HookBaseClass):
                      "code",
                      "sg_cut_in",
                      "sg_cut_out",
-                     "sg_cut_in"
-                     "sg_cut_out",
+                     "sg_versions",
+                     "sg_sequence"
                      ]
 
         sg_type = sg_publish_data["type"]
@@ -191,7 +191,10 @@ class FlameActions(HookBaseClass):
 
         # Checks that we have the necessary info to proceed.
         if not all(f in sg_info for f in sg_fields):
-            return
+            # For now, do nothing. Alternatively we can return here since we
+            # dont' have enough information.
+            # return
+            pass
 
         # If Batch loading is enabled, try to do that
         if batch:
@@ -207,14 +210,30 @@ class FlameActions(HookBaseClass):
         # Tries to get params for the write file node
         root_path = self._get_root_path_from_publish(sg_info["sg_published_files"])
 
+        print '===========================================================\n'
+        print root_path
+        print '===========================================================\n'
+
         # If the root_path exists and we can access it
         write_file_config = None
-        if root_path and os.path.exists(root_path):
-            # Gets the sequence name
-            seq_name = sg_info["sg_sequence"]["name"]
+        if root_path and not os.path.exists(root_path) and len(sg_info["sg_versions"]) > 0:
+            # Segment name is always trapped between two underscores
+            split = str.split(sg_info["sg_versions"][0]["name"], '_')
+
+            seg_name = split[1]
+
+            # We take off the first char, ie 'v' to get the pure version
+            vers = int(split[2][1:])
+
             write_file_config = self._generate_write_file_params(
+                root_path,
+                sg_info["sg_cut_in"],
+                sg_info["sg_cut_out"],
                 sg_info["sg_sequence"]["name"],
-                sg_info["cg_cut_in"])
+                sg_info["code"],  # shot name
+                seg_name,
+                vers
+            )
 
         self._generate_batch_group(
             published_files,
@@ -222,7 +241,7 @@ class FlameActions(HookBaseClass):
             start_frame=int(sg_info["sg_cut_in"]),
             duration=(int(sg_info["sg_cut_out"]) - int(sg_info["sg_cut_out"])),
             comp=comp,  # Don't comp the result
-            write_file_config=None
+            write_file_config=write_file_config
         )
 
     def _create_batch_file(self, sg_info=None, sg_publish_data=None):
@@ -526,8 +545,17 @@ class FlameActions(HookBaseClass):
             # @TODO Set up some write file params here
             if write_file_config:
 
-                for key, value in write_file_config.iteritems():
+                # A bit of a hack, but we need to set custom version before
+                # we set the others
+                if 'version_mode' in write_file_config:
+                    setattr(
+                        write_node,
+                        'version_mode',
+                        write_file_config['version_mode']
+                    )
+                    write_file_config.pop('version_mode')
 
+                for key, value in write_file_config.iteritems():
                     setattr(write_node, key, value)
 
             flame.batch.connect_nodes(prev_node, "Default", write_node, "Front")
@@ -597,35 +625,43 @@ class FlameActions(HookBaseClass):
         return path.replace(formatting_str, frame_range)
 
     @staticmethod
-    def _generate_write_file_params(root, cut_in, cut_out, seq_name, shot_name, prev_version):
+    def _generate_write_file_params(root, cut_in, cut_out, seq_name, shot_name, seg_name, vers):
         """Generates params for use with the write file node.
         
-        :
+        :param root: The root Shotgun Desktop path.
+        :param cut_in: The shot cut in time as seen in Shotgun.
+        :param cut_out: The shot cut out time as seen in Shotgun.
+        :param seq_name: The sequence name.
+        :param seq_name: The version number.
+        :returns: A dictionary of Flame attributes with their associated values.
         
         """
 
         write_file_info = {}
 
-        base_shot_path = root + "/{}/{}/finishing".format(seq_name, shot_name)
+        media = root + "/{}/{}/finishing/comp/{}_v<version>/<name>_{}_v<version><ext>".format(seq_name, shot_name, seg_name, seg_name)
 
-        media_path = base_shot_path + "/comp/{}".format("tst")
+        clip = root + "/sequences/{}/<name>/finishing/clip/<name><ext>".format(seq_name)
 
-        clip = base_shot_path + "/clip/{}".format("tst")
+        setup = root + "/sequences/{}/<name>/finishing/batch/<name>.v<version><ext>"
 
-        setup = base_shot_path + "/batch/{}".format("tst")
-
-        write_file_info["media_path"] = media_path
-        write_file_info["clip"] = clip
-        write_file_info["setup"] = setup
+        write_file_info["media_path"] = media
+        write_file_info["create_clip_path"] = clip
+        write_file_info["include_setup_path"] = setup
 
         # Sets clip and include setup
-        write_file_info["create_clip"] = 1
-        write_file_info["include_setup"] = 1
+        write_file_info["create_clip"] = True
+        write_file_info["include_setup"] = True
 
         # Sets up range
         write_file_info["range_start"] = cut_in
         write_file_info["range_end"] = cut_out
 
-        # Sets up version name
+        # Version stuff
+        write_file_info["version_mode"] = "Custom Version"
+        write_file_info["version_number"] = vers
+        write_file_info["version_name"] = "v<version>"
+        write_file_info["version_padding"] = 2
 
+        # Sets up version name
         return write_file_info

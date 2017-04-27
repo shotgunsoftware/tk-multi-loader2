@@ -1207,7 +1207,8 @@ class AppDialog(QtGui.QWidget):
 
             if not type_hierarchy:
 
-                # FIXME: We should probably remove all of this block in favor of something like
+                # FIXME: We should probably remove all of this block in favor of something like. Doesn't quite
+                # work at the moment so I'm leaving it as a suggestion to a future reader.
                 # search = SearchWidget(tab)
                 # search.setToolTip("Use the <i>search</i> field to narrow down the items displayed in the tree above.")
                 # search_layout.addWidget(search)

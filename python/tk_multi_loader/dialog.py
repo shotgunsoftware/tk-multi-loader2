@@ -825,7 +825,7 @@ class AppDialog(QtGui.QWidget):
             self._select_tab(found_hierarchy_preset, combo_operation_mode=True)
             # Kick off an async load of an entity, which in the context of the loader
             # is always meant to switch select that item.
-            preset.model.async_load_entity(ctx.entity)
+            preset.model.async_item_from_entity(ctx.entity)
             return
         else:
             if found_preset is None:
@@ -1263,8 +1263,8 @@ class AppDialog(QtGui.QWidget):
                 )
                 # When getting back the model items that were loaded, we will need the view and proxy model
                 # to expand the item.
-                model.async_load_completed.connect(
-                    lambda item, view=view, proxy_model=proxy_model: self._async_load_completed(
+                model.async_item_retrieval_completed.connect(
+                    lambda item, view=view, proxy_model=proxy_model: self._async_item_retrieval_completed(
                         item, view, proxy_model
                     )
                 )
@@ -1468,9 +1468,9 @@ class AppDialog(QtGui.QWidget):
         """
         source_model = proxy_model.sourceModel()
         # Asynchronously retrieve the nodes that lead to the item we picked.
-        source_model.async_load_paths(incremental_paths)
+        source_model.async_item_from_paths(incremental_paths)
 
-    def _async_load_completed(self, item, view, proxy_model):
+    def _async_item_retrieval_completed(self, item, view, proxy_model):
         """
         Called when the last node from the deep load is loaded.
         """

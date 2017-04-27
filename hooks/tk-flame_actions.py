@@ -19,7 +19,7 @@ HookBaseClass = sgtk.get_hook_baseclass()
 # Defines the Schematic Reel we will use
 # Ideally this wouldn't be hardcoded, but there exists no way currently
 # to import clips without specifying a schematic reel
-SCHEMATIC_REEL = 'Schematic Reel 1'
+SCHEMATIC_REEL = "Schematic Reel 1"
 
 class FlameActions(HookBaseClass):
 
@@ -174,15 +174,16 @@ class FlameActions(HookBaseClass):
         """
 
         # Determines published files
-        sg_filters = [["id", "is", sg_publish_data['id']]]
-        sg_fields = ['sg_published_files',
-                     'code',
-                     'sg_cut_in',
-                     'sg_cut_out',
-                     'sg_sequence',
-                     'code']
+        sg_filters = [["id", "is", sg_publish_data["id"]]]
+        sg_fields = ["sg_published_files",
+                     "code",
+                     "sg_cut_in",
+                     "sg_cut_out",
+                     "sg_cut_in"
+                     "sg_cut_out",
+                     ]
 
-        sg_type = sg_publish_data['type']
+        sg_type = sg_publish_data["type"]
 
         sg_info = self.parent.shotgun.find_one(
             sg_type, filters=sg_filters, fields=sg_fields
@@ -200,25 +201,26 @@ class FlameActions(HookBaseClass):
 
         # First loop populates the list of valid published files in the shot
         published_files = self._get_paths_from_published_files(
-            sg_info['sg_published_files']
+            sg_info["sg_published_files"]
         )
 
         # Tries to get params for the write file node
-        root_path = self._get_root_path_from_publish(sg_info['sg_published_files'])
+        root_path = self._get_root_path_from_publish(sg_info["sg_published_files"])
 
         # If the root_path exists and we can access it
         write_file_config = None
         if root_path and os.path.exists(root_path):
-            pass
             # Gets the sequence name
-            #seq_name = sg_info['sg_sequence']['name']
-            #write_file_config = self._generate_write_file_params()
+            seq_name = sg_info["sg_sequence"]["name"]
+            write_file_config = self._generate_write_file_params(
+                sg_info["sg_sequence"]["name"],
+                sg_info["cg_cut_in"])
 
         self._generate_batch_group(
             published_files,
-            name=sg_info['code'],
-            start_frame=int(sg_info['sg_cut_in']),
-            duration=(int(sg_info['sg_cut_out']) - int(sg_info['sg_cut_out'])),
+            name=sg_info["code"],
+            start_frame=int(sg_info["sg_cut_in"]),
+            duration=(int(sg_info["sg_cut_out"]) - int(sg_info["sg_cut_out"])),
             comp=comp,  # Don't comp the result
             write_file_config=None
         )
@@ -242,16 +244,16 @@ class FlameActions(HookBaseClass):
         if not sg_info and sg_publish_data:
             # Gets sg_info from sg_publish_data
             batch_path = next(
-                (sg_publish_data['path'][p] for p in (
-                    'local_path', 'local_path_linux',
-                    'local_path_mac', 'local_path_windows')
-                if (p in sg_publish_data['path'] and sg_publish_data['path'][p] is not None)),
+                (sg_publish_data["path"][p] for p in (
+                    "local_path", "local_path_linux",
+                    "local_path_mac", "local_path_windows")
+                if (p in sg_publish_data["path"] and sg_publish_data["path"][p] is not None)),
                 None  # Default argument that will be passed to path if it isn't found
             )
         elif sg_info:
             # Otherwise determines it from the published files in the Shot
             batch_path = self._get_batch_path_from_published_files(
-                sg_info['sg_published_files']
+                sg_info["sg_published_files"]
             )
         else:
             # If we don't have either we give up
@@ -279,8 +281,8 @@ class FlameActions(HookBaseClass):
 
         # Makes sure that we have at least some local_path set
         path = next(
-            (sg_publish_data['path'][p] for p in ('local_path', 'local_path_linux', 'local_path_windows', 'local_path_mac')
-             if (p in sg_publish_data['path'] and sg_publish_data['path'][p] is not None)),
+            (sg_publish_data["path"][p] for p in ("local_path", "local_path_linux", "local_path_windows", "local_path_mac")
+             if (p in sg_publish_data["path"] and sg_publish_data["path"][p] is not None)),
             None  # Default argument that will be passed to path if it isn't found
         )
 
@@ -289,9 +291,9 @@ class FlameActions(HookBaseClass):
             flame.batch.import_clip(path, SCHEMATIC_REEL)
         elif '%' in path:
             # Special case parsing for frames, attempts to expand
-            temp_filters = [["id", "is", sg_publish_data['version']['id']]]
-            temp_fields = ['frame_range']
-            temp_type = 'Version'
+            temp_filters = [["id", "is", sg_publish_data["version"]["id"]]]
+            temp_fields = ["frame_range"]
+            temp_type = "Version"
 
             temp_info = self.parent.shotgun.find_one(
                 temp_type, filters=temp_filters, fields=temp_fields
@@ -301,7 +303,7 @@ class FlameActions(HookBaseClass):
             # old style Python formatting does not support getting a frame
             # range. Thus we need to parse it ourselves
             new_path = self._handle_frame_range(
-                path, temp_info['frame_range']
+                path, temp_info["frame_range"]
             )
 
             if new_path and len(new_path) != 0:
@@ -328,21 +330,21 @@ class FlameActions(HookBaseClass):
         for published_file in sg_published_files:
 
             # Gets paths to published files
-            sg_filters = [["id", "is", published_file['id']]]
-            sg_fields = ['path', 'published_file_type', 'version']
-            sg_type = 'PublishedFile'
+            sg_filters = [["id", "is", published_file["id"]]]
+            sg_fields = ["path", "published_file_type", "version"]
+            sg_type = "PublishedFile"
 
             info = self.parent.shotgun.find_one(sg_type, filters=sg_filters, fields=sg_fields)
 
             # Eliminates PublishedFiles without a specified path or published_file_type, or not supported type
-            if 'path' not in info or 'published_file_type' not in info \
-                    or info['published_file_type']['name'] == 'Flame Batch File':
+            if "path" not in info or "published_file_type" not in info \
+                    or info["published_file_type"]["name"] == "Flame Batch File":
                 continue
 
             # Makes sure that we have at least some local_path set
             path = next(
-                (info['path'][p] for p in ('local_path', 'local_path_linux', 'local_path_windows', 'local_path_mac')
-                 if (p in info['path'] and info['path'][p] is not None)),
+                (info["path"][p] for p in ("local_path", "local_path_linux", "local_path_windows", "local_path_mac")
+                 if (p in info["path"] and info["path"][p] is not None)),
                 None  # Default argument that will be passed to path if it isn't found
             )
 
@@ -352,12 +354,12 @@ class FlameActions(HookBaseClass):
 
             # Eliminates PublishedFiles with an invalid local path
             if path and os.path.exists(path):
-                published_files.append({'path': path})
+                published_files.append({"path": path})
             elif '%' in path:
                 # Special case parsing for frames, attempts to expand
-                temp_filters = [["id", "is", info['version']['id']]]
-                temp_fields = ['frame_range']
-                temp_type = 'Version'
+                temp_filters = [["id", "is", info["version"]["id"]]]
+                temp_fields = ["frame_range"]
+                temp_type = "Version"
 
                 temp_info = self.parent.shotgun.find_one(
                     temp_type, filters=temp_filters, fields=temp_fields
@@ -367,13 +369,13 @@ class FlameActions(HookBaseClass):
                 # old style Python formatting does not support getting a frame
                 # range. Thus we need to parse it ourselves
                 new_path = self._handle_frame_range(
-                    path, temp_info['frame_range']
+                    path, temp_info["frame_range"]
                 )
 
                 if new_path and len(new_path) != 0:
                     path = new_path
 
-                published_files.append({'path': path})
+                published_files.append({"path": path})
             else:
                 pass
                 # @TODO determine whether we want to raise an exception here or not
@@ -394,21 +396,21 @@ class FlameActions(HookBaseClass):
 
             # Gets paths to published files
             sg_filters = [["id", "is", published_file["id"]]]
-            sg_fields = ['path', 'published_file_type']
-            sg_type = 'PublishedFile'
+            sg_fields = ["path", "published_file_type"]
+            sg_type = "PublishedFile"
 
             info = self.parent.shotgun.find_one(sg_type,
                                                 filters=sg_filters,
                                                 fields=sg_fields)
 
-            if 'path' not in info or 'published_file_type' not in info \
-                    or info['published_file_type']['name'] != 'Flame Batch File':
+            if "path" not in info or "published_file_type" not in info \
+                    or info["published_file_type"]["name"] != "Flame Batch File":
                 pass
             else:
                 # Makes sure that we have at least some local_path set
                 path = next(
-                    (info['path'][p] for p in ('local_path', 'local_path_linux', 'local_path_mac', 'local_path_windows')
-                     if (p in info['path'] and info['path'][p] is not None)),
+                    (info["path"][p] for p in ("local_path", "local_path_linux", "local_path_mac", "local_path_windows")
+                     if (p in info["path"] and info["path"][p] is not None)),
                     None  # Default argument that will be passed to path if it isn't found
                 )
                 return path
@@ -428,21 +430,21 @@ class FlameActions(HookBaseClass):
 
             # Gets paths to published files
             sg_filters = [["id", "is", published_file["id"]]]
-            sg_fields = ['path']
-            sg_type = 'PublishedFile'
+            sg_fields = ["path"]
+            sg_type = "PublishedFile"
 
             info = self.parent.shotgun.find_one(sg_type, filters=sg_filters, fields=sg_fields)
 
-            if 'path' not in info or 'local_storage' not in info['path']:
+            if "path" not in info or "local_storage" not in info["path"]:
                 continue
 
             # Makes sure that we have at least some local_path set
-            storage_type = info['path']['local_storage'].get('type', None)
+            storage_type = info["path"]["local_storage"].get("type", None)
             storage_filters = [
-                ['id', 'is', info['path']['local_storage'].get('id', None)]
+                ["id", "is", info["path"]["local_storage"].get("id", None)]
             ]
             storage_fields = [
-                'linux_path', 'mac_path', 'windows_path'
+                "linux_path", "mac_path", "windows_path"
             ]
 
             storage_info = self.parent.shotgun.find_one(
@@ -497,7 +499,7 @@ class FlameActions(HookBaseClass):
         for path in file_paths:
 
             # Creates the node from the path
-            node = flame.batch.import_clip(path['path'], SCHEMATIC_REEL)
+            node = flame.batch.import_clip(path["path"], SCHEMATIC_REEL)
             # @TODO Set up some import params here
 
             # Checks that the node was created
@@ -510,16 +512,16 @@ class FlameActions(HookBaseClass):
                 prev_node = node
             elif comp:
                 # Comps together the prev node and this one
-                comp = flame.batch.create_node('Comp')
+                comp = flame.batch.create_node("Comp")
 
-                flame.batch.connect_nodes(prev_node, 'Default', comp, 'Front')
-                flame.batch.connect_nodes(node, 'Default', comp, 'Back')
+                flame.batch.connect_nodes(prev_node, "Default", comp, "Front")
+                flame.batch.connect_nodes(node, "Default", comp, "Back")
 
                 # Sets the newly created comp as the previous node
                 prev_node = comp
         else:
             # Connects the previous node to a Write File node
-            write_node = flame.batch.create_node('Write File')
+            write_node = flame.batch.create_node("Write File")
 
             # @TODO Set up some write file params here
             if write_file_config:
@@ -528,7 +530,7 @@ class FlameActions(HookBaseClass):
 
                     setattr(write_node, key, value)
 
-            flame.batch.connect_nodes(prev_node, 'Default', write_node, 'Front')
+            flame.batch.connect_nodes(prev_node, "Default", write_node, "Front")
 
         # Organize call to let Flame take care of making things look pretty
         flame.batch.organize()
@@ -587,7 +589,7 @@ class FlameActions(HookBaseClass):
         end_frame = formatting_str % int(ranges[1])
 
         # Generates back the frame range, now formatted
-        frame_range = '[{}-{}]'.format(
+        frame_range = "[{}-{}]".format(
             start_frame, end_frame
         )
 
@@ -598,30 +600,31 @@ class FlameActions(HookBaseClass):
     def _generate_write_file_params(root, cut_in, cut_out, seq_name, shot_name, prev_version):
         """Generates params for use with the write file node.
         
+        :
         
         """
 
         write_file_info = {}
 
-        base_shot_path = root + '/{}/{}/finishing'.format(seq_name, shot_name)
+        base_shot_path = root + "/{}/{}/finishing".format(seq_name, shot_name)
 
-        media_path = base_shot_path + '/comp/{}'.format('tst')
+        media_path = base_shot_path + "/comp/{}".format("tst")
 
-        clip = base_shot_path + '/clip/{}'.format('tst')
+        clip = base_shot_path + "/clip/{}".format("tst")
 
-        setup = base_shot_path + '/batch/{}'.format('tst')
+        setup = base_shot_path + "/batch/{}".format("tst")
 
-        write_file_info['media_path'] = media_path
-        write_file_info['clip'] = clip
-        write_file_info['setup'] = setup
+        write_file_info["media_path"] = media_path
+        write_file_info["clip"] = clip
+        write_file_info["setup"] = setup
 
         # Sets clip and include setup
-        write_file_info['create_clip'] = 1
-        write_file_info['include_setup'] = 1
+        write_file_info["create_clip"] = 1
+        write_file_info["include_setup"] = 1
 
         # Sets up range
-        write_file_info['range_start'] = cut_in
-        write_file_info['range_end'] = cut_out
+        write_file_info["range_start"] = cut_in
+        write_file_info["range_end"] = cut_out
 
         # Sets up version name
 

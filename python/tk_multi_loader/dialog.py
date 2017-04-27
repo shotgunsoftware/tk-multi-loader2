@@ -1599,18 +1599,7 @@ class AppDialog(QtGui.QWidget):
             if isinstance(model, SgEntityModel):
                 model.async_refresh()
 
-        if combo_operation_mode == False:
-            # this request is because a user clicked a tab
-            # or because a
-            # and not part of a history operation (or other)
-
-            # programmatic selection means the operation is part of a
-            # combo selection process, where a tab is first selection
-            # and then an item. So in this case we should not
-            # register history or trigger a refresh of the publish
-            # model, since these operations will be handled by later
-            # parts of the combo operation
-
+        if track_in_history:
             # figure out what is selected
             selected_item = self._get_selected_entity()
 

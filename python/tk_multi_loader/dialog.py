@@ -1124,7 +1124,7 @@ class AppDialog(QtGui.QWidget):
             # Here is an example of Hierarchy setting dictionary:
             #     {'caption': 'Project',
             #      'type':    'Hierarchy',
-            #      'root':    '/Project/{context.project.id}'}
+            #      'root':    '{context.project}'
             # Here is an example of Query setting dictionary:
             #     {'caption':     'My Tasks',
             #      'type':        'Query',
@@ -1418,12 +1418,9 @@ class AppDialog(QtGui.QWidget):
         :return: Created `(model, proxy model)`.
         """
 
-        # Resolve any magic tokens in the root.
-        root_entity = self._get_entity_root(root)
-
         # Construct the hierarchy model and load a hierarchy that leads
         # to entities that are linked via the "PublishedFile.entity" field.
-        model = SgHierarchyModel(self, root_entity=root_entity, bg_task_manager=self._task_manager)
+        model = SgHierarchyModel(self, root_entity=root, bg_task_manager=self._task_manager)
 
         # Create a proxy model.
         proxy_model = QtGui.QSortFilterProxyModel(self)

@@ -16,10 +16,22 @@ import os
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
+##############################################################################################################
+# Constants to be used with Flame
+
 # Defines the Schematic Reel we will use
 # Ideally this wouldn't be hardcoded, but there exists no way currently
 # to import clips without specifying a schematic reel
 SCHEMATIC_REEL = "Schematic Reel 1"
+
+# Various path keys for different platforms
+# that Shotgun uses, in the order we want to check them
+LOCAL_PATHS = ("local_path",
+               "local_path_linux",
+               "local_path_mac",
+               "local_path_windows")
+
+
 
 class FlameActions(HookBaseClass):
 
@@ -170,7 +182,6 @@ class FlameActions(HookBaseClass):
         :type sg_publish_data: dict
         :type batch: bool
         :type comp: bool
-        
         """
 
         # Determines published files
@@ -209,10 +220,6 @@ class FlameActions(HookBaseClass):
 
         # Tries to get params for the write file node
         root_path = self._get_root_path_from_publish(sg_info["sg_published_files"])
-
-        print '===========================================================\n'
-        print root_path
-        print '===========================================================\n'
 
         # If the root_path exists and we can access it
         write_file_config = None
@@ -253,7 +260,6 @@ class FlameActions(HookBaseClass):
         :type sg_info: dict
         :returns: Whether or not the operation succeeded. 
         :rtype: bool
-        
         """
 
         # Defines the batch+path right away
@@ -263,11 +269,10 @@ class FlameActions(HookBaseClass):
         if not sg_info and sg_publish_data:
             # Gets sg_info from sg_publish_data
             batch_path = next(
-                (sg_publish_data["path"][p] for p in (
-                    "local_path", "local_path_linux",
-                    "local_path_mac", "local_path_windows")
-                if (p in sg_publish_data["path"] and sg_publish_data["path"][p] is not None)),
-                None  # Default argument that will be passed to path if it isn't found
+                (sg_publish_data["path"][p] for p in LOCAL_PATHS if (
+                    p in sg_publish_data["path"]
+                    and sg_publish_data["path"][p] is not None)),
+                None  # Default arg that will be passed to path
             )
         elif sg_info:
             # Otherwise determines it from the published files in the Shot
@@ -300,8 +305,9 @@ class FlameActions(HookBaseClass):
 
         # Makes sure that we have at least some local_path set
         path = next(
-            (sg_publish_data["path"][p] for p in ("local_path", "local_path_linux", "local_path_windows", "local_path_mac")
-             if (p in sg_publish_data["path"] and sg_publish_data["path"][p] is not None)),
+            (sg_publish_data["path"][p] for p in LOCAL_PATHS if
+             (p in sg_publish_data["path"] and
+              sg_publish_data["path"][p] is not None)),
             None  # Default argument that will be passed to path if it isn't found
         )
 
@@ -362,7 +368,7 @@ class FlameActions(HookBaseClass):
 
             # Makes sure that we have at least some local_path set
             path = next(
-                (info["path"][p] for p in ("local_path", "local_path_linux", "local_path_windows", "local_path_mac")
+                (info["path"][p] for p in LOCAL_PATHS
                  if (p in info["path"] and info["path"][p] is not None)),
                 None  # Default argument that will be passed to path if it isn't found
             )
@@ -428,9 +434,9 @@ class FlameActions(HookBaseClass):
             else:
                 # Makes sure that we have at least some local_path set
                 path = next(
-                    (info["path"][p] for p in ("local_path", "local_path_linux", "local_path_mac", "local_path_windows")
+                    (info["path"][p] for p in LOCAL_PATHS
                      if (p in info["path"] and info["path"][p] is not None)),
-                    None  # Default argument that will be passed to path if it isn't found
+                    None  # Default arg
                 )
                 return path
         return None
@@ -546,7 +552,8 @@ class FlameActions(HookBaseClass):
             if write_file_config:
 
                 # A bit of a hack, but we need to set custom version before
-                # we set the others
+                # we set the others or they won't work. Might want to use
+                # an OrderedDict instead
                 if 'version_mode' in write_file_config:
                     setattr(
                         write_node,

@@ -22,21 +22,41 @@ class SgHierarchyModel(SimpleShotgunHierarchyModel):
     hierarchy tree view tabs on the left-hand-side of the dialog.
     """
 
-    def __init__(self, parent, root_entity=None, bg_task_manager=None):
+    def __init__(self, parent, root_entity=None, bg_task_manager=None, include_root=None):
         """
         Initializes a Shotgun Hierarchy model instance and loads a hierarchy
-        that leads to entities that are linked via the ``PublishedFile.entity`` field.
+        that leads to entities that are linked via the ``PublishedFile.entity``
+        field.
 
         :param parent: The model parent.
         :type parent: :class:`~PySide.QtGui.QObject`
-        :param dict root_entity: The entity which will act as the root of the hierarchy to display.
-                                 By default, this value is ``None``, which will default to the entire site.
-        :param bg_task_manager: Background task manager to use for any asynchronous work.
-                                If this is ``None`` a task manager will be created as needed.
+
+        :param dict root_entity: The entity which will act as the root of the
+            hierarchy to display. By default, this value is ``None``, which will
+            default to the entire site.
+
+        :param bg_task_manager: Background task manager to use for any
+            asynchronous work. If this is ``None`` a task manager will be
+            created as needed.
         :type bg_task_manager: :class:`~task_manager.BackgroundTaskManager`
+
+        :param str include_root: Defines the name of an additional, top-level
+            model item that represents the root. In views, this item will appear
+            as a sibling to top-level children of the root. This allows for
+            UX whereby a user can select an item representing the root without
+            having a UI that shows a single, top-level item. An example would
+            be displaying published file entity hierarchy with top level items:
+            "Assets", "Shots", and "Project Publishes". In this example, the
+            supplied arg would look like: ``include_root="Project Publishes"``.
+            If ``include_root`` is `None`, no root item will be added.
         """
 
-        SimpleShotgunHierarchyModel.__init__(self, parent, bg_task_manager=bg_task_manager)
+        SimpleShotgunHierarchyModel.__init__(
+            self,
+            parent,
+            bg_task_manager=bg_task_manager,
+            include_root=include_root
+        )
 
         entity_fields = {
             "__all__": ["code", "description", "image", "sg_status_list"]

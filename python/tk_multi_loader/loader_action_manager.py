@@ -273,8 +273,6 @@ class LoaderActionManager(ActionManager):
 
         # check if we have logic configured to handle this publish type.
         mappings = self._app.get_setting("entity_mappings")
-        if not mappings:
-            return []
 
         # returns a structure on the form
         # { "Shot": ["reference", "import"] }

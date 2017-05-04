@@ -78,7 +78,7 @@ configuration:
         default_value:
             - caption: Project
               type: Hierarchy
-              root: "/Project/{context.project.id}"
+              root: "{context.project}"
               publish_filters: []
 
             - caption: My Tasks
@@ -86,7 +86,7 @@ configuration:
               entity_type: Task
               publish_filters: []
               filters:
-              - [task_assignees, is, '{context.user}']
+              - [task_assignees, is, "{context.user}"]
               - ["project", "is", "{context.project}"]
               hierarchy: [entity, content]
 

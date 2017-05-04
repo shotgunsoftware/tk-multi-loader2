@@ -1266,7 +1266,7 @@ class AppDialog(QtGui.QWidget):
                 # When a selection is made, we are only interested into the paths to the node so we can refresh
                 # the model and expand the item.
                 search.node_activated.connect(
-                    lambda entity_type, entity_id, name, path_label, incremental_paths, view=view, proxy_model=proxy_model: 
+                    lambda entity_type, entity_id, name, path_label, incremental_paths, view=view, proxy_model=proxy_model:
                         self._node_activated(incremental_paths, view, proxy_model)
                 )
                 # When getting back the model items that were loaded, we will need the view and proxy model
@@ -1591,6 +1591,7 @@ class AppDialog(QtGui.QWidget):
 
             # tell the publish view to change
             self._load_publishes_for_entity_item(selected_item)
+
 
 
     def _on_treeview_item_selected(self):

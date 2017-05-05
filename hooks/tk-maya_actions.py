@@ -11,13 +11,17 @@
 """
 Hook that loads defines all the available actions, broken down by publish type. 
 """
-import sgtk
+
+import glob
 import os
+import re
 import pymel.core as pm
 import maya.cmds as cmds
 import maya.mel as mel
+import sgtk
 
 HookBaseClass = sgtk.get_hook_baseclass()
+
 
 class MayaActions(HookBaseClass):
     
@@ -92,7 +96,16 @@ class MayaActions(HookBaseClass):
                 action_instances.append( {"name": "udim_texture_node",
                                           "params": None, 
                                           "caption": "Create Texture Node", 
-                                          "description": "Creates a file texture node for the selected item.."} )    
+                                          "description": "Creates a file texture node for the selected item.."} )
+
+        if "image_plane" in actions:
+            action_instances.append({
+                "name": "image_plane",
+                "params": None,
+                "caption": "Create Image Plane",
+                "description": "Creates an image plane for the selected item.."
+            })
+
         return action_instances
 
     def execute_multiple_actions(self, actions):
@@ -154,8 +167,10 @@ class MayaActions(HookBaseClass):
             
         if name == "udim_texture_node":
             self._create_udim_texture_node(path, sg_publish_data)
-                        
-           
+
+        if name == "image_plane":
+            self._create_image_plane(path, sg_publish_data)
+
     ##############################################################################################################
     # helper methods which can be subclassed in custom hooks to fine tune the behaviour of things
     
@@ -227,7 +242,53 @@ class MayaActions(HookBaseClass):
             # and generate a preview:
             mel.eval("generateUvTilePreview %s" % file_node)
         return file_node
-            
+
+    def _create_image_plane(self, path, sg_publish_data):
+        """
+        Create a file texture node for a UDIM (Mari) texture
+
+        :param path: Path to file.
+        :param sg_publish_data: Shotgun data dictionary with all the standard
+            publish fields.
+        :returns: The newly created file node
+        """
+
+        app = self.parent
+        has_frame_spec = False
+
+        # replace any %0#d format string with a glob character. then just find
+        # an existing frame to use. example %04d => *
+        frame_pattern = re.compile("(%0\dd)")
+        frame_match = re.search(frame_pattern, path)
+        if frame_match:
+            has_frame_spec = True
+            frame_spec = frame_match.group(1)
+            glob_path = path.replace(frame_spec, "*")
+            frame_files = glob.glob(glob_path)
+            if frame_files:
+                path = frame_files[0]
+            else:
+                app.logger.error(
+                    "Could not find file on disk for published file path %s" %
+                    (path,)
+                )
+                return
+
+        # create an image plane for the supplied path, visible in all views
+        (img_plane, img_plane_shape) = cmds.imagePlane(
+            fileName=path,
+            showInAllViews=True
+        )
+        app.logger.debug(
+            "Created image plane %s with path %s" %
+            (img_plane, path)
+        )
+
+        if has_frame_spec:
+            # setting the frame extension flag will create an expression to use
+            # the current frame.
+            cmds.setAttr("%s.useFrameExtension" % (img_plane_shape,), 1)
+
     def _get_maya_version(self):
         """
         Determine and return the Maya version as an integer

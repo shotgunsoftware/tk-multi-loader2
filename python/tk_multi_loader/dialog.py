@@ -13,6 +13,7 @@ import sgtk
 from sgtk import TankError
 from sgtk.platform.qt import QtCore, QtGui
 
+from .model_hierarchy import SgHierarchyModel
 from .model_entity import SgEntityModel
 from .model_latestpublish import SgLatestPublishModel
 from .model_publishtype import SgPublishTypeModel
@@ -26,6 +27,7 @@ from .delegate_publish_history import SgPublishHistoryDelegate
 from .search_widget import SearchWidget
 
 from . import constants
+from . import model_item_data
 
 from .ui.dialog import Ui_Dialog
 
@@ -34,6 +36,7 @@ shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "sho
 settings = sgtk.platform.import_framework("tk-framework-shotgunutils", "settings")
 help_screen = sgtk.platform.import_framework("tk-framework-qtwidgets", "help_screen")
 overlay_widget = sgtk.platform.import_framework("tk-framework-qtwidgets", "overlay_widget")
+shotgun_search_widget = sgtk.platform.import_framework("tk-framework-qtwidgets", "shotgun_search_widget")
 task_manager = sgtk.platform.import_framework("tk-framework-shotgunutils", "task_manager")
 shotgun_globals = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_globals")
 
@@ -60,7 +63,6 @@ class AppDialog(QtGui.QWidget):
         :param parent:          The parent QWidget for this control
         """
         QtGui.QWidget.__init__(self, parent)
-
         self._action_manager = action_manager
 
         # create a settings manager where we can pull and push prefs later
@@ -77,7 +79,7 @@ class AppDialog(QtGui.QWidget):
         # set up the UI
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
-        
+
         #################################################
         # maintain a list where we keep a reference to
         # all the dynamic UI we create. This is to make
@@ -107,7 +109,7 @@ class AppDialog(QtGui.QWidget):
 
         self._publish_history_model = SgPublishHistoryModel(self, self._task_manager)
 
-        self._publish_history_model_overlay = ShotgunModelOverlayWidget(self._publish_history_model, 
+        self._publish_history_model_overlay = ShotgunModelOverlayWidget(self._publish_history_model,
                                                                         self.ui.history_view)
 
         self._publish_history_proxy = QtGui.QSortFilterProxyModel(self)
@@ -278,6 +280,7 @@ class AppDialog(QtGui.QWidget):
         # set up preset tabs and load and init tree views
         self._entity_presets = {}
         self._current_entity_preset = None
+
         self._load_entity_presets()
 
         # load visibility state for details pane
@@ -382,8 +385,8 @@ class AppDialog(QtGui.QWidget):
             # as these objects sometimes are deleted internally in the view
             # and therefore persisting python handles may not be valid 
             self.ui.history_view.selectionModel().clear()
-            self.ui.publish_view.selectionModel().clear()        
-            
+            self.ui.publish_view.selectionModel().clear()
+
             # disconnect some signals so we don't go all crazy when
             # the cascading model deletes begin as part of the destroy calls
             for p in self._entity_presets:
@@ -782,36 +785,55 @@ class AppDialog(QtGui.QWidget):
 
     def _on_home_clicked(self):
         """
-        User clicks the home button
+        User clicks the home button.
         """
         # first, try to find the "home" item by looking at the current app context.
         found_preset = None
+        found_hierarchy_preset = None
         found_item = None
 
         # get entity portion of context
         ctx = sgtk.platform.current_bundle().context
+
         if ctx.entity:
             # now step through the profiles and find a matching entity
-            for p in self._entity_presets:
-                if self._entity_presets[p].entity_type == ctx.entity["type"]:
-                    # found an at least partially matching entity profile.
-                    found_preset = p
+            for preset_index, preset in self._entity_presets.iteritems():
 
-                    # now see if our context object also exists in the tree of this profile
-                    model = self._entity_presets[p].model
-                    item = model.item_from_entity(ctx.entity["type"], ctx.entity["id"])
+                if isinstance(preset.model, SgHierarchyModel):
+                    # Found a hierarchy model, we select it right away, since it contains the
+                    # entire project, no need to scan for other tabs.
+                    found_hierarchy_preset = preset_index
+                    break
+                else:
+                    if preset.entity_type == ctx.entity["type"]:
+                        # found an at least partially matching entity profile.
+                        found_preset = preset_index
 
-                    if item is not None:
-                        # find an absolute match! Break the search.
-                        found_item = item
-                        break
+                        # now see if our context object also exists in the tree of this profile
+                        model = preset.model
+                        item = model.item_from_entity(ctx.entity["type"], ctx.entity["id"])
 
-        if found_preset is None:
-            # no suitable item found. Use the first tab
-            found_preset = self.ui.entity_preset_tabs.tabText(0)
+                        if item is not None:
+                            # find an absolute match! Break the search.
+                            found_item = item
+                            break
 
-        # select it in the left hand side tree view
-        self._select_item_in_entity_tree(found_preset, found_item)
+        if found_hierarchy_preset:
+            # We're about to programmatically set the tab and then the item, so inform
+            # the tab switcher that this is a combo operation and shouldn't be tracked
+            # by the history.
+            self._select_tab(found_hierarchy_preset, track_in_history=False)
+            # Kick off an async load of an entity, which in the context of the loader
+            # is always meant to switch select that item.
+            preset.model.async_item_from_entity(ctx.entity)
+            return
+        else:
+            if found_preset is None:
+                # no suitable item found. Use the first tab
+                found_preset = self.ui.entity_preset_tabs.tabText(0)
+
+            # select it in the left hand side tree view
+            self._select_item_in_entity_tree(found_preset, found_item)
 
     def _on_back_clicked(self):
         """
@@ -869,8 +891,10 @@ class AppDialog(QtGui.QWidget):
         Triggered when the show sub items checkbox is clicked
         """
 
-        # check if we should pop up that help screen
-        if self.ui.show_sub_items.isChecked():
+        # Check if we should pop up that help screen.
+        # The hierarchy model cannot handle "Show items in subfolders" mode.
+        if self.ui.show_sub_items.isChecked() and \
+           not isinstance(self._entity_presets[self._current_entity_preset].model, SgHierarchyModel):
             subitems_shown = self._settings_manager.retrieve("subitems_shown",
                                                              False,
                                                              self._settings_manager.SCOPE_ENGINE)
@@ -900,7 +924,7 @@ class AppDialog(QtGui.QWidget):
 
     def _on_publish_selection(self, selected, deselected):
         """
-        Signal triggered when someone changes the selection in the main publish area
+        Slot triggered when someone changes the selection in the main publish area
         """
         selected_indexes = self.ui.publish_view.selectionModel().selectedIndexes()
 
@@ -995,7 +1019,7 @@ class AppDialog(QtGui.QWidget):
 
             model = current_idx.model()
 
-            if not isinstance(model, SgEntityModel):
+            if not isinstance(model, (SgHierarchyModel, SgEntityModel)):
                 # proxy model!
                 current_idx = model.mapToSource(current_idx)
 
@@ -1004,6 +1028,30 @@ class AppDialog(QtGui.QWidget):
             selected_item = current_idx.model().itemFromIndex(current_idx)
 
         return selected_item
+
+    def _select_tab(self, tab_caption, track_in_history):
+        """
+        Programmatically selects a tab based on the requested caption.
+
+        :param str tab_caption: Name of the tab to bring forward.
+        :param track_in_history: If ``True``, the tab switch will be registered in the
+            history.
+        """
+        if tab_caption != self._current_entity_preset:
+            for idx in range(self.ui.entity_preset_tabs.count()):
+                tab_name = self.ui.entity_preset_tabs.tabText(idx)
+                if tab_name == tab_caption:
+                    # found the new tab index we should set! now switch tabs.
+                    #
+                    # first switch the tab widget around but without triggering event
+                    # code (this would mean an infinite loop!)
+                    self._disable_tab_event_handler = True
+                    try:
+                        self.ui.entity_preset_tabs.setCurrentIndex(idx)
+                    finally:
+                        self._disable_tab_event_handler = False
+                    # now run the logic for the switching
+                    self._switch_profile_tab(idx, track_in_history)
 
     def _select_item_in_entity_tree(self, tab_caption, item):
         """
@@ -1022,33 +1070,7 @@ class AppDialog(QtGui.QWidget):
         # 3) we are on the wrong tab and need to switch but there is no item to select
 
         # Phase 1 - first check if we need to switch tabs
-        if tab_caption != self._current_entity_preset:
-            for idx in range(self.ui.entity_preset_tabs.count()):
-                tab_name = self.ui.entity_preset_tabs.tabText(idx)
-                if tab_name == tab_caption:
-                    # found the new tab index we should set! now switch tabs.
-                    #
-                    # Note! In the second case above, where we are first switching
-                    # tabs and then selecting an item, we don't want to store for example
-                    # history crumbs twice - so we pass a special flag to the set tab
-                    # method to tell it that the tab switch is merely part of a
-                    # combo operation...
-                    #
-                    if item is not None:
-                        # hint to tab event handler that there is more processing happening...
-                        combo_operation_mode = True
-                    else:
-                        combo_operation_mode = False
-
-                    # first switch the tab widget around but without triggering event
-                    # code (this would mean an infinite loop!)
-                    self._disable_tab_event_handler = True
-                    try:
-                        self.ui.entity_preset_tabs.setCurrentIndex(idx)
-                    finally:
-                        self._disable_tab_event_handler = False
-                    # now run the logic for the switching
-                    self._switch_profile_tab(idx, combo_operation_mode)
+        self._select_tab(tab_caption, item is None)
 
         # Phase 2 - Now select and zoom onto the item
         view = self._entity_presets[self._current_entity_preset].view
@@ -1071,7 +1093,7 @@ class AppDialog(QtGui.QWidget):
 
             else:
                 # we are about to select a new item in the tree view!
-                # when we pass selection indicies into the view, must first convert them
+                # when we pass selection indices into the view, must first convert them
                 # from deep model index into proxy model index style indicies
                 proxy_index = view.model().mapFromSource(item.index())
                 # and now perform view operations
@@ -1095,164 +1117,245 @@ class AppDialog(QtGui.QWidget):
         based on the config.
         """
         app = sgtk.platform.current_bundle()
-        entities = app.get_setting("entities")
 
-        for e in entities:
+        for setting_dict in app.get_setting("entities"):
 
-            # validate that the settings dict contains all items needed.
-            for k in ["caption", "entity_type", "hierarchy", "filters"]:
-                if k not in e:
-                    raise TankError("Configuration error: One or more items in %s "
-                                    "are missing a '%s' key!" % (entities, k))
+            # Validate that the setting dictionary contains all items needed.
+            # Here is an example of Hierarchy setting dictionary:
+            #     {'caption': 'Project',
+            #      'type':    'Hierarchy',
+            #      'root':    '{context.project}'
+            # Here is an example of Query setting dictionary:
+            #     {'caption':     'My Tasks',
+            #      'type':        'Query',
+            #      'entity_type': 'Task',
+            #      'hierarchy':   ['project', 'entity', 'content'],
+            #      'filters':     [['task_assignees', 'is', '{context.user}'],
+            #                      ['project.Project.sg_status', 'is', 'Active']]}
+
+            key_error_msg = "Configuration error: 'entities' item %s is missing key '%s'!"
+            value_error_msg = "Configuration error: 'entities' item %s key '%s' has an invalid value '%s'!"
+
+            key = "caption"
+            if key not in setting_dict:
+                raise TankError(key_error_msg % (setting_dict, key))
+
+            preset_name = setting_dict["caption"]
+
+            key = "type"
+            if key in setting_dict:
+                value = setting_dict[key]
+                if value not in ("Hierarchy", "Query"):
+                    raise TankError(value_error_msg % (setting_dict, key, value))
+                type_hierarchy = (value == "Hierarchy")
+            else:
+                # When the type is not given, default to "Query".
+                type_hierarchy = False
+
+            if type_hierarchy:
+
+                key = "root"
+                if key not in setting_dict:
+                    raise TankError(key_error_msg % (setting_dict, key))
+
+                sg_entity_type = "Project"
+
+            else:
+
+                for key in ("entity_type", "hierarchy", "filters"):
+                    if key not in setting_dict:
+                        raise TankError(key_error_msg % (setting_dict, key))
+
+                sg_entity_type = setting_dict["entity_type"]
 
             # get optional publish_filter setting
             # note: actual value in the yaml settings can be None, 
-            # that's why we cannot use e.get("publish_filters", []) 
-            publish_filters = e.get("publish_filters")
+            # that's why we cannot use setting_dict.get("publish_filters", [])
+            publish_filters = setting_dict.get("publish_filters")
             if publish_filters is None: 
                 publish_filters = []
 
-            # set up a bunch of stuff
+            # Create the model.
+            if type_hierarchy:
+                entity_root = self._get_entity_root(setting_dict["root"])
+                (model, proxy_model) = self._setup_hierarchy_model(app, entity_root)
+            else:
+                (model, proxy_model) = self._setup_query_model(app, setting_dict)
 
-            # resolve any magic tokens in the filter
-            resolved_filters = []
-            for filter in e["filters"]:
-                resolved_filter = []
-                for field in filter:
-                    if field == "{context.entity}":
-                        field = app.context.entity
-                    elif field == "{context.project}":
-                        field = app.context.project
-                    elif field == "{context.project.id}":
-                        if app.context.project:
-                            field = app.context.project.get("id")
-                        else:
-                            field = None
-                    elif field == "{context.step}":
-                        field = app.context.step
-                    elif field == "{context.task}":
-                        field = app.context.task
-                    elif field == "{context.user}":
-                        field = app.context.user
-                    resolved_filter.append(field)
-                resolved_filters.append(resolved_filter)
-            e["filters"] = resolved_filters
-
-
-            preset_name = e["caption"]
-            sg_entity_type = e["entity_type"]
-
-            # now set up a new tab
+            # Add a new tab and its layout to the main tab bar.
             tab = QtGui.QWidget()
-            # add it to the main tab UI
-            self.ui.entity_preset_tabs.addTab(tab, preset_name)
-            # add a layout
             layout = QtGui.QVBoxLayout(tab)
             layout.setSpacing(0)
             layout.setContentsMargins(0, 0, 0, 0)
+            self.ui.entity_preset_tabs.addTab(tab, preset_name)
 
-            # and add a treeview
+            # Add a tree view in the tab layout.
             view = QtGui.QTreeView(tab)
             layout.addWidget(view)
 
-            # a horiz layout to host search
-            hlayout = QtGui.QHBoxLayout()
-            layout.addLayout(hlayout)
-
-            # add search textfield
-            search = QtGui.QLineEdit(tab)
-            search.setStyleSheet("QLineEdit{ border-width: 1px; "
-                                        "background-image: url(:/res/search.png);"
-                                        "background-repeat: no-repeat;"
-                                        "background-position: center left;"
-                                        "border-radius: 5px; "
-                                        "padding-left:20px;"
-                                        "margin:4px;"
-                                        "height:22px;"
-                                        "}")
-            search.setToolTip("Use the <i>search</i> field to narrow down the items displayed in the tree above.")
-
-            try:
-                # this was introduced in qt 4.7, so try to use it if we can... :)
-                search.setPlaceholderText("Search...")
-            except:
-                pass
-
-            hlayout.addWidget(search)
-
-            # and add a cancel search button, disabled by default
-            clear_search = QtGui.QToolButton(tab)
-            icon = QtGui.QIcon()
-            icon.addPixmap(QtGui.QPixmap(":/res/clear_search.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-            clear_search.setIcon(icon)
-            clear_search.setAutoRaise(True)
-            clear_search.clicked.connect( lambda editor=search: editor.setText("") )
-            clear_search.setToolTip("Click to clear your current search.")
-            hlayout.addWidget(clear_search)
-
-            # set up data backend
-            model = SgEntityModel(self, 
-                                  sg_entity_type, 
-                                  e["filters"], 
-                                  e["hierarchy"],
-                                  self._task_manager)
-            
-            overlay = ShotgunModelOverlayWidget(model, view)
-
-            # set up right click menu
-            action_ea = QtGui.QAction("Expand All Folders", view)
-            action_ca = QtGui.QAction("Collapse All Folders", view)
-            action_refresh = QtGui.QAction("Refresh", view)
-
-            action_ea.triggered.connect(view.expandAll)
-            action_ca.triggered.connect(view.collapseAll)
-            action_refresh.triggered.connect(model.async_refresh)
-            view.addAction(action_ea)
-            view.addAction(action_ca)
-            view.addAction(action_refresh)
-            view.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
-
-            # make sure we keep a handle to all the new objects
-            # otherwise the GC may not work
-            self._dynamic_widgets.extend( [tab,
-                                           layout,
-                                           hlayout,
-                                           search,
-                                           clear_search,
-                                           view,
-                                           overlay,
-                                           action_ea,
-                                           action_ca,
-                                           action_refresh] )
-
-            # set up proxy model that we connect our search to
-            proxy_model = SgEntityProxyModel(self)
-            proxy_model.setSourceModel(model)
-            search.textChanged.connect(lambda text, v=view, pm=proxy_model: self._on_search_text_changed(text, v, pm) )
-
-            self._dynamic_widgets.extend([model, proxy_model])
-
-            # configure the view
+            # Configure the view.
             view.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
             view.setProperty("showDropIndicator", False)
             view.setIconSize(QtCore.QSize(20, 20))
-            view.setStyleSheet("QTreeView::item { padding: 6px;  }")
+            view.setStyleSheet("QTreeView::item { padding: 6px; }")
             view.setUniformRowHeights(True)
             view.setHeaderHidden(True)
             view.setModel(proxy_model)
 
-            # set up on-select callbacks - need to help pyside GC (maya 2012)
-            # by first creating a direct handle to the selection model before
-            # setting up signal / slots
+            # Keep a handle to all the new Qt objects, otherwise the GC may not work.
+            self._dynamic_widgets.extend([model, proxy_model, tab, layout, view])
+
+            if not type_hierarchy:
+
+                # FIXME: We should probably remove all of this block in favor of something like. Doesn't quite
+                # work at the moment so I'm leaving it as a suggestion to a future reader.
+                # search = SearchWidget(tab)
+                # search.setToolTip("Use the <i>search</i> field to narrow down the items displayed in the tree above.")
+                # search_layout.addWidget(search)
+                # search.set_placeholder_text("Search...")
+                # search.search_changed.connect(
+                #     lambda text, v=view, pm=proxy_model: self._on_search_text_changed(text, v, pm)
+                # )
+
+                # Add a layout to host search.
+                search_layout = QtGui.QHBoxLayout()
+                layout.addLayout(search_layout)
+
+                # Add the search text field.
+                search = QtGui.QLineEdit(tab)
+                search.setStyleSheet("QLineEdit{ border-width: 1px; "
+                                                "background-image: url(:/res/search.png); "
+                                                "background-repeat: no-repeat; "
+                                                "background-position: center left; "
+                                                "border-radius: 5px; "
+                                                "padding-left:20px; "
+                                                "margin:4px; "
+                                                "height:22px; "
+                                                "}")
+                search.setToolTip("Use the <i>search</i> field to narrow down the items displayed in the tree above.")
+
+                try:
+                    # This was introduced in Qt 4.7, so try to use it if we can...
+                    search.setPlaceholderText("Search...")
+                except:
+                    pass
+
+                search_layout.addWidget(search)
+
+                # Add a cancel search button, disabled by default.
+                clear_search = QtGui.QToolButton(tab)
+                icon = QtGui.QIcon()
+                icon.addPixmap(QtGui.QPixmap(":/res/clear_search.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+                clear_search.setIcon(icon)
+                clear_search.setAutoRaise(True)
+                clear_search.clicked.connect(lambda editor=search: editor.setText(""))
+                clear_search.setToolTip("Click to clear your current search.")
+                search_layout.addWidget(clear_search)
+
+                # Drive the proxy model with the search text.
+                search.textChanged.connect(lambda text, v=view, pm=proxy_model: self._on_search_text_changed(text, v, pm))
+
+                # Keep a handle to all the new Qt objects, otherwise the GC may not work.
+                self._dynamic_widgets.extend([search_layout, search, clear_search, icon])
+
+            else:
+                search = shotgun_search_widget.HierarchicalSearchWidget(tab)
+
+                search.search_root = entity_root
+
+                # When a selection is made, we are only interested into the paths to the node so we can refresh
+                # the model and expand the item.
+                search.node_activated.connect(
+                    lambda entity_type, entity_id, name, path_label, incremental_paths, view=view, proxy_model=proxy_model:
+                        self._node_activated(incremental_paths, view, proxy_model)
+                )
+                # When getting back the model items that were loaded, we will need the view and proxy model
+                # to expand the item.
+                model.async_item_retrieval_completed.connect(
+                    lambda item, view=view, proxy_model=proxy_model: self._async_item_retrieval_completed(
+                        item, view, proxy_model
+                    )
+                )
+                search.set_bg_task_manager(self._task_manager)
+                layout.addWidget(search)
+
+                self._dynamic_widgets.extend([search])
+
+            # We need to handle tool tip display ourselves for action context menus.
+            def action_hovered(action):
+                tip = action.toolTip()
+                if tip == action.text():
+                    QtGui.QToolTip.hideText()
+                else:
+                    QtGui.QToolTip.showText(QtGui.QCursor.pos(), tip)
+
+            # Set up a view right click menu.
+            if type_hierarchy:
+
+                action_ca = QtGui.QAction("Collapse All Folders", view)
+                action_ca.hovered.connect(lambda: action_hovered(action_ca))
+                action_ca.triggered.connect(view.collapseAll)
+                view.addAction(action_ca)
+                self._dynamic_widgets.append(action_ca)
+
+                action_reset = QtGui.QAction("Reset", view)
+                action_reset.setToolTip(
+                    "<nobr>Reset the tree to its Shotgun hierarchy root collapsed state.</nobr><br><br>"
+                    "Any existing data contained in the tree will be cleared, "
+                    "affecting selection and other related states, and "
+                    "available cached data will be immediately reloaded.<br><br>"
+                    "The rest of the data will be lazy-loaded when navigating down the tree."
+                )
+                action_reset.hovered.connect(lambda: action_hovered(action_reset))
+                action_reset.triggered.connect(model.reload_data)
+                view.addAction(action_reset)
+                self._dynamic_widgets.append(action_reset)
+
+            else:
+
+                action_ea = QtGui.QAction("Expand All Folders", view)
+                action_ea.hovered.connect(lambda: action_hovered(action_ea))
+                action_ea.triggered.connect(view.expandAll)
+                view.addAction(action_ea)
+                self._dynamic_widgets.append(action_ea)
+
+                action_ca = QtGui.QAction("Collapse All Folders", view)
+                action_ca.hovered.connect(lambda: action_hovered(action_ca))
+                action_ca.triggered.connect(view.collapseAll)
+                view.addAction(action_ca)
+                self._dynamic_widgets.append(action_ca)
+
+                action_refresh = QtGui.QAction("Refresh", view)
+                action_refresh.setToolTip(
+                    "<nobr>Refresh the tree data to ensure it is up to date with Shotgun.</nobr><br><br>"
+                    "Since this action is done in the background, the tree update "
+                    "will be applied whenever the data is returned from Shotgun.<br><br>"
+                    "When data has been added, it will be added into the existing tree "
+                    "without affecting selection and other related states.<br><br>"
+                    "When data has been modified or deleted, a tree rebuild will be done, "
+                    "affecting selection and other related states."
+                )
+                action_refresh.hovered.connect(lambda: action_hovered(action_refresh))
+                action_refresh.triggered.connect(model.async_refresh)
+                view.addAction(action_refresh)
+                self._dynamic_widgets.append(action_refresh)
+
+            view.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
+
+            # Set up an on-select callback.
             selection_model = view.selectionModel()
             self._dynamic_widgets.append(selection_model)
+
             selection_model.selectionChanged.connect(self._on_treeview_item_selected)
 
-            # finally store all these objects keyed by the caption
-            ep = EntityPreset(preset_name, 
-                              sg_entity_type, 
-                              model, 
-                              proxy_model, 
+            overlay = ShotgunModelOverlayWidget(model, view)
+            self._dynamic_widgets.append(overlay)
+
+            # Store all these objects keyed by the caption.
+            ep = EntityPreset(preset_name,
+                              sg_entity_type,
+                              model,
+                              proxy_model,
                               view,
                               publish_filters)
 
@@ -1264,6 +1367,148 @@ class AppDialog(QtGui.QWidget):
         # finalize initialization by clicking the home button, but only once the
         # data has properly arrived in the model.
         self._on_home_clicked()
+
+    def _get_entity_root(self, root):
+        """
+        Translates the string from the settings into an entity.
+
+        :param str root: Can be '{context.project} or empty.
+
+        :returns: Entity that will be used for the root.
+        """
+
+        app = sgtk.platform.current_bundle()
+
+        # FIXME: API doesn't support non-project entities as the root yet.
+        # if root == "{context.entity}":
+        #     if app.context.entity:
+        #         return app.context.entity
+        #     else:
+        #         app.log_warning(
+        #             "There is no entity in the current context %s. "
+        #             "Hierarchy will default to project." % app.context
+        #         )
+        #         root = "{context.project}"
+
+        if root == "{context.project}":
+            if app.context.project:
+                return app.context.project
+            else:
+                app.log_warning(
+                    "There is no project in the current context %s. "
+                    "Hierarchy will default to site." % app.context
+                )
+                root = None
+
+        if root is not None:
+            app.log_warning(
+                "Unknown root was specified: %s. "
+                "Hierarchy will default to site." % root
+            )
+
+        return None
+
+    def _setup_hierarchy_model(self, app, root):
+        """
+        Create the model and proxy model required by a hierarchy type configuration setting.
+
+        :param app: :class:`Application`, :class:`Engine` or :class:`Framework` bundle instance
+                    associated with the loader.
+        :param root: The path to the root of the Shotgun hierarchy to display.
+        :return: Created `(model, proxy model)`.
+        """
+
+        # Construct the hierarchy model and load a hierarchy that leads
+        # to entities that are linked via the "PublishedFile.entity" field.
+        model = SgHierarchyModel(self, root_entity=root, bg_task_manager=self._task_manager)
+
+        # Create a proxy model.
+        proxy_model = QtGui.QSortFilterProxyModel(self)
+        proxy_model.setSourceModel(model)
+
+        # Impose and keep the sorting order on the default display role text.
+        proxy_model.sort(0)
+        proxy_model.setDynamicSortFilter(True)
+
+        # When clicking on a node, we fetch all the nodes under it so we can populate the
+        # right hand-side. Make sure we are notified when the child come back so we can load
+        # publishes for the current item.
+        model.data_refreshed.connect(self._hierarchy_refreshed)
+
+        return (model, proxy_model)
+
+    def _hierarchy_refreshed(self):
+        """
+        Slot triggered when the hierarchy model has been refreshed. This allows to show all the
+        folder items in the right-hand side for the current selection.
+        """
+        selected_item = self._get_selected_entity()
+
+        # tell publish UI to update itself
+        self._load_publishes_for_entity_item(selected_item)
+
+    def _node_activated(self, incremental_paths, view, proxy_model):
+        """
+        Called when a user picks a result from the search widget.
+        """
+        source_model = proxy_model.sourceModel()
+        # Asynchronously retrieve the nodes that lead to the item we picked.
+        source_model.async_item_from_paths(incremental_paths)
+
+    def _async_item_retrieval_completed(self, item, view, proxy_model):
+        """
+        Called when the last node from the deep load is loaded.
+        """
+        # Ask the view to set the current index.
+        proxy_idx = proxy_model.mapFromSource(item.index())
+        view.setCurrentIndex(proxy_idx)
+
+    def _setup_query_model(self, app, setting_dict):
+        """
+        Create the model and proxy model required by a query type configuration setting.
+
+        :param app: :class:`Application`, :class:`Engine` or :class:`Framework` bundle instance
+                    associated with the loader.
+        :param setting_dict: Configuration setting dictionary for a tab.
+        :return: Created `(model, proxy model)`.
+        """
+
+        # Resolve any magic tokens in the filters.
+        resolved_filters = []
+        for filter in setting_dict["filters"]:
+            resolved_filter = []
+            for field in filter:
+                if field == "{context.entity}":
+                    field = app.context.entity
+                elif field == "{context.project}":
+                    field = app.context.project
+                elif field == "{context.project.id}":
+                    if app.context.project:
+                        field = app.context.project.get("id")
+                    else:
+                        field = None
+                elif field == "{context.step}":
+                    field = app.context.step
+                elif field == "{context.task}":
+                    field = app.context.task
+                elif field == "{context.user}":
+                    field = app.context.user
+                resolved_filter.append(field)
+            resolved_filters.append(resolved_filter)
+        setting_dict["filters"] = resolved_filters
+
+        # Construct the query model.
+        model = SgEntityModel(self,
+                              setting_dict["entity_type"],
+                              setting_dict["filters"],
+                              setting_dict["hierarchy"],
+                              self._task_manager)
+
+        # Create a proxy model.
+        proxy_model = SgEntityProxyModel(self)
+        proxy_model.setSourceModel(model)
+
+        return (model, proxy_model)
 
     def _on_search_text_changed(self, pattern, tree_view, proxy_model):
         """
@@ -1300,16 +1545,15 @@ class AppDialog(QtGui.QWidget):
         """
         if not self._disable_tab_event_handler:
             curr_tab_index = self.ui.entity_preset_tabs.currentIndex()
-            self._switch_profile_tab(curr_tab_index, False)
+            self._switch_profile_tab(curr_tab_index, track_in_history=True)
 
-    def _switch_profile_tab(self, new_index, combo_operation_mode):
+    def _switch_profile_tab(self, new_index, track_in_history):
         """
         Switches to use the specified profile tab.
 
         :param new_index: tab index to switch to
-        :param combo_operation_mode: hint to this method that if set to True,
-                                     this tab switch is part of a sequence of
-                                     operations and not stand alone.
+        :param track_in_history: Hint to this method that the actions should be tracked in the
+            history.
         """
         # qt returns unicode/qstring here so force to str
         curr_tab_name = shotgun_model.sanitize_qt(self.ui.entity_preset_tabs.tabText(new_index))
@@ -1317,30 +1561,27 @@ class AppDialog(QtGui.QWidget):
         # and set up which our currently visible preset is
         self._current_entity_preset = curr_tab_name
 
+        # The hierarchy model cannot handle "Show items in subfolders" mode.
+        if isinstance(self._entity_presets[self._current_entity_preset].model, SgHierarchyModel):
+            self.ui.show_sub_items.hide()
+        else:
+            self.ui.show_sub_items.show()
+
         if self._history_navigation_mode == False:
-            # when we are not navigating back and forth as part of
-            # history navigation, ask the currently visible
-            # view to (background async) refresh its data
+            # When we are not navigating back and forth as part of history navigation,
+            # ask the currently visible view to (background async) refresh its data.
+            # Refreshing the data only makes sense for SgEntityModel based tabs since
+            # SgHierarchyModel does not yet support this kind of functionality.
             model = self._entity_presets[self._current_entity_preset].model
-            model.async_refresh()
+            if isinstance(model, SgEntityModel):
+                model.async_refresh()
 
-        if combo_operation_mode == False:
-            # this request is because a user clicked a tab
-            # or because a
-            # and not part of a history operation (or other)
-
-            # programmatic selection means the operation is part of a
-            # combo selection process, where a tab is first selection
-            # and then an item. So in this case we should not
-            # register history or trigger a refresh of the publish
-            # model, since these operations will be handled by later
-            # parts of the combo operation
+        if track_in_history:
+            # figure out what is selected
+            selected_item = self._get_selected_entity()
 
             # update breadcrumbs
-            self._populate_entity_breadcrumbs()
-
-            # now figure out what is selected
-            selected_item = self._get_selected_entity()
+            self._populate_entity_breadcrumbs(selected_item)
 
             # add history record
             self._add_history_record(self._current_entity_preset, selected_item)
@@ -1355,12 +1596,13 @@ class AppDialog(QtGui.QWidget):
 
     def _on_treeview_item_selected(self):
         """
-        Signal triggered when someone changes the selection in a treeview.
+        Slot triggered when someone changes the selection in a treeview.
         """
-        # update breadcrumbs
-        self._populate_entity_breadcrumbs()
 
         selected_item = self._get_selected_entity()
+
+        # update breadcrumbs
+        self._populate_entity_breadcrumbs(selected_item)
 
         # when an item in the treeview is selected, the child
         # nodes are displayed in the main view, so make sure
@@ -1429,8 +1671,10 @@ class AppDialog(QtGui.QWidget):
                 i = self._entity_presets[self._current_entity_preset].model.itemFromIndex(child_idx)
                 child_folders.append(i)
 
-        # is the show child folders checked?
-        show_sub_items = self.ui.show_sub_items.isChecked()
+        # Is the show child folders checked?
+        # The hierarchy model cannot handle "Show items in subfolders" mode.
+        show_sub_items = self.ui.show_sub_items.isChecked() and \
+                         not isinstance(self._entity_presets[self._current_entity_preset].model, SgHierarchyModel)
 
         if show_sub_items:
             # indicate this with a special background color
@@ -1454,12 +1698,13 @@ class AppDialog(QtGui.QWidget):
         publish_filters = self._entity_presets[self._current_entity_preset].publish_filters
         self._publish_model.load_data(item, child_folders, show_sub_items, publish_filters)
 
-    def _populate_entity_breadcrumbs(self):
+    def _populate_entity_breadcrumbs(self, selected_item):
         """
         Computes the current entity breadcrumbs
-        """
 
-        selected_item = self._get_selected_entity()
+        :param selected_item: Item currently selected in the tree view or
+                              `None` when no selection has been made.
+        """
 
         crumbs = []
 
@@ -1470,17 +1715,10 @@ class AppDialog(QtGui.QWidget):
             tmp_item = selected_item
             while tmp_item:
 
-                # now figure out the associated value and type for this node
-                # we base it both on the sg_data (None for all non-leaf nodes)
-                # and on the associated data role
-                sg_data = tmp_item.get_sg_data()
-                field_data = shotgun_model.get_sanitized_data(tmp_item, SgEntityModel.SG_ASSOCIATED_FIELD_ROLE)
-                # examples of data:
-                # intermediate node: {'name': 'sg_asset_type', 'value': 'Character' }
-                # intermediate node: {'name': 'sg_sequence',   'value': {'type': 'Sequence', 'id': 11, 'name': 'bunny_080'}}
-                # leaf node:         {'name': 'code',          'value': 'mystuff'}
+                # Extract the Shotgun data and field value from the node item.
+                (sg_data, field_value) = model_item_data.get_item_data(tmp_item)
 
-                field_value = field_data["value"]
+                # now figure out the associated value and type for this node
 
                 if sg_data:
                     # leaf node

@@ -80,36 +80,31 @@ configuration:
 
     entities:
         default_value:
-            - caption: Assets
-              entity_type: Asset
+            - caption: Project
+              type: Hierarchy
+              root: "{context.project}"
               publish_filters: []
-              filters:
-              - ["project", "is", "{context.project}"]
-              hierarchy: [sg_asset_type, code]
-
-            - caption: Shots
-              entity_type: Shot
-              publish_filters: []
-              filters:
-              - ["project", "is", "{context.project}"]
-              hierarchy: [sg_sequence, code]
 
             - caption: My Tasks
+              type: Query
               entity_type: Task
               publish_filters: []
               filters:
-              - [task_assignees, is, '{context.user}']
+              - [task_assignees, is, "{context.user}"]
               - ["project", "is", "{context.project}"]
               hierarchy: [entity, content]
-
 
         type: list
         description: "This setting defines the different tabs that will show up on the left hand side.
                       Each tab represents a Shotgun query, grouped by some shotgun fields to form a tree. 
-                      This setting is a list of dictionaries. Each dictionary in the list defines one tab,
-                      and should have they following keys: *caption* specifies the name of the tab, *entity_type*
-                      specifies the shotgun entity type to display. *filters* is a list of standard API Shotgun 
-                      filters. *hierarchy* is a list of shotgun fields, defining the grouping of the tree.
+                      This setting is a list of dictionaries. Each dictionary in the list defines one tab.
+                      Dictionaries with their *type* key set to 'Hierarchy' should have they following keys:
+                      *caption* specifies the name of the tab, *root* specifies the path to the root
+                      of the project hierarchy to display.
+                      Dictionaries with their *type* key set to 'Query' should have they following keys:
+                      *caption* specifies the name of the tab, *entity_type* specifies the shotgun entity
+                      type to display. *filters* is a list of standard API Shotgun filters.
+                      *hierarchy* is a list of shotgun fields, defining the grouping of the tree.
                       Optionally, you can specify a *publish_filters* key, containing shotgun API filters to
                       apply to the publishes listing as it is being loaded in the main view." 
         allows_empty: False
@@ -140,10 +135,10 @@ description: "Locate published files and reference them into your scene."
 
 # Required minimum versions for this item to run
 requires_shotgun_version:
-requires_core_version: "v0.16.32"
+requires_core_version: "v0.18.45"
 requires_engine_version:
 
 # the frameworks required to run this app
 frameworks:
-    - {"name": "tk-framework-shotgunutils", "version": "v5.x.x"}
+    - {"name": "tk-framework-shotgunutils", "version": "v5.x.x", "minimum_version": "v5.2.0"}
     - {"name": "tk-framework-qtwidgets", "version": "v2.x.x"}

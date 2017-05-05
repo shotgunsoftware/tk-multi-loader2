@@ -74,8 +74,14 @@ class NukeActions(HookBaseClass):
             action_instances.append( {"name": "script_import",
                                       "params": None, 
                                       "caption": "Import Contents", 
-                                      "description": "This will import all the nodes into the current scene."} )        
-    
+                                      "description": "This will import all the nodes into the current scene."} )
+
+        if "open_project" in actions:
+            action_instances.append( {"name": "open_project",
+                                      "params": None,
+                                      "caption": "Open Project",
+                                      "description": "This will open the Nuke Studio project in the current session."} )
+
         return action_instances
 
     def execute_multiple_actions(self, actions):
@@ -132,7 +138,10 @@ class NukeActions(HookBaseClass):
         
         if name == "script_import":
             self._import_script(path, sg_publish_data)
-           
+
+        if name == "open_project":
+            self._open_project(path, sg_publish_data)
+
     ##############################################################################################################
     # helper methods which can be subclassed in custom hooks to fine tune the behavior of things
     
@@ -146,9 +155,29 @@ class NukeActions(HookBaseClass):
         import nuke
         if not os.path.exists(path):
             raise Exception("File not found on disk - '%s'" % path)
-        
+
         nuke.nodePaste(path)
-                
+
+    def _open_project(self, path, sg_publish_data):
+        """
+        Open the nuke studio project.
+
+        :param path: Path to file.
+        :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
+        """
+
+        if not os.path.exists(path):
+            raise Exception("File not found on disk - '%s'" % path)
+
+        import nuke
+
+        if not nuke.env.get("studio"):
+            # can't import the project unless nuke studio is running
+            raise Exception("Nuke Studio is required to open the project.")
+
+        import hiero
+        hiero.core.openProject(path)
+
     def _create_read_node(self, path, sg_publish_data):
         """
         Create a read node representing the publish.
@@ -161,8 +190,8 @@ class NukeActions(HookBaseClass):
         (_, ext) = os.path.splitext(path)
 
         # If this is an Alembic cache, use a ReadGeo2 and we're done.
-        if ext.lower() == '.abc':
-            nuke.createNode('ReadGeo2', 'file {%s}' % path)
+        if ext.lower() == ".abc":
+            nuke.createNode("ReadGeo2", "file {%s}" % path)
             return
 
         valid_extensions = [".png", 
@@ -183,15 +212,21 @@ class NukeActions(HookBaseClass):
         if ext.lower() not in valid_extensions:
             raise Exception("Unsupported file extension for '%s'!" % path)
 
+        # `nuke.createNode()` will extract the format and frame range from the
+        # file itself (if possible), whereas `nuke.nodes.Read()` won't. We'll
+        # also check to see if there's a matching template and override the
+        # frame range, but this should handle the zero config case. This will
+        # also automatically extract the format and frame range for movie files.
+        read_node = nuke.createNode("Read")
+        read_node["file"].fromUserText(path)
+
         # find the sequence range if it has one:
         seq_range = self._find_sequence_range(path)
-        
-        # create the read node
+
         if seq_range:
-            nuke.nodes.Read(file=path, first=seq_range[0], last=seq_range[1])
-        else:
-            nuke.nodes.Read(file=path)
-                    
+            # override the detected frame range.
+            read_node["first"].setValue(seq_range[0])
+            read_node["last"].setValue(seq_range[1])
 
     def _find_sequence_range(self, path):
         """
@@ -208,7 +243,7 @@ class NukeActions(HookBaseClass):
         template = None
         try:
             template = self.parent.sgtk.template_from_path(path)
-        except TankError:
+        except sgtk.TankError:
             pass
         
         if not template:

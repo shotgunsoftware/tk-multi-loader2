@@ -246,7 +246,7 @@ class FlameActions(HookBaseClass):
             published_files,
             name=sg_info["code"],
             start_frame=int(sg_info["sg_cut_in"]),
-            duration=(int(sg_info["sg_cut_out"]) - int(sg_info["sg_cut_out"])),
+            duration=(int(sg_info["sg_cut_out"]) - int(sg_info["sg_cut_in"])),
             comp=comp,  # Don't comp the result
             write_file_config=write_file_config
         )

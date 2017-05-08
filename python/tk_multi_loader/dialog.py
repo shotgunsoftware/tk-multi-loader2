@@ -27,7 +27,6 @@ from .delegate_publish_history import SgPublishHistoryDelegate
 from .search_widget import SearchWidget
 
 from . import constants
-from . import model_item_data
 
 from .ui.dialog import Ui_Dialog
 
@@ -1715,10 +1714,17 @@ class AppDialog(QtGui.QWidget):
             tmp_item = selected_item
             while tmp_item:
 
-                # Extract the Shotgun data and field value from the node item.
-                (sg_data, field_value) = model_item_data.get_item_data(tmp_item)
-
                 # now figure out the associated value and type for this node
+                # we base it both on the sg_data (None for all non-leaf nodes)
+                # and on the associated data role
+                sg_data = tmp_item.get_sg_data()
+                field_data = shotgun_model.get_sanitized_data(tmp_item, SgEntityModel.SG_ASSOCIATED_FIELD_ROLE)
+                # examples of data:
+                # intermediate node: {'name': 'sg_asset_type', 'value': 'Character' }
+                # intermediate node: {'name': 'sg_sequence',   'value': {'type': 'Sequence', 'id': 11, 'name': 'bunny_080'}}
+                # leaf node:         {'name': 'code',          'value': 'mystuff'}
+
+                field_value = field_data["value"]
 
                 if sg_data:
                     # leaf node

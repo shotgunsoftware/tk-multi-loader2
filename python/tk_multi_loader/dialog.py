@@ -1411,12 +1411,12 @@ class AppDialog(QtGui.QWidget):
         :return: Created `(model, proxy model)`.
         """
 
-        # If the root is a aproject, include it in the hierarchy model so that
+        # If the root is a project, include it in the hierarchy model so that
         # we can display project publishes. We do an innocent little hack here
         # by including a space at the front of the project root item to make it
         # display first in the tree.
-        include_root = " Project Publishes" \
-            if root.get("type") == "Project" else None
+        if root.get("type") == "Project":
+            include_root = " %s" % (root.get("name", "Project Publishes"),)
 
         # Construct the hierarchy model and load a hierarchy that leads
         # to entities that are linked via the "PublishedFile.entity" field.

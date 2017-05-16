@@ -1411,9 +1411,21 @@ class AppDialog(QtGui.QWidget):
         :return: Created `(model, proxy model)`.
         """
 
+        # If the root is a aproject, include it in the hierarchy model so that
+        # we can display project publishes. We do an innocent little hack here
+        # by including a space at the front of the project root item to make it
+        # display first in the tree.
+        include_root = " Project Publishes" \
+            if root.get("type") == "Project" else None
+
         # Construct the hierarchy model and load a hierarchy that leads
         # to entities that are linked via the "PublishedFile.entity" field.
-        model = SgHierarchyModel(self, root_entity=root, bg_task_manager=self._task_manager)
+        model = SgHierarchyModel(
+            self,
+            root_entity=root,
+            bg_task_manager=self._task_manager,
+            include_root=include_root
+        )
 
         # Create a proxy model.
         proxy_model = QtGui.QSortFilterProxyModel(self)

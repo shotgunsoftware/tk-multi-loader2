@@ -48,8 +48,7 @@ configuration:
     action_mappings:
         type: dict
         description: Associates published file types with actions. The actions are all defined
-                     inside the actions hook, so a number of actions are available by default
-                     and in addition to this you can add your own actions if you like.
+                     inside the actions hook.
         default_value: {}
         default_value_tk-3dsmax:
             3dsmax Scene: [import, reference]
@@ -73,12 +72,17 @@ configuration:
         default_value_tk-mari:
             Alembic Cache: [geometry_import]
 
+    entity_mappings:
+        type: dict
+        description: Associates entity types with actions. The actions are all defined
+                     inside the actions hook.
+        default_value: {}
 
     entities:
         default_value:
             - caption: Project
               type: Hierarchy
-              root: "/Project/{context.project.id}"
+              root: "{context.project}"
               publish_filters: []
 
             - caption: My Tasks
@@ -86,7 +90,7 @@ configuration:
               entity_type: Task
               publish_filters: []
               filters:
-              - [task_assignees, is, '{context.user}']
+              - [task_assignees, is, "{context.user}"]
               - ["project", "is", "{context.project}"]
               hierarchy: [entity, content]
 
@@ -131,10 +135,10 @@ description: "Locate published files and reference them into your scene."
 
 # Required minimum versions for this item to run
 requires_shotgun_version:
-requires_core_version: "v0.16.32"
+requires_core_version: "v0.18.45"
 requires_engine_version:
 
 # the frameworks required to run this app
 frameworks:
-    - {"name": "tk-framework-shotgunutils", "version": "v5.x.x"}
+    - {"name": "tk-framework-shotgunutils", "version": "v5.x.x", "minimum_version": "v5.2.0"}
     - {"name": "tk-framework-qtwidgets", "version": "v2.x.x"}

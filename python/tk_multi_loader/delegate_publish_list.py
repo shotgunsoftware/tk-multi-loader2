@@ -92,7 +92,7 @@ class SgPublishListDelegate(PublishDelegate):
             # this can be a multi link field but also a field like a tags field or a non-entity link type field.
             formatted_values = []
             formatted_types = set()
-
+            
             for v in field_value:
                 if isinstance(v, dict) and "name" in v and "type" in v:
                     # This is a link field
@@ -102,7 +102,7 @@ class SgPublishListDelegate(PublishDelegate):
                         formatted_types.add(v["type"])
                 else:
                     formatted_values.append(str(v))
-
+            
             types = ", ".join(list(formatted_types))
             names = ", ".join(formatted_values)
             main_text = "<b>%s</b><br>%s" % (types, names)

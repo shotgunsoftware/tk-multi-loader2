@@ -315,11 +315,14 @@ class SgLatestPublishModel(ShotgunModel):
             # see if we can get a thumbnail for this node!
             if tree_view_sg_data and tree_view_sg_data.get("image"):
                 # there is a thumbnail for this item!
-                self._request_thumbnail_download(item,
-                                                 "image",
-                                                 tree_view_sg_data["image"],
-                                                 tree_view_sg_data["type"],
-                                                 tree_view_sg_data["id"])
+                self._request_thumbnail_download(
+                    item,
+                    "image",
+                    tree_view_sg_data["image"],
+                    tree_view_sg_data["type"],
+                    tree_view_sg_data["id"]
+                )
+
             self.appendRow(item)
 
             # help GC

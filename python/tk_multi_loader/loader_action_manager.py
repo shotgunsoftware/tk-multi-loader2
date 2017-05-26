@@ -218,6 +218,7 @@ class LoaderActionManager(ActionManager):
             a.triggered[()].connect(
                 lambda actions=actions: self._execute_hook(actions)
             )
+            a.setData(actions)
             qt_actions.append(a)
 
         return qt_actions

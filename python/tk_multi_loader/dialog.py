@@ -25,6 +25,7 @@ from .delegate_publish_list import SgPublishListDelegate
 from .model_publishhistory import SgPublishHistoryModel
 from .delegate_publish_history import SgPublishHistoryDelegate
 from .search_widget import SearchWidget
+from .banner import Banner
 
 from . import constants
 from . import model_item_data
@@ -188,6 +189,8 @@ class AppDialog(QtGui.QWidget):
         # hook up view -> proxy model -> model
         self.ui.publish_view.setModel(self._publish_proxy_model)
 
+        self._action_banner = Banner(self)
+
         # set up custom delegates to use when drawing the main area
         self._publish_thumb_delegate = SgPublishThumbDelegate(self.ui.publish_view, self._action_manager)
 
@@ -308,6 +311,7 @@ class AppDialog(QtGui.QWidget):
         # Qt is our friend here. If there are no actions available, the separator won't be added, yay!
         menu.addSeparator()
         menu.addAction(self._refresh_action)
+        menu.triggered.connect(self._action_triggered)
 
         # Wait for the user to pick something.
         menu.exec_(self.ui.publish_view.mapToGlobal(pos))
@@ -453,6 +457,7 @@ class AppDialog(QtGui.QWidget):
                                                                              self._action_manager.UI_AREA_HISTORY)
         if default_action:
             default_action.trigger()
+            self._action_triggered(default_action)
 
     def _on_publish_filter_clicked(self):
         """
@@ -960,9 +965,31 @@ class AppDialog(QtGui.QWidget):
                                                                                  self._action_manager.UI_AREA_MAIN)
             if default_action:
                 default_action.trigger()
+                self._action_triggered(default_action)
 
     ########################################################################################
     # cog icon actions
+
+    def _action_triggered(self, action):
+        data = action.data()
+
+        # If there is not data, then it is not one of the import actions.
+        if not data:
+            return
+
+        if len(data) == 1:
+            sg_data = data[0]["sg_publish_data"]
+            name_str = sg_data.get("name") or "Unnamed"
+            version_number = sg_data.get("version_number")
+            self._action_banner.show_banner(
+                "<center><b>%s Version %03d</b>: Action <b>%s</b> completed.</center>" % (
+                    name_str, version_number, action.text()
+                )
+            )
+        else:
+            self._action_banner.show_banner(
+                "Action <b>%s</b> completed.</center>" % (action.text(),)
+            )
 
     def show_help_popup(self):
         """

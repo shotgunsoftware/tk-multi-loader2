@@ -67,23 +67,3 @@ class Banner(QtGui.QLabel):
         self.setText(message)
         self.show()
         self._banner_animation.start()
-
-    def _banner_timeout(self):
-        self.hide()
-
-
-class ResizeEventFilter(QtCore.QObject):
-    """
-    Event filter which emits a resized signal whenever
-    the monitored widget resizes. This is so that the overlay wrapper
-    class can be informed whenever the Widget gets a resize event.
-    """
-    resized = QtCore.Signal()
-
-    def eventFilter(self, obj, event):
-        # peek at the message
-        if event.type() == QtCore.QEvent.Resize:
-            # re-broadcast any resize events
-            self.resized.emit()
-        # pass it on!
-        return False

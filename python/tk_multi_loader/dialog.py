@@ -26,6 +26,7 @@ from .model_publishhistory import SgPublishHistoryModel
 from .delegate_publish_history import SgPublishHistoryDelegate
 from .search_widget import SearchWidget
 from .banner import Banner
+from .loader_action_manager import LoaderActionManager
 
 from . import constants
 from . import model_item_data
@@ -66,8 +67,16 @@ class AppDialog(QtGui.QWidget):
         """
         QtGui.QWidget.__init__(self, parent)
         self._action_manager = action_manager
-        self._action_manager.pre_execute_action.connect(self._pre_execute_action)
-        self._action_manager.post_execute_action.connect(lambda _: self._action_banner.hide_banner())
+
+        # The loader app can be invoked from other applications with a custom
+        # action manager as a File Open-like dialog. For these managers, we won't
+        # be using the banner system.
+
+        # We will support the banners only for the default loader.
+        if isinstance(action_manager, LoaderActionManager):
+            self._action_banner = Banner(self)
+            self._action_manager.pre_execute_action.connect(self._pre_execute_action)
+            self._action_manager.post_execute_action.connect(lambda _: self._action_banner.hide_banner())
 
         # create a settings manager where we can pull and push prefs later
         # prefs in this manager are shared
@@ -190,8 +199,6 @@ class AppDialog(QtGui.QWidget):
 
         # hook up view -> proxy model -> model
         self.ui.publish_view.setModel(self._publish_proxy_model)
-
-        self._action_banner = Banner(self)
 
         # set up custom delegates to use when drawing the main area
         self._publish_thumb_delegate = SgPublishThumbDelegate(self.ui.publish_view, self._action_manager)
@@ -970,12 +977,12 @@ class AppDialog(QtGui.QWidget):
     # cog icon actions
 
     def _pre_execute_action(self, action):
+        """
+        Called before a custom action is executed.
+        """
         data = action.data()
 
-        # If there is not data, then it is not one of the import actions.
-        if not data:
-            return
-
+        # If there is a single item, we'll put its name in the banner.
         if len(data) == 1:
             sg_data = data[0]["sg_publish_data"]
             name_str = sg_data.get("name") or "Unnamed"
@@ -986,9 +993,15 @@ class AppDialog(QtGui.QWidget):
                 )
             )
         else:
+            # Otherwise we'll simply mention the selection.
             self._action_banner.show_banner(
                 "<center>Action <b>%s</b> launched on selection.</center>" % (action.text(),)
             )
+
+        # Force the window to be redraw and process events right away since the
+        # hooks will be run right after this method returns, which will not give
+        # a chance otherwise to redraw the UI before executing a potentially long
+        # custom action.
         self.window().repaint()
         QtGui.QApplication.processEvents()
 

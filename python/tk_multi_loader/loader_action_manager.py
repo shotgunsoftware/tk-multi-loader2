@@ -9,10 +9,8 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import sgtk
-import hashlib
 import datetime
 import os
-import copy
 import sys
 from sgtk.platform.qt import QtCore, QtGui
 from tank_vendor import shotgun_api3
@@ -24,7 +22,13 @@ class LoaderActionManager(ActionManager):
     """
     Specialisation of the base ActionManager class that handles dishing out and 
     executing QActions based on the hook configuration for the regular loader UI
+
+    :signal: ``pre_execute_action(QtGui.QAction)`` - Fired before a custom action is executed.
+    :signal: ``post_execute_action(QtGui.QAction)`` - Fired after a custom action is executed.
     """
+
+    pre_execute_action = QtCore.Signal(object)
+    post_execute_action = QtCore.Signal(object)
 
     def __init__(self):
         """

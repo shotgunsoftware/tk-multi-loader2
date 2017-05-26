@@ -216,7 +216,7 @@ class LoaderActionManager(ActionManager):
 
             # Bind all the action params to a single invocation of the _execute_hook.
             a.triggered[()].connect(
-                lambda actions=actions: self._execute_hook(actions)
+                lambda qt_action=a, actions=actions: self._execute_hook(qt_action, actions)
             )
             a.setData(actions)
             qt_actions.append(a)
@@ -341,8 +341,9 @@ class LoaderActionManager(ActionManager):
 
                 # Bind all the action params to a single invocation of the _execute_hook.
                 a.triggered[()].connect(
-                    lambda actions=actions: self._execute_hook(actions)
+                    lambda qt_action=a, actions=actions: self._execute_hook(qt_action, actions)
                 )
+                a.setData(actions)
                 qt_actions.append(a)
 
         # Find paths associated with the Shotgun entity.
@@ -381,7 +382,7 @@ class LoaderActionManager(ActionManager):
     ########################################################################################
     # callbacks
 
-    def _execute_hook(self, actions):
+    def _execute_hook(self, qt_action, actions):
         """
         callback - executes a hook
         """
@@ -399,12 +400,13 @@ class LoaderActionManager(ActionManager):
                 "Error: %s" % e,
             )
         else:
+            self.action_executed.emit(qt_action)
             try:
                 self._app.log_metric("%s action" % (actions[0]["action_name"],))
             except:
                 # ignore all errors. ex: using a core that doesn't support metrics
                 pass
-    
+
     def _show_in_sg(self, entity):
         """
         Callback - Shows a shotgun entity in the web browser

@@ -27,6 +27,7 @@ class Banner(QtGui.QLabel):
         """)
 
         self.hide()
+        self._banner_animation = QtCore.QSequentialAnimationGroup(self)
 
     def show_banner(self, message):
 
@@ -38,7 +39,7 @@ class Banner(QtGui.QLabel):
 
         window_size = self.window().size()
 
-        banner_width = window_size.width() * 0.7
+        banner_width = window_size.width() * 0.5
 
         folded_pos = QtCore.QRect(
             (window_size.width() - banner_width) / 2,
@@ -58,7 +59,7 @@ class Banner(QtGui.QLabel):
         swipe_out.setStartValue(expanded_pos)
         swipe_out.setEndValue(folded_pos)
 
-        self._banner_animation = QtCore.QSequentialAnimationGroup(self)
+        self._banner_animation.clear()
         self._banner_animation.addAnimation(swipe_in)
         self._banner_animation.addPause(3000)
         self._banner_animation.addAnimation(swipe_out)

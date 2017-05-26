@@ -66,6 +66,7 @@ class AppDialog(QtGui.QWidget):
         """
         QtGui.QWidget.__init__(self, parent)
         self._action_manager = action_manager
+        self._action_manager.action_executed.connect(self._action_triggered)
 
         # create a settings manager where we can pull and push prefs later
         # prefs in this manager are shared
@@ -311,7 +312,6 @@ class AppDialog(QtGui.QWidget):
         # Qt is our friend here. If there are no actions available, the separator won't be added, yay!
         menu.addSeparator()
         menu.addAction(self._refresh_action)
-        menu.triggered.connect(self._action_triggered)
 
         # Wait for the user to pick something.
         menu.exec_(self.ui.publish_view.mapToGlobal(pos))
@@ -457,7 +457,6 @@ class AppDialog(QtGui.QWidget):
                                                                              self._action_manager.UI_AREA_HISTORY)
         if default_action:
             default_action.trigger()
-            self._action_triggered(default_action)
 
     def _on_publish_filter_clicked(self):
         """
@@ -965,7 +964,6 @@ class AppDialog(QtGui.QWidget):
                                                                                  self._action_manager.UI_AREA_MAIN)
             if default_action:
                 default_action.trigger()
-                self._action_triggered(default_action)
 
     ########################################################################################
     # cog icon actions
@@ -988,7 +986,7 @@ class AppDialog(QtGui.QWidget):
             )
         else:
             self._action_banner.show_banner(
-                "Action <b>%s</b> completed.</center>" % (action.text(),)
+                "<center>Action <b>%s</b> completed on selection.</center>" % (action.text(),)
             )
 
     def show_help_popup(self):

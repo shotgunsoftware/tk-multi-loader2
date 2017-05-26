@@ -66,7 +66,8 @@ class AppDialog(QtGui.QWidget):
         """
         QtGui.QWidget.__init__(self, parent)
         self._action_manager = action_manager
-        self._action_manager.action_executed.connect(self._action_triggered)
+        self._action_manager.pre_execute_action.connect(self._pre_execute_action)
+        self._action_manager.post_execute_action.connect(lambda _: self._action_banner.hide_banner())
 
         # create a settings manager where we can pull and push prefs later
         # prefs in this manager are shared
@@ -968,7 +969,7 @@ class AppDialog(QtGui.QWidget):
     ########################################################################################
     # cog icon actions
 
-    def _action_triggered(self, action):
+    def _pre_execute_action(self, action):
         data = action.data()
 
         # If there is not data, then it is not one of the import actions.
@@ -980,14 +981,16 @@ class AppDialog(QtGui.QWidget):
             name_str = sg_data.get("name") or "Unnamed"
             version_number = sg_data.get("version_number")
             self._action_banner.show_banner(
-                "<center><b>%s Version %03d</b>: Action <b>%s</b> completed.</center>" % (
-                    name_str, version_number, action.text()
+                "<center>Action <b>%s</b> launched on <b>%s Version %03d</b></center>" % (
+                    action.text(), name_str, version_number
                 )
             )
         else:
             self._action_banner.show_banner(
-                "<center>Action <b>%s</b> completed on selection.</center>" % (action.text(),)
+                "<center>Action <b>%s</b> launched on selection.</center>" % (action.text(),)
             )
+        self.window().repaint()
+        QtGui.QApplication.processEvents()
 
     def show_help_popup(self):
         """

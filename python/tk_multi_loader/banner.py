@@ -10,6 +10,7 @@
 
 
 from sgtk.platform.qt import QtCore, QtGui
+import time
 
 
 class Banner(QtGui.QLabel):
@@ -37,33 +38,39 @@ class Banner(QtGui.QLabel):
         if self.parentWidget() != self.window():
             self.setParent(self.window())
 
-        window_size = self.window().size()
+        self._banner_animation.clear()
 
-        banner_width = window_size.width() * 0.5
+        rect = self._calc_expanded_pos()
 
-        folded_pos = QtCore.QRect(
-            (window_size.width() - banner_width) / 2,
-            -self._HEIGHT,
-            banner_width,
-            self._HEIGHT
-        )
-        expanded_pos = folded_pos.translated(0, self._HEIGHT)
+        self.setGeometry(rect)
 
-        swipe_in = QtCore.QPropertyAnimation(self, "geometry")
-        swipe_in.setDuration(250)
-        swipe_in.setStartValue(folded_pos)
-        swipe_in.setEndValue(expanded_pos)
+        self.setText(message)
+        self.show()
+        self._show_time = time.time()
+
+    def hide_banner(self):
+
+        elapsed = (time.time() - self._show_time) * 1000
+
+        expanded_pos = self._calc_expanded_pos()
+        folded_pos = expanded_pos.translated(0, -self._HEIGHT)
 
         swipe_out = QtCore.QPropertyAnimation(self, "geometry")
         swipe_out.setDuration(250)
         swipe_out.setStartValue(expanded_pos)
         swipe_out.setEndValue(folded_pos)
 
-        self._banner_animation.clear()
-        self._banner_animation.addAnimation(swipe_in)
-        self._banner_animation.addPause(3000)
+        self._banner_animation.addPause(max(3000 - elapsed, 0))
         self._banner_animation.addAnimation(swipe_out)
 
-        self.setText(message)
-        self.show()
         self._banner_animation.start()
+
+    def _calc_expanded_pos(self):
+        window_size = self.window().size()
+        banner_width = window_size.width() * 0.5
+        return QtCore.QRect(
+            (window_size.width() - banner_width) / 2,
+            0,
+            banner_width,
+            self._HEIGHT
+        )

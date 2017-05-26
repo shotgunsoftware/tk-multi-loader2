@@ -21,7 +21,8 @@ class ActionManager(QtCore.QObject):
     UI_AREA_DETAILS = 0x2
     UI_AREA_HISTORY = 0x3    
 
-    action_executed = QtCore.Signal(object)
+    pre_execute_action = QtCore.Signal(object)
+    post_execute_action = QtCore.Signal(object)
     
     def __init__(self):
         """

@@ -388,6 +388,8 @@ class LoaderActionManager(ActionManager):
         """
         self._app.log_debug("Calling scene load hook.")
 
+        self.pre_execute_action.emit(qt_action)
+
         try:
             self._app.execute_hook_method("actions_hook",
                                           "execute_multiple_actions",
@@ -400,12 +402,13 @@ class LoaderActionManager(ActionManager):
                 "Error: %s" % e,
             )
         else:
-            self.action_executed.emit(qt_action)
             try:
                 self._app.log_metric("%s action" % (actions[0]["action_name"],))
             except:
                 # ignore all errors. ex: using a core that doesn't support metrics
                 pass
+        finally:
+            self.post_execute_action.emit(qt_action)
 
     def _show_in_sg(self, entity):
         """

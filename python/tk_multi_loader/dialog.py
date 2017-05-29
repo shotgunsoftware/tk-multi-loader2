@@ -979,6 +979,8 @@ class AppDialog(QtGui.QWidget):
     def _pre_execute_action(self, action):
         """
         Called before a custom action is executed.
+
+        :param action: The QAction that is being executed.
         """
         data = action.data()
 

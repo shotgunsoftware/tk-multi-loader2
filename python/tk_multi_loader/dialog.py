@@ -1000,10 +1000,9 @@ class AppDialog(QtGui.QWidget):
                 "<center>Action <b>%s</b> launched on selection.</center>" % (action.text(),)
             )
 
-        # Force the window to be redraw and process events right away since the
-        # hooks will be run right after this method returns, which will not give
-        # a chance otherwise to redraw the UI before executing a potentially long
-        # custom action.
+        # Force the window to be redrawn and process events right away since the
+        # hooks will be run right after this method returns, which wouldn't
+        # leave space for the event loop to update the UI.
         self.window().repaint()
         QtGui.QApplication.processEvents()
 

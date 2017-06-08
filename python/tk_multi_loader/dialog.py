@@ -685,7 +685,11 @@ class AppDialog(QtGui.QWidget):
                 msg = ""
                 msg += __make_table_row("Name", name_str)
                 msg += __make_table_row("Type", type_str)
-                msg += __make_table_row("Version", "%03d" % sg_item.get("version_number"))
+
+                version = sg_item.get("version_number")
+                vers_str = "%03d" % version if version else "N/A"
+
+                msg += __make_table_row("Version", "%s" % vers_str)
 
                 if sg_item.get("entity"):
                     entity_str = "<b>%s</b> %s" % (sg_item.get("entity").get("type"),

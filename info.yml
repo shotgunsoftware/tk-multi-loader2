@@ -72,7 +72,14 @@ configuration:
             Rendered Image: [add_as_a_layer, open_file]
         default_value_tk-mari:
             Alembic Cache: [geometry_import]
-
+        default_value_tk-flame:
+            Flame Batch File: [load_setup]
+            Flame Quicktime: [load_clip]
+            Flame Render: [load_clip]
+            Photoshop Image: [load_clip]
+            Rendered Image: [load_clip]
+            Image: [load_clip]
+            Movie: [load_clip]
 
     entities:
         default_value:

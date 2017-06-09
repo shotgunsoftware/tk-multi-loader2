@@ -9,10 +9,8 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import sgtk
-import hashlib
 import datetime
 import os
-import copy
 import sys
 from sgtk.platform.qt import QtCore, QtGui
 from tank_vendor import shotgun_api3
@@ -24,7 +22,13 @@ class LoaderActionManager(ActionManager):
     """
     Specialisation of the base ActionManager class that handles dishing out and 
     executing QActions based on the hook configuration for the regular loader UI
+
+    :signal: ``pre_execute_action(QtGui.QAction)`` - Fired before a custom action is executed.
+    :signal: ``post_execute_action(QtGui.QAction)`` - Fired after a custom action is executed.
     """
+
+    pre_execute_action = QtCore.Signal(object)
+    post_execute_action = QtCore.Signal(object)
 
     def __init__(self):
         """
@@ -216,8 +220,9 @@ class LoaderActionManager(ActionManager):
 
             # Bind all the action params to a single invocation of the _execute_hook.
             a.triggered[()].connect(
-                lambda actions=actions: self._execute_hook(actions)
+                lambda qt_action=a, actions=actions: self._execute_hook(qt_action, actions)
             )
+            a.setData(actions)
             qt_actions.append(a)
 
         return qt_actions
@@ -340,8 +345,9 @@ class LoaderActionManager(ActionManager):
 
                 # Bind all the action params to a single invocation of the _execute_hook.
                 a.triggered[()].connect(
-                    lambda actions=actions: self._execute_hook(actions)
+                    lambda qt_action=a, actions=actions: self._execute_hook(qt_action, actions)
                 )
+                a.setData(actions)
                 qt_actions.append(a)
 
         # Find paths associated with the Shotgun entity.
@@ -380,11 +386,13 @@ class LoaderActionManager(ActionManager):
     ########################################################################################
     # callbacks
 
-    def _execute_hook(self, actions):
+    def _execute_hook(self, qt_action, actions):
         """
         callback - executes a hook
         """
         self._app.log_debug("Calling scene load hook.")
+
+        self.pre_execute_action.emit(qt_action)
 
         try:
             self._app.execute_hook_method("actions_hook",
@@ -403,7 +411,9 @@ class LoaderActionManager(ActionManager):
             except:
                 # ignore all errors. ex: using a core that doesn't support metrics
                 pass
-    
+        finally:
+            self.post_execute_action.emit(qt_action)
+
     def _show_in_sg(self, entity):
         """
         Callback - Shows a shotgun entity in the web browser

@@ -25,6 +25,8 @@ from .delegate_publish_list import SgPublishListDelegate
 from .model_publishhistory import SgPublishHistoryModel
 from .delegate_publish_history import SgPublishHistoryDelegate
 from .search_widget import SearchWidget
+from .banner import Banner
+from .loader_action_manager import LoaderActionManager
 
 from . import constants
 from . import model_item_data
@@ -65,6 +67,16 @@ class AppDialog(QtGui.QWidget):
         """
         QtGui.QWidget.__init__(self, parent)
         self._action_manager = action_manager
+
+        # The loader app can be invoked from other applications with a custom
+        # action manager as a File Open-like dialog. For these managers, we won't
+        # be using the banner system.
+
+        # We will support the banners only for the default loader.
+        if isinstance(action_manager, LoaderActionManager):
+            self._action_banner = Banner(self)
+            self._action_manager.pre_execute_action.connect(self._pre_execute_action)
+            self._action_manager.post_execute_action.connect(lambda _: self._action_banner.hide_banner())
 
         # create a settings manager where we can pull and push prefs later
         # prefs in this manager are shared
@@ -963,6 +975,36 @@ class AppDialog(QtGui.QWidget):
 
     ########################################################################################
     # cog icon actions
+
+    def _pre_execute_action(self, action):
+        """
+        Called before a custom action is executed.
+
+        :param action: The QAction that is being executed.
+        """
+        data = action.data()
+
+        # If there is a single item, we'll put its name in the banner.
+        if len(data) == 1:
+            sg_data = data[0]["sg_publish_data"]
+            name_str = sg_data.get("name") or "Unnamed"
+            version_number = sg_data.get("version_number")
+            self._action_banner.show_banner(
+                "<center>Action <b>%s</b> launched on <b>%s Version %03d</b></center>" % (
+                    action.text(), name_str, version_number
+                )
+            )
+        else:
+            # Otherwise we'll simply mention the selection.
+            self._action_banner.show_banner(
+                "<center>Action <b>%s</b> launched on selection.</center>" % (action.text(),)
+            )
+
+        # Force the window to be redrawn and process events right away since the
+        # hooks will be run right after this method returns, which wouldn't
+        # leave space for the event loop to update the UI.
+        self.window().repaint()
+        QtGui.QApplication.processEvents()
 
     def show_help_popup(self):
         """

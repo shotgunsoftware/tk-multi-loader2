@@ -83,7 +83,7 @@ class FlameActions(HookBaseClass):
         if "load_setup" in actions:
             action_instances.append({"name": "load_setup",
                                      "params": None,
-                                     "caption": "Create a Batch Group",
+                                     "caption": "Load Batch Group",
                                      "description": "This will load a batch setup"})
 
         if "load_clip" in actions:

@@ -85,6 +85,8 @@ configuration:
         description: Associates entity types with actions. The actions are all defined
                      inside the actions hook.
         default_value: {}
+        default_value_tk-flame:
+            Shot: [load_batch]
 
     entities:
         default_value:

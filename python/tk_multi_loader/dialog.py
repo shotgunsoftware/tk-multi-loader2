@@ -993,9 +993,11 @@ class AppDialog(QtGui.QWidget):
             sg_data = data[0]["sg_publish_data"]
             name_str = sg_data.get("name") or "Unnamed"
             version_number = sg_data.get("version_number")
+            vers_str = "%03d" % version_number if version_number else "N/A"
+
             self._action_banner.show_banner(
-                "<center>Action <b>%s</b> launched on <b>%s Version %03d</b></center>" % (
-                    action.text(), name_str, version_number
+                "<center>Action <b>%s</b> launched on <b>%s Version %s</b></center>" % (
+                    action.text(), name_str, vers_str
                 )
             )
         else:

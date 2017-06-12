@@ -28,6 +28,10 @@ HookBaseClass = sgtk.get_hook_baseclass()
 SCHEMATIC_REEL = "Schematic Reel 1"
 
 
+class FlameActionError(Exception):
+    pass
+
+
 class FlameActions(HookBaseClass):
     ##############################################################################################################
     # public interface - to be overridden by deriving classes
@@ -142,14 +146,21 @@ class FlameActions(HookBaseClass):
         app.log_debug("Execute action called for action %s. "
                       "Parameters: %s. Publish Data: %s" % (name, params, sg_publish_data))
 
-        if name == "load_clip":
-            self._import_clip(sg_publish_data)
+        try:
+            if name == "load_clip":
+                self._import_clip(sg_publish_data)
 
-        if name == "load_setup":
-            self._import_batch_file(sg_publish_data)
+            if name == "load_setup":
+                self._import_batch_file(sg_publish_data)
 
-        if name == "load_batch":
-            self._import_batch_group(sg_publish_data)
+            if name == "load_batch":
+                self._import_batch_group(sg_publish_data)
+        except FlameActionError as error:
+            from PySide import QtGui, QtCore
+            if QtCore.QCoreApplication.instance():
+                QtGui.QMessageBox.information(None, "Flame Action Error", str(error))
+            app = self.parent
+            app.log_debug("Flame Action Error: {}" .format(str(error)))
 
     ##############################################################################################################
     # methods called by the menu options in the loader
@@ -170,7 +181,7 @@ class FlameActions(HookBaseClass):
             flame.batch.load_setup(batch_path)
             flame.batch.organize()
         else:
-            raise IOError("File not found on disk - '%s'" % batch_path)
+            raise FlameActionError("File not found on disk - '%s'" % batch_path)
 
     def _import_clip(self, sg_publish_data):
         """
@@ -212,9 +223,9 @@ class FlameActions(HookBaseClass):
                 flame.batch.import_clip(clip_path, SCHEMATIC_REEL)
                 flame.batch.organize()
             except Exception:
-                raise IOError("File not found on disk - '%s'" % clip_path)
+                raise FlameActionError("File not found on disk - '%s'" % clip_path)
         else:
-            raise IOError("File not found on disk - '%s'" % clip_path)
+            raise FlameActionError("File not found on disk - '%s'" % clip_path)
 
     def _import_batch_group(self, sg_publish_data):
         """
@@ -241,7 +252,7 @@ class FlameActions(HookBaseClass):
 
         # Checks that we have the necessary info to proceed.
         if not all(f in sg_info for f in sg_fields):
-            raise TankError("Cannot load a Batch Group from Shotgun using this {}".format(sg_type))
+            raise FlameActionError("Cannot load a Batch Group from Shotgun using this {}".format(sg_type))
 
         published_files = self._get_paths_from_published_files(
             sg_info["sg_published_files"]
@@ -255,7 +266,7 @@ class FlameActions(HookBaseClass):
             flame.batch.load_setup(batch_path)
             flame.batch.organize()
         else:
-            raise TankError("Batch file missing")
+            raise FlameActionError("Batch file missing")
 
     ##############################################################################################################
     # helper methods which can be subclassed in custom hooks to fine tune the behavior of things
@@ -346,7 +357,7 @@ class FlameActions(HookBaseClass):
 
                 published_files.append({"path": path, "info": file_info})
             else:
-                raise IOError("File not found on disk - '%s'" % path)
+                raise FlameActionError("File not found on disk - '%s'" % path)
 
         return published_files
 

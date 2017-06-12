@@ -76,8 +76,14 @@ class MaxActions(HookBaseClass):
             action_instances.append( {"name": "xref_scene",
                                       "params": None, 
                                       "caption": "XRef Scene", 
-                                      "description": "This will insert a reference to this file into the current scene."} )        
-        
+                                      "description": "This will insert a reference to this file into the current scene."} )
+
+        if "texture_node" in actions:
+            action_instances.append({"name": "texture_node",
+                                     "params": None,
+                                     "caption": "Create Texture Node",
+                                     "description": "Creates a file texture node for the selected item."})
+
         return action_instances
 
     def execute_multiple_actions(self, actions):
@@ -129,7 +135,7 @@ class MaxActions(HookBaseClass):
         path = self.get_publish_path(sg_publish_data)
 
         # If this is an Alembic cache, then we can import that.
-        if path.endswith(".abc"):
+        if path.lower().endswith(".abc"):
             # Note that native Alembic support is only available in Max 2016+.
             if app.engine._max_version_to_year(app.engine._get_max_version()) >= 2016:
                 self._import_alembic(path)
@@ -139,6 +145,8 @@ class MaxActions(HookBaseClass):
             self._merge(path, sg_publish_data)
         elif name == "xref_scene":
             self._xref_scene(path, sg_publish_data)
+        elif name == "texture_node":
+            self._create_texture_node(path, sg_publish_data)
     
     ##############################################################################################################
     # helper methods which can be subclassed in custom hooks to fine tune the behaviour of things
@@ -206,3 +214,34 @@ class MaxActions(HookBaseClass):
 
         # No direct equivalent found in MaxPlus. Would potentially need to get scene root node (INode) and use addNewXRef on that otherwise.
         app.engine.safe_dialog_exec(lambda: MaxPlus.Core.EvalMAXScript('xrefs.addNewXRefFile(\"' + path.replace('\\', '/') + '\")'))
+
+    def _create_texture_node(self, path, sg_publish_data):
+        """
+        Create a file texture node for a texture
+
+        :param path:             Path to file.
+        :param sg_publish_data:  Shotgun data dictionary with all the standard publish fields.
+        :returns:                The newly created file node
+        """
+
+        max_script = CREATE_TEXTURE_NODE_MAXSCRIPT % (path,)
+        MaxPlus.Core.EvalMAXScript(max_script)
+
+
+# This maxscript creates a bitmap texture node and attaches it to a standard
+# material.
+CREATE_TEXTURE_NODE_MAXSCRIPT = """
+--opens material editor
+actionMan.executeAction 0 "50048"
+
+--creates a bitmap texture node
+bmap = Bitmaptexture fileName:"%s"
+bmap.alphaSource = 2
+
+--creates a standard max material node
+mat = Standardmaterial ()
+mat.diffuseMap = bmap
+
+--assigns it slot of the compact material editor
+meditMaterials[1] = mat
+"""

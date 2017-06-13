@@ -159,11 +159,7 @@ class FlameActions(HookBaseClass):
             else:
                 raise FlameActionError("Unknown action name")
         except FlameActionError as error:
-            from PySide import QtGui, QtCore
-            if QtCore.QCoreApplication.instance():
-                QtGui.QMessageBox.information(None, "Flame Action Error", str(error))
-            app = self.parent
-            app.log_debug("Flame Action Error: {}".format(str(error)))
+            self.parent.log_warning("Flame Action Error: {}".format(str(error)))
 
     ##############################################################################################################
     # methods called by the menu options in the loader

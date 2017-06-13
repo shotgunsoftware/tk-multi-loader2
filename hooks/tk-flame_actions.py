@@ -150,11 +150,14 @@ class FlameActions(HookBaseClass):
             if name == "load_clip":
                 self._import_clip(sg_publish_data)
 
-            if name == "load_setup":
+            elif name == "load_setup":
                 self._import_batch_file(sg_publish_data)
 
-            if name == "load_batch":
+            elif name == "load_batch":
                 self._import_batch_group(sg_publish_data)
+
+            else:
+                raise FlameActionError("Unknown action name")
         except FlameActionError as error:
             from PySide import QtGui, QtCore
             if QtCore.QCoreApplication.instance():

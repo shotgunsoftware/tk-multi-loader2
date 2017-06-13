@@ -163,7 +163,7 @@ class FlameActions(HookBaseClass):
             if QtCore.QCoreApplication.instance():
                 QtGui.QMessageBox.information(None, "Flame Action Error", str(error))
             app = self.parent
-            app.log_debug("Flame Action Error: {}" .format(str(error)))
+            app.log_debug("Flame Action Error: {}".format(str(error)))
 
     ##############################################################################################################
     # methods called by the menu options in the loader
@@ -240,11 +240,7 @@ class FlameActions(HookBaseClass):
         # Determines published files
         sg_filters = [["id", "is", sg_publish_data["id"]]]
         sg_fields = ["sg_published_files",
-                     "code",
-                     "sg_cut_in",
-                     "sg_cut_out",
-                     "sg_versions",
-                     "sg_sequence"
+                     "code"
                      ]
 
         sg_type = sg_publish_data["type"]
@@ -257,12 +253,7 @@ class FlameActions(HookBaseClass):
         if not all(f in sg_info for f in sg_fields):
             raise FlameActionError("Cannot load a Batch Group from Shotgun using this {}".format(sg_type))
 
-        published_files = self._get_paths_from_published_files(
-            sg_info["sg_published_files"]
-        )
-
-        # If the operation succeeds, skip the rest
-        batch_path = self._get_batch_path_from_published_files(published_files)
+        batch_path = self._get_batch_path_from_published_files(sg_info)
         if batch_path and os.path.exists(batch_path):
             flame.batch.create_batch_group(sg_publish_data["code"])
             flame.batch.go_to()
@@ -364,16 +355,20 @@ class FlameActions(HookBaseClass):
 
         return published_files
 
-    def _get_batch_path_from_published_files(self, sg_published_files):
+    def _get_batch_path_from_published_files(self, sg_info):
         """
-        Gets the Batch File from a list of published files
+        Gets the Batch File from a published files dictionary
 
-        :param sg_published_files: A list of Shotgun data dictionary with all the standard publish fields.
+        :param sg_info: A list of Shotgun data dictionary containing the published files.
         :returns: The path to the batch file.
         :rtype: str
         """
 
-        for published_file in sg_published_files:
+        published_files_paths = self._get_paths_from_published_files(
+            sg_info["sg_published_files"]
+        )
+
+        for published_file in published_files_paths:
             # Gets paths to published files
 
             info = published_file["info"]

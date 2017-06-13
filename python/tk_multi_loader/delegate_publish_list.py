@@ -167,7 +167,7 @@ class SgPublishListDelegate(PublishDelegate):
         main_text = "<b>%s</b>" % (sg_data.get("name") or "Unnamed")
 
         version = sg_data.get("version_number")
-        vers_str = "%03d" % version if version else "N/A"
+        vers_str = "%03d" % version if version is not None else "N/A"
 
         main_text += " Version %s" % vers_str        
 

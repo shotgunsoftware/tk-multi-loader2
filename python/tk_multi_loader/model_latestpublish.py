@@ -212,7 +212,7 @@ class SgLatestPublishModel(ShotgunModel):
             author_str = "Unspecified User"
 
         version = sg_item.get("version_number")
-        vers_str = "%03d" % version if version else "N/A"
+        vers_str = "%03d" % version if version is not None else "N/A"
 
         tooltip += "<br><br><b>Version:</b> %s by %s at %s" % (
             vers_str,

@@ -701,7 +701,7 @@ class AppDialog(QtGui.QWidget):
                 msg += __make_table_row("Type", type_str)
 
                 version = sg_item.get("version_number")
-                vers_str = "%03d" % version if version else "N/A"
+                vers_str = "%03d" % version if version is not None else "N/A"
 
                 msg += __make_table_row("Version", "%s" % vers_str)
 
@@ -993,7 +993,7 @@ class AppDialog(QtGui.QWidget):
             sg_data = data[0]["sg_publish_data"]
             name_str = sg_data.get("name") or "Unnamed"
             version_number = sg_data.get("version_number")
-            vers_str = "%03d" % version_number if version_number else "N/A"
+            vers_str = "%03d" % version_number if version_number is not None else "N/A"
 
             self._action_banner.show_banner(
                 "<center>Action <b>%s</b> launched on <b>%s Version %s</b></center>" % (

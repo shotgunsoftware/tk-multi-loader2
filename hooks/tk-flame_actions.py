@@ -234,22 +234,16 @@ class FlameActions(HookBaseClass):
         :type sg_publish_data: dict
         """
         # Determines published files
-        sg_filters = [["id", "is", sg_publish_data["id"]]]
-        sg_fields = ["sg_published_files",
-                     "code"
-                     ]
+        sg_filters = [["entity", "is", sg_publish_data]]
+        sg_fields = ["path", "published_file_type", "version"]
+        sg_type = "PublishedFile"
 
-        sg_type = sg_publish_data["type"]
-
-        sg_info = self.parent.shotgun.find_one(
+        published_files = self.parent.shotgun.find(
             sg_type, filters=sg_filters, fields=sg_fields
         )
 
-        # Checks that we have the necessary info to proceed.
-        if not all(f in sg_info for f in sg_fields):
-            raise FlameActionError("Cannot load a Batch Group from Shotgun using this {}".format(sg_type))
+        batch_path = self._get_batch_path_from_published_files(published_files)
 
-        batch_path = self._get_batch_path_from_published_files(sg_info)
         if batch_path and os.path.exists(batch_path):
             flame.batch.create_batch_group(sg_publish_data["code"])
             flame.batch.go_to()
@@ -314,20 +308,13 @@ class FlameActions(HookBaseClass):
         published_files = []
 
         for published_file in sg_published_files:
-            # Gets paths to published files
-            sg_filters = [["id", "is", published_file["id"]]]
-            sg_fields = ["path", "published_file_type", "version"]
-            sg_type = "PublishedFile"
-
-            file_info = self.parent.shotgun.find_one(sg_type, filters=sg_filters, fields=sg_fields)
-
-            path = self.get_publish_path(file_info)
+            path = self.get_publish_path(published_file)
 
             # Eliminates PublishedFiles with an invalid local path
             if path and os.path.exists(path):
-                published_files.append({"path": path, "info": file_info})
+                published_files.append({"path": path, "info": published_file})
             elif '%' in path:
-                sg_filters = [["id", "is", file_info["version"]["id"]]]
+                sg_filters = [["id", "is", published_file["version"]["id"]]]
                 sg_fields = ["frame_range"]
                 sg_type = "Version"
 
@@ -345,33 +332,29 @@ class FlameActions(HookBaseClass):
                 if new_path and len(new_path) != 0:
                     path = new_path
 
-                published_files.append({"path": path, "info": file_info})
+                published_files.append({"path": path, "info": published_file})
             else:
                 raise FlameActionError("File not found on disk - '%s'" % path)
 
         return published_files
 
-    def _get_batch_path_from_published_files(self, sg_info):
+    def _get_batch_path_from_published_files(self, published_files):
         """
         Gets the Batch File from a published files dictionary
 
-        :param sg_info: A list of Shotgun data dictionary containing the published files.
+        :param published_files: A list of Shotgun data dictionary containing the published files.
         :returns: The path to the batch file.
         :rtype: str
         """
 
+        batchs = []
+
         published_files_paths = self._get_paths_from_published_files(
-            sg_info["sg_published_files"]
+            published_files
         )
 
         for published_file in published_files_paths:
-            # Gets paths to published files
+            if published_file["info"]["published_file_type"]["name"] == "Flame Batch File":
+                batchs.append(published_file["path"])
 
-            info = published_file["info"]
-
-            if info["published_file_type"]["name"] != "Flame Batch File":
-                pass
-            else:
-                # Makes sure that we have at least some local_path set
-                return published_file["path"]
-        return None
+        return max(batchs) if batchs else None

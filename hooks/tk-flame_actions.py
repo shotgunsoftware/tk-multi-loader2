@@ -154,7 +154,7 @@ class FlameActions(HookBaseClass):
                 self._import_batch_file(sg_publish_data)
 
             elif name == "load_batch":
-                self._import_batch_group(sg_publish_data)
+                self._import_batch_group_from_shot(sg_publish_data)
 
             else:
                 raise FlameActionError("Unknown action name")
@@ -226,9 +226,9 @@ class FlameActions(HookBaseClass):
         else:
             raise FlameActionError("File not found on disk - '%s'" % clip_path)
 
-    def _import_batch_group(self, sg_publish_data):
+    def _import_batch_group_from_shot(self, sg_publish_data):
         """
-        Imports a Batch Group from Shotgun into Flame.
+        Imports a Batch Group from Shotgun Shot into Flame.
 
         :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
         :type sg_publish_data: dict
@@ -239,7 +239,7 @@ class FlameActions(HookBaseClass):
                      "code"
                      ]
 
-        sg_type = sg_publish_data["type"]
+        sg_type = "Shot"
 
         sg_info = self.parent.shotgun.find_one(
             sg_type, filters=sg_filters, fields=sg_fields
@@ -364,14 +364,14 @@ class FlameActions(HookBaseClass):
             sg_info["sg_published_files"]
         )
 
+        batchs = []
+
         for published_file in published_files_paths:
             # Gets paths to published files
 
             info = published_file["info"]
 
-            if info["published_file_type"]["name"] != "Flame Batch File":
-                pass
-            else:
-                # Makes sure that we have at least some local_path set
-                return published_file["path"]
-        return None
+            if info["published_file_type"]["name"] == "Flame Batch File":
+                batchs.append(published_file["path"])
+
+        return max(batchs) if batchs is not [] else None

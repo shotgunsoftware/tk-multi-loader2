@@ -165,7 +165,11 @@ class SgPublishListDelegate(PublishDelegate):
         # Publish Name Version 002
         sg_data = shotgun_model.get_sg_data(model_index)
         main_text = "<b>%s</b>" % (sg_data.get("name") or "Unnamed")
-        main_text += " Version %03d" % sg_data.get("version_number")        
+
+        version = sg_data.get("version_number")
+        vers_str = "%03d" % version if version is not None else "N/A"
+
+        main_text += " Version %s" % vers_str        
 
         # If we are in "show subfolders mode, this line will contain
         # the entity information (because we are displaying info from several entities 

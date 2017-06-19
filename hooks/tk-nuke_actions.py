@@ -11,8 +11,10 @@
 """
 Hook that loads defines all the available actions, broken down by publish type. 
 """
-import sgtk
+import glob
 import os
+import re
+import sgtk
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
@@ -247,8 +249,8 @@ class NukeActions(HookBaseClass):
             pass
         
         if not template:
-            return None
-            
+            return self._find_sequence_range_no_template(path)
+
         # get the fields and find all matching files:
         fields = template.get_fields(path)
         if not "SEQ" in fields:
@@ -269,4 +271,49 @@ class NukeActions(HookBaseClass):
         # return the range
         return (min(frames), max(frames))
 
+    def _find_sequence_range_no_template(self, path):
+        """
+        Given a path for which there is no template, try to find the start and
+        end frame numbers
+        :param path:
+        :return:
+        """
+
+        # see if the path has a formatted frame number specification. i.e. %04d
+        frame_format_regex = re.compile("(%0\d+d)")
+        frame_pattern_match = re.search(frame_format_regex, path)
+        if not frame_pattern_match:
+            # path doesn't contain the format spec we're looking for
+            return None
+
+        format_spec = frame_pattern_match.group(1)
+
+        # try to replace the frame spec with a glob string
+        glob_path = re.sub(format_spec, "*", path)
+
+        # build a regex match string for the frame numbers
+        regex_path = re.sub("\*", "(\d+)", glob_path)
+
+        # if we're here, we found a frame spec. now glob for matching frames
+        frame_files = glob.glob(glob_path)
+
+        # no matched files on disk. this could be bad but oh well.
+        if not frame_files:
+            return None
+
+        # sort the files. Assuming they're 0-padded, this should make it easy
+        # to get first and last frames
+        frame_files.sort()
+        first_frame_path = frame_files[0]
+        last_frame_path = frame_files[-1]
+
+        # replace the
+        first_frame_match = re.search(regex_path, first_frame_path)
+        last_frame_match = re.search(regex_path, last_frame_path)
+
+        # return the matched numbers
+        return (
+            int(first_frame_match.group(1)),
+            int(last_frame_match.group(1))
+        )
 

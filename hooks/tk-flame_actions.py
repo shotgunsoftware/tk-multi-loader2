@@ -321,13 +321,20 @@ class FlameActions(HookBaseClass):
 
             file_info = self.parent.shotgun.find_one(sg_type, filters=sg_filters, fields=sg_fields)
 
-            path = self.get_publish_path(file_info)
+            try:
+                path = self.get_publish_path(file_info)
+            except TankError:
+                # We can't get the publish path so let's ignore this publish file
+                continue
 
             # Eliminates PublishedFiles with an invalid local path
             if path and os.path.exists(path):
                 published_files.append({"path": path, "info": file_info})
             elif '%' in path:
-                sg_filters = [["id", "is", file_info["version"]["id"]]]
+                if file_info["version"] is not None:
+                    sg_filters = [["id", "is", file_info["version"]["id"]]]
+                else:
+                    continue
                 sg_fields = ["frame_range"]
                 sg_type = "Version"
 
@@ -374,4 +381,4 @@ class FlameActions(HookBaseClass):
             if info["published_file_type"]["name"] == "Flame Batch File":
                 batchs.append(published_file["path"])
 
-        return max(batchs) if batchs is not [] else None
+        return max(batchs) if batchs else None

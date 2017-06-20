@@ -324,6 +324,7 @@ class FlameActions(HookBaseClass):
             try:
                 path = self.get_publish_path(file_info)
             except TankError:
+                # We can't get the publish path so let's ignore this publish file
                 continue
 
             # Eliminates PublishedFiles with an invalid local path

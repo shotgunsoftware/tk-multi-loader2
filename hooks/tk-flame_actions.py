@@ -1001,8 +1001,8 @@ class FlameActions(HookBaseClass):
 
         folder, file_name = ntpath.split(media_path)
 
-        # Try to check if the path is sa sequence
-        match = re.match(r"(.+\.)((?:\[\d+-\d+\])|(?:\d+))(\..+)", file_name)
+        # Try to check if the path is a sequence
+        match = re.match(r"(.*)(\[\d+-\d+\])(.+)", file_name)
 
         if not match:
             # The path is not a sequence

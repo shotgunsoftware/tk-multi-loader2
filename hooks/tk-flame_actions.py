@@ -415,6 +415,18 @@ class FlameActions(HookBaseClass):
         return self.configuration.get("write_file_media_path_pattern")
 
     @property
+    def media_path_root(self):
+        """
+        This path helps to setup the write_file_node by specifying where to write the medias.
+
+        This is defined by the "write_file_media_path_root" entry of the configuration dictionary
+
+        :return: Media path root
+        :type: str
+        """
+        return self.configuration.get("write_file_media_path_root")
+
+    @property
     def clip_path_pattern(self):
         """
         This pattern helps to setup the write_file_node by specifying where to write the clips.
@@ -638,6 +650,7 @@ class FlameActions(HookBaseClass):
             media_path_set = True
 
         if not media_path_set and self.media_path_pattern:
+            write_file_info["media_path"] = self.media_path_root
             write_file_info["media_path_pattern"] = self.media_path_pattern.format(**fields)
 
         if "version_padding" not in write_file_info and self.version_padding:

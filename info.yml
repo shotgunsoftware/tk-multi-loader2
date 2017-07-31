@@ -54,6 +54,8 @@ configuration:
             write_file_media_path_template: "flame_shot_comp_exr"
             # Pattern to use for the media pattern if the template is not available
             write_file_media_path_pattern: "<shot name>_{segment_name}_v<version>.<frame>"
+            # Location to use for the media path if the template is not available
+            write_file_media_path_root: "/var/tmp"
             # Type to use for the media if the template is not available
             write_file_media_type: "OpenEXR"
             # Frame padding to use if the template is not available

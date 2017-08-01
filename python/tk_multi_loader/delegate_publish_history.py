@@ -164,10 +164,14 @@ class SgPublishHistoryDelegate(shotgun_view.EditSelectedWidgetDelegate):
         
         # if there is a version associated, add View in Screening Room Action
         if sg_item.get("version"):
+
+            # redirect to std shotgun player, same as you go to if you click the
+            # play icon inside of the shotgun web ui
             sg_url = sgtk.platform.current_bundle().shotgun.base_url
-            url = "%s/page/screening_room?entity_type=%s&entity_id=%d" % (sg_url, 
-                                                                          sg_item["version"]["type"], 
-                                                                          sg_item["version"]["id"])                    
+            url = "%s/page/media_center?type=Version&id=%d" % (
+                sg_url,
+                sg_item["version"]["id"]
+            )
             
             fn = lambda: QtGui.QDesktopServices.openUrl(QtCore.QUrl(url))                    
             a = QtGui.QAction("View in Screening Room", None)

@@ -31,38 +31,6 @@ configuration:
         default_value: "{self}/{engine_name}_actions.py"
         description: Hook which contains all methods for action management.
 
-    action_hook_config:
-        type: dict
-        description: Control certain behaviour of the hook
-        default_value: {}
-        default_value_tk-flame:
-            # Location where import_clip should put the clips
-            import_clip_location: "Schematic Reel 1"
-            # Hint about if the loader should create a write file node
-            write_file_node: true
-            # Hint about if the loader should use the defined templates
-            write_file_use_template: true
-            # Template to use for Open Clip path
-            write_file_clip_path_template: "flame_shot_clip"
-            # Pattern to use for the Open clip path instead of the if the template is not available
-            write_file_clip_path_pattern: "{Shot}"
-            # Template to use for the Batch Setup path
-            write_file_setup_path_template: "flame_shot_batch"
-            # Pattern to use for the Batch Setup path if the template is not available
-            write_file_setup_path_pattern: "<shot name>.v<version>"
-            # Template to use for the media path, the media pattern and the file type
-            write_file_media_path_template: "flame_shot_comp_exr"
-            # Pattern to use for the media pattern if the template is not available
-            write_file_media_path_pattern: "<shot name>_{segment_name}_v<version>.<frame>"
-            # Location to use for the media path if the template is not available
-            write_file_media_path_root: "/var/tmp"
-            # Type to use for the media if the template is not available
-            write_file_media_type: "OpenEXR"
-            # Frame padding to use if the template is not available
-            write_file_frame_padding: 04
-            # Version padding to use if the template is not available
-            write_file_version_padding: 03
-
     filter_publishes_hook:
         type: hook
         default_value: "{self}/filter_publishes.py"

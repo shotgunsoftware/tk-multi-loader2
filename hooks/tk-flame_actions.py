@@ -13,7 +13,6 @@
 Hook that loads defines all the available actions, broken down by publish type.
 """
 import collections
-import ntpath
 import os
 import re
 
@@ -24,13 +23,7 @@ from sgtk import TankError
 if sgtk.platform.current_engine().is_version_less_than("2018.2"):
     flame = None
 else:
-    try:
-        # The python API is available
-        import flame
-
-    except ImportError:
-        # Unable to load the python API
-        flame = None
+    import flame
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
@@ -43,7 +36,7 @@ SHOT_LOAD_ACTION = "load_batch"
 SHOT_CREATE_ACTION = "create_batch"
 
 
-class FlameActionsError(Exception):
+class FlameActionError(Exception):
     pass
 
 
@@ -101,28 +94,26 @@ class FlameActions(HookBaseClass):
         if BATCH_ACTION in actions:
             action_instances.append({"name": BATCH_ACTION,
                                      "params": None,
-                                     "caption": "Load Batch Group",
-                                     "description": "This will load a batch setup"})
+                                     "caption": "Load and Append Batch Setup",
+                                     "description": "Load and append a batch setup file to the current Batch Group."})
 
         if CLIP_ACTION in actions:
             action_instances.append({"name": CLIP_ACTION,
                                      "params": None,
-                                     "caption": "Import clip",
-                                     "description": "This will import the clip to the current Batch Group."})
+                                     "caption": "Import Clip",
+                                     "description": "Import a clip to the current Batch Group."})
 
         if SHOT_CREATE_ACTION in actions:
             action_instances.append({"name": SHOT_CREATE_ACTION,
                                      "params": None,
-                                     "caption": "Create a Batch Group",
-                                     "description": "This will create a Batch Group using the media found inside the "
-                                                    "folder"})
+                                     "caption": "Create Batch Group",
+                                     "description": "Create a Batch setup inside a new Batch Group."})
 
         if SHOT_LOAD_ACTION in actions:
             action_instances.append({"name": SHOT_LOAD_ACTION,
                                      "params": None,
-                                     "caption": "Load a Batch Group",
-                                     "description": "This will Load a Batch Group using the setup found inside the "
-                                                    "folder"})
+                                     "caption": "Load in new Batch Group",
+                                     "description": "Load a Batch setup file inside a new Batch Group."})
 
         return action_instances
 
@@ -186,9 +177,9 @@ class FlameActions(HookBaseClass):
                 self._add_batch_group_from_shot(sg_publish_data, False)
 
             else:
-                raise FlameActionsError("Unknown action name")
-        except FlameActionsError as error:
-            # A FlameActionError reaching here mean that something major have stopped the current action
+                raise FlameActionError("Unknown action name: '%s'".format(name))
+        except FlameActionError, error:
+            # A FlameActionError reaching here means that something major have stopped the current action
             app.log_error(error)
 
     ##############################################################################################################
@@ -200,8 +191,7 @@ class FlameActions(HookBaseClass):
 
         This function import the Batch setup into the current Batch Group.
         
-        :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
-        :type sg_publish_data: dict
+        :param dict sg_publish_data: Shotgun data dictionary with all the standard publish fields.
         """
 
         app = self.parent
@@ -213,11 +203,11 @@ class FlameActions(HookBaseClass):
         if setup_path and os.path.exists(setup_path):
             flame.batch.go_to()
 
-            if not flame.batch.load_setup(setup_path):
-                raise FlameActionsError("Unable to load a Batch Setup")
+            if not flame.batch.append_setup(setup_path):
+                raise FlameActionError("Unable to load a Batch Setup")
 
         else:
-            raise FlameActionsError("File not found on disk - '%s'" % setup_path)
+            raise FlameActionError("File not found on disk - '%s'" % setup_path)
 
     def _import_clip(self, sg_publish_data):
         """
@@ -225,8 +215,7 @@ class FlameActions(HookBaseClass):
 
         This function import the clip into self.import_location (Default: Schematic Reel 1) in the current Batch Group.
 
-        :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
-        :type sg_publish_data: dict
+        :param dict sg_publish_data: Shotgun data dictionary with all the standard publish fields.
         """
 
         app = self.parent
@@ -240,9 +229,7 @@ class FlameActions(HookBaseClass):
             flame.batch.go_to()
 
             if not flame.batch.import_clip(clip_path, self.import_location):
-                raise FlameActionsError("Unable to import '%s'" % clip_path)
-
-            flame.batch.organize()
+                raise FlameActionError("Unable to import '%s'" % clip_path)
 
         # The clip name doesn't directly exists, but it might contain a pattern that we need to resolve.
         elif clip_path and '%' in clip_path:
@@ -253,17 +240,15 @@ class FlameActions(HookBaseClass):
                 flame.batch.go_to()
 
                 if not flame.batch.import_clip(new_path, self.import_location):
-                    raise FlameActionsError("Unable to import '%s'" % clip_path)
-
-                flame.batch.organize()
+                    raise FlameActionError("Unable to import '%s'" % clip_path)
 
             # The sequence doesn't exist on disk
             else:
-                raise FlameActionsError("Sequence not found on disk - '%s'" % new_path)
+                raise FlameActionError("Sequence not found on disk - '%s'" % new_path)
 
         # Clip path doesn't exists and doesn't contain any pattern
         else:
-            raise FlameActionsError("File not found on disk - '%s'" % clip_path)
+            raise FlameActionError("File not found on disk - '%s'" % clip_path)
 
     def _add_batch_group_from_shot(self, sg_publish_data, build_new):
         """
@@ -272,10 +257,8 @@ class FlameActions(HookBaseClass):
         If build_new is True, it loads last version of every clip present in the Shot, otherwise it create the batch
         group using the latest version of the batch file present in the Shot ( Do nothing if no batch file is present).
 
-        :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
-        :param build_new: Hint about if we should build a new batch group from the clip or use the latest batch file
-        :type sg_publish_data: dict
-        :type build_new: bool
+        :param dict sg_publish_data: Shotgun data dictionary with all the standard publish fields.
+        :param bool build_new: Hint about if we should build a new batch group from the clip or use the latest batch file
         """
 
         app = self.parent
@@ -296,7 +279,7 @@ class FlameActions(HookBaseClass):
 
         # Checks that we have the necessary info to proceed.
         if not all(f in sg_info for f in sg_fields):
-            raise FlameActionsError("Cannot load a Batch Group from Shotgun using this {}".format(sg_type))
+            raise FlameActionError("Cannot load a Batch Group from Shotgun using this {}".format(sg_type))
 
         # Create a new batch_group using this Shot
         if build_new:
@@ -313,12 +296,11 @@ class FlameActions(HookBaseClass):
                 flame.batch.go_to()
                 flame.batch.create_batch_group(sg_publish_data["code"])
                 if not flame.batch.load_setup(batch_path):
-                    raise FlameActionsError("Unable to load the Batch Setup")
-                flame.batch.organize()
+                    raise FlameActionError("Unable to load the Batch Setup")
 
             # No batch file found
             else:
-                raise FlameActionsError("No setup to load")
+                raise FlameActionError("No setup to load")
 
     ##############################################################################################################
     # interface to the action hook configuration
@@ -348,35 +330,20 @@ class FlameActions(HookBaseClass):
                 BATCH_ACTION in entry[1]]
 
     @property
-    def configuration(self):
-        """
-        Direct interface to the tk-flame actions configuration dictionary.
-
-        :return: Dictionary of configuration
-        :rtype: dict
-        """
-
-        return self.parent.get_setting("action_hook_config", {})
-
-    @property
     def import_location(self):
         """
         Schematic Reel where the loader should import the clips.
-
-        This is defined by the "import_clip_location" entry of the configuration dictionary
 
         :return: Location to import clip
         :rtype: str
         """
 
-        return self.configuration.get("import_clip_location")
+        return "Schematic Reel 1"
 
     @property
     def want_write_file_node(self):
         """
         Define if we want to link a Write File node to a new Batch group
-
-        This is defined by the "write_file_node" entry of the configuration dictionary
 
         Flame 2018.3 or above is needed for this functionality
 
@@ -387,149 +354,124 @@ class FlameActions(HookBaseClass):
         if sgtk.platform.current_engine().is_version_less_than("2018.3"):
             return False
 
-        return self.configuration.get("write_file_node")
+        return True
 
     @property
     def use_template(self):
         """
         Define if we want to use templates to generate de Write File node attribute.
 
-        This is defined by the "write_file_use_template" entry of the configuration dictionary
-
         :return: Hint about using the templates to generate the Write File node attribute.
         :rtype: bool
         """
 
-        return self.configuration.get("write_file_use_template")
-
-    @property
-    def media_path_pattern(self):
-        """
-        This pattern helps to setup the write_file_node by specifying where to write the medias.
-
-        This is defined by the "write_file_media_path_pattern" entry of the configuration dictionary
-
-        :return: Media path pattern
-        :type: str
-        """
-        return self.configuration.get("write_file_media_path_pattern")
+        return True
 
     @property
     def media_path_root(self):
         """
         This path helps to setup the write_file_node by specifying where to write the medias.
 
-        This is defined by the "write_file_media_path_root" entry of the configuration dictionary
-
         :return: Media path root
         :type: str
         """
-        return self.configuration.get("write_file_media_path_root")
+        return "/var/tmp"
 
     @property
-    def clip_path_pattern(self):
+    def media_path_pattern(self):
         """
-        This pattern helps to setup the write_file_node by specifying where to write the clips.
+        This pattern helps to setup the write_file_node by specifying where to write the medias.
 
-        This is defined by the "write_file_clip_path_pattern" entry of the configuration dictionary
-
-        :return: Clip path pattern
+        :return: Media path pattern
         :type: str
         """
-        return self.configuration.get("write_file_clip_path_pattern")
-
-    @property
-    def setup_path_pattern(self):
-        """
-        This pattern helps to setup the write_file_node by specifying where to write the setups.
-
-        This is defined by the "write_file_setup_path_pattern" entry of the configuration dictionary
-
-        :return: Setup path pattern
-        :type: str
-        """
-        return self.configuration.get("write_file_setup_path_pattern")
-
-    @property
-    def media_path_template(self):
-        """
-        Template built from the "write_file_media_path_template" entry from the configuration dictionary.
-
-        This template helps to setup the write_file_node by specifying where to write the medias
-
-        :return: Media pattern path template
-        :rtype: TemplatePath
-        """
-
-        template_name = self.configuration.get("write_file_media_path_template")
-        return self.parent.sgtk.templates.get(template_name)
+        return "<shot name>_{segment_name}_v<version>.<frame>"
 
     @property
     def media_file_type(self):
         """
         Media type to use with the Write File node.
 
-        This is defined by the "write_file_media_type" entry of the configuration dictionary
-
         :return: Media file type
-       :rtype: str
+        :rtype: str
         """
 
-        return self.configuration.get("write_file_media_type")
+        return "OpenEXR"
+
+    @property
+    def clip_path_pattern(self):
+        """
+        This pattern helps to setup the write_file_node by specifying where to write the clips.
+
+        :return: Clip path pattern
+        :type: str
+        """
+        return "<shot name>"
+
+    @property
+    def setup_path_pattern(self):
+        """
+        This pattern helps to setup the write_file_node by specifying where to write the setups.
+
+        :return: Setup path pattern
+        :type: str
+        """
+        return "<shot name>.v<version>"
+
+    @property
+    def media_path_template(self):
+        """
+        Template built from the "write_file_media_path_template" entry from the configuration dictionary.
+
+        :return: Media pattern path template
+        :rtype: TemplatePath
+        """
+
+        return self.parent.sgtk.templates.get("flame_shot_comp_exr")
 
     @property
     def clip_path_template(self):
         """
         Template built from the "write_file_clip_path_template" entry from the configuration dictionary.
 
-        This template helps to setup the write_file_node by specifying where to write the clips
-
         :return: Clip path template
         :rtype: TemplatePath
         """
 
-        template_name = self.configuration.get("write_file_clip_path_template")
-        return self.parent.sgtk.templates.get(template_name)
+        return self.parent.sgtk.templates.get("flame_shot_clip")
 
     @property
     def setup_path_template(self):
         """
         Template built from the "write_file_setup_path_template" entry from the configuration dictionary.
 
-        This template helps to setup the write_file_node by specifying where to write the setup
-
         :return: Setup path template
         :rtype: TemplatePath
         """
 
-        template_name = self.configuration.get("write_file_setup_path_template")
-        return self.parent.sgtk.templates.get(template_name)
+        return self.parent.sgtk.templates.get("flame_shot_batch")
 
     @property
     def version_padding(self):
         """
         Padding to use on the version attribute on the Write File node.
 
-        This is defined by the "write_file_version_padding" entry of the configuration dictionary
-
         :return: Write File version padding
         :rtype: int
         """
 
-        return self.configuration.get("write_file_version_padding")
+        return 3
 
     @property
     def frame_padding(self):
         """
         Padding to use on the frame attribute on the Write File node.
 
-        This is defined by the "write_file_frame_padding" entry of the configuration dictionary
-
         :return: Write File frame padding
         :rtype: int
         """
 
-        return self.configuration.get("write_file_frame_padding")
+        return 4
 
     ##############################################################################################################
     # helper methods which can be subclassed in custom hooks to fine tune the behavior of things
@@ -538,8 +480,7 @@ class FlameActions(HookBaseClass):
         """
         Create a new Batch group using the current Shot information
 
-        :param shot_info: Metadata of the current Shot
-        :type shot_info: dict
+        :param dict shot_info: Metadata of the current Shot
         """
         app = self.parent
 
@@ -551,7 +492,7 @@ class FlameActions(HookBaseClass):
         app.log_debug("Found clips %s" % clips)
 
         if not clips:
-            raise FlameActionsError("No clip to load")
+            raise FlameActionError("No clip to load")
 
         # Get the frame information of the Batch group from the sg_versions
         start_frame, last_frame = self._extract_frame_range_from_version(shot_info)
@@ -568,7 +509,7 @@ class FlameActions(HookBaseClass):
         flame.batch.go_to()
 
         if not flame.batch.create_batch_group(**batch_group_info):
-            raise FlameActionsError("Unable to create a Batch Group")
+            raise FlameActionError("Unable to create a Batch Group")
 
         have_write_file = False
 
@@ -602,7 +543,6 @@ class FlameActions(HookBaseClass):
 
         """
         app = self.parent
-        app.log_debug("Building write file node attribute for '%s' using '%s'" % (clip, self.configuration))
 
         fields = {
             "Sequence": clip["Sequence Name"],
@@ -688,10 +628,8 @@ class FlameActions(HookBaseClass):
         """
         Links a write file node to the provided clip.
 
-        :param node: Flame node to attach a Write File node to
-        :param clip: Clip information of the node
-        :type node: PyNode
-        :type clip: dict
+        :param PyNode node: Flame node to attach a Write File node to
+        :param dict clip: Clip information of the node
         """
 
         app = self.parent
@@ -722,8 +660,7 @@ class FlameActions(HookBaseClass):
         Gets a list of paths associated to a list of published files. Specific to Flame as some paths
         need to be custom formatted (ie frames), and others need to be ignored (for instance, Batch files)
 
-        :param sg_published_files: A list of Shotgun data dictionary with all the standard publish fields.
-        :type sg_published_files: [dict]
+        :param [dict] sg_published_files: A list of Shotgun data dictionary with all the standard publish fields.
         :returns: A list of published file information.
         :rtype: [dict]
         """
@@ -777,8 +714,7 @@ class FlameActions(HookBaseClass):
         """
         Gets the Batch File from a published files dictionary
 
-        :param sg_info: A list of Shotgun data dictionary containing the published files.
-        :type sg_info: dict
+        :param dict sg_info: A list of Shotgun data dictionary containing the published files.
         :returns: The path to the batch file.
         :rtype: str
         """
@@ -806,8 +742,7 @@ class FlameActions(HookBaseClass):
         """
         Gets the clip files information from a published files dictionary
 
-        :param sg_info: A list of Shotgun data dictionary containing the published files.
-        :type sg_info: dict
+        :param dict sg_info: A list of Shotgun data dictionary containing the published files.
         :returns: A list of supported published file data.
         :rtype: [dict]
         """
@@ -836,8 +771,7 @@ class FlameActions(HookBaseClass):
         """
         Try to get the frame range from the latest version of the entity.
 
-        :param sg_info: Entity metadata
-        :type sg_info: dict
+        :param dict sg_info: Entity metadata
         :return: Tuple containing first and last frame
         :rtype: ( int, int )
         """
@@ -860,7 +794,7 @@ class FlameActions(HookBaseClass):
 
                 # Checks that we have the necessary info to proceed.
                 if not all(f in version_data for f in fields):
-                    raise FlameActionsError("Cannot extract frame range for \n {}".format(sg_info))
+                    raise FlameActionError("Cannot extract frame range for \n {}".format(sg_info))
 
                 # Only if the frame_range is defined
                 if version_data["frame_range"] is not None:
@@ -880,8 +814,7 @@ class FlameActions(HookBaseClass):
         """
         Filter that keep the newest version of the Published Files.
 
-        :param published_files_info: List of PublishedFile metadata
-        :type published_files_info: [dict]
+        :param dict published_files_info: List of PublishedFile metadata
         :return: List of the latest PublishedFile metadata
         :rtype: [dict]
         """
@@ -916,8 +849,7 @@ class FlameActions(HookBaseClass):
         Takes a path and inserts formatted frame range for later use in Flame,
         using old-style Python formatting normally reserved for ints.
 
-        :param path: The path containing the formatting character.
-        :type path: str
+        :param str path: The path containing the formatting character.
         :return: Dictionary containing the sequence path, the first_frame and the last_frame
         :rtype: dict
         """
@@ -935,7 +867,7 @@ class FlameActions(HookBaseClass):
         end_frame = formatting_str % int(ranges[1])
 
         if None in [start_frame, end_frame]:
-            raise FlameActionsError("File not found on disk - '%s'" % path)
+            raise FlameActionError("File not found on disk - '%s'" % path)
         elif start_frame == end_frame:
             frame_range = start_frame
         else:
@@ -951,16 +883,15 @@ class FlameActions(HookBaseClass):
         """
         Try to get the sequence's frame range from the path
 
-        :param path: Path of the sequence containing a frame pattern
-        :type path: str
+        :param str path: Path of the sequence containing a frame pattern
         :return: Tuple containing the first and the last frame number of the sequence or tuple of None if failure
         :rtype: ( int, int ) or ( None, None )
         """
-        folder, file_name = ntpath.split(path)
+        folder, file_name = os.path.split(path)
         match = re.match(r"(.*)(%\d+d)(.+)", file_name)
 
         if not match:
-            raise FlameActionsError("Cannot detect frame pattern for '%s'" % path)
+            raise FlameActionError("Cannot detect frame pattern for '%s'" % path)
 
         frame_list = []
 
@@ -968,6 +899,9 @@ class FlameActions(HookBaseClass):
         frame_len = int(match.group(2)[1:-1])
 
         # Lets retrieve all the files that's in the folder of the file to match
+        if not os.path.exists(folder):
+            raise FlameActionError("Folder not found in disk: '%s'" % folder)
+
         files = [f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f))]
 
         for f in files:
@@ -1002,8 +936,7 @@ class FlameActions(HookBaseClass):
         """
         Checks if the path exists directly or as a sequence
 
-        :param media_path: Potential media path
-        :type media_path: str
+        :param str media_path: Potential media path
         :return: Return if the media_path exists
         :rtype: bool
         """
@@ -1012,7 +945,7 @@ class FlameActions(HookBaseClass):
         if os.path.exists(media_path):
             return True
 
-        folder, file_name = ntpath.split(media_path)
+        folder, file_name = os.path.split(media_path)
 
         # Try to check if the path is a sequence
         match = re.match(r"(.*)(\[\d+-\d+\])(.+)", file_name)
@@ -1046,10 +979,8 @@ class FlameActions(HookBaseClass):
         """
         Build a path from a template and from a clip information dictionary.
 
-        :param template: Template to use to build the path
-        :param fields: Dictionary containing Shotgun Template keys and theirs values
-        :type template: TemplatePath
-        :type fields: dict
+        :param TemplatePath template: Template to use to build the path
+        :param dict fields: Dictionary containing Shotgun Template keys and theirs values
         :return: Tuple containing the project root, the media path and the extension
         :rtype: ( str, str, str )
         """

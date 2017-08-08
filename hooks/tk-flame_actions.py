@@ -30,7 +30,7 @@ HookBaseClass = sgtk.get_hook_baseclass()
 ##############################################################################################################
 # Constants to be used with Flame
 
-BATCH_ACTION = "load_setup"
+SETUP_ACTION = "load_setup"
 CLIP_ACTION = "load_clip"
 SHOT_LOAD_ACTION = "load_batch"
 SHOT_CREATE_ACTION = "create_batch"
@@ -91,8 +91,8 @@ class FlameActions(HookBaseClass):
             app.log_warning("Unable to import the Flame Python API")
             return action_instances
 
-        if BATCH_ACTION in actions:
-            action_instances.append({"name": BATCH_ACTION,
+        if SETUP_ACTION in actions:
+            action_instances.append({"name": SETUP_ACTION,
                                      "params": None,
                                      "caption": "Load and Append Batch Setup",
                                      "description": "Load and append a batch setup file to the current Batch Group."})
@@ -167,7 +167,7 @@ class FlameActions(HookBaseClass):
             if name == CLIP_ACTION:
                 self._import_clip(sg_publish_data)
 
-            elif name == BATCH_ACTION:
+            elif name == SETUP_ACTION:
                 self._import_batch_file(sg_publish_data)
 
             elif name == SHOT_CREATE_ACTION:
@@ -327,7 +327,7 @@ class FlameActions(HookBaseClass):
         """
 
         return [entry[0] for entry in self.parent.get_setting("action_mappings", {}).items() if
-                BATCH_ACTION in entry[1]]
+                SETUP_ACTION in entry[1]]
 
     @property
     def import_location(self):
@@ -350,9 +350,6 @@ class FlameActions(HookBaseClass):
         :return: Hint about using a linking a Write File node
         :rtype: bool
         """
-
-        if sgtk.platform.current_engine().is_version_less_than("2018.3"):
-            return False
 
         return True
 
@@ -899,10 +896,10 @@ class FlameActions(HookBaseClass):
         frame_len = int(match.group(2)[1:-1])
 
         # Lets retrieve all the files that's in the folder of the file to match
-        if not os.path.exists(folder):
-            raise FlameActionError("Folder not found in disk: '%s'" % folder)
-
-        files = [f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f))]
+        try:
+            files = [f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f))]
+        except OSError, e:
+            raise FlameActionError("Unable to guess the frame range for '%s'" % path)
 
         for f in files:
             # It doesn't match our pattern

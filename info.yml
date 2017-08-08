@@ -79,6 +79,7 @@ configuration:
             Rendered Image: [load_clip]
             Image: [load_clip]
             Movie: [load_clip]
+            Texture: [load_clip]
 
     entity_mappings:
         type: dict
@@ -86,7 +87,7 @@ configuration:
                      inside the actions hook.
         default_value: {}
         default_value_tk-flame:
-            Shot: [load_batch]
+            Shot: [load_batch, create_batch]
 
     entities:
         default_value:

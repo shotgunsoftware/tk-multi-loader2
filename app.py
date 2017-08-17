@@ -25,7 +25,12 @@ class MultiLoader(sgtk.platform.Application):
         """
         Called as the application is being initialized
         """
-        
+        # We won't be able to do anything if there's no UI. The import
+        # of our tk-multi-loader module below required some Qt components,
+        # and will likely blow up.
+        if not self.engine.has_ui:
+            return
+
         tk_multi_loader = self.import_module("tk_multi_loader")
         
         # register command

@@ -362,7 +362,7 @@ class LoaderActionManager(ActionManager):
         sg.triggered[()].connect(lambda f=sg_data: self._show_in_sg(f))
         qt_actions.append(sg)
 
-        sr = QtGui.QAction("Show in Screening Room", None)
+        sr = QtGui.QAction("Show in Media Center", None)
         sr.triggered[()].connect(lambda f=sg_data: self._show_in_sr(f))
         qt_actions.append(sr)
 
@@ -425,13 +425,15 @@ class LoaderActionManager(ActionManager):
 
     def _show_in_sr(self, entity):
         """
-        Callback - Shows a shotgun entity in screening room
+        Callback - Shows a shotgun entity in the shotgun media center
         
         :param entity: std sg entity dict with keys type, id and name
         """
-        url = "%s/page/screening_room?entity_type=%s&entity_id=%d" % (self._app.sgtk.shotgun.base_url, 
-                                                                      entity["type"], 
-                                                                      entity["id"])                    
+        url = "%s/page/media_center?type=%s&id=%s" % (
+            self._app.sgtk.shotgun.base_url,
+            entity["type"],
+            entity["id"]
+        )
         QtGui.QDesktopServices.openUrl(QtCore.QUrl(url))
     
     def _show_in_fs(self, paths):

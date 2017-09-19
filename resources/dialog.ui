@@ -690,7 +690,7 @@ background-image: url(:/res/right_arrow_pressed.png);
              </size>
             </property>
             <property name="toolTip">
-             <string>The most recent published version has some playable media associated. Click this button to launch the Shotgun &lt;b&gt;Screening Room&lt;/b&gt; web player to see the review version and any notes and comments that have been submitted.</string>
+             <string>The most recent published version has some playable media associated. Click this button to launch the Shotgun &lt;b&gt;Media Center&lt;/b&gt; web player to see the review version and any notes and comments that have been submitted.</string>
             </property>
             <property name="text">
              <string/>

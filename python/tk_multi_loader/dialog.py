@@ -679,9 +679,10 @@ class AppDialog(QtGui.QWidget):
                 # if there is an associated version, show the play button
                 if sg_item.get("version"):
                     sg_url = sgtk.platform.current_bundle().shotgun.base_url
-                    url = "%s/page/screening_room?entity_type=%s&entity_id=%d" % (sg_url,
-                                                                                  sg_item["version"]["type"],
-                                                                                  sg_item["version"]["id"])
+                    url = "%s/page/media_center?type=Version&id=%d" % (
+                        sg_url,
+                        sg_item["version"]["id"]
+                    )
 
                     self.ui.detail_playback_btn.setVisible(True)
                     self._current_version_detail_playback_url = url
@@ -745,7 +746,7 @@ class AppDialog(QtGui.QWidget):
         Callback when someone clicks the version playback button
         """
         # the code that sets up the version button also populates
-        # a member variable which olds the current screening room url.
+        # a member variable which olds the current media center url.
         if self._current_version_detail_playback_url:
             QtGui.QDesktopServices.openUrl(QtCore.QUrl(self._current_version_detail_playback_url))
 

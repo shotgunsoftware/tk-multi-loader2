@@ -380,7 +380,7 @@ class Ui_Dialog(object):
         self.thumb_scale.setToolTip(QtGui.QApplication.translate("Dialog", "Use this handle to <i>adjust the size</i> of the displayed thumbnails.", None, QtGui.QApplication.UnicodeUTF8))
         self.details_image.setText(QtGui.QApplication.translate("Dialog", "TextLabel", None, QtGui.QApplication.UnicodeUTF8))
         self.details_header.setText(QtGui.QApplication.translate("Dialog", "TextLabel", None, QtGui.QApplication.UnicodeUTF8))
-        self.detail_playback_btn.setToolTip(QtGui.QApplication.translate("Dialog", "The most recent published version has some playable media associated. Click this button to launch the Shotgun <b>Screening Room</b> web player to see the review version and any notes and comments that have been submitted.", None, QtGui.QApplication.UnicodeUTF8))
+        self.detail_playback_btn.setToolTip(QtGui.QApplication.translate("Dialog", "The most recent published version has some playable media associated. Click this button to launch the Shotgun <b>Media Center</b> web player to see the review version and any notes and comments that have been submitted.", None, QtGui.QApplication.UnicodeUTF8))
         self.detail_actions_btn.setText(QtGui.QApplication.translate("Dialog", "Actions", None, QtGui.QApplication.UnicodeUTF8))
         self.version_history_label.setText(QtGui.QApplication.translate("Dialog", "<small>Complete Version History</small>", None, QtGui.QApplication.UnicodeUTF8))
 

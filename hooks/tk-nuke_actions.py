@@ -13,6 +13,8 @@ Hook that loads defines all the available actions, broken down by publish type.
 """
 import sgtk
 import os
+import re
+import glob
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
@@ -228,6 +230,58 @@ class NukeActions(HookBaseClass):
             read_node["first"].setValue(seq_range[0])
             read_node["last"].setValue(seq_range[1])
 
+    def _sequence_range_from_path(self, path):
+        """
+        Parses the file name in an attempt to determine the first and last
+        frame number of a sequence. This assumes some sort of common convention
+        for the file names, where the frame number is an integer at the end of
+        the basename, just ahead of the file extension, such as
+        file.0001.jpg, or file_001.jpg. We also check for input file names with
+        abstracted frame number tokens, such as file.####.jpg, or file.%04d.jpg.
+
+        :param str path: The file path to parse.
+
+        :returns: None if no range could be determined, otherwise (min, max)
+        :rtype: tuple or None
+        """
+        # This pattern will match the following at the end of a string and
+        # retain the frame number or frame token as group(1) in the resulting
+        # match object:
+        #
+        # 0001
+        # ####
+        # %04d
+        #
+        # The number of digits or hashes does not matter; we match as many as
+        # exist.
+        frame_pattern = re.compile(r"([0-9#]+|[%]0\dd)$")
+        root, ext = os.path.splitext(path)
+        match = re.search(frame_pattern, root)
+
+        # If we did not match, we don't know how to parse the file name, or there
+        # is no frame number to extract.
+        if match is None:
+            return None
+
+        # We need to get all files that match the pattern from disk so that we
+        # can determine what the min and max frame number is.
+        glob_path = "%s%s" % (
+            re.sub(frame_pattern, "*", root),
+            ext,
+        )
+        files = glob.glob(glob_path)
+
+        # Our pattern from above matches against the file root, so we need
+        # to chop off the extension at the end.
+        file_roots = [os.path.splitext(f)[0] for f in files]
+
+        # We know that the searc will result in a match at this point, otherwise
+        # the glob wouldn't have found the file. We can search and pull group 1
+        # to get the integer frame number from the file root name.
+        frames = [int(re.search(frame_pattern, f).group(1)) for f in file_roots]
+
+        return (min(frames), max(frames))
+
     def _find_sequence_range(self, path):
         """
         Helper method attempting to extract sequence information.
@@ -247,7 +301,10 @@ class NukeActions(HookBaseClass):
             pass
         
         if not template:
-            return None
+            # If we don't have a template to take advantage of, then 
+            # we are forced to do some rough parsing ourself to try
+            # to determine the frame range.
+            return self._sequence_range_from_path(path)
             
         # get the fields and find all matching files:
         fields = template.get_fields(path)

@@ -275,11 +275,10 @@ class NukeActions(HookBaseClass):
         # to chop off the extension at the end.
         file_roots = [os.path.splitext(f)[0] for f in files]
 
-        # We know that the searc will result in a match at this point, otherwise
+        # We know that the search will result in a match at this point, otherwise
         # the glob wouldn't have found the file. We can search and pull group 1
         # to get the integer frame number from the file root name.
         frames = [int(re.search(frame_pattern, f).group(1)) for f in file_roots]
-
         return (min(frames), max(frames))
 
     def _find_sequence_range(self, path):

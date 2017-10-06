@@ -260,7 +260,7 @@ class NukeActions(HookBaseClass):
 
         # If we did not match, we don't know how to parse the file name, or there
         # is no frame number to extract.
-        if match is None:
+        if not match:
             return None
 
         # We need to get all files that match the pattern from disk so that we

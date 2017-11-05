@@ -406,11 +406,33 @@ class LoaderActionManager(ActionManager):
                 "Error: %s" % e,
             )
         else:
+
+            # Logging the "Loaded Published File" toolkit metric
+            #
+            # We're deliberately not making any checks or verification in the
+            # code below, as we don't want to be logging exception or debug
+            # messages relating to metrics. 
+            #
+            # On any failure relating to metric logging we just silently
+            # catch and continue normal execution.
             try:
-                self._app.log_metric("%s action" % (actions[0]["action_name"],))
+                from sgtk.util.metrics import EventMetric as EventMetric
+
+                action = actions[0]
+                action_title = action.get("name")
+                publish_type = action.get("sg_publish_data").get("published_file_type").get("name")
+                EventMetric.log(EventMetric.GROUP_TOOLKIT,
+                                "Loaded Published File",
+                                properties={
+                                    "Publish Type": publish_type,
+                                    "Action Title": action_title
+                                },
+                                bundle=self._app)
+
             except:
                 # ignore all errors. ex: using a core that doesn't support metrics
                 pass
+
         finally:
             self.post_execute_action.emit(qt_action)
 

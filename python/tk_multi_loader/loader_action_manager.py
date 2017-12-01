@@ -416,18 +416,21 @@ class LoaderActionManager(ActionManager):
             # On any failure relating to metric logging we just silently
             # catch and continue normal execution.
             try:
-                from sgtk.util.metrics import EventMetric as EventMetric
+                from sgtk.util.metrics import EventMetric
 
                 action = actions[0]
                 action_title = action.get("name")
                 publish_type = action.get("sg_publish_data").get("published_file_type").get("name")
-                EventMetric.log(EventMetric.GROUP_TOOLKIT,
+                properties = {
+                    "Publish Type": publish_type,
+                    "Action Title": action_title
+                }
+                EventMetric.log(
+                                EventMetric.GROUP_TOOLKIT,
                                 "Loaded Published File",
-                                properties={
-                                    "Publish Type": publish_type,
-                                    "Action Title": action_title
-                                },
-                                bundle=self._app)
+                                properties=properties,
+                                bundle=self._app
+                )
 
             except:
                 # ignore all errors. ex: using a core that doesn't support metrics

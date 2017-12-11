@@ -147,7 +147,7 @@ class NukeActions(HookBaseClass):
     ##############################################################################################################
     # helper methods which can be subclassed in custom hooks to fine tune the behavior of things
     
-    def _import_script(self, path, sg_publish_data):
+    def _import_script(self, path_utf8, sg_publish_data):
         """
         Import contents of the given file into the scene.
         
@@ -155,6 +155,7 @@ class NukeActions(HookBaseClass):
         :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
         """
         import nuke
+        path=path_utf8.decode('utf-8')
         if not os.path.exists(path):
             raise Exception("File not found on disk - '%s'" % path)
 

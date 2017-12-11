@@ -243,7 +243,7 @@ class MayaActions(HookBaseClass):
             mel.eval("generateUvTilePreview %s" % file_node)
         return file_node
 
-    def _create_image_plane(self, path, sg_publish_data):
+    def _create_image_plane(self, path_utf8, sg_publish_data):
         """
         Create a file texture node for a UDIM (Mari) texture
 
@@ -254,6 +254,7 @@ class MayaActions(HookBaseClass):
         """
 
         app = self.parent
+        path=path_utf8.decode('utf-8')
         has_frame_spec = False
 
         # replace any %0#d format string with a glob character. then just find

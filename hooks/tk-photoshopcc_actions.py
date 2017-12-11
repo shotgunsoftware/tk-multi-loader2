@@ -161,7 +161,7 @@ class PhotoshopActions(HookBaseClass):
         file = self.parent.engine.adobe.File(path)
         self.parent.engine.adobe.app.load(file)
 
-    def _place_file(self, path, sg_publish_data):
+    def _place_file(self, path_utf8, sg_publish_data):
         """
         Import contents of the given file into the scene.
 
@@ -169,6 +169,7 @@ class PhotoshopActions(HookBaseClass):
         :param sg_publish_data: Shotgun data dictionary with all the standard
                                 publish fields.
         """
+        path=path_utf8.decode('utf-8')
         path = "/".join(path.split(os.path.sep))
         adobe = self.parent.engine.adobe
 

@@ -169,14 +169,14 @@ class MaxActions(HookBaseClass):
             )
         )
     
-    def _merge(self, path, sg_publish_data):
+    def _merge(self, path_utf8, sg_publish_data):
         """
         Merge contents of the given file into the scene.
         
         :param path: Path to file.
         :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
         """
-
+        path = path_utf8.decode('utf-8')
         if not os.path.exists(path):
             raise Exception("File not found on disk - '%s'" % path)
         

@@ -225,7 +225,7 @@ class HoudiniActions(HookBaseClass):
         import hou
         app = self.parent
 
-        publish_name = sg_publish_data.get("name", "published_file")
+        publish_name = sg_publish_data.get("name", "published_file").decode('utf-8')
 
         # we'll use the publish name for the file cop node name, but we need to
         # remove non alphanumeric characers from the string (houdini node names

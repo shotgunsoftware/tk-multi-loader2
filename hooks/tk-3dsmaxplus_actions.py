@@ -190,7 +190,7 @@ class MaxActions(HookBaseClass):
         app = self.parent
 
         # Note: MaxPlus.FileManager.Merge() is not equivalent as it opens a dialog.
-        app.engine.safe_dialog_exec(lambda: MaxPlus.Core.EvalMAXScript('mergeMAXFile(\"' + path.replace('\\', '/') + '\")'))
+        app.engine.safe_dialog_exec(lambda: MaxPlus.Core.EvalMAXScript('mergeMAXFile(\"' + path_utf8.replace('\\', '/') + '\")'))
 
     def _xref_scene(self, path, sg_publish_data):
         """
@@ -200,10 +200,10 @@ class MaxActions(HookBaseClass):
         :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
         """
         
-        if not os.path.exists(path):
+        if not os.path.exists(path.decode('utf-8')):
             raise Exception("File not found on disk - '%s'" % path)
         
-        (_, ext) = os.path.splitext(path)
+        (_, ext) = os.path.splitext(path.decode('utf-8'))
         
         supported_file_exts = [".max"]
         if ext.lower() not in supported_file_exts:
@@ -213,7 +213,7 @@ class MaxActions(HookBaseClass):
         app = self.parent
 
         # No direct equivalent found in MaxPlus. Would potentially need to get scene root node (INode) and use addNewXRef on that otherwise.
-        app.engine.safe_dialog_exec(lambda: MaxPlus.Core.EvalMAXScript('xrefs.addNewXRefFile(\"' + path.replace('\\', '/') + '\")'))
+        app.engine.safe_dialog_exec(lambda: MaxPlus.Core.EvalMAXScript('xrefs.addNewXRefFile(\"' + path.decode('utf-8').replace('\\', '/') + '\")'))
 
     def _create_texture_node(self, path, sg_publish_data):
         """
@@ -224,7 +224,7 @@ class MaxActions(HookBaseClass):
         :returns:                The newly created file node
         """
 
-        max_script = CREATE_TEXTURE_NODE_MAXSCRIPT % (path,)
+        max_script = CREATE_TEXTURE_NODE_MAXSCRIPT % (path.decode('utf-8'),)
         MaxPlus.Core.EvalMAXScript(max_script)
 
 

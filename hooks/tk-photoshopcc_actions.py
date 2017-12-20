@@ -137,7 +137,7 @@ class PhotoshopActions(HookBaseClass):
         # resolve path
         path = self.get_publish_path(sg_publish_data)
 
-        if not os.path.exists(path):
+        if not os.path.exists(path.decode('utf-8')):
             raise Exception("File not found on disk - '%s'" % path)
 
         if name == _OPEN_FILE:

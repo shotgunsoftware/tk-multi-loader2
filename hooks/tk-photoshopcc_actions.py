@@ -135,9 +135,11 @@ class PhotoshopActions(HookBaseClass):
                       "Parameters: %s. Publish Data: %s" % (name, params, sg_publish_data))
 
         # resolve path
-        path = self.get_publish_path(sg_publish_data)
+        # toolkit uses utf-8 encoded strings internally and the Photoshop API expects unicode
+        # so convert the path to ensure filenames containing complex characters are supported
+        path = self.get_publish_path(sg_publish_data).decode('utf-8')
 
-        if not os.path.exists(path.decode('utf-8')):
+        if not os.path.exists(path):
             raise Exception("File not found on disk - '%s'" % path)
 
         if name == _OPEN_FILE:
@@ -161,7 +163,7 @@ class PhotoshopActions(HookBaseClass):
         file = self.parent.engine.adobe.File(path)
         self.parent.engine.adobe.app.load(file)
 
-    def _place_file(self, path_utf8, sg_publish_data):
+    def _place_file(self, path, sg_publish_data):
         """
         Import contents of the given file into the scene.
 
@@ -169,7 +171,6 @@ class PhotoshopActions(HookBaseClass):
         :param sg_publish_data: Shotgun data dictionary with all the standard
                                 publish fields.
         """
-        path=path_utf8.decode('utf-8')
         path = "/".join(path.split(os.path.sep))
         adobe = self.parent.engine.adobe
 

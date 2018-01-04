@@ -132,7 +132,9 @@ class MaxActions(HookBaseClass):
                       "Parameters: %s. Publish Data: %s" % (name, params, sg_publish_data))
         
         # resolve path
-        path = self.get_publish_path(sg_publish_data)
+        # toolkit uses utf-8 encoded strings internally and the 3dsmax API expects unicode
+        # so convert the path to ensure filenames containing complex characters are supported
+        path = self.get_publish_path(sg_publish_data).decode("utf-8")
 
         # If this is an Alembic cache, then we can import that.
         if path.lower().endswith(".abc"):
@@ -176,7 +178,6 @@ class MaxActions(HookBaseClass):
         :param path: Path to file.
         :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
         """
-
         if not os.path.exists(path):
             raise Exception("File not found on disk - '%s'" % path)
         

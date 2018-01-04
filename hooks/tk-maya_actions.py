@@ -154,7 +154,9 @@ class MayaActions(HookBaseClass):
                       "Parameters: %s. Publish Data: %s" % (name, params, sg_publish_data))
         
         # resolve path
-        path = self.get_publish_path(sg_publish_data)
+        # toolkit uses utf-8 encoded strings internally and Maya API expects unicode
+        # so convert the path to ensure filenames containing complex characters are supported
+        path = self.get_publish_path(sg_publish_data).decode("utf-8")
         
         if name == "reference":
             self._create_reference(path, sg_publish_data)

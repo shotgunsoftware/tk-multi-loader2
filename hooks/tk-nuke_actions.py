@@ -133,7 +133,9 @@ class NukeActions(HookBaseClass):
                       "Parameters: %s. Publish Data: %s" % (name, params, sg_publish_data))
         
         # resolve path - forward slashes on all platforms in Nuke
-        path = self.get_publish_path(sg_publish_data).replace(os.path.sep, "/")
+        # toolkit uses utf-8 encoded strings internally and Nuke API expects unicode
+        # so convert the path to ensure filenames containing complex characters are supported
+        path = self.get_publish_path(sg_publish_data).replace(os.path.sep, "/").decode("utf-8")
         
         if name == "read_node":
             self._create_read_node(path, sg_publish_data)

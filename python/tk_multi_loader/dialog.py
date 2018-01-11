@@ -707,10 +707,7 @@ class AppDialog(QtGui.QWidget):
                 msg += __make_table_row("Version", "%s" % vers_str)
 
                 if sg_item.get("entity"):
-                    tk = sgtk.platform.current_bundle().sgtk
-                    sg_type_display_name = sgtk.util.get_entity_type_display_name(tk, sg_item.get("entity").get("type"))
-
-                    entity_str = "<b>%s</b> %s" % (sg_type_display_name,
+                    entity_str = "<b>%s</b> %s" % (sg_item.get("entity").get("type"),
                                                    sg_item.get("entity").get("name"))
                     msg += __make_table_row("Link", entity_str)
 
@@ -1772,6 +1769,7 @@ class AppDialog(QtGui.QWidget):
                 (sg_data, field_value) = model_item_data.get_item_data(tmp_item)
 
                 # now figure out the associated value and type for this node
+
                 if sg_data:
                     # leaf node
                     name = str(field_value)
@@ -1810,9 +1808,7 @@ class AppDialog(QtGui.QWidget):
                 else:
                     # lookup the display name for the entity type:
                     tk = sgtk.platform.current_bundle().sgtk
-
                     sg_type_display_name = sgtk.util.get_entity_type_display_name(tk, sg_type)
-
                     crumbs.append("<b>%s</b> %s" % (sg_type_display_name, name))
                 tmp_item = tmp_item.parent()
 

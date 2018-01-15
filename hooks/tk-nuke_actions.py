@@ -160,7 +160,7 @@ class NukeActions(HookBaseClass):
         if not os.path.exists(path):
             raise Exception("File not found on disk - '%s'" % path)
 
-        nuke.nodePaste(path)
+        nuke.nodePaste(path.encode('utf-8'))
 
     def _open_project(self, path, sg_publish_data):
         """
@@ -222,7 +222,7 @@ class NukeActions(HookBaseClass):
         # frame range, but this should handle the zero config case. This will
         # also automatically extract the format and frame range for movie files.
         read_node = nuke.createNode("Read")
-        read_node["file"].fromUserText(path)
+        read_node["file"].fromUserText(path.encode('utf-8'))
 
         # find the sequence range if it has one:
         seq_range = self._find_sequence_range(path)

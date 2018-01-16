@@ -195,7 +195,7 @@ class NukeActions(HookBaseClass):
 
         # If this is an Alembic cache, use a ReadGeo2 and we're done.
         if ext.lower() == ".abc":
-            nuke.createNode("ReadGeo2", "file {%s}" % path)
+            nuke.createNode("ReadGeo2", "file {%s}" % path.encode('utf-8'))
             return
 
         valid_extensions = [".png", 

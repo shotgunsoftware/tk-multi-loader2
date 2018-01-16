@@ -193,9 +193,11 @@ class NukeActions(HookBaseClass):
         
         (_, ext) = os.path.splitext(path)
 
+        encoded_path = path.encode('utf-8')
+
         # If this is an Alembic cache, use a ReadGeo2 and we're done.
         if ext.lower() == ".abc":
-            nuke.createNode("ReadGeo2", "file {%s}" % path.encode('utf-8'))
+            nuke.createNode("ReadGeo2", "file {%s}" % encoded_path)
             return
 
         valid_extensions = [".png", 
@@ -222,7 +224,7 @@ class NukeActions(HookBaseClass):
         # frame range, but this should handle the zero config case. This will
         # also automatically extract the format and frame range for movie files.
         read_node = nuke.createNode("Read")
-        read_node["file"].fromUserText(path.encode('utf-8'))
+        read_node["file"].fromUserText(encoded_path)
 
         # find the sequence range if it has one:
         seq_range = self._find_sequence_range(path)

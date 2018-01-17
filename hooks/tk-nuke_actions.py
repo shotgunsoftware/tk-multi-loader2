@@ -135,7 +135,7 @@ class NukeActions(HookBaseClass):
         # resolve path - forward slashes on all platforms in Nuke
         # toolkit uses utf-8 encoded strings internally and Nuke API expects unicode
         # so convert the path to ensure filenames containing complex characters are supported
-        path = self.get_publish_path(sg_publish_data).replace(os.path.sep, "/").decode("utf-8")
+        path = self.get_publish_path(sg_publish_data).replace(os.path.sep, "/")
         
         if name == "read_node":
             self._create_read_node(path, sg_publish_data)
@@ -157,10 +157,10 @@ class NukeActions(HookBaseClass):
         :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
         """
         import nuke
-        if not os.path.exists(path):
+        if not os.path.exists(path.decode('utf-8')):
             raise Exception("File not found on disk - '%s'" % path)
 
-        nuke.nodePaste(path.encode('utf-8'))
+        nuke.nodePaste(path)
 
     def _open_project(self, path, sg_publish_data):
         """
@@ -193,11 +193,10 @@ class NukeActions(HookBaseClass):
         
         (_, ext) = os.path.splitext(path)
 
-        encoded_path = path.encode('utf-8')
 
         # If this is an Alembic cache, use a ReadGeo2 and we're done.
         if ext.lower() == ".abc":
-            nuke.createNode("ReadGeo2", "file {%s}" % encoded_path)
+            nuke.createNode("ReadGeo2", "file {%s}" % path)
             return
 
         valid_extensions = [".png", 
@@ -224,7 +223,7 @@ class NukeActions(HookBaseClass):
         # frame range, but this should handle the zero config case. This will
         # also automatically extract the format and frame range for movie files.
         read_node = nuke.createNode("Read")
-        read_node["file"].fromUserText(encoded_path)
+        read_node["file"].fromUserText(path)
 
         # find the sequence range if it has one:
         seq_range = self._find_sequence_range(path)

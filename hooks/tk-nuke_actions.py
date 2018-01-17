@@ -133,8 +133,6 @@ class NukeActions(HookBaseClass):
                       "Parameters: %s. Publish Data: %s" % (name, params, sg_publish_data))
         
         # resolve path - forward slashes on all platforms in Nuke
-        # toolkit uses utf-8 encoded strings internally and Nuke API expects unicode
-        # so convert the path to ensure filenames containing complex characters are supported
         path = self.get_publish_path(sg_publish_data).replace(os.path.sep, "/")
         
         if name == "read_node":
@@ -157,6 +155,8 @@ class NukeActions(HookBaseClass):
         :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
         """
         import nuke
+
+        # must use unicode otherwise path won't be found
         if not os.path.exists(path.decode('utf-8')):
             raise Exception("File not found on disk - '%s'" % path)
 

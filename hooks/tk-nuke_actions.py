@@ -133,9 +133,7 @@ class NukeActions(HookBaseClass):
                       "Parameters: %s. Publish Data: %s" % (name, params, sg_publish_data))
         
         # resolve path - forward slashes on all platforms in Nuke
-        # toolkit uses utf-8 encoded strings internally and Nuke API expects unicode
-        # so convert the path to ensure filenames containing complex characters are supported
-        path = self.get_publish_path(sg_publish_data).replace(os.path.sep, "/").decode("utf-8")
+        path = self.get_publish_path(sg_publish_data).replace(os.path.sep, "/")
         
         if name == "read_node":
             self._create_read_node(path, sg_publish_data)
@@ -157,7 +155,9 @@ class NukeActions(HookBaseClass):
         :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
         """
         import nuke
-        if not os.path.exists(path):
+
+        # must use unicode otherwise path won't be found
+        if not os.path.exists(path.decode('utf-8')):
             raise Exception("File not found on disk - '%s'" % path)
 
         nuke.nodePaste(path)
@@ -192,6 +192,7 @@ class NukeActions(HookBaseClass):
         import nuke
         
         (_, ext) = os.path.splitext(path)
+
 
         # If this is an Alembic cache, use a ReadGeo2 and we're done.
         if ext.lower() == ".abc":

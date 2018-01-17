@@ -192,8 +192,11 @@ class MayaActions(HookBaseClass):
         namespace = "%s %s" % (sg_publish_data.get("entity").get("name"), sg_publish_data.get("name"))
         namespace = namespace.replace(" ", "_")
                 
-        pm.system.createReference(path, 
-                                  loadReferenceDepth= "all", 
+        # create reference using relative path instead of absolute path
+        current_path = cmds.file(q=True, sn=True)
+        relative_path = os.path.relpath(path, os.path.dirname(current_path))
+        pm.system.createReference(relative_path, 
+                                  loadReferenceDepth="all", 
                                   mergeNamespacesOnClash=False, 
                                   namespace=namespace)
 

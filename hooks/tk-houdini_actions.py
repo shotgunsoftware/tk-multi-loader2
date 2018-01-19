@@ -231,7 +231,9 @@ class HoudiniActions(HookBaseClass):
         # remove non alphanumeric characers from the string (houdini node names
         # must be alphanumeric). first, build a regex to match non alpha-numeric
         # characters. Then use it to replace any matches with an underscore
-        pattern = re.compile('[\W_]+', re.UNICODE)
+        
+        # cannot use special characters to create nodes
+        pattern = re.compile('[\W_]+')
         publish_name = pattern.sub('_', publish_name)
 
         # get the publish path

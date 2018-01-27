@@ -122,6 +122,8 @@ class SgLatestPublishModel(ShotgunModel):
                 #
                 if entity_type == "Task":
                     sg_filters = [["task", "in", data]]
+                elif entity_type == "Version":
+                    sg_filters = [["version", "in", data]]
                 else:
                     sg_filters = [["entity", "in", data]]
 
@@ -144,7 +146,9 @@ class SgLatestPublishModel(ShotgunModel):
                     # show the items associated. Handle tasks
                     # via the task field instead of the entity field
                     if sg_data.get("type") == "Task":
-                        sg_filters = [["task", "is", {"type": sg_data["type"], "id": sg_data["id"]} ]]
+                        sg_filters = [["task", "is", {"type": sg_data["type"], "id": sg_data["id"]}]]
+                    elif sg_data.get("type") == "Version":
+                        sg_filters = [["version", "is", {"type": "Version", "id": sg_data["id"]}]]
                     else:
                         sg_filters = [["entity", "is", {"type": sg_data["type"], "id": sg_data["id"]} ]]
 
@@ -168,7 +172,7 @@ class SgLatestPublishModel(ShotgunModel):
         if sg_filters:
             # first apply any global sg filters, as specified in the config that we should append
             # to the main entity filters before getting publishes from shotgun. This may be stuff
-            # like 'only status appproved'
+            # like 'only status approved'
             pub_filters = app.get_setting("publish_filters", [])
             sg_filters.extend(pub_filters)
             

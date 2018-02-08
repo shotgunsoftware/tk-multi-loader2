@@ -122,13 +122,13 @@ class SgLatestPublishModel(ShotgunModel):
                 # rather than the std entity link field
                 #
 
-                # New sg_filter for library tags (CustomEntity14). We need to pull the tag applied to the Version associated with the publish
+                # New sg_filter for tags. We need to pull the tag applied to the Version associated with the publish
                 # In the context of a media library it should be assumed that any PublishedFile WILL have a Version associated with it.
-                #
+                # We may need to add logic to cover cases where the published file has no version.
                 if entity_type == "Task":
                     sg_filters = [["task", "in", data]]
-                elif entity_type == "CustomEntity14":
-                    sg_filters = [["version.Version.sg_library_tags", "in", data ]]
+                elif entity_type == "Tag":
+                    sg_filters = [["version.Version.tags", "in", data ]]
                 else:
                     sg_filters = [["entity", "in", data]]
 
@@ -154,13 +154,14 @@ class SgLatestPublishModel(ShotgunModel):
                         # leaf node!
                         # show the items associated. Handle tasks
                         # via the task field instead of the entity field
-                        # this only applies for library_tag entities of customentity14
+                        # handle tags via the publish file's Version's tags field. (Tags should always be applied
+                        # to the Version rather than the PublishedFile as we also want to be able to filter by tag
+                        # from the media page (which is shows only versions and as the published_files field in
+                        # versions is ulti-entity, we cant filter by published_files.PublishedFile.tag)
                         if sg_data.get("type") == "Task":
                             sg_filters.append(["task", "is", {"type": sg_data["type"], "id": sg_data["id"]} ])
-                        elif sg_data.get("type") == "CustomEntity14":
-                            # as the CustomEntity 14 is the only case where multiselection is enabled, this is the only case
-                            # where we need to append filters. The other cases simply set the filter array.
-                            sg_filters.append(["version.Version.sg_library_tags", "in", {"type": sg_data["type"], "id": sg_data["id"]} ])
+                        elif sg_data.get("type") == "Tag":
+                            sg_filters.append(["version.Version.tags", "in", {"type": sg_data["type"], "id": sg_data["id"]} ])
                         else:
                             sg_filters.append(["entity", "is", {"type": sg_data["type"], "id": sg_data["id"]} ])
 

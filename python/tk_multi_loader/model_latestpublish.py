@@ -122,11 +122,15 @@ class SgLatestPublishModel(ShotgunModel):
                 # rather than the std entity link field
                 #
 
-                # New sg_filter for tags. We need to pull the tag applied to the Version associated with the publish
-                # In the context of a media library it should be assumed that any PublishedFile WILL have a Version associated with it.
+                # New sg_filter for tags. We need to pull the tag applied
+                # to the Version associated with the publish
+                # In the context of a media library it should be assumed
+                # that any PublishedFile WILL have a Version associated with it.
                 # We may need to add logic to cover cases where the published file has no version.
                 if entity_type == "Task":
                     sg_filters = [["task", "in", data]]
+                elif entity_type == "Version":
+                    sg_filters = [["version", "in", data]]
                 elif entity_type == "Tag":
                     sg_filters = [["version.Version.tags", "in", data ]]
                 else:
@@ -147,44 +151,53 @@ class SgLatestPublishModel(ShotgunModel):
 
                 # loop through the selected items
                 for item in items:
-                    # Extract the Shotgun data and field value from the node item.
-                    (sg_data, field_value) = model_item_data.get_item_data(item)
-
-                    if sg_data:
-                        # leaf node!
-                        # show the items associated. Handle tasks
-                        # via the task field instead of the entity field
-                        # handle tags via the publish file's Version's tags field. (Tags should always be applied
-                        # to the Version rather than the PublishedFile as we also want to be able to filter by tag
-                        # from the media page (which is shows only versions and as the published_files field in
-                        # versions is ulti-entity, we cant filter by published_files.PublishedFile.tag)
-                        if sg_data.get("type") == "Task":
-                            sg_filters.append(["task", "is", {"type": sg_data["type"], "id": sg_data["id"]} ])
-                        elif sg_data.get("type") == "Tag":
-                            sg_filters.append(["version.Version.tags", "in", {"type": sg_data["type"], "id": sg_data["id"]} ])
-                        else:
-                            sg_filters.append(["entity", "is", {"type": sg_data["type"], "id": sg_data["id"]} ])
-
+                    if item is None:
+                        # nothing selected in the treeview
+                        # passing none to _load_data indicates that no query should be executed
+                        sg_filters = None
                     else:
-                        # intermediate node.
+                        # Extract the Shotgun data and field value from the node item.
+                        (sg_data, field_value) = model_item_data.get_item_data(item)
 
-                        if isinstance(field_value, dict) and "name" in field_value and "type" in field_value:
-                            # this is an intermediate node like a sequence or an asset which
-                            # can have publishes of its own associated
-                            sg_filters = [["entity", "is", field_value ]]
+                        if sg_data:
+                            # leaf node!
+                            # show the items associated. Handle tasks
+                            # via the task field instead of the entity field
+                            # handle tags via the publish file's Version's tags field. (Tags should always be applied
+                            # to the Version rather than the PublishedFile as we also want to be able to filter by tag
+                            # from the media page (which is shows only versions and as the published_files field in
+                            # versions is ulti-entity, we cant filter by published_files.PublishedFile.tag)
+                            if sg_data.get("type") == "Task":
+                                sg_filters.append(["task", "is", {"type": sg_data["type"], "id": sg_data["id"]} ])
+                            elif sg_data.get("type") == "Version":
+                                sg_filters = [["version", "is", {"type": "Version", "id": sg_data["id"]}]]
+                            elif sg_data.get("type") == "Tag":
+                                sg_filters.append(["version.Version.tags", "in", {"type": sg_data["type"], "id": sg_data["id"]} ])
+                                # the folder paradigm isn't relevant to tag view, so hide the child folders.
+                                child_folders = []
+                            else:
+                                sg_filters.append(["entity", "is", {"type": sg_data["type"], "id": sg_data["id"]} ])
 
                         else:
-                            # this is an intermediate node like status or asset type which does not
-                            # have any publishes of its own, because the value (e.g. the status or the asset type)
-                            # is nothing that you could link up a publish to.
-                            sg_filters = None
+                            # intermediate node.
+
+                            if isinstance(field_value, dict) and "name" in field_value and "type" in field_value:
+                                # this is an intermediate node like a sequence or an asset which
+                                # can have publishes of its own associated
+                                sg_filters = [["entity", "is", field_value ]]
+
+                            else:
+                                # this is an intermediate node like status or asset type which does not
+                                # have any publishes of its own, because the value (e.g. the status or the asset type)
+                                # is nothing that you could link up a publish to.
+                                sg_filters = None
 
         # now if sg_filters is not None (None indicates that no data should be fetched by the model),
         # add our external filter settings
         if sg_filters:
             # first apply any global sg filters, as specified in the config that we should append
             # to the main entity filters before getting publishes from shotgun. This may be stuff
-            # like 'only status appproved'
+            # like 'only status approved'
             pub_filters = app.get_setting("publish_filters", [])
             sg_filters.extend(pub_filters)
 

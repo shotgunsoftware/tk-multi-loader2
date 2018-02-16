@@ -924,7 +924,7 @@ class AppDialog(QtGui.QWidget):
                 help_screen.show_help_screen(self.window(), app, help_pix)
 
         # tell publish UI to update itself
-        item = self._get_selected_entity()
+        item = self._get_selected_entities()[0]
         self._load_publishes_for_entity_items([item])
 
     def _on_thumb_size_slider_change(self, value):
@@ -1047,35 +1047,12 @@ class AppDialog(QtGui.QWidget):
     ########################################################################################
     # entity listing tree view and presets toolbar
 
-    def _get_selected_entity(self):
-        """
-        Returns the item currently selected in the tree view, None
-        if no selection has been made.
-        """
-        selected_item = None
-        selection_model = self._entity_presets[self._current_entity_preset].view.selectionModel()
-        if selection_model.hasSelection():
-
-            current_idx = selection_model.selection().indexes()[0]
-
-            model = current_idx.model()
-
-            if not isinstance(model, (SgHierarchyModel, SgEntityModel)):
-                # proxy model!
-                current_idx = model.mapToSource(current_idx)
-
-            # now we have arrived at our model derived from StandardItemModel
-            # so let's retrieve the standarditem object associated with the index
-            selected_item = current_idx.model().itemFromIndex(current_idx)
-
-        return selected_item
-
     def _get_selected_entities(self):
         """
         Returns the items currently selected in the tree view, None
         if no selection has been made.
         """
-        selected_items = None
+        selected_items = [None]
         selection_model = self._entity_presets[self._current_entity_preset].view.selectionModel()
 
         if selection_model.hasSelection():
@@ -1146,7 +1123,7 @@ class AppDialog(QtGui.QWidget):
             # to selected is in vertically centered in the widget
 
             # get the currently selected item in our tab
-            selected_item = self._get_selected_entity()
+            selected_item = self._get_selected_entities()[0]
 
             if selected_item and selected_item.index() == item.index():
                 # the item is already selected!
@@ -1532,7 +1509,7 @@ class AppDialog(QtGui.QWidget):
         Slot triggered when the hierarchy model has been refreshed. This allows to show all the
         folder items in the right-hand side for the current selection.
         """
-        selected_item = self._get_selected_entity()
+        selected_item = self._get_selected_entities()[0]
 
         # tell publish UI to update itself
         self._load_publishes_for_entity_items([selected_item])
@@ -1668,7 +1645,7 @@ class AppDialog(QtGui.QWidget):
 
         if track_in_history:
             # figure out what is selected
-            selected_item = self._get_selected_entity()
+            selected_item = self._get_selected_entities()[0]
 
             # update breadcrumbs
             self._populate_entity_breadcrumbs(selected_item)
@@ -1688,34 +1665,38 @@ class AppDialog(QtGui.QWidget):
         """
         selected_items = self._get_selected_entities()
 
-
-
-        # when an item in the treeview is selected, the child
-        # nodes are displayed in the main view, so make sure
-        # they are loaded.
         model = self._entity_presets[self._current_entity_preset].model
 
-        multi_selection_filters = []
-        for selected_item in selected_items:
-            # update breadcrumbs
-            self._populate_entity_breadcrumbs(selected_item)
+        # If nothing is selected, refresh the view.
+        if len(selected_items) == 0:
+            if isinstance(model, SgEntityModel):
+                model.async_refresh()
+        else:
+            # when an item in the treeview is selected, the child
+            # nodes are displayed in the main view, so make sure
+            # they are loaded.
 
-            selected_item_filters = model.get_filters(selected_item)
-            for f in selected_item_filters:
-                if f not in multi_selection_filters:
-                    multi_selection_filters.append(f)
+            multi_selection_filters = []
+            for selected_item in selected_items:
+                # update breadcrumbs
+                self._populate_entity_breadcrumbs(selected_item)
 
-            if selected_item and model.canFetchMore(selected_item.index()):
-                model.fetchMore(selected_item.index())
+                selected_item_filters = model.get_filters(selected_item)
+                for f in selected_item_filters:
+                    if f not in multi_selection_filters:
+                        multi_selection_filters.append(f)
 
-            # notify history
-            self._add_history_record(self._current_entity_preset, selected_item)
+                if selected_item and model.canFetchMore(selected_item.index()):
+                    model.fetchMore(selected_item.index())
 
-        # tell details panel to clear itself
-        self._setup_details_panel([])
+                # notify history
+                self._add_history_record(self._current_entity_preset, selected_item)
 
-        # tell publish UI to update itself
-        self._load_publishes_for_entity_items(selected_items)
+            # tell details panel to clear itself
+            self._setup_details_panel([])
+
+            # tell publish UI to update itself
+            self._load_publishes_for_entity_items(selected_items)
 
     def _load_publishes_for_entity_items(self, items):
         """

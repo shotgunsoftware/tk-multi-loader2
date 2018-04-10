@@ -84,6 +84,12 @@ class NukeActions(HookBaseClass):
                                       "caption": "Open Project",
                                       "description": "This will open the Nuke Studio project in the current session."} )
 
+        if "shot_import" in actions:
+            action_instances.append( {"name": "shot_import",
+                                      "params": None, 
+                                      "caption": "Impot Shot", 
+                                      "description": "Import Shot in NukeStudio."} ) 
+
         return action_instances
 
     def execute_multiple_actions(self, actions):
@@ -143,9 +149,31 @@ class NukeActions(HookBaseClass):
 
         if name == "open_project":
             self._open_project(path, sg_publish_data)
+            
+        if name == "shot_import":
+            self._import_shot(path, sg_publish_data)
 
     ##############################################################################################################
     # helper methods which can be subclassed in custom hooks to fine tune the behavior of things
+
+
+    def _import_shot(self, path, sg_publish_data):
+        import hiero.core
+        from hiero.core import newProject
+        from hiero.core import BinItem
+        from hiero.core import MediaSource
+        from hiero.core import Clip
+        from hiero.core import Sequence
+        from hiero.core import VideoTrack
+        import os.path
+        import sys
+        prj = hiero.core.projects()[-1]
+        root = prj.clipsBin()
+        bins = root.bins()
+        clipsBin = prj.clipsBin()
+        source1 = MediaSource(path)
+        clip1 = Clip(source1)
+        clipsBin.addItem(BinItem(clip1))
     
     def _import_script(self, path, sg_publish_data):
         """

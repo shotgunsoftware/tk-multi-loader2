@@ -27,6 +27,7 @@ from .delegate_publish_history import SgPublishHistoryDelegate
 from .search_widget import SearchWidget
 from .banner import Banner
 from .loader_action_manager import LoaderActionManager
+from .utils import resolve_filters
 
 from . import constants
 from . import model_item_data
@@ -1528,27 +1529,7 @@ class AppDialog(QtGui.QWidget):
         """
 
         # Resolve any magic tokens in the filters.
-        resolved_filters = []
-        for filter in setting_dict["filters"]:
-            resolved_filter = []
-            for field in filter:
-                if field == "{context.entity}":
-                    field = app.context.entity
-                elif field == "{context.project}":
-                    field = app.context.project
-                elif field == "{context.project.id}":
-                    if app.context.project:
-                        field = app.context.project.get("id")
-                    else:
-                        field = None
-                elif field == "{context.step}":
-                    field = app.context.step
-                elif field == "{context.task}":
-                    field = app.context.task
-                elif field == "{context.user}":
-                    field = app.context.user
-                resolved_filter.append(field)
-            resolved_filters.append(resolved_filter)
+        resolved_filters = resolve_filters(setting_dict["filters"])
         setting_dict["filters"] = resolved_filters
 
         # Construct the query model.

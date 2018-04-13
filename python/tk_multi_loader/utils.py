@@ -281,12 +281,12 @@ def filter_publishes(app, sg_data_list):
 
 def resolve_filters(filters):
     """
+    When passed a list of filters, it will resolve strings found in the filters using the context.
+    For example: '{context.user}' could get resolved to {'type': 'HumanUser', 'id': 86, 'name': 'Philip Scadding'}
 
-    When passed a list of filters, it will resolve strings found in the filters using the context
-    example: '{context.user}' could get resolved to {'type': 'HumanUser', 'id': 86, 'name': 'Philip Scadding'}
-
-    :param filters: a list of filters as found in the info.yml config
-    should be in the format: [[task_assignees, is, '{context.user}'],[sg_status_list, not_in, [fin,omt]]]
+    :param filters: A list of filters that has usually be defined by the user or by default in the environment yml
+    config or the app's info.yml. Supports complex filters as well. Filters should be passed in the following format:
+    [[task_assignees, is, '{context.user}'],[sg_status_list, not_in, [fin,omt]]]
 
     :return: A List of filters for use with the shotgun api
     """

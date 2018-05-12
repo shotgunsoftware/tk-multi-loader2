@@ -11,10 +11,12 @@
 """
 Hook that loads defines all the available actions, broken down by publish type. 
 """
-import sgtk
 import os
 import re
 import glob
+import sys
+
+import sgtk
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
@@ -84,11 +86,11 @@ class NukeActions(HookBaseClass):
                                       "caption": "Open Project",
                                       "description": "This will open the Nuke Studio project in the current session."} )
 
-        if "shot_import" in actions:
-            action_instances.append( {"name": "shot_import",
+        if "clip_import" in actions:
+            action_instances.append( {"name": "clip_import",
                                       "params": None, 
-                                      "caption": "Impot Shot", 
-                                      "description": "Import Shot in NukeStudio."} ) 
+                                      "caption": "Import Clip", 
+                                      "description": "This will import a publish as clip in Hiero or Nuke Studio."} ) 
 
         return action_instances
 
@@ -150,30 +152,38 @@ class NukeActions(HookBaseClass):
         if name == "open_project":
             self._open_project(path, sg_publish_data)
             
-        if name == "shot_import":
-            self._import_shot(path, sg_publish_data)
+        if name == "clip_import":
+            self._import_clip(path, sg_publish_data)
 
     ##############################################################################################################
     # helper methods which can be subclassed in custom hooks to fine tune the behavior of things
 
 
-    def _import_shot(self, path, sg_publish_data):
-        import hiero.core
-        from hiero.core import newProject
-        from hiero.core import BinItem
-        from hiero.core import MediaSource
-        from hiero.core import Clip
-        from hiero.core import Sequence
-        from hiero.core import VideoTrack
-        import os.path
-        import sys
-        prj = hiero.core.projects()[-1]
-        root = prj.clipsBin()
-        bins = root.bins()
-        clipsBin = prj.clipsBin()
-        source1 = MediaSource(path)
-        clip1 = Clip(source1)
-        clipsBin.addItem(BinItem(clip1))
+    def _import_clip(self, path, sg_publish_data):
+        """
+        Imports the given publish data into Nuke Studio or Hiero as a clip.
+
+        :param str path: Path to the file(s) to import.
+        :param dict sg_publish_data: Shotgun data dictionary with all of the standard publish
+            fields.
+        """
+        if not self.parent.studio_enabled or not self.parent.hiero_enabled:
+            raise Exception("Importing shot clips is only supported in Hiero and Nuke Studio.")
+
+        from hiero.core import (
+            BinItem,
+            MediaSource,
+            Clip,
+        )
+
+        if not hiero.core.projects():
+            raise Exception("An active project must exist to import clips into.")
+
+        project = hiero.core.projects()[-1]
+        bins = project.clipsBin().bins()
+        media_source = MediaSource(path)
+        clip = Clip(media_source)
+        project.clipsBin().addItem(BinItem(clip))
     
     def _import_script(self, path, sg_publish_data):
         """

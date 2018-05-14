@@ -167,9 +167,10 @@ class NukeActions(HookBaseClass):
         :param dict sg_publish_data: Shotgun data dictionary with all of the standard publish
             fields.
         """
-        if not self.parent.studio_enabled or not self.parent.hiero_enabled:
+        if not self.parent.engine.studio_enabled and not self.parent.engine.hiero_enabled:
             raise Exception("Importing shot clips is only supported in Hiero and Nuke Studio.")
 
+        import hiero
         from hiero.core import (
             BinItem,
             MediaSource,

@@ -205,6 +205,13 @@ class SgPublishTypeModel(ShotgunModel):
                 
         # and ask the model to resort itself 
         self.sort(0)
+
+    def hard_refresh(self):
+        """
+        Clears any caches on disk, then refreshes the data.
+        """
+        super(SgPublishTypeModel, self).hard_refresh()
+        self._load_external_data()
             
     ############################################################################################
     # subclassed methods

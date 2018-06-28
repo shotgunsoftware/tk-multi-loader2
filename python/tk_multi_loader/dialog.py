@@ -708,7 +708,10 @@ class AppDialog(QtGui.QWidget):
                 msg += __make_table_row("Version", "%s" % vers_str)
 
                 if sg_item.get("entity"):
-                    entity_str = "<b>%s</b> %s" % (sg_item.get("entity").get("type"),
+                    tk = sgtk.platform.current_bundle().sgtk
+                    sg_type_display_name = sgtk.util.get_entity_type_display_name(tk, sg_item.get("entity").get("type")) 
+
+                    entity_str = "<b>%s</b> %s" % (sg_type_display_name,
                                                    sg_item.get("entity").get("name"))
                     msg += __make_table_row("Link", entity_str)
 

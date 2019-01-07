@@ -15,7 +15,6 @@ import os
 import re
 import glob
 import sys
-
 import sgtk
 
 HookBaseClass = sgtk.get_hook_baseclass()
@@ -73,6 +72,12 @@ class NukeActions(HookBaseClass):
                                       "params": None,
                                       "caption": "Create Read Node", 
                                       "description": "This will add a read node to the current scene."} )
+
+        if "read_cam" in actions:
+            action_instances.append( {"name": "read_cam", 
+                                      "params": None,
+                                      "caption": "Create Camera", 
+                                      "description": "This will add a Camera node to the current scene."} )
 
         if "script_import" in actions:        
             action_instances.append( {"name": "script_import",
@@ -146,6 +151,9 @@ class NukeActions(HookBaseClass):
         if name == "read_node":
             self._create_read_node(path, sg_publish_data)
         
+        if name == "read_cam":
+            self._create_read_camera(path, sg_publish_data)
+        
         if name == "script_import":
             self._import_script(path, sg_publish_data)
 
@@ -158,6 +166,22 @@ class NukeActions(HookBaseClass):
     ##############################################################################################################
     # helper methods which can be subclassed in custom hooks to fine tune the behavior of things
 
+
+    def _create_read_camera(self, path, sg_publish_data):
+
+        """
+        Create a read node representing the publish.
+        
+        :param path: Path to file.
+        :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.        
+        """        
+        import nuke
+        (_, ext) = os.path.splitext(path)
+
+
+        # If this is an Alembic cache, use a ReadGeo2 and we're done.
+        if ext.lower() == ".abc":
+            nuke.createNode("Camera2", "file {%s} read_from_file true" % path )
 
     def _import_clip(self, path, sg_publish_data):
         """
@@ -246,8 +270,7 @@ class NukeActions(HookBaseClass):
                             ".dpx", 
                             ".tiff", 
                             ".tif", 
-                            ".mov",
-                            ".mp4",
+                            ".mov", 
                             ".psd",
                             ".tga",
                             ".ari",

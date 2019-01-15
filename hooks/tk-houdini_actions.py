@@ -1,4 +1,4 @@
-# Copyright (c) 2015 Shotgun Software Inc.
+ # Copyright (c) 2015 Shotgun Software Inc.
 # 
 # CONFIDENTIAL AND PROPRIETARY
 # 
@@ -69,12 +69,22 @@ class HoudiniActions(HookBaseClass):
             action_instances.append( {"name": "merge", 
                                       "params": None,
                                       "caption": "Merge", 
-                                      "description": "This will merge the item into the scene."} )        
+                                      "description": "This will merge the item into the scene."
+            }) 
+
+        if "import_h" in actions:
+            action_instances.append({
+                "name": "import_h",
+                "params": None,
+                "caption": "Import Hierarchy",
+                "description": "Import the Alembic Hierarchy file into a geometry network.",
+            })
+
         if "import" in actions:
             action_instances.append({
                 "name": "import",
                 "params": None,
-                "caption": "Import",
+                "caption": "Import Cache",
                 "description": "Import the Alembic cache file into a geometry network.",
             })
 
@@ -139,6 +149,9 @@ class HoudiniActions(HookBaseClass):
         if name == "merge":
             self._merge(path, sg_publish_data)
 
+        if name == "import_h":
+            self._import_hierarchy(path, sg_publish_data)
+
         if name == "import":
             self._import(path, sg_publish_data)
 
@@ -169,6 +182,43 @@ class HoudiniActions(HookBaseClass):
                           overwrite_on_conflict=False,
                           ignore_load_warnings=False) 
 
+
+    ##############################################################################################################
+    def _import_hierarchy(self, path, sg_publish_data):
+        """Import the supplied path as a geo/alembic sop.
+        
+        :param str path: The path to the file to import.
+        :param dict sg_publish_data: The publish data for the supplied path.
+        
+        """
+
+        import hou
+        app = self.parent
+
+        name = sg_publish_data.get("name", "alembic")
+        path = self.get_publish_path(sg_publish_data)
+
+        # houdini doesn't like UNC paths.
+        path = path.replace("\\", "/")
+
+        obj_context = hou.node("/obj")
+
+        try:
+            AlembicNode = obj_context.createNode("alembicarchive","name")
+            AlembicNode.parm("fileName").set(path)
+            AlembicNode.parm("buildHierarchy").pressButton()
+            AlembicNode.parm("reloadGeometry").pressButton()
+            app.log_debug(
+            "Creating alembic : %s\n  path: '%s' " % 
+            (AlembicNode.path(), path))
+
+        except:
+            app.log_debug("Failed to create Node")
+
+
+
+
+        _show_node(AlembicNode)
 
     ##############################################################################################################
     def _import(self, path, sg_publish_data):

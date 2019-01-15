@@ -11,7 +11,7 @@ from sgtk.platform.qt import QtCore, QtGui
 class Ui_PublishHistoryWidget(object):
     def setupUi(self, PublishHistoryWidget):
         PublishHistoryWidget.setObjectName("PublishHistoryWidget")
-        PublishHistoryWidget.resize(394, 93)
+        PublishHistoryWidget.resize(1226, 782)
         self.horizontalLayout_3 = QtGui.QHBoxLayout(PublishHistoryWidget)
         self.horizontalLayout_3.setSpacing(1)
         self.horizontalLayout_3.setContentsMargins(1, 1, 1, 1)
@@ -45,6 +45,7 @@ class Ui_PublishHistoryWidget(object):
         self.header_label.setObjectName("header_label")
         self.horizontalLayout.addWidget(self.header_label)
         self.button = QtGui.QToolButton(self.box)
+        self.button.setMinimumSize(QtCore.QSize(50, 0))
         self.button.setPopupMode(QtGui.QToolButton.InstantPopup)
         self.button.setToolButtonStyle(QtCore.Qt.ToolButtonTextOnly)
         self.button.setObjectName("button")

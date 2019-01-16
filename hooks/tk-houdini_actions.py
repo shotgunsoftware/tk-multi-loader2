@@ -163,11 +163,16 @@ class HoudiniActions(HookBaseClass):
         
         # use the default settings, which tries to merge all nodes
         # and is conservative about overwriting and errors                
-        
-        hou.hipFile.merge(path,
-                          node_pattern="*",
-                          overwrite_on_conflict=False,
-                          ignore_load_warnings=False) 
+        #
+        # NOTE: We're ensuring that the path uses forward-slash separators
+        # since some hearly H17 builds had major issues with backslashes on
+        # Windows.
+        hou.hipFile.merge(
+            path.replace(os.path.sep, "/"),
+            node_pattern="*",
+            overwrite_on_conflict=False,
+            ignore_load_warnings=False,
+        )
 
 
     ##############################################################################################################

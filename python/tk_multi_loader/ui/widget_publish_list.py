@@ -11,7 +11,7 @@ from sgtk.platform.qt import QtCore, QtGui
 class Ui_PublishListWidget(object):
     def setupUi(self, PublishListWidget):
         PublishListWidget.setObjectName("PublishListWidget")
-        PublishListWidget.resize(352, 48)
+        PublishListWidget.resize(1226, 782)
         self.horizontalLayout_3 = QtGui.QHBoxLayout(PublishListWidget)
         self.horizontalLayout_3.setSpacing(1)
         self.horizontalLayout_3.setContentsMargins(1, 1, 1, 1)
@@ -63,6 +63,7 @@ class Ui_PublishListWidget(object):
         self.verticalLayout.addItem(spacerItem1)
         self.horizontalLayout.addLayout(self.verticalLayout)
         self.button = QtGui.QToolButton(self.box)
+        self.button.setMinimumSize(QtCore.QSize(50, 0))
         self.button.setPopupMode(QtGui.QToolButton.InstantPopup)
         self.button.setToolButtonStyle(QtCore.Qt.ToolButtonTextOnly)
         self.button.setObjectName("button")

@@ -11,7 +11,7 @@ from sgtk.platform.qt import QtCore, QtGui
 class Ui_PublishThumbWidget(object):
     def setupUi(self, PublishThumbWidget):
         PublishThumbWidget.setObjectName("PublishThumbWidget")
-        PublishThumbWidget.resize(520, 443)
+        PublishThumbWidget.resize(1226, 782)
         self.verticalLayout_2 = QtGui.QVBoxLayout(PublishThumbWidget)
         self.verticalLayout_2.setSpacing(1)
         self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
@@ -40,6 +40,7 @@ class Ui_PublishThumbWidget(object):
         self.label.setObjectName("label")
         self.horizontalLayout.addWidget(self.label)
         self.button = QtGui.QToolButton(self.box)
+        self.button.setMinimumSize(QtCore.QSize(50, 0))
         self.button.setPopupMode(QtGui.QToolButton.InstantPopup)
         self.button.setToolButtonStyle(QtCore.Qt.ToolButtonTextOnly)
         self.button.setObjectName("button")

@@ -132,6 +132,15 @@ configuration:
         allows_empty: True
         default_value: []
 
+    additional_publish_fields:
+        type: list
+        description: "Additional fields to be queried on the PublishedFile entity, which will be available for the
+                      loader items to use"
+        values:
+            type: str
+        allows_empty: True
+        default_value: []
+
 
 # this app works in all engines - it does not contain
 # any host application specific commands

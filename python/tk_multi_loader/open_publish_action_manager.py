@@ -12,7 +12,7 @@
 A specialisation of the main ActionManager class for the open publish version of the
 loader UI.
 """
-
+from functools import partial
 from sgtk.platform.qt import QtCore, QtGui
 from .action_manager import ActionManager
 
@@ -68,7 +68,7 @@ class OpenPublishActionManager(ActionManager):
 
         # connect the default action so that the default_action_triggered
         # is emitted:
-        default_action_cb = lambda sg=sg_data: self.default_action_triggered.emit(sg)
+        default_action_cb = partial(self.default_action_triggered.emit, sg_data)
         action.triggered[()].connect(default_action_cb)
 
         return action

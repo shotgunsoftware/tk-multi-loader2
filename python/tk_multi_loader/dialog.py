@@ -734,6 +734,15 @@ class AppDialog(QtGui.QWidget):
                     task_status_str = self._status_model.get_long_name(task_status_code)
                     msg += __make_table_row("Review", task_status_str)
 
+                # if there are extra fields related to published files to be displayed
+                extra_details = sgtk.platform.current_bundle().execute_hook(
+                    "publish_extra_details_hook",
+                    sg_item=sg_item,
+                    get_long_name_method=self._status_model.get_long_name
+                )
+                for label, value in extra_details:
+                    msg += __make_table_row(label, value)
+
                 self.ui.details_header.setText("<table>%s</table>" % msg)
 
                 # tell details pane to load stuff

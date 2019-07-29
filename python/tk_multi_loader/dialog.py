@@ -204,7 +204,8 @@ class AppDialog(QtGui.QWidget):
         # set up custom delegates to use when drawing the main area
         self._publish_thumb_delegate = SgPublishThumbDelegate(self.ui.publish_view, self._action_manager)
 
-        self._publish_list_delegate = SgPublishListDelegate(self.ui.publish_view, self._action_manager)
+        self._publish_list_delegate = SgPublishListDelegate(self.ui.publish_view, self._action_manager,
+                                                            self._status_model)
 
         # recall which the most recently mode used was and set that
         main_view_mode = self._settings_manager.retrieve("main_view_mode", self.MAIN_VIEW_THUMB)

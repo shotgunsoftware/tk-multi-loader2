@@ -108,16 +108,18 @@ class PublishDelegate(shotgun_view.EditSelectedWidgetDelegate):
     how things get rendered.
     """
 
-    def __init__(self, view, action_manager):
+    def __init__(self, view, action_manager, status_model=None):
         """
         Constructor
 
         :param view: The view where this delegate is being used
         :param action_manager: Action manager instance
+        :param status_model: Status model manager
         """
         self._action_manager = action_manager
         self._view = view
         self._sub_items_mode = False
+        self._status_model = status_model
         shotgun_view.EditSelectedWidgetDelegate.__init__(self, view)
 
     def set_sub_items_mode(self, enabled):

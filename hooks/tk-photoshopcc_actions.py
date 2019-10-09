@@ -15,7 +15,8 @@ Hook that loads defines all the available actions, broken down by publish type.
 import os
 
 import sgtk
-from sgtk.platform.qt import QtGui
+from sgtk.platform.qt import QtGui, QtCore
+from sgtk.platform.qt.tankqdialog import TankQDialog
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
@@ -130,22 +131,50 @@ class PhotoshopActions(HookBaseClass):
         :param sg_publish_data: Shotgun data dictionary with all the standard
                                 publish fields.
         """
-        app = self.parent
-        app.log_debug("Execute action called for action %s. "
-                      "Parameters: %s. Publish Data: %s" % (name, params, sg_publish_data))
+        # If the loader2 dialog is closed during processing it causes some stability problems
+        # on Windows and OSX. We'll just not allow it to be closed while we're working.
+        top_level_widgets = [w for w in QtGui.QApplication.topLevelWidgets() if isinstance(w, TankQDialog)]
+        top_level_widgets_flags = [(w, w.windowFlags()) for w in top_level_widgets]
 
-        # resolve path
-        # toolkit uses utf-8 encoded strings internally and the Photoshop API expects unicode
-        # so convert the path to ensure filenames containing complex characters are supported
-        path = self.get_publish_path(sg_publish_data).decode('utf-8')
+        try:
+            # We don't have an easy way from here to get the current loader2 widget, but it's
+            # not the end of the world if we just disable the close button for all top level
+            # dialogs that we know came from sgtk while we're in progress.
+            #
+            # https://stackoverflow.com/questions/3211272/qt-hide-minimize-maximize-and-close-buttons#
+            #
+            for widget in top_level_widgets:
+                if widget.isVisible():
+                    widget.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.WindowTitleHint | QtCore.Qt.CustomizeWindowHint)
+                    # Changing the window flags hides the dialog, so we re-show it. Doing these in quick succession
+                    # doesn't appear to cause any visual flicker.
+                    widget.show()
 
-        if not os.path.exists(path):
-            raise Exception("File not found on disk - '%s'" % path)
+            # Make sure the window flag change is visible to the user before we move on.
+            QtCore.QCoreApplication.processEvents()
 
-        if name == _OPEN_FILE:
-            self._open_file(path, sg_publish_data)
-        if name == _ADD_AS_A_LAYER:
-            self._place_file(path, sg_publish_data)
+            app = self.parent
+            app.log_debug("Execute action called for action %s. "
+                          "Parameters: %s. Publish Data: %s" % (name, params, sg_publish_data))
+
+            # resolve path
+            # toolkit uses utf-8 encoded strings internally and the Photoshop API expects unicode
+            # so convert the path to ensure filenames containing complex characters are supported
+            path = self.get_publish_path(sg_publish_data).decode('utf-8')
+
+            if not os.path.exists(path):
+                raise Exception("File not found on disk - '%s'" % path)
+
+            if name == _OPEN_FILE:
+                self._open_file(path, sg_publish_data)
+            if name == _ADD_AS_A_LAYER:
+                self._place_file(path, sg_publish_data)
+        finally:
+            # Set back the original window flags.
+            for widget, window_flags in top_level_widgets_flags:
+                if widget.isVisible():
+                    widget.setWindowFlags(window_flags)
+                    widget.show()
 
     ###########################################################################
     # helper methods

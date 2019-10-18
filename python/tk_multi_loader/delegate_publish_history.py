@@ -229,10 +229,9 @@ class SgPublishHistoryDelegate(shotgun_view.EditSelectedWidgetDelegate):
         # if there are extra fields related to published files to be displayed
         extra_details = sgtk.platform.current_bundle().execute_hook(
             "publish_extra_details_hook",
-            sg_item=sg_item,
-            get_long_name_method=self._status_model.get_long_name
+            sg_item=sg_item
         )
-        for label, value in extra_details:
+        for label, value in extra_details.iteritems():
             body_str += "%s: %s<br>" % (label, value)
 
         widget.set_text(header_str, body_str)

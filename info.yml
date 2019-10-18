@@ -40,7 +40,7 @@ configuration:
     publish_extra_details_hook:
         type: hook
         default_value: "{self}/publish_extra_details.py"
-        description: Hook which contains extra fields to be displayed on the details pane.
+        description: Hook that can be used to return extra fields to be displayed for a publish in the details pane.
 
     download_thumbnails:
         type: bool

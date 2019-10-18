@@ -205,14 +205,6 @@ class SgPublishListDelegate(PublishDelegate):
         small_text = "<span style='color:#2C93E2'>%s</span> by %s at %s" % (pub_type_str, 
                                                                             author_str,
                                                                             date_str)
-        # if there are extra fields related to published files to be displayed
-        extra_details = sgtk.platform.current_bundle().execute_hook(
-            "publish_extra_details_hook",
-            sg_item=sg_data,
-            get_long_name_method=self._status_model.get_long_name
-        )
-        for label, value in extra_details:
-            small_text += "<br>%s: %s" % (label, value)
 
         widget.set_text(main_text, small_text)
 

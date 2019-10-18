@@ -738,10 +738,9 @@ class AppDialog(QtGui.QWidget):
                 # if there are extra fields related to published files to be displayed
                 extra_details = sgtk.platform.current_bundle().execute_hook(
                     "publish_extra_details_hook",
-                    sg_item=sg_item,
-                    get_long_name_method=self._status_model.get_long_name
+                    entity=sg_item
                 )
-                for label, value in extra_details:
+                for label, value in extra_details.iteritems():
                     msg += __make_table_row(label, value)
 
                 self.ui.details_header.setText("<table>%s</table>" % msg)

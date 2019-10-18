@@ -245,4 +245,3 @@ class SgPublishHistoryDelegate(shotgun_view.EditSelectedWidgetDelegate):
         :param model_index: Model item to operate on
         """
         return PublishHistoryWidget.calculate_size()
-             

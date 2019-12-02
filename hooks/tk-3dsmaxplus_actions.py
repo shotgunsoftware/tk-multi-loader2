@@ -239,7 +239,7 @@ class MaxActions(HookBaseClass):
 
 
 def _execute_script(script):
-    if sgtk.platform.current_engine().supports_max_plus
+    if sgtk.platform.current_engine().supports_max_plus:
         MaxPlus.Core.EvalMAXScript(script)
     else:
         pymxs.runtime.execute(script)

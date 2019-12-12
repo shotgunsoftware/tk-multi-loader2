@@ -15,6 +15,7 @@ import sgtk
 import datetime
 from . import utils, constants
 from . import model_item_data
+from .utils import resolve_filters
 
 # import the shotgun_model module from the shotgun utils framework
 shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model")
@@ -174,6 +175,8 @@ class SgLatestPublishModel(ShotgunModel):
             # to the main entity filters before getting publishes from shotgun. This may be stuff
             # like 'only status approved'
             pub_filters = app.get_setting("publish_filters", [])
+            # resolve the filters so context properties can be used
+            pub_filters = resolve_filters(pub_filters)
             sg_filters.extend(pub_filters)
             
             # now, on top of that, apply any session specific filters

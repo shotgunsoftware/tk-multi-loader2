@@ -76,6 +76,7 @@ class SgPublishHistoryModel(ShotgunModel):
         # add external filters from config
         app = sgtk.platform.current_bundle()
         pub_filters = app.get_setting("publish_filters", [])
+        pub_filters = utils.resolve_filters(pub_filters)
         filters.extend(pub_filters)
 
         ShotgunModel._load_data(self,

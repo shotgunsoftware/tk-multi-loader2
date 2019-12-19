@@ -15,6 +15,7 @@ import sys
 from sgtk.platform.qt import QtCore, QtGui
 from tank_vendor import shotgun_api3
 from sgtk import TankError
+from sgtk.util import login
 
 from .action_manager import ActionManager
 
@@ -421,15 +422,25 @@ class LoaderActionManager(ActionManager):
                 action = actions[0]
                 action_title = action.get("name")
                 publish_type = action.get("sg_publish_data").get("published_file_type").get("name")
+                creator_id = action.get("sg_publish_data").get("created_by", dict()).get("id")
+                current_user = login.get_current_user(self._app.sgtk)
+
+                # The creator_generated property doesn't match the natural
+                # language format of the other properties, but it does match
+                # the form of the same property in other metrics being logged
+                # elsewhere. Inconsistency here means consistency where it's
+                # best to have it.
                 properties = {
                     "Publish Type": publish_type,
-                    "Action Title": action_title
+                    "Action Title": action_title,
+                    "creator_generated": current_user.get("id") == creator_id
                 }
+
                 EventMetric.log(
-                                EventMetric.GROUP_TOOLKIT,
-                                "Loaded Published File",
-                                properties=properties,
-                                bundle=self._app
+                    EventMetric.GROUP_TOOLKIT,
+                    "Loaded Published File",
+                    properties=properties,
+                    bundle=self._app
                 )
 
             except:

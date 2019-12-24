@@ -109,7 +109,8 @@ class SgPublishListDelegate(PublishDelegate):
 
         elif sg_data:
             # this is a leaf node
-            main_text = "<b>%s</b> <b style='color:#2C93E2'>%s</b>" % (sg_data["type"], field_value)
+            display_name = sgtk.util.get_entity_type_display_name(sgtk.platform.current_engine().sgtk, sg_data["type"])
+            main_text = "<b>%s</b> <b style='color:#2C93E2'>%s</b>" % (display_name, field_value)
             small_text = sg_data.get("description") or "No description given."
 
         widget.set_text(main_text, small_text)

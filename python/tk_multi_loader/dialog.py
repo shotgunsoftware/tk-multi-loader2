@@ -650,7 +650,9 @@ class AppDialog(QtGui.QWidget):
                     desc_str = "No description entered."
 
                 msg = ""
-                msg += __make_table_row("Name", "%s %s" % (sg_data.get("type"), sg_data.get("code")))
+                display_name = sgtk.util.get_entity_type_display_name(sgtk.platform.current_engine().sgtk,
+                                                                      sg_data["type"])
+                msg += __make_table_row("Name", "%s %s" % (display_name, sg_data.get("code")))
                 msg += __make_table_row("Status", status_name)
                 msg += __make_table_row("Description", desc_str)
                 self.ui.details_header.setText("<table>%s</table>" % msg)
@@ -708,8 +710,9 @@ class AppDialog(QtGui.QWidget):
                 msg += __make_table_row("Version", "%s" % vers_str)
 
                 if sg_item.get("entity"):
-                    entity_str = "<b>%s</b> %s" % (sg_item.get("entity").get("type"),
-                                                   sg_item.get("entity").get("name"))
+                    display_name = sgtk.util.get_entity_type_display_name(sgtk.platform.current_engine().sgtk,
+                                                                          sg_item.get("entity").get("type"))
+                    entity_str = "<b>%s</b> %s" % (display_name, sg_item.get("entity").get("name"))
                     msg += __make_table_row("Link", entity_str)
 
                 # sort out the task label

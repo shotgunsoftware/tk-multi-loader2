@@ -110,7 +110,7 @@ class SgPublishThumbDelegate(PublishDelegate):
         elif sg_data:
             # this is a leaf node
             header_text = field_value
-            details_text= sgtk.util.get_entity_type_display_name(sgtk.platform.current_engine().sgtk, sg_data["type"])
+            details_text = sgtk.util.get_entity_type_display_name(sgtk.platform.current_engine().sgtk, sg_data["type"])
 
         else:
             # other value (e.g. intermediary non-entity link node like sg_asset_type)

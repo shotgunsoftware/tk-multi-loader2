@@ -68,6 +68,7 @@ class AppDialog(QtGui.QWidget):
         """
         QtGui.QWidget.__init__(self, parent)
         self._action_manager = action_manager
+        self._bundle = sgtk.platform.current_bundle()
 
         # The loader app can be invoked from other applications with a custom
         # action manager as a File Open-like dialog. For these managers, we won't
@@ -924,8 +925,8 @@ class AppDialog(QtGui.QWidget):
                 help_screen.show_help_screen(self.window(), app, help_pix)
 
         # tell publish UI to update itself
-        item = self._get_selected_entity()
-        self._load_publishes_for_entity_item(item)
+        item = self._get_selected_entities()[0]
+        self._load_publishes_for_entity_items([item])
 
     def _on_thumb_size_slider_change(self, value):
         """
@@ -1047,29 +1048,29 @@ class AppDialog(QtGui.QWidget):
     ########################################################################################
     # entity listing tree view and presets toolbar
 
-    def _get_selected_entity(self):
+    def _get_selected_entities(self):
         """
-        Returns the item currently selected in the tree view, None
+        Returns the items currently selected in the tree view, None
         if no selection has been made.
         """
-
-        selected_item = None
+        selected_items = [None]
         selection_model = self._entity_presets[self._current_entity_preset].view.selectionModel()
+
         if selection_model.hasSelection():
+            selection = selection_model.selection().indexes()
 
-            current_idx = selection_model.selection().indexes()[0]
+            selected_items = []
+            for current_idx in selection:
+                model = current_idx.model()
 
-            model = current_idx.model()
+                if not isinstance(model, (SgHierarchyModel, SgEntityModel)):
+                    # proxy model!
+                    current_idx = model.mapToSource(current_idx)
 
-            if not isinstance(model, (SgHierarchyModel, SgEntityModel)):
-                # proxy model!
-                current_idx = model.mapToSource(current_idx)
+                selected_item = current_idx.model().itemFromIndex(current_idx)
+                selected_items.append(selected_item)
 
-            # now we have arrived at our model derived from StandardItemModel
-            # so let's retrieve the standarditem object associated with the index
-            selected_item = current_idx.model().itemFromIndex(current_idx)
-
-        return selected_item
+        return selected_items
 
     def _select_tab(self, tab_caption, track_in_history):
         """
@@ -1123,7 +1124,7 @@ class AppDialog(QtGui.QWidget):
             # to selected is in vertically centered in the widget
 
             # get the currently selected item in our tab
-            selected_item = self._get_selected_entity()
+            selected_item = self._get_selected_entities()[0]
 
             if selected_item and selected_item.index() == item.index():
                 # the item is already selected!
@@ -1209,6 +1210,12 @@ class AppDialog(QtGui.QWidget):
 
                 sg_entity_type = setting_dict["entity_type"]
 
+            # Check to see if we are showing a tags view.
+            if sg_entity_type == 'Tag':
+                type_tag = True
+            else:
+                type_tag = False
+
             # get optional publish_filter setting
             # note: actual value in the yaml settings can be None,
             # that's why we cannot use setting_dict.get("publish_filters", [])
@@ -1242,6 +1249,12 @@ class AppDialog(QtGui.QWidget):
             view.setUniformRowHeights(True)
             view.setHeaderHidden(True)
             view.setModel(proxy_model)
+
+            # Enable multiselection on tag list entities (or in this case extended selection so selections are sticky)
+            if type_tag:
+                view.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)
+            else:
+                view.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
 
             # Keep a handle to all the new Qt objects, otherwise the GC may not work.
             self._dynamic_widgets.extend([model, proxy_model, tab, layout, view])
@@ -1497,10 +1510,10 @@ class AppDialog(QtGui.QWidget):
         Slot triggered when the hierarchy model has been refreshed. This allows to show all the
         folder items in the right-hand side for the current selection.
         """
-        selected_item = self._get_selected_entity()
+        selected_item = self._get_selected_entities()[0]
 
         # tell publish UI to update itself
-        self._load_publishes_for_entity_item(selected_item)
+        self._load_publishes_for_entity_items([selected_item])
 
     def _node_activated(self, incremental_paths, view, proxy_model):
         """
@@ -1589,6 +1602,7 @@ class AppDialog(QtGui.QWidget):
         :param track_in_history: Hint to this method that the actions should be tracked in the
             history.
         """
+
         # qt returns unicode/qstring here so force to str
         curr_tab_name = shotgun_model.sanitize_qt(self.ui.entity_preset_tabs.tabText(new_index))
 
@@ -1612,7 +1626,7 @@ class AppDialog(QtGui.QWidget):
 
         if track_in_history:
             # figure out what is selected
-            selected_item = self._get_selected_entity()
+            selected_item = self._get_selected_entities()[0]
 
             # update breadcrumbs
             self._populate_entity_breadcrumbs(selected_item)
@@ -1624,40 +1638,52 @@ class AppDialog(QtGui.QWidget):
             self._setup_details_panel([])
 
             # tell the publish view to change
-            self._load_publishes_for_entity_item(selected_item)
+            self._load_publishes_for_entity_items([selected_item])
 
     def _on_treeview_item_selected(self):
         """
         Slot triggered when someone changes the selection in a treeview.
         """
+        selected_items = self._get_selected_entities()
 
-        selected_item = self._get_selected_entity()
-
-        # update breadcrumbs
-        self._populate_entity_breadcrumbs(selected_item)
-
-        # when an item in the treeview is selected, the child
-        # nodes are displayed in the main view, so make sure
-        # they are loaded.
         model = self._entity_presets[self._current_entity_preset].model
-        if selected_item and model.canFetchMore(selected_item.index()):
-            model.fetchMore(selected_item.index())
 
-        # notify history
-        self._add_history_record(self._current_entity_preset, selected_item)
+        # If nothing is selected, refresh the view.
+        if len(selected_items) == 0:
+            if isinstance(model, SgEntityModel):
+                model.async_refresh()
+        else:
+            # when an item in the treeview is selected, the child
+            # nodes are displayed in the main view, so make sure
+            # they are loaded.
 
-        # tell details panel to clear itself
-        self._setup_details_panel([])
+            multi_selection_filters = []
+            for selected_item in selected_items:
+                # update breadcrumbs
+                self._populate_entity_breadcrumbs(selected_item)
 
-        # tell publish UI to update itself
-        self._load_publishes_for_entity_item(selected_item)
+                selected_item_filters = model.get_filters(selected_item)
+                for f in selected_item_filters:
+                    if f not in multi_selection_filters:
+                        multi_selection_filters.append(f)
 
-    def _load_publishes_for_entity_item(self, item):
+                if selected_item and model.canFetchMore(selected_item.index()):
+                    model.fetchMore(selected_item.index())
+
+                # notify history
+                self._add_history_record(self._current_entity_preset, selected_item)
+
+            # tell details panel to clear itself
+            self._setup_details_panel([])
+
+            # tell publish UI to update itself
+            self._load_publishes_for_entity_items(selected_items)
+
+    def _load_publishes_for_entity_items(self, items):
         """
         Given an item from the treeview, or None if no item
         is selected, prepare the publish area UI.
         """
-
         # clear selection. If we don't clear the model at this point,
         # the selection model will attempt to pair up with the model is
         # data is being loaded in, resulting in many many events
@@ -1667,67 +1693,69 @@ class AppDialog(QtGui.QWidget):
         child_folders = []
         proxy_model = self._entity_presets[self._current_entity_preset].proxy_model
 
-        if item is None:
-            # nothing is selected, bring in all the top level
-            # objects in the current tab
-            num_children = proxy_model.rowCount()
+        for item in items:
+            if item is None:
+                # nothing is selected, bring in all the top level
+                # objects in the current tab
+                num_children = proxy_model.rowCount()
 
-            for x in range(num_children):
-                # get the (proxy model) index for the child
-                child_idx_proxy = proxy_model.index(x, 0)
-                # switch to shotgun model index
-                child_idx = proxy_model.mapToSource(child_idx_proxy)
-                # resolve the index into an actual standarditem object
-                i = self._entity_presets[self._current_entity_preset].model.itemFromIndex(child_idx)
-                child_folders.append(i)
+                for x in range(num_children):
+                    # get the (proxy model) index for the child
+                    child_idx_proxy = proxy_model.index(x, 0)
+                    # switch to shotgun model index
+                    child_idx = proxy_model.mapToSource(child_idx_proxy)
+                    # resolve the index into an actual standarditem object
+                    i = self._entity_presets[self._current_entity_preset].model.itemFromIndex(child_idx)
+                    child_folders.append(i)
 
-        else:
-            # we got a specific item to process!
-
-            # now get the proxy model level item instead - this way we can take search into
-            # account as we show the folder listings.
-            root_model_idx = item.index()
-            root_model_idx_proxy = proxy_model.mapFromSource(root_model_idx)
-            num_children = proxy_model.rowCount(root_model_idx_proxy)
-
-            # get all the folder children - these need to be displayed
-            # by the model as folders
-
-            for x in range(num_children):
-                # get the (proxy model) index for the child
-                child_idx_proxy = root_model_idx_proxy.child(x, 0)
-                # switch to shotgun model index
-                child_idx = proxy_model.mapToSource(child_idx_proxy)
-                # resolve the index into an actual standarditem object
-                i = self._entity_presets[self._current_entity_preset].model.itemFromIndex(child_idx)
-                child_folders.append(i)
-
-        # Is the show child folders checked?
-        # The hierarchy model cannot handle "Show items in subfolders" mode.
-        show_sub_items = self.ui.show_sub_items.isChecked() and \
-                         not isinstance(self._entity_presets[self._current_entity_preset].model, SgHierarchyModel)
-
-        if show_sub_items:
-            # indicate this with a special background color
-            self.ui.publish_view.setStyleSheet("#publish_view { background-color: rgba(44, 147, 226, 20%); }")
-            if len(child_folders) > 0:
-                # delegates are rendered in a special way
-                # if we are on a non-leaf node in the tree (e.g there are subfolders)
-                self._publish_thumb_delegate.set_sub_items_mode(True)
-                self._publish_list_delegate.set_sub_items_mode(True)
             else:
-                # we are at leaf level and the subitems check box is checked
-                # render the cells
+                # we got a specific item to process!
+
+                # now get the proxy model level item instead - this way we can take search into
+                # account as we show the folder listings.
+                root_model_idx = item.index()
+                root_model_idx_proxy = proxy_model.mapFromSource(root_model_idx)
+                num_children = proxy_model.rowCount(root_model_idx_proxy)
+
+                # get all the folder children - these need to be displayed
+                # by the model as folders
+
+                for x in range(num_children):
+                    # get the (proxy model) index for the child
+                    child_idx_proxy = root_model_idx_proxy.child(x, 0)
+                    # switch to shotgun model index
+                    child_idx = proxy_model.mapToSource(child_idx_proxy)
+                    # resolve the index into an actual standarditem object
+                    i = self._entity_presets[self._current_entity_preset].model.itemFromIndex(child_idx)
+                    child_folders.append(i)
+
+            # Is the show child folders checked?
+            # The hierarchy model cannot handle "Show items in subfolders" mode.
+            show_sub_items = self.ui.show_sub_items.isChecked() and \
+                             not isinstance(self._entity_presets[self._current_entity_preset].model, SgHierarchyModel)
+
+            if show_sub_items:
+                # indicate this with a special background color
+                self.ui.publish_view.setStyleSheet("#publish_view { background-color: rgba(44, 147, 226, 20%); }")
+                if len(child_folders) > 0:
+                    # delegates are rendered in a special way
+                    # if we are on a non-leaf node in the tree (e.g there are subfolders)
+                    self._publish_thumb_delegate.set_sub_items_mode(True)
+                    self._publish_list_delegate.set_sub_items_mode(True)
+                else:
+                    # we are at leaf level and the subitems check box is checked
+                    # render the cells
+                    self._publish_thumb_delegate.set_sub_items_mode(False)
+                    self._publish_list_delegate.set_sub_items_mode(False)
+            else:
+                self.ui.publish_view.setStyleSheet("")
                 self._publish_thumb_delegate.set_sub_items_mode(False)
                 self._publish_list_delegate.set_sub_items_mode(False)
-        else:
-            self.ui.publish_view.setStyleSheet("")
-            self._publish_thumb_delegate.set_sub_items_mode(False)
-            self._publish_list_delegate.set_sub_items_mode(False)
 
-        # now finally load up the data in the publish model
-        publish_filters = self._entity_presets[self._current_entity_preset].publish_filters
-        self._publish_model.load_data(item, child_folders, show_sub_items, publish_filters)
+            # now finally load up the data in the publish model
+            publish_filters = self._entity_presets[self._current_entity_preset].publish_filters
+
+        self._publish_model.load_data(items, child_folders, show_sub_items, publish_filters)
 
     def _populate_entity_breadcrumbs(self, selected_item):
         """
@@ -1736,7 +1764,6 @@ class AppDialog(QtGui.QWidget):
         :param selected_item: Item currently selected in the tree view or
                               `None` when no selection has been made.
         """
-
         crumbs = []
 
         if selected_item:
@@ -1800,6 +1827,21 @@ class AppDialog(QtGui.QWidget):
 
         self.ui.entity_breadcrumbs.setText("<big>%s</big>" % breadcrumbs)
 
+    def _log_debug(self, msg):
+        """
+        Convenience wrapper around debug logging
+
+        :param msg: debug message
+        """
+        self._bundle.log_debug("[%s] %s" % (self.__class__.__name__, msg))
+
+    def _log_info(self, msg):
+        """
+        Convenience wrapper around debug logging
+
+        :param msg: debug message
+        """
+        self._bundle.log_info("[%s] %s" % (self.__class__.__name__, msg))
 
 ################################################################################################
 # Helper stuff

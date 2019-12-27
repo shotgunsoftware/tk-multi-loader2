@@ -44,12 +44,12 @@ class SgLatestPublishModel(ShotgunModel):
         self._loading_icon = QtGui.QIcon(QtGui.QPixmap(":/res/loading_512x400.png"))
         self._associated_items = {}
 
-        app = sgtk.platform.current_bundle()
+        self.app = sgtk.platform.current_bundle()
 
         # init base class
         ShotgunModel.__init__(self,
                               parent,
-                              download_thumbs=app.get_setting("download_thumbnails"),
+                              download_thumbs=self.app.get_setting("download_thumbnails"),
                              schema_generation=6,
                              bg_load_thumbs=True,
                              bg_task_manager=bg_task_manager)
@@ -66,7 +66,7 @@ class SgLatestPublishModel(ShotgunModel):
         entity_item_hash = item.data(self.ASSOCIATED_TREE_VIEW_ITEM_ROLE)
         return self._associated_items.get(entity_item_hash)
 
-    def load_data(self, item, child_folders, show_sub_items, additional_sg_filters):
+    def load_data(self, items, child_folders, show_sub_items, additional_sg_filters):
         """
         Clears the model and sets it up for a particular entity.
         Loads any cached data that exists.
@@ -79,93 +79,115 @@ class SgLatestPublishModel(ShotgunModel):
                                'below' the selected item in Shotgun and hides any folders items.
         :param additional_sg_filters: List of shotgun filters to add to the shotgun query when retrieving publishes.
         """
-
-        app = sgtk.platform.current_bundle()
-
-        if item is None:
+        if len(items) == 0:
             # nothing selected in the treeview
             # passing none to _load_data indicates that no query should be executed
-            sg_filters = None
+            sg_filters = []
 
-        else:
-            # we have a selection!
+        else: #if isinstance(items, (list, tuple)):
+            # we have a multi selection!
 
             if show_sub_items:
-                # special mode -- in this case we don't show any of the
-                # child folders and only the partial matches of all the leaf nodes
+                # loop through the selected items
+                for item in items:
+                    # special mode -- in this case we don't show any of the
+                    # child folders and only the partial matches of all the leaf nodes
 
-                # for example, this may return
-                # entity type shot, [["sequence", "is", "xxx"]] or
-                # entity type shot, [["status", "is", "ip"]] or
+                    # for example, this may return
+                    # entity type shot, [["sequence", "is", "xxx"]] or
+                    # entity type shot, [["status", "is", "ip"]] or
 
-                # note! Because of nasty bug https://bugreports.qt-project.org/browse/PYSIDE-158,
-                # we cannot pull the model directly from the item but have to pull it from
-                # the model index instead.
-                model_idx = item.index()
-                model = model_idx.model()
-                partial_filters = model.get_filters(item)
-                entity_type = model.get_entity_type()
+                    # note! Because of nasty bug https://bugreports.qt-project.org/browse/PYSIDE-158,
+                    # we cannot pull the model directly from the item but have to pull it from
+                    # the model index instead.
+                    model_idx = item.index()
+                    model = model_idx.model()
+                    partial_filters = model.get_filters(item)
+                    entity_type = model.get_entity_type()
 
-                # now get a list of matches from the above query from
-                # shotgun - note that this is a synchronous call so
-                # it may 'pause' execution briefly for the user
-                data = app.shotgun.find(entity_type, partial_filters)
+                    # now get a list of matches from the above query from
+                    # shotgun - note that this is a synchronous call so
+                    # it may 'pause' execution briefly for the user
+                    data = self.app.shotgun.find(entity_type, partial_filters)
 
+                    # now create the final query for the model - this will be
+                    # a big in statement listing all the ids returned from
+                    # the previous query, asking the model to only show the
+                    # items matching the previous query.
+                    #
+                    # note that for tasks, we link via the task field
+                    # rather than the std entity link field
+                    #
 
-                # now create the final query for the model - this will be
-                # a big in statement listing all the ids returned from
-                # the previous query, asking the model to only show the
-                # items matching the previous query.
-                #
-                # note that for tasks, we link via the task field
-                # rather than the std entity link field
-                #
-                if entity_type == "Task":
-                    sg_filters = [["task", "in", data]]
-                elif entity_type == "Version":
-                    sg_filters = [["version", "in", data]]
-                else:
-                    sg_filters = [["entity", "in", data]]
+                    # New sg_filter for tags. We need to pull the tag applied
+                    # to the Version associated with the publish
+                    # In the context of a media library it should be assumed
+                    # that any PublishedFile WILL have a Version associated with it.
+                    # We may need to add logic to cover cases where the published file has no version.
+                    if entity_type == "Task":
+                        sg_filters = [["task", "in", data]]
+                    elif entity_type == "Version":
+                        sg_filters = [["version", "in", data]]
+                    elif entity_type == "Tag":
+                        sg_filters = [["version.Version.tags", "in", data ]]
+                    else:
+                        sg_filters = [["entity", "in", data]]
 
-                # lastly, when we are in this special mode, the main view
-                # is no longer functioning as a browsable hierarchy
-                # but is switching into more of a paradigm of an inverse
-                # database. Indicate the difference by not showing any folders
-                child_folders = []
-
+                    # lastly, when we are in this special mode, the main view
+                    # is no longer functioning as a browsable hierarchy
+                    # but is switching into more of a paradigm of an inverse
+                    # database. Indicate the difference by not showing any folders
+                    child_folders = []
             else:
-                # standard mode - show folders and items for the currently selected item
+                # standard mode - show folders and items for the currently selected items
                 # for leaf nodes and for tree nodes which are connected to an entity,
                 # show matches.
 
-                # Extract the Shotgun data and field value from the node item.
-                (sg_data, field_value) = model_item_data.get_item_data(item)
+                # because we might have multiple entities selected, we need to create a list to hold all our filters
+                sg_filters = []
 
-                if sg_data:
-                    # leaf node!
-                    # show the items associated. Handle tasks
-                    # via the task field instead of the entity field
-                    if sg_data.get("type") == "Task":
-                        sg_filters = [["task", "is", {"type": sg_data["type"], "id": sg_data["id"]}]]
-                    elif sg_data.get("type") == "Version":
-                        sg_filters = [["version", "is", {"type": "Version", "id": sg_data["id"]}]]
-                    else:
-                        sg_filters = [["entity", "is", {"type": sg_data["type"], "id": sg_data["id"]} ]]
-
-                else:
-                    # intermediate node.
-
-                    if isinstance(field_value, dict) and "name" in field_value and "type" in field_value:
-                        # this is an intermediate node like a sequence or an asset which
-                        # can have publishes of its own associated
-                        sg_filters = [["entity", "is", field_value ]]
-
-                    else:
-                        # this is an intermediate node like status or asset type which does not
-                        # have any publishes of its own, because the value (e.g. the status or the asset type)
-                        # is nothing that you could link up a publish to.
+                # loop through the selected items
+                for item in items:
+                    if item is None:
+                        # nothing selected in the treeview
+                        # passing none to _load_data indicates that no query should be executed
                         sg_filters = None
+                    else:
+                        # Extract the Shotgun data and field value from the node item.
+                        (sg_data, field_value) = model_item_data.get_item_data(item)
 
+                        if sg_data:
+                            # leaf node!
+                            # show the items associated. Handle tasks
+                            # via the task field instead of the entity field
+                            # handle tags via the publish file's Version's tags field. (Tags should always be applied
+                            # to the Version rather than the PublishedFile as we also want to be able to filter by tag
+                            # from the media page (which is shows only versions and as the published_files field in
+                            # versions is ulti-entity, we cant filter by published_files.PublishedFile.tag)
+                            if sg_data.get("type") == "Task":
+                                sg_filters.append(["task", "is", {"type": sg_data["type"], "id": sg_data["id"]} ])
+                            elif sg_data.get("type") == "Version":
+                                sg_filters = [["version", "is", {"type": "Version", "id": sg_data["id"]}]]
+                            elif sg_data.get("type") == "Tag":
+                                sg_filters.append(["version.Version.tags", "in", {"type": sg_data["type"], "id": sg_data["id"]} ])
+                                # the folder paradigm isn't relevant to tag view, so hide the child folders.
+                                child_folders = []
+                            else:
+                                sg_filters.append(["entity", "is", {"type": sg_data["type"], "id": sg_data["id"]} ])
+
+                        else:
+                            # intermediate node.
+
+                            if isinstance(field_value, dict) and "name" in field_value and "type" in field_value:
+                                # this is an intermediate node like a sequence or an asset which
+                                # can have publishes of its own associated
+                                sg_filters = [["entity", "is", field_value ]]
+
+                            else:
+                                # this is an intermediate node like status or asset type which does not
+                                # have any publishes of its own, because the value (e.g. the status or the asset type)
+                                # is nothing that you could link up a publish to.
+                                sg_filters = None
 
         # now if sg_filters is not None (None indicates that no data should be fetched by the model),
         # add our external filter settings
@@ -173,13 +195,13 @@ class SgLatestPublishModel(ShotgunModel):
             # first apply any global sg filters, as specified in the config that we should append
             # to the main entity filters before getting publishes from shotgun. This may be stuff
             # like 'only status approved'
-            pub_filters = app.get_setting("publish_filters", [])
+            pub_filters = self.app.get_setting("publish_filters", [])
             sg_filters.extend(pub_filters)
-            
+
             # now, on top of that, apply any session specific filters
             # these typically come from the treeview and are pulled from a per-tab config setting,
             # allowing users to configure tabs with different publish filters, so that one
-            # tab can contain approved shot publishes, another can contain only items from 
+            # tab can contain approved shot publishes, another can contain only items from
             # your current department, etc.
             sg_filters.extend(additional_sg_filters)
 
@@ -241,8 +263,7 @@ class SgLatestPublishModel(ShotgunModel):
                               of folders and files.
         """
         # first figure out which fields to get from shotgun
-        app = sgtk.platform.current_bundle()
-        publish_entity_type = sgtk.util.get_published_file_entity_type(app.tank)
+        publish_entity_type = sgtk.util.get_published_file_entity_type(self.app.tank)
 
         if publish_entity_type == "PublishedFile":
             self._publish_type_field = "published_file_type"
@@ -436,11 +457,10 @@ class SgLatestPublishModel(ShotgunModel):
         :param sg_data_list: list of shotgun dictionaries, as returned by the find() call.
         :returns: should return a list of shotgun dictionaries, on the same form as the input.
         """
-        app = sgtk.platform.current_bundle()
 
         # First, let the filter_publishes hook have a chance to filter the list
         # of publishes:
-        sg_data_list = utils.filter_publishes(app, sg_data_list)
+        sg_data_list = utils.filter_publishes(self.app, sg_data_list)
 
         # filter the shotgun data so that we only return the latest publish for each file.
         # also perform aggregate computations and push those summaries into the associated
@@ -536,3 +556,20 @@ class SgLatestPublishModel(ShotgunModel):
         self._publish_type_model.set_active_types( type_id_aggregates )
 
         return new_sg_data
+
+    def _log_debug(self, msg):
+        """
+        Convenience wrapper around debug logging
+
+        :param msg: debug message
+        """
+        self.app.log_debug("[%s] %s" % (self.__class__.__name__, msg))
+
+    def _log_info(self, msg):
+        """
+        Convenience wrapper around debug logging
+
+        :param msg: debug message
+        """
+        self.app.log_info("[%s] %s" % (self.__class__.__name__, msg))
+

@@ -650,8 +650,7 @@ class AppDialog(QtGui.QWidget):
                     desc_str = "No description entered."
 
                 msg = ""
-                display_name = sgtk.util.get_entity_type_display_name(sgtk.platform.current_engine().sgtk,
-                                                                      sg_data["type"])
+                display_name = shotgun_globals.get_type_display_name(sg_data["type"])
                 msg += __make_table_row("Name", "%s %s" % (display_name, sg_data.get("code")))
                 msg += __make_table_row("Status", status_name)
                 msg += __make_table_row("Description", desc_str)
@@ -710,8 +709,7 @@ class AppDialog(QtGui.QWidget):
                 msg += __make_table_row("Version", "%s" % vers_str)
 
                 if sg_item.get("entity"):
-                    display_name = sgtk.util.get_entity_type_display_name(sgtk.platform.current_engine().sgtk,
-                                                                          sg_item.get("entity").get("type"))
+                    display_name = shotgun_globals.get_type_display_name(sg_item.get("entity").get("type"))
                     entity_str = "<b>%s</b> %s" % (display_name, sg_item.get("entity").get("name"))
                     msg += __make_table_row("Link", entity_str)
 
@@ -1791,8 +1789,7 @@ class AppDialog(QtGui.QWidget):
 
                 else:
                     # lookup the display name for the entity type:
-                    tk = sgtk.platform.current_bundle().sgtk
-                    sg_type_display_name = sgtk.util.get_entity_type_display_name(tk, sg_type)
+                    sg_type_display_name = shotgun_globals.get_type_display_name(sg_type)
                     crumbs.append("<b>%s</b> %s" % (sg_type_display_name, name))
                 tmp_item = tmp_item.parent()
 

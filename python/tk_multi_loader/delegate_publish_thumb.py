@@ -16,6 +16,7 @@ from .utils import ResizeEventFilter
 
 # import the shotgun_model and view modules from the shotgun utils framework
 shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model")
+shotgun_globals = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_globals")
 shotgun_view = sgtk.platform.import_framework("tk-framework-qtwidgets", "views")
 
 from .ui.widget_publish_thumb import Ui_PublishThumbWidget

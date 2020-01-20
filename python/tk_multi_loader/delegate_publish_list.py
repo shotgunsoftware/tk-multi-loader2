@@ -15,6 +15,7 @@ from .model_latestpublish import SgLatestPublishModel
 
 # import the shotgun_model and view modules from the shotgun utils framework
 shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model")
+shotgun_globals = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_globals")
 shotgun_view = sgtk.platform.import_framework("tk-framework-qtwidgets", "views")
 
 from .ui.widget_publish_list import Ui_PublishListWidget
@@ -109,7 +110,8 @@ class SgPublishListDelegate(PublishDelegate):
 
         elif sg_data:
             # this is a leaf node
-            main_text = "<b>%s</b> <b style='color:#2C93E2'>%s</b>" % (sg_data["type"], field_value)
+            display_name = shotgun_globals.get_type_display_name(sg_data["type"])
+            main_text = "<b>%s</b> <b style='color:#2C93E2'>%s</b>" % (display_name, field_value)
             small_text = sg_data.get("description") or "No description given."
 
         widget.set_text(main_text, small_text)

@@ -16,6 +16,7 @@ from .utils import ResizeEventFilter
 
 # import the shotgun_model and view modules from the shotgun utils framework
 shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model")
+shotgun_globals = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_globals")
 shotgun_view = sgtk.platform.import_framework("tk-framework-qtwidgets", "views")
 
 from .ui.widget_publish_thumb import Ui_PublishThumbWidget
@@ -110,7 +111,7 @@ class SgPublishThumbDelegate(PublishDelegate):
         elif sg_data:
             # this is a leaf node
             header_text = field_value
-            details_text = sg_data.get("type")
+            details_text = shotgun_globals.get_type_display_name(sg_data["type"])
 
         else:
             # other value (e.g. intermediary non-entity link node like sg_asset_type)

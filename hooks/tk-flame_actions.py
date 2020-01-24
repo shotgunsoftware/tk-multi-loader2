@@ -178,7 +178,7 @@ class FlameActions(HookBaseClass):
 
             else:
                 raise FlameActionError("Unknown action name: '%s'".format(name))
-        except FlameActionError, error:
+        except FlameActionError as error:
             # A FlameActionError reaching here means that something major have stopped the current action
             app.log_error(error)
 
@@ -898,7 +898,7 @@ class FlameActions(HookBaseClass):
         # Lets retrieve all the files that's in the folder of the file to match
         try:
             files = [f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f))]
-        except OSError, e:
+        except OSError as e:
             raise FlameActionError("Unable to guess the frame range for '%s'" % path)
 
         for f in files:

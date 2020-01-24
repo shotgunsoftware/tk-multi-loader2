@@ -399,7 +399,7 @@ class LoaderActionManager(ActionManager):
             self._app.execute_hook_method("actions_hook",
                                           "execute_multiple_actions",
                                           actions=actions)
-        except Exception, e:
+        except Exception as e:
             self._app.log_exception("Could not execute execute_action hook: %s" % e)
             QtGui.QMessageBox.critical(
                 QtGui.QApplication.activeWindow(),

@@ -15,21 +15,26 @@ from .model_latestpublish import SgLatestPublishModel
 from .utils import ResizeEventFilter
 
 # import the shotgun_model and view modules from the shotgun utils framework
-shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model")
-shotgun_globals = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_globals")
+shotgun_model = sgtk.platform.import_framework(
+    "tk-framework-shotgunutils", "shotgun_model"
+)
+shotgun_globals = sgtk.platform.import_framework(
+    "tk-framework-shotgunutils", "shotgun_globals"
+)
 shotgun_view = sgtk.platform.import_framework("tk-framework-qtwidgets", "views")
 
 from .ui.widget_publish_thumb import Ui_PublishThumbWidget
 from .delegate_publish import PublishWidget, PublishDelegate
 from . import model_item_data
 
+
 class PublishThumbWidget(PublishWidget):
     """
-    Thumbnail style widget which contains an image and some 
-    text underneath. The widget scales gracefully. 
+    Thumbnail style widget which contains an image and some
+    text underneath. The widget scales gracefully.
     Used in the main loader view.
     """
-    
+
     def __init__(self, parent):
         """
         :param parent: QT parent object
@@ -39,7 +44,7 @@ class PublishThumbWidget(PublishWidget):
     def set_text(self, header, body):
         """
         Populate the lines of text in the widget
-        
+
         :param header: Header text as string
         :param body: Body text as string
         """
@@ -51,13 +56,13 @@ class PublishThumbWidget(PublishWidget):
         """
         Calculates and returns a suitable size for this widget given a scale factor
         in pixels.
-        
+
         :returns: Size of the widget
-        """        
+        """
         # the thumbnail proportions are 512x400
         # add another 34px for the height so the text can be rendered.
-        return QtCore.QSize(scale_factor, (scale_factor*0.78125)+34)
-        
+        return QtCore.QSize(scale_factor, (scale_factor * 0.78125) + 34)
+
 
 class SgPublishThumbDelegate(PublishDelegate):
     """
@@ -68,7 +73,7 @@ class SgPublishThumbDelegate(PublishDelegate):
         """
         Widget factory as required by base class. The base class will call this
         when a widget is needed and then pass this widget in to the various callbacks.
-        
+
         :param parent: Parent object for the widget
         """
         return PublishThumbWidget(parent)
@@ -87,7 +92,11 @@ class SgPublishThumbDelegate(PublishDelegate):
         header_text = ""
         details_text = ""
 
-        if isinstance(field_value, dict) and "name" in field_value and "type" in field_value:
+        if (
+            isinstance(field_value, dict)
+            and "name" in field_value
+            and "type" in field_value
+        ):
             # intermediate node with entity link
             header_text = field_value["name"]
             details_text = field_value["type"]
@@ -221,15 +230,16 @@ class SgPublishThumbDelegate(PublishDelegate):
             # std publish - render with a name and a publish type
             # main_body v3
             # Render
-            details_text = shotgun_model.get_sanitized_data(model_index,
-                                                            SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE)
+            details_text = shotgun_model.get_sanitized_data(
+                model_index, SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE
+            )
 
         widget.set_text(header_text, details_text)
 
     def sizeHint(self, style_options, model_index):
         """
         Specify the size of the item.
-        
+
         :param style_options: QT style options
         :param model_index: Model item to operate on
         """

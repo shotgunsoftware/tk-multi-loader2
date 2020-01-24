@@ -1,11 +1,11 @@
 # Copyright (c) 2015 Shotgun Software Inc.
-# 
+#
 # CONFIDENTIAL AND PROPRIETARY
-# 
-# This work is provided "AS IS" and subject to the Shotgun Pipeline Toolkit 
+#
+# This work is provided "AS IS" and subject to the Shotgun Pipeline Toolkit
 # Source Code License included in this distribution package. See LICENSE.
-# By accessing, using, copying or modifying this work you indicate your 
-# agreement to the Shotgun Pipeline Toolkit Source Code License. All rights 
+# By accessing, using, copying or modifying this work you indicate your
+# agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import sgtk
@@ -13,7 +13,10 @@ from sgtk.platform.qt import QtCore, QtGui
 
 from . import constants
 
-shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model")
+shotgun_model = sgtk.platform.import_framework(
+    "tk-framework-shotgunutils", "shotgun_model"
+)
+
 
 class SgEntityProxyModel(QtGui.QSortFilterProxyModel):
     """
@@ -35,7 +38,6 @@ class SgEntityProxyModel(QtGui.QSortFilterProxyModel):
         self.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
         self.setDynamicSortFilter(True)
         self.sort(0, QtCore.Qt.AscendingOrder)
-
 
     def _matching_r(self, search_exp, item):
         """
@@ -83,7 +85,10 @@ class SgEntityProxyModel(QtGui.QSortFilterProxyModel):
         cache_len = len(self._cache)
         if cache_len > 0:
             ratio = (float)(self._cache_hits) / (float)(cache_len) * 100.0
-            app.log_debug("Search efficiency: %s items %4f%% cache hit ratio." % (cache_len, ratio))
+            app.log_debug(
+                "Search efficiency: %s items %4f%% cache hit ratio."
+                % (cache_len, ratio)
+            )
 
         self._cache_hits = 0
         self._cache = {}
@@ -130,4 +135,3 @@ class SgEntityProxyModel(QtGui.QSortFilterProxyModel):
 
         # evaluate recursive match
         return self._matching_r(search_exp, item)
-

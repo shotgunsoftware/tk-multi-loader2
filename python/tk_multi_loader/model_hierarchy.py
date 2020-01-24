@@ -10,7 +10,9 @@
 
 import sgtk
 
-shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model")
+shotgun_model = sgtk.platform.import_framework(
+    "tk-framework-shotgunutils", "shotgun_model"
+)
 
 SimpleShotgunHierarchyModel = shotgun_model.SimpleShotgunHierarchyModel
 
@@ -22,7 +24,9 @@ class SgHierarchyModel(SimpleShotgunHierarchyModel):
     hierarchy tree view tabs on the left-hand-side of the dialog.
     """
 
-    def __init__(self, parent, root_entity=None, bg_task_manager=None, include_root=None):
+    def __init__(
+        self, parent, root_entity=None, bg_task_manager=None, include_root=None
+    ):
         """
         Initializes a Shotgun Hierarchy model instance and loads a hierarchy
         that leads to entities that are linked via the ``PublishedFile.entity``
@@ -52,18 +56,15 @@ class SgHierarchyModel(SimpleShotgunHierarchyModel):
         """
 
         SimpleShotgunHierarchyModel.__init__(
-            self,
-            parent,
-            bg_task_manager=bg_task_manager,
-            include_root=include_root
+            self, parent, bg_task_manager=bg_task_manager, include_root=include_root
         )
 
-        entity_fields = {
-            "__all__": ["code", "description", "image", "sg_status_list"]
-        }
+        entity_fields = {"__all__": ["code", "description", "image", "sg_status_list"]}
 
         # Load a hierarchy that leads to entities that are linked via the "PublishedFile.entity" field.
-        self.load_data("PublishedFile.entity", root=root_entity, entity_fields=entity_fields)
+        self.load_data(
+            "PublishedFile.entity", root=root_entity, entity_fields=entity_fields
+        )
 
     def reload_data(self):
         """
@@ -74,5 +75,5 @@ class SgHierarchyModel(SimpleShotgunHierarchyModel):
         self.load_data(
             self._seed_entity_field,
             entity=self._root_entity,
-            entity_fields=self._entity_fields
+            entity_fields=self._entity_fields,
         )

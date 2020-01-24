@@ -1,11 +1,11 @@
 # Copyright (c) 2015 Shotgun Software Inc.
-# 
+#
 # CONFIDENTIAL AND PROPRIETARY
-# 
-# This work is provided "AS IS" and subject to the Shotgun Pipeline Toolkit 
+#
+# This work is provided "AS IS" and subject to the Shotgun Pipeline Toolkit
 # Source Code License included in this distribution package. See LICENSE.
-# By accessing, using, copying or modifying this work you indicate your 
-# agreement to the Shotgun Pipeline Toolkit Source Code License. All rights 
+# By accessing, using, copying or modifying this work you indicate your
+# agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 """
@@ -20,7 +20,6 @@ import os
 
 
 class MultiLoader(sgtk.platform.Application):
-    
     def init_app(self):
         """
         Called as the application is being initialized
@@ -32,23 +31,20 @@ class MultiLoader(sgtk.platform.Application):
             return
 
         tk_multi_loader = self.import_module("tk_multi_loader")
-        
+
         # register command
-        cb = lambda : tk_multi_loader.show_dialog(self)
+        cb = lambda: tk_multi_loader.show_dialog(self)
         menu_caption = "%s..." % self.get_setting("menu_name")
         menu_options = {
             "short_name": self.get_setting("menu_name").replace(" ", "_"),
-
             # dark themed icon for engines that recognize this format
             "icons": {
                 "dark": {
                     "png": os.path.join(
-                        os.path.dirname(__file__),
-                        "resources",
-                        "load_menu_icon.png",
+                        os.path.dirname(__file__), "resources", "load_menu_icon.png",
                     ),
                 }
-            }
+            },
         }
         self.engine.register_command(menu_caption, cb, menu_options)
 
@@ -59,7 +55,7 @@ class MultiLoader(sgtk.platform.Application):
         """
         return True
 
-    def open_publish(self, title="Open Publish", action="Open", publish_types = []):
+    def open_publish(self, title="Open Publish", action="Open", publish_types=[]):
         """
         Display the loader UI in an open-file style where a publish can be selected and the
         artist can then click the action button.  This will then return the selected publish.

@@ -14,23 +14,28 @@ import datetime
 from .model_latestpublish import SgLatestPublishModel
 
 # import the shotgun_model and view modules from the shotgun utils framework
-shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model")
-shotgun_globals = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_globals")
+shotgun_model = sgtk.platform.import_framework(
+    "tk-framework-shotgunutils", "shotgun_model"
+)
+shotgun_globals = sgtk.platform.import_framework(
+    "tk-framework-shotgunutils", "shotgun_globals"
+)
 shotgun_view = sgtk.platform.import_framework("tk-framework-qtwidgets", "views")
 
 from .ui.widget_publish_list import Ui_PublishListWidget
 from .delegate_publish import PublishWidget, PublishDelegate
 from . import model_item_data
 
+
 class PublishListWidget(PublishWidget):
     """
     Fixed height thin list item type widget, used for the list mode in the main loader view.
     """
-    
+
     def __init__(self, parent):
         """
         Constructor
-        
+
         :param parent: QT parent object
         """
         PublishWidget.__init__(self, Ui_PublishListWidget, parent)
@@ -38,7 +43,7 @@ class PublishListWidget(PublishWidget):
     def set_text(self, large_text, small_text):
         """
         Populate the lines of text in the widget
-        
+
         :param large_text: Header text as string
         :param small_text: smaller text as string
         """
@@ -49,22 +54,22 @@ class PublishListWidget(PublishWidget):
     def calculate_size():
         """
         Calculates and returns a suitable size for this widget.
-        
-        :returns: Size of the widget
-        """        
-        return QtCore.QSize(200, 56)
 
+        :returns: Size of the widget
+        """
+        return QtCore.QSize(200, 56)
 
 
 class SgPublishListDelegate(PublishDelegate):
     """
     Delegate which 'glues up' the List widget with a QT View.
     """
+
     def _create_widget(self, parent):
         """
         Widget factory as required by base class. The base class will call this
         when a widget is needed and then pass this widget in to the various callbacks.
-        
+
         :param parent: Parent object for the widget
         """
         return PublishListWidget(parent)
@@ -72,7 +77,7 @@ class SgPublishListDelegate(PublishDelegate):
     def _format_folder(self, model_index, widget):
         """
         Formats the associated widget as a folder item.
-        
+
         :param model_index: Model index to process
         :param widget: widget to adjust
         """
@@ -84,16 +89,23 @@ class SgPublishListDelegate(PublishDelegate):
         main_text = field_value
         small_text = ""
 
-        if isinstance(field_value, dict) and "name" in field_value and "type" in field_value:
+        if (
+            isinstance(field_value, dict)
+            and "name" in field_value
+            and "type" in field_value
+        ):
             # intermediate node with entity link
-            main_text = "<b>%s</b> <b style='color:#2C93E2'>%s</b>" % (field_value["type"], field_value["name"])
+            main_text = "<b>%s</b> <b style='color:#2C93E2'>%s</b>" % (
+                field_value["type"],
+                field_value["name"],
+            )
 
         elif isinstance(field_value, list):
             # this is a list of some sort. Loop over all elements and extract a comma separated list.
             # this can be a multi link field but also a field like a tags field or a non-entity link type field.
             formatted_values = []
             formatted_types = set()
-            
+
             for v in field_value:
                 if isinstance(v, dict) and "name" in v and "type" in v:
                     # This is a link field
@@ -103,7 +115,7 @@ class SgPublishListDelegate(PublishDelegate):
                         formatted_types.add(v["type"])
                 else:
                     formatted_values.append(str(v))
-            
+
             types = ", ".join(list(formatted_types))
             names = ", ".join(formatted_values)
             main_text = "<b>%s</b><br>%s" % (types, names)
@@ -111,7 +123,10 @@ class SgPublishListDelegate(PublishDelegate):
         elif sg_data:
             # this is a leaf node
             display_name = shotgun_globals.get_type_display_name(sg_data["type"])
-            main_text = "<b>%s</b> <b style='color:#2C93E2'>%s</b>" % (display_name, field_value)
+            main_text = "<b>%s</b> <b style='color:#2C93E2'>%s</b>" % (
+                display_name,
+                field_value,
+            )
             small_text = sg_data.get("description") or "No description given."
 
         widget.set_text(main_text, small_text)
@@ -119,13 +134,13 @@ class SgPublishListDelegate(PublishDelegate):
     def _format_publish(self, model_index, widget):
         """
         Formats the associated widget as a publish item.
-        
+
         :param model_index: Model index to process
         :param widget: widget to adjust
         """
-        
+
         # example data:
-        
+
         # {'code': 'aaa_00010_F004_C003_0228F8_v000.%04d.dpx',
         #  'created_at': 1425378837.0,
         #  'created_by': {'id': 42, 'name': 'Manne Ohrstrom', 'type': 'HumanUser'},
@@ -163,7 +178,7 @@ class SgPublishListDelegate(PublishDelegate):
         #              'type': 'Version'},
         #  'version.Version.sg_status_list': 'rev',
         #  'version_number': 2}
-        
+
         # Publish Name Version 002
         sg_data = shotgun_model.get_sg_data(model_index)
         main_text = "<b>%s</b>" % (sg_data.get("name") or "Unnamed")
@@ -171,24 +186,27 @@ class SgPublishListDelegate(PublishDelegate):
         version = sg_data.get("version_number")
         vers_str = "%03d" % version if version is not None else "N/A"
 
-        main_text += " Version %s" % vers_str        
+        main_text += " Version %s" % vers_str
 
         # If we are in "show subfolders mode, this line will contain
-        # the entity information (because we are displaying info from several entities 
+        # the entity information (because we are displaying info from several entities
         # in a single view. If show subfolders mode is off, the latest description is shown.
         if self._sub_items_mode:
             # show items in subfolders mode enabled
             # get the name of the associated entity
-            
+
             main_text += "  ("
-            
+
             entity_link = sg_data.get("entity")
             if entity_link:
-                main_text += "%s <span style='color:#2C93E2'>%s</span>" % (entity_link["type"], entity_link["name"])
+                main_text += "%s <span style='color:#2C93E2'>%s</span>" % (
+                    entity_link["type"],
+                    entity_link["name"],
+                )
 
             if sg_data.get("task") is not None:
                 main_text += ", Task %s" % sg_data["task"]["name"]
-               
+
             main_text += ")"
         elif sg_data.get("task") is not None:
             # When not in subfolders mode always show Task info
@@ -196,27 +214,30 @@ class SgPublishListDelegate(PublishDelegate):
             main_text += "  (Task %s)" % sg_data["task"]["name"]
 
         # Quicktime by John Smith at 2014-02-23 10:34
-        pub_type_str = shotgun_model.get_sanitized_data(model_index, SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE)            
+        pub_type_str = shotgun_model.get_sanitized_data(
+            model_index, SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE
+        )
         created_unixtime = sg_data.get("created_at") or 0
-        date_str = datetime.datetime.fromtimestamp(created_unixtime).strftime('%Y-%m-%d %H:%M')
+        date_str = datetime.datetime.fromtimestamp(created_unixtime).strftime(
+            "%Y-%m-%d %H:%M"
+        )
         # created_by is set to None if the user has been deleted.
         if sg_data.get("created_by") and sg_data["created_by"].get("name"):
             author_str = sg_data["created_by"].get("name")
         else:
             author_str = "Unspecified User"
-        small_text = "<span style='color:#2C93E2'>%s</span> by %s at %s" % (pub_type_str, 
-                                                                            author_str,
-                                                                            date_str)
+        small_text = "<span style='color:#2C93E2'>%s</span> by %s at %s" % (
+            pub_type_str,
+            author_str,
+            date_str,
+        )
         widget.set_text(main_text, small_text)
 
     def sizeHint(self, style_options, model_index):
         """
         Specify the size of the item.
-        
+
         :param style_options: QT style options
         :param model_index: Model item to operate on
         """
         return PublishListWidget.calculate_size()
-
-
-

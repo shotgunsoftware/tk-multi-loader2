@@ -60,36 +60,54 @@ class ShellActions(HookBaseClass):
         :returns List of dictionaries, each with keys name, params, caption and description
         """
         app = self.parent
-        app.log_debug("Generate actions called for UI element %s. "
-                      "Actions: %s. Publish Data: %s" % (ui_area, actions, sg_publish_data))
+        app.log_debug(
+            "Generate actions called for UI element %s. "
+            "Actions: %s. Publish Data: %s" % (ui_area, actions, sg_publish_data)
+        )
 
         action_instances = []
 
         # For the sake of easy test, we'll reuse Maya publish types.
 
         if "debug_action_1" in actions:
-            action_instances.append({"name": "debug_action_1",
-                                     "params": "Debug Action 1 'params'",
-                                     "caption": "Debug Action 1",
-                                     "description": "Executes Debug Action 1."})
+            action_instances.append(
+                {
+                    "name": "debug_action_1",
+                    "params": "Debug Action 1 'params'",
+                    "caption": "Debug Action 1",
+                    "description": "Executes Debug Action 1.",
+                }
+            )
 
         if "debug_action_2" in actions:
-            action_instances.append({"name": "debug_action_2",
-                                     "params": "Debug Action 2 'params'",
-                                     "caption": "Debug Action 2",
-                                     "description": "Executes Debug Action 2."})
+            action_instances.append(
+                {
+                    "name": "debug_action_2",
+                    "params": "Debug Action 2 'params'",
+                    "caption": "Debug Action 2",
+                    "description": "Executes Debug Action 2.",
+                }
+            )
 
         if "debug_action_3" in actions:
-            action_instances.append({"name": "debug_action_3",
-                                     "params": "Debug Action 3 'params'",
-                                     "caption": "Debug Action 3",
-                                     "description": "Executes Debug Action 3."})
+            action_instances.append(
+                {
+                    "name": "debug_action_3",
+                    "params": "Debug Action 3 'params'",
+                    "caption": "Debug Action 3",
+                    "description": "Executes Debug Action 3.",
+                }
+            )
 
         if "debug_action_4" in actions:
-            action_instances.append({"name": "debug_action_4",
-                                     "params": "Debug Action 4 'params'",
-                                     "caption": "Debug Action 4",
-                                     "description": "Executes Debug Action 4."})
+            action_instances.append(
+                {
+                    "name": "debug_action_4",
+                    "params": "Debug Action 4 'params'",
+                    "caption": "Debug Action 4",
+                    "description": "Executes Debug Action 4.",
+                }
+            )
         return action_instances
 
     def execute_multiple_actions(self, actions):

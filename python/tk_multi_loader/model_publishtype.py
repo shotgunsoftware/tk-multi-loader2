@@ -286,7 +286,7 @@ class SgPublishTypeModel(ShotgunModel):
                     # instead collate them into a single entry
                     sg_data_handled_types[sg_code]["ids"] = [sg_data["id"]]
 
-        return sg_data_handled_types.values()
+        return list(sg_data_handled_types.values())
 
     def _finalize_item(self, item):
         """

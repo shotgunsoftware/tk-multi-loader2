@@ -894,7 +894,7 @@ class AppDialog(QtGui.QWidget):
 
         if ctx.entity:
             # now step through the profiles and find a matching entity
-            for preset_index, preset in self._entity_presets.iteritems():
+            for preset_index, preset in self._entity_presets.items():
 
                 if isinstance(preset.model, SgHierarchyModel):
                     # Found a hierarchy model, we select it right away, since it contains the

@@ -905,7 +905,7 @@ class FlameActions(HookBaseClass):
                     if other_clip["info"]["updated_at"] < clip["info"]["updated_at"]:
                         latest_clips[clip["info"]["name"]] = clip
 
-        return latest_clips.values()
+        return list(latest_clips.values())
 
     @staticmethod
     def _handle_frame_range(path):

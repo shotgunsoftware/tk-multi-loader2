@@ -5,7 +5,9 @@ from sgtk.platform.qt import QtCore, QtGui
 from .model_latestpublish import SgLatestPublishModel
 
 # import the shotgun_model and view modules from the shotgun utils framework
-shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model")
+shotgun_model = sgtk.platform.import_framework(
+    "tk-framework-shotgunutils", "shotgun_model"
+)
 shotgun_view = sgtk.platform.import_framework("tk-framework-qtwidgets", "views")
 
 
@@ -39,12 +41,16 @@ class PublishWidget(QtGui.QWidget):
         # compute hilight colors
         p = QtGui.QPalette()
         highlight_col = p.color(QtGui.QPalette.Active, QtGui.QPalette.Highlight)
-        self._highlight_str = "rgb(%s, %s, %s)" % (highlight_col.red(),
-                                                   highlight_col.green(),
-                                                   highlight_col.blue())
-        self._transp_highlight_str = "rgba(%s, %s, %s, 25%%)" % (highlight_col.red(),
-                                                                 highlight_col.green(),
-                                                                 highlight_col.blue())
+        self._highlight_str = "rgb(%s, %s, %s)" % (
+            highlight_col.red(),
+            highlight_col.green(),
+            highlight_col.blue(),
+        )
+        self._transp_highlight_str = "rgba(%s, %s, %s, 25%%)" % (
+            highlight_col.red(),
+            highlight_col.green(),
+            highlight_col.blue(),
+        )
 
     @property
     def action_menu_is_empty(self):
@@ -81,11 +87,14 @@ class PublishWidget(QtGui.QWidget):
         """
         if selected:
             # make a border around the cell
-            self.ui.box.setStyleSheet("""#box {border-width: 2px;
+            self.ui.box.setStyleSheet(
+                """#box {border-width: 2px;
                                                  border-color: %s;
                                                  border-style: solid;
                                                  background-color: %s}
-                                      """ % (self._highlight_str, self._transp_highlight_str))
+                                      """
+                % (self._highlight_str, self._transp_highlight_str)
+            )
         else:
             self.ui.box.setStyleSheet("")
 
@@ -145,7 +154,9 @@ class PublishDelegate(shotgun_view.EditSelectedWidgetDelegate):
 
         # now set up actions menu
         sg_item = shotgun_model.get_sg_data(model_index)
-        is_folder = shotgun_model.get_sanitized_data(model_index, SgLatestPublishModel.IS_FOLDER_ROLE)
+        is_folder = shotgun_model.get_sanitized_data(
+            model_index, SgLatestPublishModel.IS_FOLDER_ROLE
+        )
         if sg_item is None:
             # an intermediate folder widget with no shotgun data
             pass
@@ -153,11 +164,16 @@ class PublishDelegate(shotgun_view.EditSelectedWidgetDelegate):
             # a folder widget with shotgun data
             widget.set_actions(self._action_manager.get_actions_for_folder(sg_item))
         else:
-            actions = self._action_manager.get_actions_for_publish(sg_item, self._action_manager.UI_AREA_MAIN)
+            actions = self._action_manager.get_actions_for_publish(
+                sg_item, self._action_manager.UI_AREA_MAIN
+            )
             widget.set_actions(actions)
             # If there is only one selected item and there are actions for it, update the
             # delegate's tooltip to mention what a double click can achieve.
-            if len(self._view.selectionModel().selectedIndexes()) == 1 and len(actions) > 0:
+            if (
+                len(self._view.selectionModel().selectedIndexes()) == 1
+                and len(actions) > 0
+            ):
                 primary_action = actions[0]
                 widget.setToolTip(
                     "Double click for the <i>%s</i> action." % primary_action.text()
@@ -192,7 +208,9 @@ class PublishDelegate(shotgun_view.EditSelectedWidgetDelegate):
             thumb = icon.pixmap(512)
             widget.set_thumbnail(thumb)
 
-        if shotgun_model.get_sanitized_data(model_index, SgLatestPublishModel.IS_FOLDER_ROLE):
+        if shotgun_model.get_sanitized_data(
+            model_index, SgLatestPublishModel.IS_FOLDER_ROLE
+        ):
             self._format_folder(model_index, widget)
         else:
             self._format_publish(model_index, widget)

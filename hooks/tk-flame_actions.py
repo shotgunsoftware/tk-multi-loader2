@@ -82,8 +82,10 @@ class FlameActions(HookBaseClass):
         """
 
         app = self.parent
-        app.log_debug("Generate actions called for UI element %s. "
-                      "Actions: %s. Publish Data: %s" % (ui_area, actions, sg_publish_data))
+        app.log_debug(
+            "Generate actions called for UI element %s. "
+            "Actions: %s. Publish Data: %s" % (ui_area, actions, sg_publish_data)
+        )
 
         action_instances = []
 
@@ -92,28 +94,44 @@ class FlameActions(HookBaseClass):
             return action_instances
 
         if SETUP_ACTION in actions:
-            action_instances.append({"name": SETUP_ACTION,
-                                     "params": None,
-                                     "caption": "Load and Append Batch Setup",
-                                     "description": "Load and append a batch setup file to the current Batch Group."})
+            action_instances.append(
+                {
+                    "name": SETUP_ACTION,
+                    "params": None,
+                    "caption": "Load and Append Batch Setup",
+                    "description": "Load and append a batch setup file to the current Batch Group.",
+                }
+            )
 
         if CLIP_ACTION in actions:
-            action_instances.append({"name": CLIP_ACTION,
-                                     "params": None,
-                                     "caption": "Import Clip",
-                                     "description": "Import a clip to the current Batch Group."})
+            action_instances.append(
+                {
+                    "name": CLIP_ACTION,
+                    "params": None,
+                    "caption": "Import Clip",
+                    "description": "Import a clip to the current Batch Group.",
+                }
+            )
 
         if SHOT_CREATE_ACTION in actions:
-            action_instances.append({"name": SHOT_CREATE_ACTION,
-                                     "params": None,
-                                     "caption": "Create Batch Group",
-                                     "description": "Create a Batch setup inside a new Batch Group."})
+            action_instances.append(
+                {
+                    "name": SHOT_CREATE_ACTION,
+                    "params": None,
+                    "caption": "Create Batch Group",
+                    "description": "Create a Batch setup inside a new Batch Group.",
+                }
+            )
 
         if SHOT_LOAD_ACTION in actions:
-            action_instances.append({"name": SHOT_LOAD_ACTION,
-                                     "params": None,
-                                     "caption": "Load in new Batch Group",
-                                     "description": "Load a Batch setup file inside a new Batch Group."})
+            action_instances.append(
+                {
+                    "name": SHOT_LOAD_ACTION,
+                    "params": None,
+                    "caption": "Load in new Batch Group",
+                    "description": "Load a Batch setup file inside a new Batch Group.",
+                }
+            )
 
         return action_instances
 
@@ -160,8 +178,10 @@ class FlameActions(HookBaseClass):
         """
 
         app = self.parent
-        app.log_debug("Execute action called for action %s. "
-                      "Parameters: %s. Publish Data: %s" % (name, params, sg_publish_data))
+        app.log_debug(
+            "Execute action called for action %s. "
+            "Parameters: %s. Publish Data: %s" % (name, params, sg_publish_data)
+        )
 
         try:
             if name == CLIP_ACTION:
@@ -178,7 +198,7 @@ class FlameActions(HookBaseClass):
 
             else:
                 raise FlameActionError("Unknown action name: '%s'".format(name))
-        except FlameActionError, error:
+        except FlameActionError as error:
             # A FlameActionError reaching here means that something major have stopped the current action
             app.log_error(error)
 
@@ -190,7 +210,7 @@ class FlameActions(HookBaseClass):
         Imports a Batch setup into Flame.
 
         This function import the Batch setup into the current Batch Group.
-        
+
         :param dict sg_publish_data: Shotgun data dictionary with all the standard publish fields.
         """
 
@@ -232,7 +252,7 @@ class FlameActions(HookBaseClass):
                 raise FlameActionError("Unable to import '%s'" % clip_path)
 
         # The clip name doesn't directly exists, but it might contain a pattern that we need to resolve.
-        elif clip_path and '%' in clip_path:
+        elif clip_path and "%" in clip_path:
             new_path = self._handle_frame_range(clip_path)["path"]
 
             # The sequence exists on disk
@@ -266,11 +286,12 @@ class FlameActions(HookBaseClass):
 
         # Query the Shotgun database about what we need
         sg_filters = [["id", "is", sg_publish_data["id"]]]
-        sg_fields = ["sg_published_files",  # List of linked PublishedFile
-                     "code",  # Name of the Shot
-                     "sg_versions",  # List of linked Version
-                     "sg_sequence"  # Linked Sequence
-                     ]
+        sg_fields = [
+            "sg_published_files",  # List of linked PublishedFile
+            "code",  # Name of the Shot
+            "sg_versions",  # List of linked Version
+            "sg_sequence",  # Linked Sequence
+        ]
         sg_type = "Shot"
 
         sg_info = self.parent.shotgun.find_one(
@@ -279,7 +300,9 @@ class FlameActions(HookBaseClass):
 
         # Checks that we have the necessary info to proceed.
         if not all(f in sg_info for f in sg_fields):
-            raise FlameActionError("Cannot load a Batch Group from Shotgun using this {}".format(sg_type))
+            raise FlameActionError(
+                "Cannot load a Batch Group from Shotgun using this {}".format(sg_type)
+            )
 
         # Create a new batch_group using this Shot
         if build_new:
@@ -292,7 +315,10 @@ class FlameActions(HookBaseClass):
             app.log_debug("Found Batch setup path: %s" % batch_path)
             # We found a batch file so let's import it
             if batch_path and self._exists(batch_path):
-                app.log_debug("Creating the '%s' batch group using '%s'" % (sg_publish_data['code'], batch_path))
+                app.log_debug(
+                    "Creating the '%s' batch group using '%s'"
+                    % (sg_publish_data["code"], batch_path)
+                )
                 flame.batch.go_to()
                 flame.batch.create_batch_group(sg_publish_data["code"])
                 if not flame.batch.load_setup(batch_path):
@@ -314,8 +340,11 @@ class FlameActions(HookBaseClass):
         :rtype: [str]
         """
 
-        return [entry[0] for entry in self.parent.get_setting("action_mappings", {}).items() if
-                CLIP_ACTION in entry[1]]
+        return [
+            entry[0]
+            for entry in self.parent.get_setting("action_mappings", {}).items()
+            if CLIP_ACTION in entry[1]
+        ]
 
     @property
     def supported_batch_types(self):
@@ -326,8 +355,11 @@ class FlameActions(HookBaseClass):
         :rtype: [str]
         """
 
-        return [entry[0] for entry in self.parent.get_setting("action_mappings", {}).items() if
-                SETUP_ACTION in entry[1]]
+        return [
+            entry[0]
+            for entry in self.parent.get_setting("action_mappings", {}).items()
+            if SETUP_ACTION in entry[1]
+        ]
 
     @property
     def import_location(self):
@@ -546,13 +578,10 @@ class FlameActions(HookBaseClass):
             "Shot": "<shot name>",
             "segment_name": clip["Sequence Name"],
             "version": "<version>",
-            "SEQ": "<frame>"
+            "SEQ": "<frame>",
         }
 
-        file_format = {
-            "exr": "OpenEXR",
-            "dpx": "Dpx"
-        }
+        file_format = {"exr": "OpenEXR", "dpx": "Dpx"}
         # The order is important when setting the attributes
         write_file_info = collections.OrderedDict()
 
@@ -575,20 +604,24 @@ class FlameActions(HookBaseClass):
 
         # Specify where to write our media
         if self.use_template and self.media_path_template:
-            media_root, media_path, media_ext = self._build_path_from_template(self.media_path_template, fields)
+            media_root, media_path, media_ext = self._build_path_from_template(
+                self.media_path_template, fields
+            )
             write_file_info["media_path"] = media_root
             write_file_info["media_path_pattern"] = media_path
             write_file_info["file_type"] = file_format.get(media_ext)
 
             keys = self.media_path_template.keys
-            write_file_info["version_padding"] = int(keys['version'].format_spec)
-            write_file_info["frame_padding"] = int(keys['SEQ'].format_spec)
+            write_file_info["version_padding"] = int(keys["version"].format_spec)
+            write_file_info["frame_padding"] = int(keys["SEQ"].format_spec)
 
             media_path_set = True
 
         if not media_path_set and self.media_path_pattern:
             write_file_info["media_path"] = self.media_path_root
-            write_file_info["media_path_pattern"] = self.media_path_pattern.format(**fields)
+            write_file_info["media_path_pattern"] = self.media_path_pattern.format(
+                **fields
+            )
 
         if "version_padding" not in write_file_info and self.version_padding:
             write_file_info["version_padding"] = self.version_padding
@@ -601,23 +634,31 @@ class FlameActions(HookBaseClass):
 
         # Create a .clip file
         if self.use_template and self.clip_path_template:
-            clip_root, clip_path, clip_ext = self._build_path_from_template(self.clip_path_template, fields)
+            clip_root, clip_path, clip_ext = self._build_path_from_template(
+                self.clip_path_template, fields
+            )
             write_file_info["create_clip_path"] = clip_path
 
             clip_path_set = True
 
         if not clip_path_set and self.clip_path_pattern:
-            write_file_info["create_clip_path"] = self.clip_path_pattern.format(**fields)
+            write_file_info["create_clip_path"] = self.clip_path_pattern.format(
+                **fields
+            )
 
         # Create a .batch file
         if self.use_template and self.setup_path_template:
-            setup_root, setup_path, setup_ext = self._build_path_from_template(self.setup_path_template, fields)
+            setup_root, setup_path, setup_ext = self._build_path_from_template(
+                self.setup_path_template, fields
+            )
             write_file_info["include_setup_path"] = setup_path
 
             setup_path_set = True
 
         if not setup_path_set and self.setup_path_pattern:
-            write_file_info["include_setup_path"] = self.setup_path_pattern.format(**fields)
+            write_file_info["include_setup_path"] = self.setup_path_pattern.format(
+                **fields
+            )
 
         return write_file_info
 
@@ -663,17 +704,29 @@ class FlameActions(HookBaseClass):
         """
         app = self.parent
 
-        app.log_debug("Getting path and frame range information from '%s'" % sg_published_files)
+        app.log_debug(
+            "Getting path and frame range information from '%s'" % sg_published_files
+        )
         # First loop populates the list of valid published files in the shot
         published_files = []
 
         for published_file in sg_published_files:
             # Gets paths to published files
             sg_filters = [["id", "is", published_file["id"]]]
-            sg_fields = ["path", "published_file_type", "version", "version_number", "code", "updated_at", "name"]
+            sg_fields = [
+                "path",
+                "published_file_type",
+                "version",
+                "version_number",
+                "code",
+                "updated_at",
+                "name",
+            ]
             sg_type = "PublishedFile"
 
-            file_info = self.parent.shotgun.find_one(sg_type, filters=sg_filters, fields=sg_fields)
+            file_info = self.parent.shotgun.find_one(
+                sg_type, filters=sg_filters, fields=sg_fields
+            )
 
             try:
                 # Get the local path of the published file
@@ -686,18 +739,17 @@ class FlameActions(HookBaseClass):
             # Eliminates PublishedFiles with an invalid local path
             if path and self._exists(path):
                 published_files.append({"path": path, "info": file_info})
-            elif '%' in path:
+            elif "%" in path:
                 path_info = self._handle_frame_range(path)
 
                 published_files.append(
                     {
                         "path": path_info["path"],
-                        "frame_range":
-                            {
-                                "start_frame": int(path_info["start_frame"]),
-                                "end_frame": int(path_info["end_frame"])
-                            },
-                        "info": file_info
+                        "frame_range": {
+                            "start_frame": int(path_info["start_frame"]),
+                            "end_frame": int(path_info["end_frame"]),
+                        },
+                        "info": file_info,
                     }
                 )
             else:
@@ -791,19 +843,28 @@ class FlameActions(HookBaseClass):
 
                 # Checks that we have the necessary info to proceed.
                 if not all(f in version_data for f in fields):
-                    raise FlameActionError("Cannot extract frame range for \n {}".format(sg_info))
+                    raise FlameActionError(
+                        "Cannot extract frame range for \n {}".format(sg_info)
+                    )
 
                 # Only if the frame_range is defined
                 if version_data["frame_range"] is not None:
                     try:
                         # The current sg_version is more recent that the one we use
-                        if latest_update is None or latest_update < version_data["updated_at"]:
+                        if (
+                            latest_update is None
+                            or latest_update < version_data["updated_at"]
+                        ):
                             latest_update = version_data["updated_at"]
-                            first_frame, last_frame = list(map(int, version_data["frame_range"].split("-")))
+                            first_frame, last_frame = list(
+                                map(int, version_data["frame_range"].split("-"))
+                            )
                     except (AttributeError, ValueError):
                         pass
 
-        app.log_debug("Found first frame = %s and last frame = %s" % (first_frame, last_frame))
+        app.log_debug(
+            "Found first frame = %s and last frame = %s" % (first_frame, last_frame)
+        )
         return first_frame, last_frame
 
     @staticmethod
@@ -826,11 +887,17 @@ class FlameActions(HookBaseClass):
                 latest_clips[clip["info"]["name"]] = clip
             else:
                 # The other clip have a greater version so let's keep it
-                if other_clip["info"]["version_number"] > clip["info"]["version_number"]:
+                if (
+                    other_clip["info"]["version_number"]
+                    > clip["info"]["version_number"]
+                ):
                     continue
 
                 # The other clip have a smaller version so let's swap them
-                elif other_clip["info"]["version_number"] < clip["info"]["version_number"]:
+                elif (
+                    other_clip["info"]["version_number"]
+                    < clip["info"]["version_number"]
+                ):
                     latest_clips[clip["info"]["name"]] = clip
 
                 # They both have the same version so let's keep the newest one
@@ -854,10 +921,10 @@ class FlameActions(HookBaseClass):
         ranges = FlameActions._guess_frame_range(path)
 
         # Cuts off everything after the position of the formatting char.
-        path_end = path[path.find('%'):]
+        path_end = path[path.find("%") :]
 
         # Get the formatting alone
-        formatting_str = path_end[:path_end.find('d') + 1]
+        formatting_str = path_end[: path_end.find("d") + 1]
 
         # Gets the formatted frames numbers
         start_frame = formatting_str % int(ranges[0])
@@ -869,11 +936,13 @@ class FlameActions(HookBaseClass):
             frame_range = start_frame
         else:
             # Generates back the frame range, now formatted
-            frame_range = "[{}-{}]".format(
-                start_frame, end_frame
-            )
+            frame_range = "[{}-{}]".format(start_frame, end_frame)
 
-        return {"path": path.replace(formatting_str, frame_range), "start_frame": start_frame, "end_frame": end_frame}
+        return {
+            "path": path.replace(formatting_str, frame_range),
+            "start_frame": start_frame,
+            "end_frame": end_frame,
+        }
 
     @staticmethod
     def _guess_frame_range(path):
@@ -897,8 +966,10 @@ class FlameActions(HookBaseClass):
 
         # Lets retrieve all the files that's in the folder of the file to match
         try:
-            files = [f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f))]
-        except OSError, e:
+            files = [
+                f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f))
+            ]
+        except OSError as e:
             raise FlameActionError("Unable to guess the frame range for '%s'" % path)
 
         for f in files:
@@ -907,7 +978,7 @@ class FlameActions(HookBaseClass):
                 continue
 
             # Lets isolate the potential frame number from the file name
-            frame = f[len(match.group(1)):-len(match.group(3))]
+            frame = f[len(match.group(1)) : -len(match.group(3))]
 
             # It's not a frame that match our pattern
             if len(frame) != frame_len and not frame.isdigit():
@@ -983,8 +1054,11 @@ class FlameActions(HookBaseClass):
         """
 
         # Build the path from the template
-        path = template._apply_fields(fields, ignore_types=["version", "SEQ", "Shot", "segment_name"]) \
-                   .replace(template.root_path, "", 1)[1:]  # remove the root path from the path and the first "/"
+        path = template._apply_fields(
+            fields, ignore_types=["version", "SEQ", "Shot", "segment_name"]
+        ).replace(template.root_path, "", 1)[
+            1:
+        ]  # remove the root path from the path and the first "/"
 
         # Get the extension
         ext = path.split(".")[-1]

@@ -107,7 +107,7 @@ configuration:
 
         type: list
         description: "This setting defines the different tabs that will show up on the left hand side.
-                      Each tab represents a Shotgun query, grouped by some shotgun fields to form a tree. 
+                      Each tab represents a Shotgun query, grouped by some shotgun fields to form a tree.
                       This setting is a list of dictionaries. Each dictionary in the list defines one tab.
                       Dictionaries with their *type* key set to 'Hierarchy' should have they following keys:
                       *caption* specifies the name of the tab, *root* specifies the path to the root
@@ -117,7 +117,7 @@ configuration:
                       type to display. *filters* is a list of standard API Shotgun filters.
                       *hierarchy* is a list of shotgun fields, defining the grouping of the tree.
                       Optionally, you can specify a *publish_filters* key, containing shotgun API filters to
-                      apply to the publishes listing as it is being loaded in the main view." 
+                      apply to the publishes listing as it is being loaded in the main view."
         allows_empty: False
         values:
             type: dict

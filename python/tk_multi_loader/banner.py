@@ -31,12 +31,14 @@ class Banner(QtGui.QLabel):
         super(Banner, self).__init__(parent)
 
         # Sets the style sheet for the widget.
-        self.setStyleSheet("""
+        self.setStyleSheet(
+            """
             background-color: rgb(67, 131, 168);
             color: rgb(255, 255, 255);
             border-bottom-left-radius: 10px;
             border-bottom-right-radius: 10px;
-        """)
+        """
+        )
 
         # Hide the widget by default.
         self.hide()
@@ -104,8 +106,5 @@ class Banner(QtGui.QLabel):
         window_size = self.window().size()
         banner_width = window_size.width() * 0.5
         return QtCore.QRect(
-            (window_size.width() - banner_width) / 2,
-            0,
-            banner_width,
-            self._HEIGHT
+            (window_size.width() - banner_width) / 2, 0, banner_width, self._HEIGHT
         )

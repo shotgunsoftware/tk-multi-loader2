@@ -14,8 +14,11 @@ from sgtk.platform.qt import QtCore, QtGui
 from . import utils, constants
 
 # import the shotgun_model module from the shotgun utils framework
-shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model")
+shotgun_model = sgtk.platform.import_framework(
+    "tk-framework-shotgunutils", "shotgun_model"
+)
 ShotgunModel = shotgun_model.ShotgunModel
+
 
 class SgPublishHistoryModel(ShotgunModel):
     """
@@ -32,13 +35,14 @@ class SgPublishHistoryModel(ShotgunModel):
         # folder icon
         self._loading_icon = QtGui.QPixmap(":/res/loading_100x100.png")
         app = sgtk.platform.current_bundle()
-        ShotgunModel.__init__(self,
-                              parent,
-                              download_thumbs=app.get_setting("download_thumbnails"),
-                              schema_generation=2,
-                              bg_load_thumbs=True,
-                              bg_task_manager=bg_task_manager)
-
+        ShotgunModel.__init__(
+            self,
+            parent,
+            download_thumbs=app.get_setting("download_thumbnails"),
+            schema_generation=2,
+            bg_load_thumbs=True,
+            bg_task_manager=bg_task_manager,
+        )
 
     ############################################################################################
     # public interface
@@ -46,11 +50,11 @@ class SgPublishHistoryModel(ShotgunModel):
     def load_data(self, sg_data):
         """
         Load the details for the shotgun publish entity described by sg_data.
-        
-        :param sg_data: dictionary describing a publish in shotgun, including all the common 
+
+        :param sg_data: dictionary describing a publish in shotgun, including all the common
                         publish fields.
         """
-        
+
         app = sgtk.platform.current_bundle()
         publish_entity_type = sgtk.util.get_published_file_entity_type(app.sgtk)
 
@@ -64,28 +68,30 @@ class SgPublishHistoryModel(ShotgunModel):
 
         # when we filter out which other publishes are associated with this one,
         # to effectively get the "version history", we look for items
-        # which have the same project, same entity assocation, same name, same type 
+        # which have the same project, same entity assocation, same name, same type
         # and the same task.
-        filters = [ ["project", "is", sg_data["project"] ],
-                    ["name", "is", sg_data["name"] ],
-                    ["task", "is", sg_data["task"] ],
-                    ["entity", "is", sg_data["entity"] ],
-                    [publish_type_field, "is", sg_data[publish_type_field] ],
-                  ]
+        filters = [
+            ["project", "is", sg_data["project"]],
+            ["name", "is", sg_data["name"]],
+            ["task", "is", sg_data["task"]],
+            ["entity", "is", sg_data["entity"]],
+            [publish_type_field, "is", sg_data[publish_type_field]],
+        ]
 
         # add external filters from config
         app = sgtk.platform.current_bundle()
         pub_filters = app.get_setting("publish_filters", [])
         filters.extend(pub_filters)
 
-        ShotgunModel._load_data(self,
-                                entity_type=publish_entity_type,
-                                filters=filters,
-                                hierarchy=["version_number"],
-                                fields=fields)
+        ShotgunModel._load_data(
+            self,
+            entity_type=publish_entity_type,
+            filters=filters,
+            hierarchy=["version_number"],
+            fields=fields,
+        )
 
         self._refresh_data()
-
 
     def async_refresh(self):
         """
@@ -119,17 +125,17 @@ class SgPublishHistoryModel(ShotgunModel):
         if sg_data.get("version_number"):
             item.setText("%03d" % sg_data.get("version_number"))
 
-
         # see if we can get a thumbnail for the user
         if sg_data.get("created_by.HumanUser.image"):
             # get the thumbnail - store the unique id we get back from
             # the data retrieve in a dict for fast lookup later
-            self._request_thumbnail_download(item,
-                                             "created_by.HumanUser.image",
-                                             sg_data["created_by.HumanUser.image"],
-                                             sg_data["created_by"]["type"],
-                                             sg_data["created_by"]["id"])
-
+            self._request_thumbnail_download(
+                item,
+                "created_by.HumanUser.image",
+                sg_data["created_by.HumanUser.image"],
+                sg_data["created_by"]["type"],
+                sg_data["created_by"]["id"],
+            )
 
     def _before_data_processing(self, sg_data_list):
         """
@@ -145,7 +151,6 @@ class SgPublishHistoryModel(ShotgunModel):
 
         return utils.filter_publishes(app, sg_data_list)
 
-
     def _populate_default_thumbnail(self, item):
         """
         Called whenever an item needs to get a default thumbnail attached to a node.
@@ -156,8 +161,9 @@ class SgPublishHistoryModel(ShotgunModel):
         """
         # set up publishes with a "thumbnail loading" icon
         item.setData(self._loading_icon, SgPublishHistoryModel.PUBLISH_THUMB_ROLE)
-        thumb = utils.create_overlayed_user_publish_thumbnail(item.data(SgPublishHistoryModel.PUBLISH_THUMB_ROLE),
-                                                              None)
+        thumb = utils.create_overlayed_user_publish_thumbnail(
+            item.data(SgPublishHistoryModel.PUBLISH_THUMB_ROLE), None
+        )
         item.setIcon(QtGui.QIcon(thumb))
 
     def _populate_thumbnail_image(self, item, field, image, path):
@@ -190,8 +196,8 @@ class SgPublishHistoryModel(ShotgunModel):
             item.setData(thumb, SgPublishHistoryModel.USER_THUMB_ROLE)
 
         # composite the user thumbnail and the publish thumb into a single image
-        thumb = utils.create_overlayed_user_publish_thumbnail(item.data(SgPublishHistoryModel.PUBLISH_THUMB_ROLE),
-                                                              item.data(SgPublishHistoryModel.USER_THUMB_ROLE))
+        thumb = utils.create_overlayed_user_publish_thumbnail(
+            item.data(SgPublishHistoryModel.PUBLISH_THUMB_ROLE),
+            item.data(SgPublishHistoryModel.USER_THUMB_ROLE),
+        )
         item.setIcon(QtGui.QIcon(thumb))
-
-

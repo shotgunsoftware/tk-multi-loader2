@@ -17,8 +17,11 @@ from . import utils, constants
 from . import model_item_data
 
 # import the shotgun_model module from the shotgun utils framework
-shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model")
+shotgun_model = sgtk.platform.import_framework(
+    "tk-framework-shotgunutils", "shotgun_model"
+)
 ShotgunModel = shotgun_model.ShotgunModel
+
 
 class SgLatestPublishModel(ShotgunModel):
 
@@ -47,12 +50,14 @@ class SgLatestPublishModel(ShotgunModel):
         app = sgtk.platform.current_bundle()
 
         # init base class
-        ShotgunModel.__init__(self,
-                              parent,
-                              download_thumbs=app.get_setting("download_thumbnails"),
-                             schema_generation=6,
-                             bg_load_thumbs=True,
-                             bg_task_manager=bg_task_manager)
+        ShotgunModel.__init__(
+            self,
+            parent,
+            download_thumbs=app.get_setting("download_thumbnails"),
+            schema_generation=6,
+            bg_load_thumbs=True,
+            bg_task_manager=bg_task_manager,
+        )
 
     ############################################################################################
     # public interface
@@ -111,7 +116,6 @@ class SgLatestPublishModel(ShotgunModel):
                 # it may 'pause' execution briefly for the user
                 data = app.shotgun.find(entity_type, partial_filters)
 
-
                 # now create the final query for the model - this will be
                 # a big in statement listing all the ids returned from
                 # the previous query, asking the model to only show the
@@ -146,26 +150,43 @@ class SgLatestPublishModel(ShotgunModel):
                     # show the items associated. Handle tasks
                     # via the task field instead of the entity field
                     if sg_data.get("type") == "Task":
-                        sg_filters = [["task", "is", {"type": sg_data["type"], "id": sg_data["id"]}]]
+                        sg_filters = [
+                            [
+                                "task",
+                                "is",
+                                {"type": sg_data["type"], "id": sg_data["id"]},
+                            ]
+                        ]
                     elif sg_data.get("type") == "Version":
-                        sg_filters = [["version", "is", {"type": "Version", "id": sg_data["id"]}]]
+                        sg_filters = [
+                            ["version", "is", {"type": "Version", "id": sg_data["id"]}]
+                        ]
                     else:
-                        sg_filters = [["entity", "is", {"type": sg_data["type"], "id": sg_data["id"]} ]]
+                        sg_filters = [
+                            [
+                                "entity",
+                                "is",
+                                {"type": sg_data["type"], "id": sg_data["id"]},
+                            ]
+                        ]
 
                 else:
                     # intermediate node.
 
-                    if isinstance(field_value, dict) and "name" in field_value and "type" in field_value:
+                    if (
+                        isinstance(field_value, dict)
+                        and "name" in field_value
+                        and "type" in field_value
+                    ):
                         # this is an intermediate node like a sequence or an asset which
                         # can have publishes of its own associated
-                        sg_filters = [["entity", "is", field_value ]]
+                        sg_filters = [["entity", "is", field_value]]
 
                     else:
                         # this is an intermediate node like status or asset type which does not
                         # have any publishes of its own, because the value (e.g. the status or the asset type)
                         # is nothing that you could link up a publish to.
                         sg_filters = None
-
 
         # now if sg_filters is not None (None indicates that no data should be fetched by the model),
         # add our external filter settings
@@ -175,11 +196,11 @@ class SgLatestPublishModel(ShotgunModel):
             # like 'only status approved'
             pub_filters = app.get_setting("publish_filters", [])
             sg_filters.extend(pub_filters)
-            
+
             # now, on top of that, apply any session specific filters
             # these typically come from the treeview and are pulled from a per-tab config setting,
             # allowing users to configure tabs with different publish filters, so that one
-            # tab can contain approved shot publishes, another can contain only items from 
+            # tab can contain approved shot publishes, another can contain only items from
             # your current department, etc.
             sg_filters.extend(additional_sg_filters)
 
@@ -205,9 +226,11 @@ class SgLatestPublishModel(ShotgunModel):
         # Version 012 by John Smith at 2014-02-23 10:34
         if not isinstance(sg_item.get("created_at"), datetime.datetime):
             created_unixtime = sg_item.get("created_at") or 0
-            date_str = datetime.datetime.fromtimestamp(created_unixtime).strftime('%Y-%m-%d %H:%M')
+            date_str = datetime.datetime.fromtimestamp(created_unixtime).strftime(
+                "%Y-%m-%d %H:%M"
+            )
         else:
-            date_str = sg_item.get("created_at").strftime('%Y-%m-%d %H:%M')
+            date_str = sg_item.get("created_at").strftime("%Y-%m-%d %H:%M")
 
         # created_by is set to None if the user has been deleted.
         if sg_item.get("created_by") and sg_item["created_by"].get("name"):
@@ -221,10 +244,14 @@ class SgLatestPublishModel(ShotgunModel):
         tooltip += "<br><br><b>Version:</b> %s by %s at %s" % (
             vers_str,
             author_str,
-            date_str
+            date_str,
         )
-        tooltip += "<br><br><b>Path:</b> %s" % ((sg_item.get("path") or {}).get("local_path"))
-        tooltip += "<br><br><b>Description:</b> %s" % (sg_item.get("description") or "No description given.")
+        tooltip += "<br><br><b>Path:</b> %s" % (
+            (sg_item.get("path") or {}).get("local_path")
+        )
+        tooltip += "<br><br><b>Description:</b> %s" % (
+            sg_item.get("description") or "No description given."
+        )
 
         item.setToolTip(tooltip)
 
@@ -234,7 +261,7 @@ class SgLatestPublishModel(ShotgunModel):
     def _do_load_data(self, sg_filters, treeview_folder_items):
         """
         Load and refresh data.
-        
+
         :param sg_filters: Shotgun filters to use for the search.
         :param child_folders: List of items ('folders') from the tree view. These are to be
                               added to the model in addition to the publishes, so that you get a mix
@@ -256,17 +283,23 @@ class SgLatestPublishModel(ShotgunModel):
         self._treeview_folder_items = treeview_folder_items
 
         # load cached data
-        ShotgunModel._load_data(self,
-                               entity_type=publish_entity_type,
-                               filters=sg_filters,
-                               hierarchy=["code"],
-                               fields=publish_fields,
-                               order=[{"field_name":"created_at", "direction":"asc"}])
+        ShotgunModel._load_data(
+            self,
+            entity_type=publish_entity_type,
+            filters=sg_filters,
+            hierarchy=["code"],
+            fields=publish_fields,
+            order=[{"field_name": "created_at", "direction": "asc"}],
+        )
 
         # now calculate type aggregates
         type_id_aggregates = defaultdict(int)
         for x in range(self.invisibleRootItem().rowCount()):
-            type_id = self.invisibleRootItem().child(x).data(SgLatestPublishModel.TYPE_ID_ROLE)
+            type_id = (
+                self.invisibleRootItem()
+                .child(x)
+                .data(SgLatestPublishModel.TYPE_ID_ROLE)
+            )
             type_id_aggregates[type_id] += 1
         self._publish_type_model.set_active_types(type_id_aggregates)
 
@@ -296,8 +329,10 @@ class SgLatestPublishModel(ShotgunModel):
             tree_view_item_hash = str(hash(tree_view_item))
 
             # create an item in the publish item for each folder item in the tree view
-            item = shotgun_model.ShotgunStandardItem(self._folder_icon, tree_view_item.text())
-            
+            item = shotgun_model.ShotgunStandardItem(
+                self._folder_icon, tree_view_item.text()
+            )
+
             # make the item searchable by name
             item.setData(tree_view_item.text(), SgLatestPublishModel.SEARCHABLE_NAME)
 
@@ -305,10 +340,14 @@ class SgLatestPublishModel(ShotgunModel):
             item.setData(True, SgLatestPublishModel.IS_FOLDER_ROLE)
 
             # associate the tree view node hash with this node.
-            item.setData(tree_view_item_hash, SgLatestPublishModel.ASSOCIATED_TREE_VIEW_ITEM_ROLE)
+            item.setData(
+                tree_view_item_hash, SgLatestPublishModel.ASSOCIATED_TREE_VIEW_ITEM_ROLE
+            )
 
             # Extract the Shotgun data and field value from the tree view item.
-            (tree_view_sg_data, field_value) = model_item_data.get_item_data(tree_view_item)
+            (tree_view_sg_data, field_value) = model_item_data.get_item_data(
+                tree_view_item
+            )
 
             # Rebuild field data with the field value.
             # Since this data will be consumed by SgPublishListDelegate._format_folder() and
@@ -317,7 +356,9 @@ class SgLatestPublishModel(ShotgunModel):
 
             # copy across the std fields SG_ASSOCIATED_FIELD_ROLE and SG_DATA_ROLE
             item.setData(tree_view_sg_data, SgLatestPublishModel.SG_DATA_ROLE)
-            item.setData(tree_view_field_data, SgLatestPublishModel.SG_ASSOCIATED_FIELD_ROLE)
+            item.setData(
+                tree_view_field_data, SgLatestPublishModel.SG_ASSOCIATED_FIELD_ROLE
+            )
 
             # see if we can get a thumbnail for this node!
             if tree_view_sg_data and tree_view_sg_data.get("image"):
@@ -327,7 +368,7 @@ class SgLatestPublishModel(ShotgunModel):
                     "image",
                     tree_view_sg_data["image"],
                     tree_view_sg_data["type"],
-                    tree_view_sg_data["id"]
+                    tree_view_sg_data["id"],
                 )
 
             self.appendRow(item)
@@ -335,8 +376,7 @@ class SgLatestPublishModel(ShotgunModel):
             # help GC
             self._folder_items.append(item)
             # store original item, allowing us to do a reverse lookup
-            self._associated_items[ tree_view_item_hash ] = tree_view_item
-
+            self._associated_items[tree_view_item_hash] = tree_view_item
 
     def _populate_item(self, item, sg_data):
         """
@@ -354,7 +394,7 @@ class SgLatestPublishModel(ShotgunModel):
         item.setData(False, SgLatestPublishModel.IS_FOLDER_ROLE)
 
         # start figuring out the searchable tokens for this item
-        search_str = "" 
+        search_str = ""
 
         # add the associated publish type (both id and name) as special roles
         type_link = sg_data.get(self._publish_type_field)
@@ -365,8 +405,8 @@ class SgLatestPublishModel(ShotgunModel):
         else:
             item.setData(None, SgLatestPublishModel.TYPE_ID_ROLE)
             item.setData("No Type", SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE)
-            
-        # add name and version to search string            
+
+        # add name and version to search string
         if sg_data.get("name"):
             search_str += " %s" % sg_data["name"]
         if sg_data.get("version_number"):
@@ -409,10 +449,10 @@ class SgLatestPublishModel(ShotgunModel):
         :param field: The Shotgun field which the thumbnail is associated with.
         :param path: A path on disk to the thumbnail. This is a file in jpeg format.
         """
-        
+
         if field != "image":
             # there may be other thumbnails being loaded in as part of the data flow
-            # (in particular, created_by.HumanUser.image) - these ones we just want to 
+            # (in particular, created_by.HumanUser.image) - these ones we just want to
             # ignore and not display.
             return
 
@@ -477,15 +517,15 @@ class SgLatestPublishModel(ShotgunModel):
         # - Foo v3 (type XXX)
         # - Foo v2 (type YYY, task ANIM)
         # - Foo v7 (type YYY, task LAY)
-                
-        # also, if there are cases where there are two items with the same name and the same type, 
+
+        # also, if there are cases where there are two items with the same name and the same type,
         # but with different tasks, indicate this with a special boolean flag
-                
+
         unique_data = {}
         name_type_aggregates = defaultdict(int)
-        
+
         for sg_item in sg_data_list:
-            
+
             # get the associated type
             type_id = None
             type_link = sg_item[self._publish_type_field]
@@ -496,14 +536,17 @@ class SgLatestPublishModel(ShotgunModel):
             task_id = None
             task_link = sg_item["task"]
             if task_link:
-                task_id = task_link["id"]  
+                task_id = task_link["id"]
 
             # key publishes in dict by type and name
-            unique_data[ (sg_item["name"], type_id, task_id) ] = {"sg_item": sg_item, "type_id": type_id}
-            
+            unique_data[(sg_item["name"], type_id, task_id)] = {
+                "sg_item": sg_item,
+                "type_id": type_id,
+            }
+
             # count how many items of this type we have
-            name_type_aggregates[ (sg_item["name"], type_id) ] += 1
-        
+            name_type_aggregates[(sg_item["name"], type_id)] += 1
+
         # SECOND PASS
         # We now have the latest versions only
         # Go ahead count types for the aggregate
@@ -513,17 +556,17 @@ class SgLatestPublishModel(ShotgunModel):
 
             # get the shotgun data for this guy
             sg_item = second_pass_data["sg_item"]
-            
+
             # now add a flag to indicate if this item is "task unique" or not
-            # e.g. if there are other items in the listing with the same name 
+            # e.g. if there are other items in the listing with the same name
             # and same type but with a different task
-            if name_type_aggregates[ (sg_item["name"], second_pass_data["type_id"]) ] > 1:
+            if name_type_aggregates[(sg_item["name"], second_pass_data["type_id"])] > 1:
                 # there are more than one item with this same name/type combo!
                 sg_item["task_uniqueness"] = False
-            else: 
+            else:
                 # no other item with this task/name/type combo
                 sg_item["task_uniqueness"] = True
-                
+
             # append to new sg data
             new_sg_data.append(sg_item)
 
@@ -533,6 +576,6 @@ class SgLatestPublishModel(ShotgunModel):
 
         # tell the type model to reshuffle and reformat itself
         # based on the types contained in this search
-        self._publish_type_model.set_active_types( type_id_aggregates )
+        self._publish_type_model.set_active_types(type_id_aggregates)
 
         return new_sg_data

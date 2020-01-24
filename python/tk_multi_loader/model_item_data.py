@@ -12,7 +12,9 @@ import sgtk
 from sgtk import TankError
 from sgtk.platform.qt import QtCore, QtGui
 
-shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model")
+shotgun_model = sgtk.platform.import_framework(
+    "tk-framework-shotgunutils", "shotgun_model"
+)
 
 
 def get_item_data(item):
@@ -160,7 +162,9 @@ def get_item_data(item):
     #
     # For an item in the ShotgunHierarchyModel tree structure, this data is None.
     #
-    field_data = shotgun_model.get_sanitized_data(item, shotgun_model.ShotgunModel.SG_ASSOCIATED_FIELD_ROLE)
+    field_data = shotgun_model.get_sanitized_data(
+        item, shotgun_model.ShotgunModel.SG_ASSOCIATED_FIELD_ROLE
+    )
 
     # Ascertain the type of the model the item is coming from.
     # Beware that "ShotgunHierarchyItem" is a subclass of "ShotgunStandardItem".
@@ -177,7 +181,9 @@ def get_item_data(item):
         elif isinstance(model, shotgun_model.ShotgunModel):
             type_hierarchy = False
         else:
-            raise TankError("Unknown item '%s' model type '%s'!" % (text_data, type(model)))
+            raise TankError(
+                "Unknown item '%s' model type '%s'!" % (text_data, type(model))
+            )
     else:
         raise TankError("Unknown item '%s' type '%s'!" % (text_data, type(item)))
 

@@ -1,11 +1,11 @@
 # Copyright (c) 2015 Shotgun Software Inc.
-# 
+#
 # CONFIDENTIAL AND PROPRIETARY
-# 
-# This work is provided "AS IS" and subject to the Shotgun Pipeline Toolkit 
+#
+# This work is provided "AS IS" and subject to the Shotgun Pipeline Toolkit
 # Source Code License included in this distribution package. See LICENSE.
-# By accessing, using, copying or modifying this work you indicate your 
-# agreement to the Shotgun Pipeline Toolkit Source Code License. All rights 
+# By accessing, using, copying or modifying this work you indicate your
+# agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import sgtk
@@ -19,9 +19,10 @@ from sgtk.util import login
 
 from .action_manager import ActionManager
 
+
 class LoaderActionManager(ActionManager):
     """
-    Specialisation of the base ActionManager class that handles dishing out and 
+    Specialisation of the base ActionManager class that handles dishing out and
     executing QActions based on the hook configuration for the regular loader UI
 
     :signal: ``pre_execute_action(QtGui.QAction)`` - Fired before a custom action is executed.
@@ -38,10 +39,10 @@ class LoaderActionManager(ActionManager):
         ActionManager.__init__(self)
 
         self._app = sgtk.platform.current_bundle()
-        
+
         # are we old school or new school with publishes?
         publish_entity_type = sgtk.util.get_published_file_entity_type(self._app.sgtk)
-        
+
         if publish_entity_type == "PublishedFile":
             self._publish_type_field = "published_file_type"
         else:
@@ -64,16 +65,16 @@ class LoaderActionManager(ActionManager):
             publish_type = "undefined"
         else:
             publish_type = publish_type_dict["name"]
-        
+
         # check if we have logic configured to handle this publish type.
         mappings = self._app.get_setting("action_mappings")
         # returns a structure on the form
         # { "Maya Scene": ["reference", "import"] }
         actions = mappings.get(publish_type, [])
-        
+
         if len(actions) == 0:
             return []
-        
+
         # cool so we have one or more actions for this publish type.
         # resolve UI area
         if ui_area == LoaderActionManager.UI_AREA_DETAILS:
@@ -91,11 +92,13 @@ class LoaderActionManager(ActionManager):
         action_defs = []
         try:
             # call out to hook to give us the specifics.
-            action_defs = self._app.execute_hook_method("actions_hook",
-                                                        "generate_actions",
-                                                        sg_publish_data=sg_data,
-                                                        actions=actions,
-                                                        ui_area=ui_area_str)
+            action_defs = self._app.execute_hook_method(
+                "actions_hook",
+                "generate_actions",
+                sg_publish_data=sg_data,
+                actions=actions,
+                ui_area=ui_area_str,
+            )
         except Exception:
             self._app.log_exception("Could not execute generate_actions hook.")
 
@@ -146,7 +149,10 @@ class LoaderActionManager(ActionManager):
         # The key is the action name, the value is the a list of data pairs. Each data pair
         # holds the Shotgun Item the action is for and the action description.
         intersection_actions_per_name = dict(
-            [(action["name"], [(sg_data_list[0], action)]) for action in first_entity_actions]
+            [
+                (action["name"], [(sg_data_list[0], action)])
+                for action in first_entity_actions
+            ]
         )
 
         # ... and then we'll remove actions from that set as we encounter entities without those actions.
@@ -172,7 +178,9 @@ class LoaderActionManager(ActionManager):
                 # If the action is available for that publish, add the publish's action to the intersection
                 publish_action = publish_actions.get(name)
                 if publish_action:
-                    intersection_actions_per_name[name].append((sg_data, publish_action))
+                    intersection_actions_per_name[name].append(
+                        (sg_data, publish_action)
+                    )
                 else:
                     # Otherwise remove this action from the intersection
                     del intersection_actions_per_name[name]
@@ -215,13 +223,16 @@ class LoaderActionManager(ActionManager):
                 {
                     "sg_publish_data": sg_data,
                     "name": name,
-                    "params": action_def["params"]
-                } for (sg_data, action_def) in action_list
+                    "params": action_def["params"],
+                }
+                for (sg_data, action_def) in action_list
             ]
 
             # Bind all the action params to a single invocation of the _execute_hook.
             a.triggered[()].connect(
-                lambda qt_action=a, actions=actions: self._execute_hook(qt_action, actions)
+                lambda qt_action=a, actions=actions: self._execute_hook(
+                    qt_action, actions
+                )
             )
             a.setData(actions)
             qt_actions.append(a)
@@ -238,12 +249,12 @@ class LoaderActionManager(ActionManager):
     def get_default_action_for_publish(self, sg_data, ui_area):
         """
         Get the default action for the specified publish data.
-        
-        The default action is defined as the one that appears first in the list in the 
+
+        The default action is defined as the one that appears first in the list in the
         action mappings.
 
         :param sg_data: Shotgun data for a publish
-        :param ui_area: Indicates which part of the UI the request is coming from. 
+        :param ui_area: Indicates which part of the UI the request is coming from.
                         Currently one of UI_AREA_MAIN, UI_AREA_DETAILS and UI_AREA_HISTORY
         :returns:       The QAction object representing the default action for this publish
         """
@@ -255,7 +266,7 @@ class LoaderActionManager(ActionManager):
     def has_actions(self, publish_type):
         """
         Returns true if the given publish type has any actions associated with it.
-        
+
         :param publish_type: A Shotgun publish type (e.g. 'Maya Render')
         :returns: True if the current actions setup knows how to handle this.
         """
@@ -264,7 +275,7 @@ class LoaderActionManager(ActionManager):
         # returns a structure on the form
         # { "Maya Scene": ["reference", "import"] }
         my_mappings = mappings.get(publish_type, [])
-        
+
         return len(my_mappings) > 0
 
     def _get_actions_for_folder(self, sg_data):
@@ -293,11 +304,13 @@ class LoaderActionManager(ActionManager):
         action_defs = []
         try:
             # call out to hook to give us the specifics.
-            action_defs = self._app.execute_hook_method("actions_hook",
-                                                        "generate_actions",
-                                                        sg_publish_data=sg_data,
-                                                        actions=actions,
-                                                        ui_area="main")  # folder options only found in main ui area
+            action_defs = self._app.execute_hook_method(
+                "actions_hook",
+                "generate_actions",
+                sg_publish_data=sg_data,
+                actions=actions,
+                ui_area="main",
+            )  # folder options only found in main ui area
         except Exception:
             self._app.log_exception("Could not execute generate_actions hook.")
 
@@ -340,13 +353,15 @@ class LoaderActionManager(ActionManager):
                     {
                         "sg_publish_data": sg_data,  # keep sg_publish_data name for back comp
                         "name": name,
-                        "params": action["params"]
+                        "params": action["params"],
                     }
                 ]
 
                 # Bind all the action params to a single invocation of the _execute_hook.
                 a.triggered[()].connect(
-                    lambda qt_action=a, actions=actions: self._execute_hook(qt_action, actions)
+                    lambda qt_action=a, actions=actions: self._execute_hook(
+                        qt_action, actions
+                    )
                 )
                 a.setData(actions)
                 qt_actions.append(a)
@@ -396,15 +411,13 @@ class LoaderActionManager(ActionManager):
         self.pre_execute_action.emit(qt_action)
 
         try:
-            self._app.execute_hook_method("actions_hook",
-                                          "execute_multiple_actions",
-                                          actions=actions)
-        except Exception, e:
+            self._app.execute_hook_method(
+                "actions_hook", "execute_multiple_actions", actions=actions
+            )
+        except Exception as e:
             self._app.log_exception("Could not execute execute_action hook: %s" % e)
             QtGui.QMessageBox.critical(
-                QtGui.QApplication.activeWindow(),
-                "Hook Error",
-                "Error: %s" % e,
+                QtGui.QApplication.activeWindow(), "Hook Error", "Error: %s" % e,
             )
         else:
 
@@ -412,7 +425,7 @@ class LoaderActionManager(ActionManager):
             #
             # We're deliberately not making any checks or verification in the
             # code below, as we don't want to be logging exception or debug
-            # messages relating to metrics. 
+            # messages relating to metrics.
             #
             # On any failure relating to metric logging we just silently
             # catch and continue normal execution.
@@ -421,8 +434,12 @@ class LoaderActionManager(ActionManager):
 
                 action = actions[0]
                 action_title = action.get("name")
-                publish_type = action.get("sg_publish_data").get("published_file_type").get("name")
-                creator_id = action.get("sg_publish_data").get("created_by", dict()).get("id")
+                publish_type = (
+                    action.get("sg_publish_data").get("published_file_type").get("name")
+                )
+                creator_id = (
+                    action.get("sg_publish_data").get("created_by", dict()).get("id")
+                )
                 current_user = login.get_current_user(self._app.sgtk)
 
                 # The creator_generated property doesn't match the natural
@@ -433,14 +450,14 @@ class LoaderActionManager(ActionManager):
                 properties = {
                     "Publish Type": publish_type,
                     "Action Title": action_title,
-                    "creator_generated": current_user.get("id") == creator_id
+                    "creator_generated": current_user.get("id") == creator_id,
                 }
 
                 EventMetric.log(
                     EventMetric.GROUP_TOOLKIT,
                     "Loaded Published File",
                     properties=properties,
-                    bundle=self._app
+                    bundle=self._app,
                 )
 
             except:
@@ -453,37 +470,41 @@ class LoaderActionManager(ActionManager):
     def _show_in_sg(self, entity):
         """
         Callback - Shows a shotgun entity in the web browser
-        
+
         :param entity: std sg entity dict with keys type, id and name
         """
-        url = "%s/detail/%s/%d" % (self._app.sgtk.shotgun.base_url, entity["type"], entity["id"])                    
+        url = "%s/detail/%s/%d" % (
+            self._app.sgtk.shotgun.base_url,
+            entity["type"],
+            entity["id"],
+        )
         QtGui.QDesktopServices.openUrl(QtCore.QUrl(url))
 
     def _show_in_sr(self, entity):
         """
         Callback - Shows a shotgun entity in the shotgun media center
-        
+
         :param entity: std sg entity dict with keys type, id and name
         """
         url = "%s/page/media_center?type=%s&id=%s" % (
             self._app.sgtk.shotgun.base_url,
             entity["type"],
-            entity["id"]
+            entity["id"],
         )
         QtGui.QDesktopServices.openUrl(QtCore.QUrl(url))
-    
+
     def _show_in_fs(self, paths):
         """
         Callback - Shows Shotgun entity paths in the file system.
-        
+
         :param paths: List of paths associated with a Shotgun entity.
         """
 
         for disk_location in paths:
-                
-            # get the setting        
+
+            # get the setting
             system = sys.platform
-            
+
             # run the app
             if system == "linux2":
                 cmd = 'xdg-open "%s"' % disk_location
@@ -493,7 +514,7 @@ class LoaderActionManager(ActionManager):
                 cmd = 'cmd.exe /C start "Folder" "%s"' % disk_location
             else:
                 raise Exception("Platform '%s' is not supported." % system)
-            
+
             exit_code = os.system(cmd)
             if exit_code != 0:
                 self._engine.log_error("Failed to launch '%s'!" % cmd)

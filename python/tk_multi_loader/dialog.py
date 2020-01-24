@@ -35,13 +35,23 @@ from . import model_item_data
 from .ui.dialog import Ui_Dialog
 
 # import frameworks
-shotgun_model = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_model")
+shotgun_model = sgtk.platform.import_framework(
+    "tk-framework-shotgunutils", "shotgun_model"
+)
 settings = sgtk.platform.import_framework("tk-framework-shotgunutils", "settings")
 help_screen = sgtk.platform.import_framework("tk-framework-qtwidgets", "help_screen")
-overlay_widget = sgtk.platform.import_framework("tk-framework-qtwidgets", "overlay_widget")
-shotgun_search_widget = sgtk.platform.import_framework("tk-framework-qtwidgets", "shotgun_search_widget")
-task_manager = sgtk.platform.import_framework("tk-framework-shotgunutils", "task_manager")
-shotgun_globals = sgtk.platform.import_framework("tk-framework-shotgunutils", "shotgun_globals")
+overlay_widget = sgtk.platform.import_framework(
+    "tk-framework-qtwidgets", "overlay_widget"
+)
+shotgun_search_widget = sgtk.platform.import_framework(
+    "tk-framework-qtwidgets", "shotgun_search_widget"
+)
+task_manager = sgtk.platform.import_framework(
+    "tk-framework-shotgunutils", "task_manager"
+)
+shotgun_globals = sgtk.platform.import_framework(
+    "tk-framework-shotgunutils", "shotgun_globals"
+)
 
 ShotgunModelOverlayWidget = overlay_widget.ShotgunModelOverlayWidget
 
@@ -77,16 +87,18 @@ class AppDialog(QtGui.QWidget):
         if isinstance(action_manager, LoaderActionManager):
             self._action_banner = Banner(self)
             self._action_manager.pre_execute_action.connect(self._pre_execute_action)
-            self._action_manager.post_execute_action.connect(lambda _: self._action_banner.hide_banner())
+            self._action_manager.post_execute_action.connect(
+                lambda _: self._action_banner.hide_banner()
+            )
 
         # create a settings manager where we can pull and push prefs later
         # prefs in this manager are shared
         self._settings_manager = settings.UserSettings(sgtk.platform.current_bundle())
 
         # create a background task manager
-        self._task_manager = task_manager.BackgroundTaskManager(self,
-                                                                start_processing=True,
-                                                                max_threads=2)
+        self._task_manager = task_manager.BackgroundTaskManager(
+            self, start_processing=True, max_threads=2
+        )
 
         shotgun_globals.register_bg_task_manager(self._task_manager)
 
@@ -123,8 +135,9 @@ class AppDialog(QtGui.QWidget):
 
         self._publish_history_model = SgPublishHistoryModel(self, self._task_manager)
 
-        self._publish_history_model_overlay = ShotgunModelOverlayWidget(self._publish_history_model,
-                                                                        self.ui.history_view)
+        self._publish_history_model_overlay = ShotgunModelOverlayWidget(
+            self._publish_history_model, self.ui.history_view
+        )
 
         self._publish_history_proxy = QtGui.QSortFilterProxyModel(self)
         self._publish_history_proxy.setSourceModel(self._publish_history_model)
@@ -141,8 +154,9 @@ class AppDialog(QtGui.QWidget):
         self._publish_history_proxy.sort(0, QtCore.Qt.DescendingOrder)
 
         self.ui.history_view.setModel(self._publish_history_proxy)
-        self._history_delegate = SgPublishHistoryDelegate(self.ui.history_view, self._status_model,
-                                                          self._action_manager)
+        self._history_delegate = SgPublishHistoryDelegate(
+            self.ui.history_view, self._status_model, self._action_manager
+        )
         self.ui.history_view.setItemDelegate(self._history_delegate)
 
         # event handler for when the selection in the history view is changing
@@ -150,9 +164,13 @@ class AppDialog(QtGui.QWidget):
         # a direct reference to the selection model before we can set up any signal/slots
         # against it
         self._history_view_selection_model = self.ui.history_view.selectionModel()
-        self._history_view_selection_model.selectionChanged.connect(self._on_history_selection)
+        self._history_view_selection_model.selectionChanged.connect(
+            self._on_history_selection
+        )
 
-        self._multiple_publishes_pixmap = QtGui.QPixmap(":/res/multiple_publishes_512x400.png")
+        self._multiple_publishes_pixmap = QtGui.QPixmap(
+            ":/res/multiple_publishes_512x400.png"
+        )
         self._no_selection_pixmap = QtGui.QPixmap(":/res/no_item_selected_512x400.png")
         self._no_pubs_found_icon = QtGui.QPixmap(":/res/no_publishes_found.png")
 
@@ -161,7 +179,9 @@ class AppDialog(QtGui.QWidget):
 
         # set up right click menu for the main publish view
         self._refresh_history_action = QtGui.QAction("Refresh", self.ui.history_view)
-        self._refresh_history_action.triggered.connect(self._publish_history_model.async_refresh)
+        self._refresh_history_action.triggered.connect(
+            self._publish_history_model.async_refresh
+        )
         self.ui.history_view.addAction(self._refresh_history_action)
         self.ui.history_view.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
 
@@ -170,23 +190,24 @@ class AppDialog(QtGui.QWidget):
 
         #################################################
         # load and initialize cached publish type model
-        self._publish_type_model = SgPublishTypeModel(self,
-                                                      self._action_manager,
-                                                      self._settings_manager,
-                                                      self._task_manager)
+        self._publish_type_model = SgPublishTypeModel(
+            self, self._action_manager, self._settings_manager, self._task_manager
+        )
         self.ui.publish_type_list.setModel(self._publish_type_model)
 
-        self._publish_type_overlay = ShotgunModelOverlayWidget(self._publish_type_model,
-                                                               self.ui.publish_type_list)
+        self._publish_type_overlay = ShotgunModelOverlayWidget(
+            self._publish_type_model, self.ui.publish_type_list
+        )
 
         #################################################
         # setup publish model
-        self._publish_model = SgLatestPublishModel(self,
-                                                   self._publish_type_model,
-                                                   self._task_manager)
+        self._publish_model = SgLatestPublishModel(
+            self, self._publish_type_model, self._task_manager
+        )
 
-        self._publish_main_overlay = ShotgunModelOverlayWidget(self._publish_model,
-                                                               self.ui.publish_view)
+        self._publish_main_overlay = ShotgunModelOverlayWidget(
+            self._publish_model, self.ui.publish_view
+        )
 
         # set up a proxy model to cull results based on type selection
         self._publish_proxy_model = SgLatestPublishProxyModel(self)
@@ -196,22 +217,32 @@ class AppDialog(QtGui.QWidget):
         # check if we should display the "sorry, no publishes found" overlay
         self._publish_model.cache_loaded.connect(self._on_publish_content_change)
         self._publish_model.data_refreshed.connect(self._on_publish_content_change)
-        self._publish_proxy_model.filter_changed.connect(self._on_publish_content_change)
+        self._publish_proxy_model.filter_changed.connect(
+            self._on_publish_content_change
+        )
 
         # hook up view -> proxy model -> model
         self.ui.publish_view.setModel(self._publish_proxy_model)
 
         # set up custom delegates to use when drawing the main area
-        self._publish_thumb_delegate = SgPublishThumbDelegate(self.ui.publish_view, self._action_manager)
+        self._publish_thumb_delegate = SgPublishThumbDelegate(
+            self.ui.publish_view, self._action_manager
+        )
 
-        self._publish_list_delegate = SgPublishListDelegate(self.ui.publish_view, self._action_manager)
+        self._publish_list_delegate = SgPublishListDelegate(
+            self.ui.publish_view, self._action_manager
+        )
 
         # recall which the most recently mode used was and set that
-        main_view_mode = self._settings_manager.retrieve("main_view_mode", self.MAIN_VIEW_THUMB)
+        main_view_mode = self._settings_manager.retrieve(
+            "main_view_mode", self.MAIN_VIEW_THUMB
+        )
         self._set_main_view_mode(main_view_mode)
 
         # whenever the type list is checked, update the publish filters
-        self._publish_type_model.itemChanged.connect(self._apply_type_filters_on_publishes)
+        self._publish_type_model.itemChanged.connect(
+            self._apply_type_filters_on_publishes
+        )
 
         # if an item in the table is double clicked the default action is run
         self.ui.publish_view.doubleClicked.connect(self._on_publish_double_clicked)
@@ -222,13 +253,17 @@ class AppDialog(QtGui.QWidget):
         # against it
         self.ui.publish_view.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
         self._publish_view_selection_model = self.ui.publish_view.selectionModel()
-        self._publish_view_selection_model.selectionChanged.connect(self._on_publish_selection)
+        self._publish_view_selection_model.selectionChanged.connect(
+            self._on_publish_selection
+        )
 
         # set up right click menu for the main publish view
         self._refresh_action = QtGui.QAction("Refresh", self.ui.publish_view)
         self._refresh_action.triggered.connect(self._publish_model.async_refresh)
         self.ui.publish_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.ui.publish_view.customContextMenuRequested.connect(self._show_publish_actions)
+        self.ui.publish_view.customContextMenuRequested.connect(
+            self._show_publish_actions
+        )
 
         #################################################
         # popdown publish filter widget for the main view
@@ -245,7 +280,9 @@ class AppDialog(QtGui.QWidget):
         # hook it up with the search button the main toolbar
         self.ui.search_publishes.clicked.connect(self._on_publish_filter_clicked)
         # hook it up so that it signals the publish proxy model whenever the filter changes
-        self._search_widget.filter_changed.connect(self._publish_proxy_model.set_search_query)
+        self._search_widget.filter_changed.connect(
+            self._publish_proxy_model.set_search_query
+        )
 
         #################################################
         # checkboxes, buttons etc
@@ -402,8 +439,11 @@ class AppDialog(QtGui.QWidget):
             # disconnect some signals so we don't go all crazy when
             # the cascading model deletes begin as part of the destroy calls
             for p in self._entity_presets:
-                self._entity_presets[p].view.selectionModel().selectionChanged.disconnect(
-                    self._on_treeview_item_selected)
+                self._entity_presets[
+                    p
+                ].view.selectionModel().selectionChanged.disconnect(
+                    self._on_treeview_item_selected
+                )
 
             # gracefully close all connections
             shotgun_globals.unregister_bg_task_manager(self._task_manager)
@@ -423,10 +463,14 @@ class AppDialog(QtGui.QWidget):
         """
         Returns true if this is the first time UI is being launched
         """
-        ui_launched = self._settings_manager.retrieve("ui_launched", False, self._settings_manager.SCOPE_ENGINE)
+        ui_launched = self._settings_manager.retrieve(
+            "ui_launched", False, self._settings_manager.SCOPE_ENGINE
+        )
         if ui_launched == False:
             # store in settings that we now have launched
-            self._settings_manager.store("ui_launched", True, self._settings_manager.SCOPE_ENGINE)
+            self._settings_manager.store(
+                "ui_launched", True, self._settings_manager.SCOPE_ENGINE
+            )
 
         return not (ui_launched)
 
@@ -462,8 +506,9 @@ class AppDialog(QtGui.QWidget):
 
         # Run default action.
         sg_item = shotgun_model.get_sg_data(model_index)
-        default_action = self._action_manager.get_default_action_for_publish(sg_item,
-                                                                             self._action_manager.UI_AREA_HISTORY)
+        default_action = self._action_manager.get_default_action_for_publish(
+            sg_item, self._action_manager.UI_AREA_HISTORY
+        )
         if default_action:
             default_action.trigger()
 
@@ -472,10 +517,14 @@ class AppDialog(QtGui.QWidget):
         Executed when someone clicks the filter button in the main UI
         """
         if self.ui.search_publishes.isChecked():
-            self.ui.search_publishes.setIcon(QtGui.QIcon(QtGui.QPixmap(":/res/search_active.png")))
+            self.ui.search_publishes.setIcon(
+                QtGui.QIcon(QtGui.QPixmap(":/res/search_active.png"))
+            )
             self._search_widget.enable()
         else:
-            self.ui.search_publishes.setIcon(QtGui.QIcon(QtGui.QPixmap(":/res/search.png")))
+            self.ui.search_publishes.setIcon(
+                QtGui.QIcon(QtGui.QPixmap(":/res/search.png"))
+            )
             self._search_widget.disable()
 
     def _on_thumbnail_mode_clicked(self):
@@ -497,17 +546,25 @@ class AppDialog(QtGui.QWidget):
         :param mode: either MAIN_VIEW_LIST or MAIN_VIEW_THUMB
         """
         if mode == self.MAIN_VIEW_LIST:
-            self.ui.list_mode.setIcon(QtGui.QIcon(QtGui.QPixmap(":/res/mode_switch_card_active.png")))
+            self.ui.list_mode.setIcon(
+                QtGui.QIcon(QtGui.QPixmap(":/res/mode_switch_card_active.png"))
+            )
             self.ui.list_mode.setChecked(True)
-            self.ui.thumbnail_mode.setIcon(QtGui.QIcon(QtGui.QPixmap(":/res/mode_switch_thumb.png")))
+            self.ui.thumbnail_mode.setIcon(
+                QtGui.QIcon(QtGui.QPixmap(":/res/mode_switch_thumb.png"))
+            )
             self.ui.thumbnail_mode.setChecked(False)
             self.ui.publish_view.setViewMode(QtGui.QListView.ListMode)
             self.ui.publish_view.setItemDelegate(self._publish_list_delegate)
             self._show_thumb_scale(False)
         elif mode == self.MAIN_VIEW_THUMB:
-            self.ui.list_mode.setIcon(QtGui.QIcon(QtGui.QPixmap(":/res/mode_switch_card.png")))
+            self.ui.list_mode.setIcon(
+                QtGui.QIcon(QtGui.QPixmap(":/res/mode_switch_card.png"))
+            )
             self.ui.list_mode.setChecked(False)
-            self.ui.thumbnail_mode.setIcon(QtGui.QIcon(QtGui.QPixmap(":/res/mode_switch_thumb_active.png")))
+            self.ui.thumbnail_mode.setIcon(
+                QtGui.QIcon(QtGui.QPixmap(":/res/mode_switch_thumb_active.png"))
+            )
             self.ui.thumbnail_mode.setChecked(True)
             self.ui.publish_view.setViewMode(QtGui.QListView.IconMode)
             self.ui.publish_view.setItemDelegate(self._publish_thumb_delegate)
@@ -570,7 +627,10 @@ class AppDialog(QtGui.QWidget):
             """
             Helper method to make a detail table row
             """
-            return "<tr><td><b style='color:#2C93E2'>%s</b>&nbsp;</td><td>%s</td></tr>" % (left, right)
+            return (
+                "<tr><td><b style='color:#2C93E2'>%s</b>&nbsp;</td><td>%s</td></tr>"
+                % (left, right)
+            )
 
         def __set_publish_ui_visibility(is_publish):
             """
@@ -642,7 +702,10 @@ class AppDialog(QtGui.QWidget):
 
                 status_color = self._status_model.get_color_str(status_code)
                 if status_color:
-                    status_name = "%s&nbsp;<span style='color: rgb(%s)'>&#9608;</span>" % (status_name, status_color)
+                    status_name = (
+                        "%s&nbsp;<span style='color: rgb(%s)'>&#9608;</span>"
+                        % (status_name, status_color)
+                    )
 
                 if sg_data.get("description"):
                     desc_str = sg_data.get("description")
@@ -651,7 +714,9 @@ class AppDialog(QtGui.QWidget):
 
                 msg = ""
                 display_name = shotgun_globals.get_type_display_name(sg_data["type"])
-                msg += __make_table_row("Name", "%s %s" % (display_name, sg_data.get("code")))
+                msg += __make_table_row(
+                    "Name", "%s %s" % (display_name, sg_data.get("code"))
+                )
                 msg += __make_table_row("Status", status_name)
                 msg += __make_table_row("Description", desc_str)
                 self.ui.details_header.setText("<table>%s</table>" % msg)
@@ -660,7 +725,6 @@ class AppDialog(QtGui.QWidget):
                 __set_publish_ui_visibility(False)
                 self._publish_history_model.clear()
 
-
             else:
                 # this is a publish!
                 __set_publish_ui_visibility(True)
@@ -668,7 +732,9 @@ class AppDialog(QtGui.QWidget):
                 sg_item = item.get_sg_data()
 
                 # sort out the actions button
-                actions = self._action_manager.get_actions_for_publish(sg_item, self._action_manager.UI_AREA_DETAILS)
+                actions = self._action_manager.get_actions_for_publish(
+                    sg_item, self._action_manager.UI_AREA_DETAILS
+                )
                 if len(actions) == 0:
                     self.ui.detail_actions_btn.setVisible(False)
                 else:
@@ -683,7 +749,7 @@ class AppDialog(QtGui.QWidget):
                     sg_url = sgtk.platform.current_bundle().shotgun.base_url
                     url = "%s/page/media_center?type=Version&id=%d" % (
                         sg_url,
-                        sg_item["version"]["id"]
+                        sg_item["version"]["id"],
                     )
 
                     self.ui.detail_playback_btn.setVisible(True)
@@ -697,7 +763,9 @@ class AppDialog(QtGui.QWidget):
                 else:
                     name_str = sg_item.get("name")
 
-                type_str = shotgun_model.get_sanitized_data(item, SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE)
+                type_str = shotgun_model.get_sanitized_data(
+                    item, SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE
+                )
 
                 msg = ""
                 msg += __make_table_row("Name", name_str)
@@ -709,8 +777,13 @@ class AppDialog(QtGui.QWidget):
                 msg += __make_table_row("Version", "%s" % vers_str)
 
                 if sg_item.get("entity"):
-                    display_name = shotgun_globals.get_type_display_name(sg_item.get("entity").get("type"))
-                    entity_str = "<b>%s</b> %s" % (display_name, sg_item.get("entity").get("name"))
+                    display_name = shotgun_globals.get_type_display_name(
+                        sg_item.get("entity").get("type")
+                    )
+                    entity_str = "<b>%s</b> %s" % (
+                        display_name,
+                        sg_item.get("entity").get("name"),
+                    )
                     msg += __make_table_row("Link", entity_str)
 
                 # sort out the task label
@@ -725,9 +798,13 @@ class AppDialog(QtGui.QWidget):
                         task_status_str = "No Status"
                     else:
                         task_status_code = sg_item.get("task.Task.sg_status_list")
-                        task_status_str = self._status_model.get_long_name(task_status_code)
+                        task_status_str = self._status_model.get_long_name(
+                            task_status_code
+                        )
 
-                    msg += __make_table_row("Task", "%s (%s)" % (task_name_str, task_status_str))
+                    msg += __make_table_row(
+                        "Task", "%s (%s)" % (task_name_str, task_status_str)
+                    )
 
                 # if there is a version associated, get the status for this
                 if sg_item.get("version.Version.sg_status_list"):
@@ -750,7 +827,9 @@ class AppDialog(QtGui.QWidget):
         # the code that sets up the version button also populates
         # a member variable which olds the current media center url.
         if self._current_version_detail_playback_url:
-            QtGui.QDesktopServices.openUrl(QtCore.QUrl(self._current_version_detail_playback_url))
+            QtGui.QDesktopServices.openUrl(
+                QtCore.QUrl(self._current_version_detail_playback_url)
+            )
 
     ########################################################################################
     # history related
@@ -775,9 +854,11 @@ class AppDialog(QtGui.QWidget):
         # in that case, discard the history after the current item and add this new record
         # after the current item
 
-        if not self._history_navigation_mode:  # do not add to history when browsing the history :)
+        if (
+            not self._history_navigation_mode
+        ):  # do not add to history when browsing the history :)
             # chop off history at the point we are currently
-            self._history = self._history[:self._history_index]
+            self._history = self._history[: self._history_index]
             # append our current item to the chopped history
             self._history.append({"preset": preset_caption, "item": std_item})
             self._history_index += 1
@@ -827,7 +908,9 @@ class AppDialog(QtGui.QWidget):
 
                         # now see if our context object also exists in the tree of this profile
                         model = preset.model
-                        item = model.item_from_entity(ctx.entity["type"], ctx.entity["id"])
+                        item = model.item_from_entity(
+                            ctx.entity["type"], ctx.entity["id"]
+                        )
 
                         if item is not None:
                             # find an absolute match! Break the search.
@@ -908,20 +991,25 @@ class AppDialog(QtGui.QWidget):
 
         # Check if we should pop up that help screen.
         # The hierarchy model cannot handle "Show items in subfolders" mode.
-        if self.ui.show_sub_items.isChecked() and \
-                not isinstance(self._entity_presets[self._current_entity_preset].model, SgHierarchyModel):
-            subitems_shown = self._settings_manager.retrieve("subitems_shown",
-                                                             False,
-                                                             self._settings_manager.SCOPE_ENGINE)
+        if self.ui.show_sub_items.isChecked() and not isinstance(
+            self._entity_presets[self._current_entity_preset].model, SgHierarchyModel
+        ):
+            subitems_shown = self._settings_manager.retrieve(
+                "subitems_shown", False, self._settings_manager.SCOPE_ENGINE
+            )
             if subitems_shown == False:
                 # store in settings that we now clicked the subitems at least once
-                self._settings_manager.store("subitems_shown", True, self._settings_manager.SCOPE_ENGINE)
+                self._settings_manager.store(
+                    "subitems_shown", True, self._settings_manager.SCOPE_ENGINE
+                )
                 # and display help
                 app = sgtk.platform.current_bundle()
-                help_pix = [QtGui.QPixmap(":/res/subitems_help_1.png"),
-                            QtGui.QPixmap(":/res/subitems_help_2.png"),
-                            QtGui.QPixmap(":/res/subitems_help_3.png"),
-                            QtGui.QPixmap(":/res/help_4.png")]
+                help_pix = [
+                    QtGui.QPixmap(":/res/subitems_help_1.png"),
+                    QtGui.QPixmap(":/res/subitems_help_2.png"),
+                    QtGui.QPixmap(":/res/subitems_help_3.png"),
+                    QtGui.QPixmap(":/res/help_4.png"),
+                ]
                 help_screen.show_help_screen(self.window(), app, help_pix)
 
         # tell publish UI to update itself
@@ -970,13 +1058,16 @@ class AppDialog(QtGui.QWidget):
             tree_view_item = self._publish_model.get_associated_tree_view_item(item)
 
             # select it in the tree view
-            self._select_item_in_entity_tree(self._current_entity_preset, tree_view_item)
+            self._select_item_in_entity_tree(
+                self._current_entity_preset, tree_view_item
+            )
 
         else:
             # Run default action.
             sg_item = shotgun_model.get_sg_data(model_index)
-            default_action = self._action_manager.get_default_action_for_publish(sg_item,
-                                                                                 self._action_manager.UI_AREA_MAIN)
+            default_action = self._action_manager.get_default_action_for_publish(
+                sg_item, self._action_manager.UI_AREA_MAIN
+            )
             if default_action:
                 default_action.trigger()
 
@@ -999,14 +1090,14 @@ class AppDialog(QtGui.QWidget):
             vers_str = "%03d" % version_number if version_number is not None else "N/A"
 
             self._action_banner.show_banner(
-                "<center>Action <b>%s</b> launched on <b>%s Version %s</b></center>" % (
-                    action.text(), name_str, vers_str
-                )
+                "<center>Action <b>%s</b> launched on <b>%s Version %s</b></center>"
+                % (action.text(), name_str, vers_str)
             )
         else:
             # Otherwise we'll simply mention the selection.
             self._action_banner.show_banner(
-                "<center>Action <b>%s</b> launched on selection.</center>" % (action.text(),)
+                "<center>Action <b>%s</b> launched on selection.</center>"
+                % (action.text(),)
             )
 
         # Force the window to be redrawn and process events right away since the
@@ -1020,10 +1111,12 @@ class AppDialog(QtGui.QWidget):
         Someone clicked the show help screen action
         """
         app = sgtk.platform.current_bundle()
-        help_pix = [QtGui.QPixmap(":/res/help_1.png"),
-                    QtGui.QPixmap(":/res/help_2.png"),
-                    QtGui.QPixmap(":/res/help_3.png"),
-                    QtGui.QPixmap(":/res/help_4.png")]
+        help_pix = [
+            QtGui.QPixmap(":/res/help_1.png"),
+            QtGui.QPixmap(":/res/help_2.png"),
+            QtGui.QPixmap(":/res/help_3.png"),
+            QtGui.QPixmap(":/res/help_4.png"),
+        ]
         help_screen.show_help_screen(self.window(), app, help_pix)
 
     def _on_doc_action(self):
@@ -1055,7 +1148,9 @@ class AppDialog(QtGui.QWidget):
         """
 
         selected_item = None
-        selection_model = self._entity_presets[self._current_entity_preset].view.selectionModel()
+        selection_model = self._entity_presets[
+            self._current_entity_preset
+        ].view.selectionModel()
         if selection_model.hasSelection():
 
             current_idx = selection_model.selection().indexes()[0]
@@ -1141,10 +1236,12 @@ class AppDialog(QtGui.QWidget):
                 proxy_index = view.model().mapFromSource(item.index())
                 # and now perform view operations
                 view.scrollTo(proxy_index, QtGui.QAbstractItemView.PositionAtCenter)
-                selection_model.select(proxy_index, QtGui.QItemSelectionModel.ClearAndSelect)
-                selection_model.setCurrentIndex(proxy_index, QtGui.QItemSelectionModel.ClearAndSelect)
-
-
+                selection_model.select(
+                    proxy_index, QtGui.QItemSelectionModel.ClearAndSelect
+                )
+                selection_model.setCurrentIndex(
+                    proxy_index, QtGui.QItemSelectionModel.ClearAndSelect
+                )
 
         else:
             # clear selection to match no items
@@ -1175,7 +1272,9 @@ class AppDialog(QtGui.QWidget):
             #      'filters':     [['task_assignees', 'is', '{context.user}'],
             #                      ['project.Project.sg_status', 'is', 'Active']]}
 
-            key_error_msg = "Configuration error: 'entities' item %s is missing key '%s'!"
+            key_error_msg = (
+                "Configuration error: 'entities' item %s is missing key '%s'!"
+            )
             value_error_msg = "Configuration error: 'entities' item %s key '%s' has an invalid value '%s'!"
 
             key = "caption"
@@ -1189,7 +1288,7 @@ class AppDialog(QtGui.QWidget):
                 value = setting_dict[key]
                 if value not in ("Hierarchy", "Query"):
                     raise TankError(value_error_msg % (setting_dict, key, value))
-                type_hierarchy = (value == "Hierarchy")
+                type_hierarchy = value == "Hierarchy"
             else:
                 # When the type is not given, default to "Query".
                 type_hierarchy = False
@@ -1265,16 +1364,20 @@ class AppDialog(QtGui.QWidget):
 
                 # Add the search text field.
                 search = QtGui.QLineEdit(tab)
-                search.setStyleSheet("QLineEdit{ border-width: 1px; "
-                                     "background-image: url(:/res/search.png); "
-                                     "background-repeat: no-repeat; "
-                                     "background-position: center left; "
-                                     "border-radius: 5px; "
-                                     "padding-left:20px; "
-                                     "margin:4px; "
-                                     "height:22px; "
-                                     "}")
-                search.setToolTip("Use the <i>search</i> field to narrow down the items displayed in the tree above.")
+                search.setStyleSheet(
+                    "QLineEdit{ border-width: 1px; "
+                    "background-image: url(:/res/search.png); "
+                    "background-repeat: no-repeat; "
+                    "background-position: center left; "
+                    "border-radius: 5px; "
+                    "padding-left:20px; "
+                    "margin:4px; "
+                    "height:22px; "
+                    "}"
+                )
+                search.setToolTip(
+                    "Use the <i>search</i> field to narrow down the items displayed in the tree above."
+                )
 
                 try:
                     # This was introduced in Qt 4.7, so try to use it if we can...
@@ -1287,7 +1390,11 @@ class AppDialog(QtGui.QWidget):
                 # Add a cancel search button, disabled by default.
                 clear_search = QtGui.QToolButton(tab)
                 icon = QtGui.QIcon()
-                icon.addPixmap(QtGui.QPixmap(":/res/clear_search.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+                icon.addPixmap(
+                    QtGui.QPixmap(":/res/clear_search.png"),
+                    QtGui.QIcon.Normal,
+                    QtGui.QIcon.Off,
+                )
                 clear_search.setIcon(icon)
                 clear_search.setAutoRaise(True)
                 clear_search.clicked.connect(lambda editor=search: editor.setText(""))
@@ -1296,10 +1403,15 @@ class AppDialog(QtGui.QWidget):
 
                 # Drive the proxy model with the search text.
                 search.textChanged.connect(
-                    lambda text, v=view, pm=proxy_model: self._on_search_text_changed(text, v, pm))
+                    lambda text, v=view, pm=proxy_model: self._on_search_text_changed(
+                        text, v, pm
+                    )
+                )
 
                 # Keep a handle to all the new Qt objects, otherwise the GC may not work.
-                self._dynamic_widgets.extend([search_layout, search, clear_search, icon])
+                self._dynamic_widgets.extend(
+                    [search_layout, search, clear_search, icon]
+                )
 
             else:
                 search = shotgun_search_widget.HierarchicalSearchWidget(tab)
@@ -1309,9 +1421,9 @@ class AppDialog(QtGui.QWidget):
                 # When a selection is made, we are only interested into the paths to the node so we can refresh
                 # the model and expand the item.
                 search.node_activated.connect(
-                    lambda entity_type, entity_id, name, path_label, incremental_paths, view=view,
-                           proxy_model=proxy_model:
-                    self._node_activated(incremental_paths, view, proxy_model)
+                    lambda entity_type, entity_id, name, path_label, incremental_paths, view=view, proxy_model=proxy_model: self._node_activated(
+                        incremental_paths, view, proxy_model
+                    )
                 )
                 # When getting back the model items that were loaded, we will need the view and proxy model
                 # to expand the item.
@@ -1396,17 +1508,16 @@ class AppDialog(QtGui.QWidget):
             self._dynamic_widgets.append(overlay)
 
             # Store all these objects keyed by the caption.
-            ep = EntityPreset(preset_name,
-                              sg_entity_type,
-                              model,
-                              proxy_model,
-                              view,
-                              publish_filters)
+            ep = EntityPreset(
+                preset_name, sg_entity_type, model, proxy_model, view, publish_filters
+            )
 
             self._entity_presets[preset_name] = ep
 
         # hook up an event handler when someone clicks a tab
-        self.ui.entity_preset_tabs.currentChanged.connect(self._on_entity_profile_tab_clicked)
+        self.ui.entity_preset_tabs.currentChanged.connect(
+            self._on_entity_profile_tab_clicked
+        )
 
         # finalize initialization by clicking the home button, but only once the
         # data has properly arrived in the model.
@@ -1475,7 +1586,7 @@ class AppDialog(QtGui.QWidget):
             self,
             root_entity=root,
             bg_task_manager=self._task_manager,
-            include_root=include_root
+            include_root=include_root,
         )
 
         # Create a proxy model.
@@ -1534,11 +1645,13 @@ class AppDialog(QtGui.QWidget):
         setting_dict["filters"] = resolved_filters
 
         # Construct the query model.
-        model = SgEntityModel(self,
-                              setting_dict["entity_type"],
-                              setting_dict["filters"],
-                              setting_dict["hierarchy"],
-                              self._task_manager)
+        model = SgEntityModel(
+            self,
+            setting_dict["entity_type"],
+            setting_dict["filters"],
+            setting_dict["hierarchy"],
+            self._task_manager,
+        )
 
         # Create a proxy model.
         proxy_model = SgEntityProxyModel(self)
@@ -1563,11 +1676,13 @@ class AppDialog(QtGui.QWidget):
         # once we have typed a couple of characters
         if pattern and len(pattern) >= constants.TREE_SEARCH_TRIGGER_LENGTH:
             # indicate with a blue border that a search is active
-            tree_view.setStyleSheet("""QTreeView { border-width: 3px;
+            tree_view.setStyleSheet(
+                """QTreeView { border-width: 3px;
                                                    border-style: solid;
                                                    border-color: #2C93E2; }
                                        QTreeView::item { padding: 6px; }
-                                    """)
+                                    """
+            )
             # expand all nodes in the tree
             tree_view.expandAll()
         else:
@@ -1591,13 +1706,17 @@ class AppDialog(QtGui.QWidget):
             history.
         """
         # qt returns unicode/qstring here so force to str
-        curr_tab_name = shotgun_model.sanitize_qt(self.ui.entity_preset_tabs.tabText(new_index))
+        curr_tab_name = shotgun_model.sanitize_qt(
+            self.ui.entity_preset_tabs.tabText(new_index)
+        )
 
         # and set up which our currently visible preset is
         self._current_entity_preset = curr_tab_name
 
         # The hierarchy model cannot handle "Show items in subfolders" mode.
-        if isinstance(self._entity_presets[self._current_entity_preset].model, SgHierarchyModel):
+        if isinstance(
+            self._entity_presets[self._current_entity_preset].model, SgHierarchyModel
+        ):
             self.ui.show_sub_items.hide()
         else:
             self.ui.show_sub_items.show()
@@ -1679,7 +1798,9 @@ class AppDialog(QtGui.QWidget):
                 # switch to shotgun model index
                 child_idx = proxy_model.mapToSource(child_idx_proxy)
                 # resolve the index into an actual standarditem object
-                i = self._entity_presets[self._current_entity_preset].model.itemFromIndex(child_idx)
+                i = self._entity_presets[
+                    self._current_entity_preset
+                ].model.itemFromIndex(child_idx)
                 child_folders.append(i)
 
         else:
@@ -1700,17 +1821,22 @@ class AppDialog(QtGui.QWidget):
                 # switch to shotgun model index
                 child_idx = proxy_model.mapToSource(child_idx_proxy)
                 # resolve the index into an actual standarditem object
-                i = self._entity_presets[self._current_entity_preset].model.itemFromIndex(child_idx)
+                i = self._entity_presets[
+                    self._current_entity_preset
+                ].model.itemFromIndex(child_idx)
                 child_folders.append(i)
 
         # Is the show child folders checked?
         # The hierarchy model cannot handle "Show items in subfolders" mode.
-        show_sub_items = self.ui.show_sub_items.isChecked() and \
-                         not isinstance(self._entity_presets[self._current_entity_preset].model, SgHierarchyModel)
+        show_sub_items = self.ui.show_sub_items.isChecked() and not isinstance(
+            self._entity_presets[self._current_entity_preset].model, SgHierarchyModel
+        )
 
         if show_sub_items:
             # indicate this with a special background color
-            self.ui.publish_view.setStyleSheet("#publish_view { background-color: rgba(44, 147, 226, 20%); }")
+            self.ui.publish_view.setStyleSheet(
+                "#publish_view { background-color: rgba(44, 147, 226, 20%); }"
+            )
             if len(child_folders) > 0:
                 # delegates are rendered in a special way
                 # if we are on a non-leaf node in the tree (e.g there are subfolders)
@@ -1727,8 +1853,12 @@ class AppDialog(QtGui.QWidget):
             self._publish_list_delegate.set_sub_items_mode(False)
 
         # now finally load up the data in the publish model
-        publish_filters = self._entity_presets[self._current_entity_preset].publish_filters
-        self._publish_model.load_data(item, child_folders, show_sub_items, publish_filters)
+        publish_filters = self._entity_presets[
+            self._current_entity_preset
+        ].publish_filters
+        self._publish_model.load_data(
+            item, child_folders, show_sub_items, publish_filters
+        )
 
     def _populate_entity_breadcrumbs(self, selected_item):
         """
@@ -1757,7 +1887,11 @@ class AppDialog(QtGui.QWidget):
                     name = str(field_value)
                     sg_type = sg_data.get("type")
 
-                elif isinstance(field_value, dict) and "name" in field_value and "type" in field_value:
+                elif (
+                    isinstance(field_value, dict)
+                    and "name" in field_value
+                    and "type" in field_value
+                ):
                     name = field_value["name"]
                     sg_type = field_value["type"]
 
@@ -1789,7 +1923,9 @@ class AppDialog(QtGui.QWidget):
 
                 else:
                     # lookup the display name for the entity type:
-                    sg_type_display_name = shotgun_globals.get_type_display_name(sg_type)
+                    sg_type_display_name = shotgun_globals.get_type_display_name(
+                        sg_type
+                    )
                     crumbs.append("<b>%s</b> %s" % (sg_type_display_name, name))
                 tmp_item = tmp_item.parent()
 
@@ -1803,6 +1939,7 @@ class AppDialog(QtGui.QWidget):
 
 ################################################################################################
 # Helper stuff
+
 
 class EntityPreset(object):
     """

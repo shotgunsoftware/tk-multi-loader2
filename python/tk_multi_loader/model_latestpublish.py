@@ -326,7 +326,9 @@ class SgLatestPublishModel(ShotgunModel):
         for tree_view_item in self._treeview_folder_items:
 
             # compute and store a hash for the tree view item so that we can access it later
-            tree_view_item_id = id(tree_view_item)
+            # Use the id of the object as the unique identifier, but convert it as a string
+            # as the id might be greater than a 32-bit integer and Qt doesn't like that.
+            tree_view_item_hash = str(id(tree_view_item))
 
             # create an item in the publish item for each folder item in the tree view
             item = shotgun_model.ShotgunStandardItem(
@@ -341,7 +343,7 @@ class SgLatestPublishModel(ShotgunModel):
 
             # associate the tree view node hash with this node.
             item.setData(
-                tree_view_item_id, SgLatestPublishModel.ASSOCIATED_TREE_VIEW_ITEM_ROLE
+                tree_view_item_hash, SgLatestPublishModel.ASSOCIATED_TREE_VIEW_ITEM_ROLE
             )
 
             # Extract the Shotgun data and field value from the tree view item.
@@ -376,7 +378,7 @@ class SgLatestPublishModel(ShotgunModel):
             # help GC
             self._folder_items.append(item)
             # store original item, allowing us to do a reverse lookup
-            self._associated_items[tree_view_item_id] = tree_view_item
+            self._associated_items[tree_view_item_hash] = tree_view_item
 
     def _populate_item(self, item, sg_data):
         """

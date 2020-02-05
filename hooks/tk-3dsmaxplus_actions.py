@@ -15,8 +15,6 @@ import sgtk
 import os
 import MaxPlus
 
-from tank_vendor import six
-
 HookBaseClass = sgtk.get_hook_baseclass()
 
 
@@ -152,7 +150,7 @@ class MaxActions(HookBaseClass):
         # resolve path
         # toolkit uses utf-8 encoded strings internally and the 3dsmax API expects unicode
         # so convert the path to ensure filenames containing complex characters are supported
-        path = six.ensure_text(self.get_publish_path(sg_publish_data))
+        path = self.get_publish_path(sg_publish_data).decode("utf-8")
 
         # If this is an Alembic cache, then we can import that.
         if path.lower().endswith(".abc"):

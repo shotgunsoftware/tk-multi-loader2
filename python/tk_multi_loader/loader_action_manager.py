@@ -174,7 +174,7 @@ class LoaderActionManager(ActionManager):
             # Check if the actions from the intersection are available for this publish
             #
             # Get a copy of the keys because we're about to remove items as they are visited.
-            for name in intersection_actions_per_name.keys():
+            for name in intersection_actions_per_name:
                 # If the action is available for that publish, add the publish's action to the intersection
                 publish_action = publish_actions.get(name)
                 if publish_action:

@@ -894,7 +894,7 @@ class AppDialog(QtGui.QWidget):
 
         if ctx.entity:
             # now step through the profiles and find a matching entity
-            for preset_index, preset in self._entity_presets.iteritems():
+            for preset_index, preset in self._entity_presets.items():
 
                 if isinstance(preset.model, SgHierarchyModel):
                     # Found a hierarchy model, we select it right away, since it contains the
@@ -1397,7 +1397,15 @@ class AppDialog(QtGui.QWidget):
                 )
                 clear_search.setIcon(icon)
                 clear_search.setAutoRaise(True)
-                clear_search.clicked.connect(lambda editor=search: editor.setText(""))
+                # Ignore the boolean parameter in the lambda. There seems to be an odd bug here,
+                # probably in PySide2. Contrary to other places where we simply
+                # accept a two parameters, one for the boolean and a second default one,
+                # here we have to pass a default value to checked. If we don't, we get
+                #   TypeError: <lambda>() missing 1 required positional argument: 'checked'
+                #
+                clear_search.clicked.connect(
+                    lambda checked=True, editor=search: editor.setText("")
+                )
                 clear_search.setToolTip("Click to clear your current search.")
                 search_layout.addWidget(clear_search)
 

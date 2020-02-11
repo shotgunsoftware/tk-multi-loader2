@@ -86,7 +86,7 @@ class Banner(QtGui.QLabel):
         folded_pos = expanded_pos.translated(0, -self._HEIGHT)
 
         # Animate the banner sliding out of the dialog.
-        sliding_out = QtCore.QPropertyAnimation(self, "geometry")
+        sliding_out = QtCore.QPropertyAnimation(self, b"geometry")
         sliding_out.setDuration(250)
         sliding_out.setStartValue(expanded_pos)
         sliding_out.setEndValue(folded_pos)

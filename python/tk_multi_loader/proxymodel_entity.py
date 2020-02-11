@@ -67,7 +67,7 @@ class SgEntityProxyModel(QtGui.QSortFilterProxyModel):
             child_item = item.child(idx)
             if self._matching_r(search_exp, child_item):
                 # exit early as soon as we find a match for performance
-                self._cache[item] = True
+                self._cache[item_hash] = True
                 return True
 
         # no sub nodes matches. Keep this result in the cache so that next

@@ -150,7 +150,7 @@ class PhotoshopActions(HookBaseClass):
         # resolve path
         # toolkit uses utf-8 encoded strings internally and the Photoshop API expects unicode
         # so convert the path to ensure filenames containing complex characters are supported
-        path = six.text_type(self.get_publish_path(sg_publish_data))
+        path = six.ensure_text(self.get_publish_path(sg_publish_data))
 
         if not os.path.exists(path):
             raise Exception("File not found on disk - '%s'" % path)

@@ -78,7 +78,7 @@ class Banner(QtGui.QLabel):
         """
         elapsed = (time.time() - self._show_time) * 1000
 
-        # Make sure we store any animations we create as a class variable to avoid it being garbage collected.
+        # Make sure we store any animations we create as a class instance variable to avoid it being garbage collected.
         # Not doing so will result in a warning when we try to clear the animation group.
 
         # We'll pause if required.

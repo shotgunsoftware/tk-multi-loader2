@@ -78,19 +78,22 @@ class Banner(QtGui.QLabel):
         """
         elapsed = (time.time() - self._show_time) * 1000
 
+        # Make sure we store any animations we create as a class instance variable to avoid it being garbage collected.
+        # Not doing so will result in a warning when we try to clear the animation group.
+
         # We'll pause if required.
-        self._banner_animation.addPause(max(3000 - elapsed, 0))
+        self._anim_pause = self._banner_animation.addPause(max(3000 - elapsed, 0))
 
         # Compute the fully expanded and folded positions.
         expanded_pos = self._calc_expanded_pos()
         folded_pos = expanded_pos.translated(0, -self._HEIGHT)
 
         # Animate the banner sliding out of the dialog.
-        sliding_out = QtCore.QPropertyAnimation(self, b"geometry")
-        sliding_out.setDuration(250)
-        sliding_out.setStartValue(expanded_pos)
-        sliding_out.setEndValue(folded_pos)
-        self._banner_animation.addAnimation(sliding_out)
+        self._anim_sliding_out = QtCore.QPropertyAnimation(self, b"geometry")
+        self._anim_sliding_out.setDuration(250)
+        self._anim_sliding_out.setStartValue(expanded_pos)
+        self._anim_sliding_out.setEndValue(folded_pos)
+        self._banner_animation.addAnimation(self._anim_sliding_out)
 
         # Launch the sliding out!
         self._banner_animation.start()

@@ -95,8 +95,12 @@ class SgPublishListDelegate(PublishDelegate):
             and "type" in field_value
         ):
             # intermediate node with entity link
+            field_value_type = shotgun_globals.get_type_display_name(
+                field_value["type"]
+            )
+
             main_text = "<b>%s</b> <b style='color:#2C93E2'>%s</b>" % (
-                field_value["type"],
+                field_value_type,
                 field_value["name"],
             )
 
@@ -110,9 +114,10 @@ class SgPublishListDelegate(PublishDelegate):
                 if isinstance(v, dict) and "name" in v and "type" in v:
                     # This is a link field
                     name = v["name"]
+                    v_type = shotgun_globals.get_type_display_name(v["type"])
                     if name:
                         formatted_values.append(name)
-                        formatted_types.add(v["type"])
+                        formatted_types.add(v_type)
                 else:
                     formatted_values.append(str(v))
 
@@ -199,8 +204,11 @@ class SgPublishListDelegate(PublishDelegate):
 
             entity_link = sg_data.get("entity")
             if entity_link:
+                entity_link_type = shotgun_globals.get_type_display_name(
+                    entity_link["type"]
+                )
                 main_text += "%s <span style='color:#2C93E2'>%s</span>" % (
-                    entity_link["type"],
+                    entity_link_type,
                     entity_link["name"],
                 )
 

@@ -99,7 +99,7 @@ class SgPublishThumbDelegate(PublishDelegate):
         ):
             # intermediate node with entity link
             header_text = field_value["name"]
-            details_text = field_value["type"]
+            details_text = shotgun_globals.get_type_display_name(field_value["type"])
 
         elif isinstance(field_value, list):
             # this is a list of some sort. Loop over all elements and extract a comma separated list.

@@ -224,7 +224,9 @@ class SgPublishThumbDelegate(PublishDelegate):
             if entity_link is None:
                 details_text = "Unlinked"
             else:
-                entity_link_type = shotgun_globals.get_type_display_name(entity_link["type"])
+                entity_link_type = shotgun_globals.get_type_display_name(
+                    entity_link["type"]
+                )
                 details_text = "%s %s" % (entity_link_type, entity_link["name"])
 
         else:

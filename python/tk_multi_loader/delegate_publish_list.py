@@ -204,7 +204,9 @@ class SgPublishListDelegate(PublishDelegate):
 
             entity_link = sg_data.get("entity")
             if entity_link:
-                entity_link_type = shotgun_globals.get_type_display_name(entity_link["type"])
+                entity_link_type = shotgun_globals.get_type_display_name(
+                    entity_link["type"]
+                )
                 main_text += "%s <span style='color:#2C93E2'>%s</span>" % (
                     entity_link_type,
                     entity_link["name"],

@@ -115,9 +115,6 @@ class AppDialogAppWrapper(object):
         """
         return self.root.exists()
 
-    def open_demo_pane(self, name):
-        self.root["Demo Tree View"][name].get().mouseClick()
-
     def close(self):
         self.root.buttons["Close"].get().mouseClick()
 
@@ -127,6 +124,16 @@ def test_context_selection(app_dialog):
     assert app_dialog.root.captions[
         "Loader"
     ].exists(), "Cannot find Loader2 app"
+
+    # Validate Welcome page
+    if app_dialog.root.floatingwindows["Toolkit Help"].exists():
+        app_dialog.root.floatingwindows["Toolkit Help"].buttons["Close"].mouseClick()
+    else:
+        app_dialog.root.buttons["cog_button"].mouseClick()
+        topwindows.menuitems["Show Help Screen"].waitExist(), 30
+        topwindows.menuitems["Show Help Screen"].get().mouseClick()
+        app_dialog.root.floatingwindows["Toolkit Help"].waitExist(), 30
+        app_dialog.root.floatingwindows["Toolkit Help"].buttons["Close"].mouseClick()
 
     # Select an asset
     app_dialog.root.outlineitems["Assets"].get().mouseDoubleClick()

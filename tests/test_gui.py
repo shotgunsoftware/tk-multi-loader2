@@ -119,22 +119,59 @@ class AppDialogAppWrapper(object):
         self.root.buttons["Close"].get().mouseClick()
 
 
-def test_context_selection(app_dialog):
+def test_welcome_page(app_dialog):
     # Validate that Loader app is up
     assert app_dialog.root.captions[
         "Loader"
     ].exists(), "Cannot find Loader2 app"
 
-    # Validate Welcome page
-    if app_dialog.root.floatingwindows["Toolkit Help"].exists():
-        app_dialog.root.floatingwindows["Toolkit Help"].buttons["Close"].mouseClick()
-    else:
+    # Validate Welcome page is up
+    if app_dialog.root.floatingwindows["Toolkit Help"].exists() is False:
         app_dialog.root.buttons["cog_button"].mouseClick()
         topwindows.menuitems["Show Help Screen"].waitExist(), 30
         topwindows.menuitems["Show Help Screen"].get().mouseClick()
-        app_dialog.root.floatingwindows["Toolkit Help"].waitExist(), 30
-        app_dialog.root.floatingwindows["Toolkit Help"].buttons["Close"].mouseClick()
+    app_dialog.root.floatingwindows["Toolkit Help"].waitExist(), 30
 
+    # Click on Scroll to the next slide until you reach the last slide
+    for _i in range(0, 3):
+        # Make sure Scroll to the next slide button is available
+        assert (
+            app_dialog.root.dialogs["Toolkit Help"]
+            .buttons["Scroll to the next slide"]
+            .exists()
+        ), "Scroll to the next slide button is not available"
+        # Click on Scroll to the next slide button
+        app_dialog.root.dialogs["Toolkit Help"].buttons[
+            "Scroll to the next slide"
+        ].get().mouseClick()
+
+    # Validate Show Help Screen last slide
+    assert app_dialog.root.dialogs[
+        "Toolkit Help"
+    ].exists(), "Show Help Screen is not showing up"
+    assert (
+        app_dialog.root.dialogs["Toolkit Help"]
+        .buttons["Jump to Documentation"]
+        .exists()
+    ), "Jump to Documentation button is not available"
+    assert (
+        app_dialog.root.dialogs["Toolkit Help"].buttons["Close"].exists()
+    ), "Close button is not available"
+    assert (
+        app_dialog.root.dialogs["Toolkit Help"]
+        .buttons["Scroll to the previous slide"]
+        .exists()
+    ), "Scroll to the previous slide button is not available"
+    assert (
+        app_dialog.root.dialogs["Toolkit Help"]
+        .buttons["Scroll to the next slide"]
+        .exists()
+        is False
+    ), "Scroll to the next slide button is still available"
+    app_dialog.root.floatingwindows["Toolkit Help"].buttons["Close"].mouseClick()
+
+
+def test_context_selection(app_dialog):
     # Select an asset
     app_dialog.root.outlineitems["Assets"].get().mouseDoubleClick()
     app_dialog.root.outlineitems["Character"].waitExist(), 30
@@ -142,3 +179,45 @@ def test_context_selection(app_dialog):
     app_dialog.root.outlineitems["Alice"].waitExist(), 30
     app_dialog.root.listitems["Alice"].get().mouseClick()
 
+    # Validate Breadcrumb widget
+    assert app_dialog.root.captions[
+        "Project * Assets * Character"
+    ].exists(), "Breadcrumb widget is not set correctly"
+
+    # Validate Show/Hide button
+    if app_dialog.root.buttons["Show Details"].exists():
+        assert (
+            app_dialog.root["history_view"].exists()
+            is False
+        ), "History view should be hidden."
+        app_dialog.root.buttons["Show Details"].mouseClick()
+        assert (
+            app_dialog.root["history_view"].exists()
+        ), "History view should be visible."
+    else:
+        app_dialog.root.buttons["Hide Details"].mouseClick()
+        assert (
+            app_dialog.root["history_view"].exists()
+            is False
+        ), "History view should be hidden."
+        app_dialog.root.buttons["Show Details"].mouseClick()
+        assert (
+            app_dialog.root["history_view"].exists()
+        ), "History view should be visible."
+
+    # Validate Details View
+    assert (
+            app_dialog.root["details_image"].exists()
+        ), "Details view image is missing."
+    assert (
+            app_dialog.root.captions["Name*Asset Alice*Status*Final*Description*Now, thought Alice, Well, I hardly know No more, thank ye Im better now but Im grown up now, she added in a hurry. No, look"].exists()
+        ), "Details view Asset text is missing."
+
+    # Validate Publish View
+    app_dialog.root.listitems["Alice"].get().mouseDoubleClick()
+    assert (
+            app_dialog.root["publish_view"].exists()
+        ), "Publish view is missing."
+    assert (
+            app_dialog.root.listitems[""].exists()
+        ), "Publish view is missing."

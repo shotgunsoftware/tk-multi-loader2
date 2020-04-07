@@ -121,9 +121,7 @@ class AppDialogAppWrapper(object):
 
 def test_welcome_page(app_dialog):
     # Validate that Loader app is up
-    assert app_dialog.root.captions[
-        "Loader"
-    ].exists(), "Cannot find Loader2 app"
+    assert app_dialog.root.captions["Loader"].exists(), "Cannot find Loader2 app"
 
     # Validate Welcome page is up
     if app_dialog.root.floatingwindows["Toolkit Help"].exists() is False:
@@ -182,12 +180,14 @@ def test_search(app_dialog):
     app_dialog.root.textfields.typeIn("bunny_010")
     topwindows.listitems["bunny_010"].waitExist(timeout=30)
     topwindows.listitems["bunny_010"].mouseClick()
-    app_dialog.root["entity_preset_tabs"].outlineitems["bunny_010"].waitExist(timeout=30)
+    app_dialog.root["entity_preset_tabs"].outlineitems["bunny_010"].waitExist(
+        timeout=30
+    )
 
     # Validate that bunny_010_0010 is showing up in publish view list items
     assert (
-            app_dialog.root["publish_view"].listitems["bunny_010_0010"].exists()
-        ), "bunny_010_0010 isn't showing up in the entity list view."
+        app_dialog.root["publish_view"].listitems["bunny_010_0010"].exists()
+    ), "bunny_010_0010 isn't showing up in the entity list view."
 
 
 def test_context_selection(app_dialog):
@@ -200,32 +200,24 @@ def test_context_selection(app_dialog):
     # Validate Show/Hide button and make sure history view is visible
     if app_dialog.root.buttons["Show Details"].exists():
         assert (
-            app_dialog.root["history_view"].exists()
-            is False
+            app_dialog.root["history_view"].exists() is False
         ), "History view isn't hidden."
         app_dialog.root.buttons["Show Details"].mouseClick()
-        assert (
-            app_dialog.root["history_view"].exists()
-        ), "History view isn't visible."
+        assert app_dialog.root["history_view"].exists(), "History view isn't visible."
     else:
         app_dialog.root.buttons["Hide Details"].mouseClick()
         assert (
-            app_dialog.root["history_view"].exists()
-            is False
+            app_dialog.root["history_view"].exists() is False
         ), "History view isn't hidden."
         app_dialog.root.buttons["Show Details"].mouseClick()
-        assert (
-            app_dialog.root["history_view"].exists()
-        ), "History view isn't visible."
+        assert app_dialog.root["history_view"].exists(), "History view isn't visible."
 
     # Select an item and validate Details View
     app_dialog.root.listitems["Alice"].get().mouseClick()
-    assert (
-            app_dialog.root["details_image"].exists()
-        ), "Details view isn't visible."
-    assert (
-            app_dialog.root.captions["Name*Asset Alice*Status*Final*Description*Now, thought Alice, Well, I hardly know No more, thank ye Im better now but Im grown up now, she added in a hurry. No, look"].exists()
-        ), "Details view Asset informations is missing."
+    assert app_dialog.root["details_image"].exists(), "Details view isn't visible."
+    assert app_dialog.root.captions[
+        "Name*Asset Alice*Status*Final*Description*Now, thought Alice, Well, I hardly know No more, thank ye Im better now but Im grown up now, she added in a hurry. No, look"
+    ].exists(), "Details view Asset informations is missing."
 
 
 def test_breadcrumb_widget(app_dialog):
@@ -267,15 +259,14 @@ def test_view_mode(app_dialog):
     # Select list mode
     app_dialog.root.checkboxes["list_mode"].mouseClick()
     assert (
-            app_dialog.root["thumb_scale"].exists()
-            is False
-        ), "Thumbnail scale slider shouldn't be visible."
+        app_dialog.root["thumb_scale"].exists() is False
+    ), "Thumbnail scale slider shouldn't be visible."
 
     # Select thumbnail mode
     app_dialog.root.checkboxes["thumbnail_mode"].mouseClick()
-    assert (
-            app_dialog.root["thumb_scale"].exists()
-        ), "Thumbnail scale slider isn't available."
+    assert app_dialog.root[
+        "thumb_scale"
+    ].exists(), "Thumbnail scale slider isn't available."
 
     # Validate thumbnail slider
     # Move slider to get small thumbnails
@@ -293,28 +284,30 @@ def test_view_mode(app_dialog):
 
 def test_action_items(app_dialog):
     # Click on the Actions drop down menu. That menu is hidden from qt so I need to do some hack to select it.
-    folderThumbnail = first(app_dialog.root["publish_view"].listitems["*Big Buck Bunny"])
+    folderThumbnail = first(
+        app_dialog.root["publish_view"].listitems["*Big Buck Bunny"]
+    )
     width, height = folderThumbnail.size
     app_dialog.root["publish_view"].listitems["*Big Buck Bunny"].get().mouseSlide()
     folderThumbnail.mouseClick(width * 0.9, height * 0.9)
 
     # Validate action items.
-    assert (
-            topwindows.menuitems["Show details in Shotgun"].exists()
-        ), "Show details in Shotgun isn't available."
-    assert (
-            topwindows.menuitems["Show in Media Center"].exists()
-        ), "Show in Media Center isn't available."
+    assert topwindows.menuitems[
+        "Show details in Shotgun"
+    ].exists(), "Show details in Shotgun isn't available."
+    assert topwindows.menuitems[
+        "Show in Media Center"
+    ].exists(), "Show in Media Center isn't available."
 
 
 def test_publish_type(app_dialog):
     # Make sure buttons are available
-    assert (
-            app_dialog.root.buttons["Select All"].exists()
-        ), "Select All button is missing"
-    assert (
-            app_dialog.root.buttons["Select None"].exists()
-        ), "Select None button is missing"
+    assert app_dialog.root.buttons[
+        "Select All"
+    ].exists(), "Select All button is missing"
+    assert app_dialog.root.buttons[
+        "Select None"
+    ].exists(), "Select None button is missing"
 
     # Unselect Folders. That checkbox is hidden from qt so I need to do some hack to select it.
     foldersCheckbox = first(app_dialog.root["publish_type_list"].listitems["Folders"])
@@ -324,20 +317,21 @@ def test_publish_type(app_dialog):
 
     # Make sure Big Buck Bunny project is no more showing up in the publish view
     assert (
-            app_dialog.root["publish_view"].listitems["*Big Buck Bunny"].exists()
-            is False
-        ), "Big Buck Bunny project shouldn't be visible."
+        app_dialog.root["publish_view"].listitems["*Big Buck Bunny"].exists() is False
+    ), "Big Buck Bunny project shouldn't be visible."
 
     # Click on Select All button
     app_dialog.root.buttons["Select All"].mouseClick()
 
     # Make sure Big Buck Bunny project is showing up in the publish view
     assert (
-            app_dialog.root["publish_view"].listitems["*Big Buck Bunny"].exists()
-        ), "Big Buck Bunny project ins't available."
+        app_dialog.root["publish_view"].listitems["*Big Buck Bunny"].exists()
+    ), "Big Buck Bunny project ins't available."
 
 
-@pytest.mark.skip(reason="Need to fix this known issue: https://jira.autodesk.com/browse/SG-9294")
+@pytest.mark.skip(
+    reason="Need to fix this known issue: https://jira.autodesk.com/browse/SG-9294"
+)
 def test_reload(app_dialog):
     # Click on the cog button and select reload
     app_dialog.root.buttons["cog_button"].mouseClick()
@@ -346,11 +340,11 @@ def test_reload(app_dialog):
 
     # Make sure items are still showing up in the entity view
     assert (
-            app_dialog.root["entity_preset_tabs"].outlineitems["*Big Buck Bunny"].exists()
-        ), "Big Buck Bunny project ins't available."
+        app_dialog.root["entity_preset_tabs"].outlineitems["*Big Buck Bunny"].exists()
+    ), "Big Buck Bunny project ins't available."
     assert (
-            app_dialog.root["entity_preset_tabs"].outlineitems["Assets"].exists()
-        ), "Assets ins't available."
+        app_dialog.root["entity_preset_tabs"].outlineitems["Assets"].exists()
+    ), "Assets ins't available."
     assert (
-            app_dialog.root["entity_preset_tabs"].outlineitems["Shots"].exists()
-        ), "Shots ins't available."
+        app_dialog.root["entity_preset_tabs"].outlineitems["Shots"].exists()
+    ), "Shots ins't available."

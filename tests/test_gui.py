@@ -14,11 +14,10 @@ import time
 import os
 import sys
 import sgtk
-from tk_toolchain.cmd_line_tools import tk_run_app
-from MA.UI import first
 
 try:
     from MA.UI import topwindows
+    from MA.UI import first
 except ImportError:
     pytestmark = pytest.mark.skip()
 

@@ -90,6 +90,12 @@ def app_dialog(host_application):
             app_dialog = AppDialogAppWrapper(topwindows["python"])
 
         if app_dialog.exists():
+            wait = time.time()
+            while wait + 5 > time.time():
+                # Close Welcome page if it is the first time the Loader2 app is run
+                if app_dialog.root.floatingwindows["Toolkit Help"].exists():
+                    app_dialog.root.floatingwindows["Toolkit Help"].buttons["Close"].mouseClick()
+                    break
             yield app_dialog
             app_dialog.close()
             return
@@ -119,14 +125,10 @@ class AppDialogAppWrapper(object):
 
 
 def test_welcome_page(app_dialog):
-    # Validate that Loader app is up
-    assert app_dialog.root.captions["Loader"].exists(), "Cannot find Loader2 app"
-
-    # Validate Welcome page is up
-    if app_dialog.root.floatingwindows["Toolkit Help"].exists() is False:
-        app_dialog.root.buttons["cog_button"].mouseClick()
-        topwindows.menuitems["Show Help Screen"].waitExist(timeout=30)
-        topwindows.menuitems["Show Help Screen"].get().mouseClick()
+    # Open the Welcome page
+    app_dialog.root.buttons["cog_button"].mouseClick()
+    topwindows.menuitems["Show Help Screen"].waitExist(timeout=30)
+    topwindows.menuitems["Show Help Screen"].get().mouseClick()
     app_dialog.root.floatingwindows["Toolkit Help"].waitExist(timeout=30)
 
     # Click on Scroll to the next slide until you reach the last slide

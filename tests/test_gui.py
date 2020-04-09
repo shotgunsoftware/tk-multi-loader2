@@ -94,7 +94,9 @@ def app_dialog(host_application):
             while wait + 5 > time.time():
                 # Close Welcome page if it is the first time the Loader2 app is run
                 if app_dialog.root.floatingwindows["Toolkit Help"].exists():
-                    app_dialog.root.floatingwindows["Toolkit Help"].buttons["Close"].mouseClick()
+                    app_dialog.root.floatingwindows["Toolkit Help"].buttons[
+                        "Close"
+                    ].mouseClick()
                     break
             yield app_dialog
             app_dialog.close()

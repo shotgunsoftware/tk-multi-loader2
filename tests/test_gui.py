@@ -261,12 +261,22 @@ def test_breadcrumb_widget(app_dialog):
 def test_view_mode(app_dialog):
     # Select list mode
     app_dialog.root.checkboxes["list_mode"].mouseClick()
+    # Make sure list mode button is checked
+    assert (
+        app_dialog.root.checkboxes["list_mode"].checked
+    ), "List view mode is not selected."
+    # Make sure thumb scale slider is not available in list mode
     assert (
         app_dialog.root["thumb_scale"].exists() is False
     ), "Thumbnail scale slider shouldn't be visible."
 
     # Select thumbnail mode
     app_dialog.root.checkboxes["thumbnail_mode"].mouseClick()
+    # Make sure thumbnail mode button is checked
+    assert (
+        app_dialog.root.checkboxes["thumbnail_mode"].checked
+    ), "Thumbnail view mode is not selected."
+    # Make sure thumb scale slider is available in lithumbnail mode
     assert app_dialog.root[
         "thumb_scale"
     ].exists(), "Thumbnail scale slider isn't available."

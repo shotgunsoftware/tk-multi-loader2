@@ -207,9 +207,6 @@ class MayaActions(HookBaseClass):
         :param path: Path to file.
         :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
         """
-        if not os.path.exists(path):
-            raise Exception("File not found on disk - '%s'" % path)
-
         # make a name space out of entity name + publish name
         # e.g. bunny_upperbody
         namespace = "%s %s" % (
@@ -235,9 +232,6 @@ class MayaActions(HookBaseClass):
         :param path: Path to file.
         :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
         """
-        if not os.path.exists(path):
-            raise Exception("File not found on disk - '%s'" % path)
-
         # make a name space out of entity name + publish name
         # e.g. bunny_upperbody
         namespace = "%s %s" % (

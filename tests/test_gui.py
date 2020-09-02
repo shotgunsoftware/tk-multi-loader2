@@ -14,6 +14,7 @@ import time
 import os
 import sys
 import sgtk
+from tk_toolchain.authentication import get_toolkit_user
 
 try:
     from MA.UI import topwindows
@@ -24,9 +25,14 @@ except ImportError:
 
 @pytest.fixture(scope="session")
 def context():
-    # A task in Big Buck Bunny which we're going to use
-    # for the current context.
-    return {"type": "Project", "id": 65}
+    # Get credentials from TK_TOOLCHAIN
+    sg = get_toolkit_user().create_sg_connection()
+
+    # Get the Demo Animation project id
+    filters = [["name", "is", "Demo: Animation"]]
+    project = sg.find_one("Project", filters)
+
+    return project
 
 
 # This fixture will launch tk-run-app on first usage
@@ -298,10 +304,10 @@ def test_view_mode(app_dialog):
 def test_action_items(app_dialog):
     # Click on the Actions drop down menu. That menu is hidden from qt so I need to do some hack to select it.
     folderThumbnail = first(
-        app_dialog.root["publish_view"].listitems["*Big Buck Bunny"]
+        app_dialog.root["publish_view"].listitems["*Demo: Animation"]
     )
     width, height = folderThumbnail.size
-    app_dialog.root["publish_view"].listitems["*Big Buck Bunny"].get().mouseSlide()
+    app_dialog.root["publish_view"].listitems["*Demo: Animation"].get().mouseSlide()
     folderThumbnail.mouseClick(width * 0.9, height * 0.9)
 
     # Validate action items.
@@ -328,18 +334,18 @@ def test_publish_type(app_dialog):
     app_dialog.root["publish_type_list"].listitems["Folders"].get().mouseSlide()
     foldersCheckbox.mouseClick(width * 0.05, height * 0.5)
 
-    # Make sure Big Buck Bunny project is no more showing up in the publish view
+    # Make sure Demo: Animation project is no more showing up in the publish view
     assert (
-        app_dialog.root["publish_view"].listitems["*Big Buck Bunny"].exists() is False
-    ), "Big Buck Bunny project shouldn't be visible."
+        app_dialog.root["publish_view"].listitems["*Demo: Animation"].exists() is False
+    ), "Demo: Animation project shouldn't be visible."
 
     # Click on Select All button
     app_dialog.root.buttons["Select All"].mouseClick()
 
-    # Make sure Big Buck Bunny project is showing up in the publish view
+    # Make sure Demo: Animation project is showing up in the publish view
     assert (
-        app_dialog.root["publish_view"].listitems["*Big Buck Bunny"].exists()
-    ), "Big Buck Bunny project ins't available."
+        app_dialog.root["publish_view"].listitems["*Demo: Animation"].exists()
+    ), "Demo: Animation project ins't available."
 
 
 @pytest.mark.skip(
@@ -353,8 +359,8 @@ def test_reload(app_dialog):
 
     # Make sure items are still showing up in the entity view
     assert (
-        app_dialog.root["entity_preset_tabs"].outlineitems["*Big Buck Bunny"].exists()
-    ), "Big Buck Bunny project ins't available."
+        app_dialog.root["entity_preset_tabs"].outlineitems["*Demo: Animation"].exists()
+    ), "Demo: Animation project ins't available."
     assert (
         app_dialog.root["entity_preset_tabs"].outlineitems["Assets"].exists()
     ), "Assets ins't available."

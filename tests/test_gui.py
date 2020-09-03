@@ -67,7 +67,10 @@ def context():
         "sg_sequence": {"type": new_sequence["type"], "id": new_sequence["id"]},
         "code": "shot_001",
         "sg_status_list": "ip",
-        "task_template": {"type": shot_task_template["type"], "id": shot_task_template["id"]},
+        "task_template": {
+            "type": shot_task_template["type"],
+            "id": shot_task_template["id"],
+        },
     }
     sg.create("Shot", shot_data)
 
@@ -82,7 +85,10 @@ def context():
         "description": "This asset was created by the Loader2 UI automation",
         "sg_status_list": "ip",
         "sg_asset_type": "Character",
-        "task_template": {"type": asset_task_template["type"], "id": asset_task_template["id"]},
+        "task_template": {
+            "type": asset_task_template["type"],
+            "id": asset_task_template["id"],
+        },
     }
     sg.create("Asset", asset_data)
 
@@ -243,9 +249,7 @@ def test_search(app_dialog):
     app_dialog.root.textfields.typeIn("seq_001")
     topwindows.listitems["seq_001"].waitExist(timeout=30)
     topwindows.listitems["seq_001"].mouseClick()
-    app_dialog.root["entity_preset_tabs"].outlineitems["seq_001"].waitExist(
-        timeout=30
-    )
+    app_dialog.root["entity_preset_tabs"].outlineitems["seq_001"].waitExist(timeout=30)
 
     # Validate that shot_001 is showing up in publish view list items
     assert (
@@ -361,7 +365,9 @@ def test_action_items(app_dialog):
         app_dialog.root["publish_view"].listitems["*Toolkit Loader2 UI Automation"]
     )
     width, height = folderThumbnail.size
-    app_dialog.root["publish_view"].listitems["*Toolkit Loader2 UI Automation"].get().mouseSlide()
+    app_dialog.root["publish_view"].listitems[
+        "*Toolkit Loader2 UI Automation"
+    ].get().mouseSlide()
     folderThumbnail.mouseClick(width * 0.9, height * 0.9)
 
     # Validate action items.
@@ -390,7 +396,10 @@ def test_publish_type(app_dialog):
 
     # Make sure Toolkit Loader2 UI Automation project is no more showing up in the publish view
     assert (
-        app_dialog.root["publish_view"].listitems["*Toolkit Loader2 UI Automation"].exists() is False
+        app_dialog.root["publish_view"]
+        .listitems["*Toolkit Loader2 UI Automation"]
+        .exists()
+        is False
     ), "Toolkit Loader2 UI Automation project shouldn't be visible."
 
     # Click on Select All button
@@ -398,7 +407,9 @@ def test_publish_type(app_dialog):
 
     # Make sure Toolkit Loader2 UI Automation project is showing up in the publish view
     assert (
-        app_dialog.root["publish_view"].listitems["*Toolkit Loader2 UI Automation"].exists()
+        app_dialog.root["publish_view"]
+        .listitems["*Toolkit Loader2 UI Automation"]
+        .exists()
     ), "Toolkit Loader2 UI Automation project ins't available."
 
 
@@ -413,7 +424,9 @@ def test_reload(app_dialog):
 
     # Make sure items are still showing up in the entity view
     assert (
-        app_dialog.root["entity_preset_tabs"].outlineitems["*Toolkit Loader2 UI Automation"].exists()
+        app_dialog.root["entity_preset_tabs"]
+        .outlineitems["*Toolkit Loader2 UI Automation"]
+        .exists()
     ), "Toolkit Loader2 UI Automation project ins't available."
     assert (
         app_dialog.root["entity_preset_tabs"].outlineitems["Assets"].exists()

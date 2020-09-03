@@ -25,14 +25,68 @@ except ImportError:
 
 @pytest.fixture(scope="session")
 def context():
+    # A task in Toolkit Loader2 UI Automation project which we're going to use
+    # for the current context.
     # Get credentials from TK_TOOLCHAIN
     sg = get_toolkit_user().create_sg_connection()
 
-    # Get the Demo Animation project id
-    filters = [["name", "is", "Demo: Animation"]]
-    project = sg.find_one("Project", filters)
+    # Make sure there is not already an automation project created
+    filters = [["name", "is", "Toolkit Loader2 UI Automation"]]
+    existed_project = sg.find_one("Project", filters)
+    if existed_project is not None:
+        sg.delete(existed_project["type"], existed_project["id"])
+    # Get the Film VFX Template project id to be passed in the project creation
+    filters = [["name", "is", "Film VFX Template"]]
+    template_project = sg.find_one("Project", filters)
+    # Create a new project with the Film VFX Template
+    project_data = {
+        "sg_description": "Project Created by Automation",
+        "name": "Toolkit Loader2 UI Automation",
+        "layout_project": {
+            "type": template_project["type"],
+            "id": template_project["id"],
+        },
+    }
+    new_project = sg.create("Project", project_data)
 
-    return project
+    # Create a Sequence to be used by the Shot creation
+    sequence_data = {
+        "project": {"type": new_project["type"], "id": new_project["id"]},
+        "code": "seq_001",
+        "sg_status_list": "ip",
+    }
+    new_sequence = sg.create("Sequence", sequence_data)
+
+    # Get the Animation - Shot task template id to be passed in the shot creation
+    shot_filters = [["code", "is", "Animation - Shot"]]
+    shot_task_template = sg.find_one("TaskTemplate", shot_filters)
+
+    # Create a new shot
+    shot_data = {
+        "project": {"type": new_project["type"], "id": new_project["id"]},
+        "sg_sequence": {"type": new_sequence["type"], "id": new_sequence["id"]},
+        "code": "shot_001",
+        "sg_status_list": "ip",
+        "task_template": {"type": shot_task_template["type"], "id": shot_task_template["id"]},
+    }
+    sg.create("Shot", shot_data)
+
+    # Get the Film VFX - Character - Asset task template id to be passed in the asset creation
+    asset_filters = [["code", "is", "Film VFX - Character Asset"]]
+    asset_task_template = sg.find_one("TaskTemplate", asset_filters)
+
+    # Create a new asset
+    asset_data = {
+        "project": {"type": new_project["type"], "id": new_project["id"]},
+        "code": "AssetAutomation",
+        "description": "This asset was created by the Loader2 UI automation",
+        "sg_status_list": "ip",
+        "sg_asset_type": "Character",
+        "task_template": {"type": asset_task_template["type"], "id": asset_task_template["id"]},
+    }
+    sg.create("Asset", asset_data)
+
+    return new_project
 
 
 # This fixture will launch tk-run-app on first usage
@@ -185,18 +239,18 @@ def test_search(app_dialog):
     # Clear text field
     app_dialog.root["entity_preset_tabs"].buttons.mouseClick()
 
-    # Search for bunny_010 and select it
-    app_dialog.root.textfields.typeIn("bunny_010")
-    topwindows.listitems["bunny_010"].waitExist(timeout=30)
-    topwindows.listitems["bunny_010"].mouseClick()
-    app_dialog.root["entity_preset_tabs"].outlineitems["bunny_010"].waitExist(
+    # Search for seq_001 and select it
+    app_dialog.root.textfields.typeIn("seq_001")
+    topwindows.listitems["seq_001"].waitExist(timeout=30)
+    topwindows.listitems["seq_001"].mouseClick()
+    app_dialog.root["entity_preset_tabs"].outlineitems["seq_001"].waitExist(
         timeout=30
     )
 
-    # Validate that bunny_010_0010 is showing up in publish view list items
+    # Validate that shot_001 is showing up in publish view list items
     assert (
-        app_dialog.root["publish_view"].listitems["bunny_010_0010"].exists()
-    ), "bunny_010_0010 isn't showing up in the entity list view."
+        app_dialog.root["publish_view"].listitems["shot_001"].exists()
+    ), "shot_001 isn't showing up in the entity list view."
 
 
 def test_context_selection(app_dialog):
@@ -204,7 +258,7 @@ def test_context_selection(app_dialog):
     app_dialog.root.outlineitems["Assets"].get().mouseDoubleClick()
     app_dialog.root.outlineitems["Character"].waitExist(timeout=30)
     app_dialog.root.outlineitems["Character"].get().mouseDoubleClick()
-    app_dialog.root.outlineitems["Alice"].waitExist(timeout=30)
+    app_dialog.root.outlineitems["AssetAutomation"].waitExist(timeout=30)
 
     # Validate Show/Hide button and make sure history view is visible
     if app_dialog.root.buttons["Show Details"].exists():
@@ -222,10 +276,10 @@ def test_context_selection(app_dialog):
         assert app_dialog.root["history_view"].exists(), "History view isn't visible."
 
     # Select an item and validate Details View
-    app_dialog.root.listitems["Alice"].get().mouseClick()
+    app_dialog.root.listitems["AssetAutomation"].get().mouseClick()
     assert app_dialog.root["details_image"].exists(), "Details view isn't visible."
     assert app_dialog.root.captions[
-        "Name*Asset Alice*Status*Final*Description*Now, thought Alice, Well, I hardly know No more, thank ye Im better now but Im grown up now, she added in a hurry. No, look"
+        "Name*Asset AssetAutomation*Status*In Progress*Description*This asset was created by the Loader2 UI automation"
     ].exists(), "Details view Asset informations is missing."
 
 
@@ -242,7 +296,7 @@ def test_breadcrumb_widget(app_dialog):
 
     # Validate Breadcrumb widget back to project context
     assert app_dialog.root.captions[
-        "Project * Shots * Sequence bunny_010"
+        "Project * Shots * Sequence seq_001"
     ].exists(), "Breadcrumb widget is not set correctly"
 
     # Click on the next navigation button until back to the character context
@@ -304,10 +358,10 @@ def test_view_mode(app_dialog):
 def test_action_items(app_dialog):
     # Click on the Actions drop down menu. That menu is hidden from qt so I need to do some hack to select it.
     folderThumbnail = first(
-        app_dialog.root["publish_view"].listitems["*Demo: Animation"]
+        app_dialog.root["publish_view"].listitems["*Toolkit Loader2 UI Automation"]
     )
     width, height = folderThumbnail.size
-    app_dialog.root["publish_view"].listitems["*Demo: Animation"].get().mouseSlide()
+    app_dialog.root["publish_view"].listitems["*Toolkit Loader2 UI Automation"].get().mouseSlide()
     folderThumbnail.mouseClick(width * 0.9, height * 0.9)
 
     # Validate action items.
@@ -334,18 +388,18 @@ def test_publish_type(app_dialog):
     app_dialog.root["publish_type_list"].listitems["Folders"].get().mouseSlide()
     foldersCheckbox.mouseClick(width * 0.05, height * 0.5)
 
-    # Make sure Demo: Animation project is no more showing up in the publish view
+    # Make sure Toolkit Loader2 UI Automation project is no more showing up in the publish view
     assert (
-        app_dialog.root["publish_view"].listitems["*Demo: Animation"].exists() is False
-    ), "Demo: Animation project shouldn't be visible."
+        app_dialog.root["publish_view"].listitems["*Toolkit Loader2 UI Automation"].exists() is False
+    ), "Toolkit Loader2 UI Automation project shouldn't be visible."
 
     # Click on Select All button
     app_dialog.root.buttons["Select All"].mouseClick()
 
-    # Make sure Demo: Animation project is showing up in the publish view
+    # Make sure Toolkit Loader2 UI Automation project is showing up in the publish view
     assert (
-        app_dialog.root["publish_view"].listitems["*Demo: Animation"].exists()
-    ), "Demo: Animation project ins't available."
+        app_dialog.root["publish_view"].listitems["*Toolkit Loader2 UI Automation"].exists()
+    ), "Toolkit Loader2 UI Automation project ins't available."
 
 
 @pytest.mark.skip(
@@ -359,8 +413,8 @@ def test_reload(app_dialog):
 
     # Make sure items are still showing up in the entity view
     assert (
-        app_dialog.root["entity_preset_tabs"].outlineitems["*Demo: Animation"].exists()
-    ), "Demo: Animation project ins't available."
+        app_dialog.root["entity_preset_tabs"].outlineitems["*Toolkit Loader2 UI Automation"].exists()
+    ), "Toolkit Loader2 UI Automation project ins't available."
     assert (
         app_dialog.root["entity_preset_tabs"].outlineitems["Assets"].exists()
     ), "Assets ins't available."

@@ -35,17 +35,11 @@ def context():
     existed_project = sg.find_one("Project", filters)
     if existed_project is not None:
         sg.delete(existed_project["type"], existed_project["id"])
-    # Get the Film VFX Template project id to be passed in the project creation
-    filters = [["name", "is", "Film VFX Template"]]
-    template_project = sg.find_one("Project", filters)
+
     # Create a new project with the Film VFX Template
     project_data = {
         "sg_description": "Project Created by Automation",
         "name": "Toolkit Loader2 UI Automation",
-        "layout_project": {
-            "type": template_project["type"],
-            "id": template_project["id"],
-        },
     }
     new_project = sg.create("Project", project_data)
 
@@ -74,27 +68,14 @@ def context():
     }
     sg.create("Shot", shot_data)
 
-    # Get the Film VFX - Character - Asset task template id to be passed in the asset creation
-    asset_filters = [["code", "is", "Film VFX - Character Asset"]]
-    asset_task_template = sg.find_one("TaskTemplate", asset_filters)
-
     # Create a new asset
     asset_data = {
         "project": {"type": new_project["type"], "id": new_project["id"]},
         "code": "AssetAutomation",
         "description": "This asset was created by the Loader2 UI automation",
         "sg_status_list": "ip",
-        "sg_asset_type": "Character",
-        "task_template": {
-            "type": asset_task_template["type"],
-            "id": asset_task_template["id"],
-        },
     }
     asset = sg.create("Asset", asset_data)
-
-    # Get the Asset task model id to be passed in the publish creation
-    task_filters = [["content", "is", "Model"], ["entity", "is", asset]]
-    task = sg.find_one("Task", task_filters)
 
     # Get the publish_file_type id to be passed in the publish creation
     published_file_type_filters = [["code", "is", "Image"]]
@@ -118,7 +99,6 @@ def context():
         # },
         "path": {"local_path": file_to_publish},
         "entity": asset,
-        "task": task,
         "version_number": 1,
     }
     sg.create("PublishedFile", publish_data)
@@ -291,8 +271,6 @@ def test_search(app_dialog):
 def test_context_selection(app_dialog):
     # Select an asset
     app_dialog.root.outlineitems["Assets"].get().mouseDoubleClick()
-    app_dialog.root.outlineitems["Character"].waitExist(timeout=30)
-    app_dialog.root.outlineitems["Character"].get().mouseDoubleClick()
     app_dialog.root.outlineitems["AssetAutomation"].waitExist(timeout=30)
 
     # Validate Show/Hide button and make sure history view is visible
@@ -321,11 +299,11 @@ def test_context_selection(app_dialog):
 def test_breadcrumb_widget(app_dialog):
     # Validate Breadcrumb widget current state
     assert app_dialog.root.captions[
-        "Project * Assets * Character"
+        "Project * Assets"
     ].exists(), "Breadcrumb widget is not set correctly"
 
     # Click on the back navigation button until back to the project context
-    for _i in range(0, 2):
+    for _i in range(0, 1):
         # Click on the back navigation button
         app_dialog.root.buttons["navigation_prev"].mouseClick()
 
@@ -335,13 +313,13 @@ def test_breadcrumb_widget(app_dialog):
     ].exists(), "Breadcrumb widget is not set correctly"
 
     # Click on the next navigation button until back to the character context
-    for _i in range(0, 2):
+    for _i in range(0, 1):
         # Click on the back navigation button
         app_dialog.root.buttons["navigation_next"].mouseClick()
 
     # Validate Breadcrumb widget current state
     assert app_dialog.root.captions[
-        "Project * Assets * Character"
+        "Project * Assets"
     ].exists(), "Breadcrumb widget is not set correctly"
 
     # Click on the home navigation button
@@ -445,8 +423,6 @@ def test_publish_type(app_dialog):
 
     # Make sure publish item is showing up correctly
     app_dialog.root["publish_view"].listitems["Assets"].get().mouseDoubleClick()
-    app_dialog.root["publish_view"].listitems["Character"].waitExist(timeout=30)
-    app_dialog.root["publish_view"].listitems["Character"].get().mouseDoubleClick()
     app_dialog.root["publish_view"].listitems["AssetAutomation"].waitExist(timeout=30)
     app_dialog.root["publish_view"].listitems[
         "AssetAutomation"
@@ -457,7 +433,7 @@ def test_publish_type(app_dialog):
     app_dialog.root["publish_view"].listitems["achmed.JPG"].get().mouseClick()
     app_dialog.root["details_image"].waitExist(timeout=30)
     assert app_dialog.root.captions[
-        "Name*achmed.JPG*Type*No Type*Version*001*Link*Asset AssetAutomation*Task*Model (Waiting to Start)"
+        "Name*achmed.JPG*Type*No Type*Version*001*Link*Asset AssetAutomation"
     ].exists(), "Published File informations is missing."
     assert (
         app_dialog.root["history_view"].listitems["001"].exists()

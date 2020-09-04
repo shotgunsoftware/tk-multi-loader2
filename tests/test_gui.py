@@ -51,20 +51,12 @@ def context():
     }
     new_sequence = sg.create("Sequence", sequence_data)
 
-    # Get the Animation - Shot task template id to be passed in the shot creation
-    shot_filters = [["code", "is", "Animation - Shot"]]
-    shot_task_template = sg.find_one("TaskTemplate", shot_filters)
-
     # Create a new shot
     shot_data = {
         "project": {"type": new_project["type"], "id": new_project["id"]},
         "sg_sequence": {"type": new_sequence["type"], "id": new_sequence["id"]},
         "code": "shot_001",
         "sg_status_list": "ip",
-        "task_template": {
-            "type": shot_task_template["type"],
-            "id": shot_task_template["id"],
-        },
     }
     sg.create("Shot", shot_data)
 

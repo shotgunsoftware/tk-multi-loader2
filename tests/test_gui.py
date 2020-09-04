@@ -25,8 +25,8 @@ except ImportError:
 
 @pytest.fixture(scope="session")
 def context():
-    # A task in Toolkit Loader2 UI Automation project which we're going to use
-    # for the current context.
+    # Tasks in Toolkit Loader2 UI Automation project which we're going to use
+    # in different test cases.
     # Get credentials from TK_TOOLCHAIN
     sg = get_toolkit_user().create_sg_connection()
 
@@ -90,7 +90,38 @@ def context():
             "id": asset_task_template["id"],
         },
     }
-    sg.create("Asset", asset_data)
+    asset = sg.create("Asset", asset_data)
+
+    # Get the Asset task model id to be passed in the publish creation
+    task_filters = [["content", "is", "Model"], ["entity", "is", asset]]
+    task = sg.find_one("Task", task_filters)
+
+    # Get the publish_file_type id to be passed in the publish creation
+    published_file_type_filters = [["code", "is", "Image"]]
+    published_file_type = sg.find_one("PublishedFileType", published_file_type_filters)
+
+    # File to publish
+    file_to_publish = os.path.normpath(
+        os.path.expandvars("${TK_TEST_FIXTURES}/files/images/achmed.JPG")
+    )
+
+    # Create a published file
+    publish_data = {
+        "project": {"type": new_project["type"], "id": new_project["id"]},
+        "code": "achmed.JPG",
+        "name": "achmed.JPG",
+        "description": "This file was published by the Loader2 UI automation",
+        # Published_file_type is commented out because the published file isn't showing up if it is set. Need more investigation
+        # "published_file_type": {
+        #     "type": published_file_type["type"],
+        #     "id": published_file_type["id"],
+        # },
+        "path": {"local_path": file_to_publish},
+        "entity": asset,
+        "task": task,
+        "version_number": 1,
+    }
+    sg.create("PublishedFile", publish_data)
 
     return new_project
 
@@ -249,7 +280,7 @@ def test_search(app_dialog):
     app_dialog.root.textfields.typeIn("seq_001")
     topwindows.listitems["seq_001"].waitExist(timeout=30)
     topwindows.listitems["seq_001"].mouseClick()
-    app_dialog.root["entity_preset_tabs"].outlineitems["seq_001"].waitExist(timeout=30)
+    app_dialog.root["publish_view"].listitems["shot_001"].waitExist(timeout=30)
 
     # Validate that shot_001 is showing up in publish view list items
     assert (
@@ -411,6 +442,32 @@ def test_publish_type(app_dialog):
         .listitems["*Toolkit Loader2 UI Automation"]
         .exists()
     ), "Toolkit Loader2 UI Automation project ins't available."
+
+    # Make sure publish item is showing up correctly
+    app_dialog.root["publish_view"].listitems["Assets"].get().mouseDoubleClick()
+    app_dialog.root["publish_view"].listitems["Character"].waitExist(timeout=30)
+    app_dialog.root["publish_view"].listitems["Character"].get().mouseDoubleClick()
+    app_dialog.root["publish_view"].listitems["AssetAutomation"].waitExist(timeout=30)
+    app_dialog.root["publish_view"].listitems[
+        "AssetAutomation"
+    ].get().mouseDoubleClick()
+    app_dialog.root["publish_view"].listitems["achmed.JPG"].waitExist(timeout=30)
+
+    # Make sure published file detail view is good
+    app_dialog.root["publish_view"].listitems["achmed.JPG"].get().mouseClick()
+    app_dialog.root["details_image"].waitExist(timeout=30)
+    assert app_dialog.root.captions[
+        "Name*achmed.JPG*Type*No Type*Version*001*Link*Asset AssetAutomation*Task*Model (Waiting to Start)"
+    ].exists(), "Published File informations is missing."
+    assert (
+        app_dialog.root["history_view"].listitems["001"].exists()
+    ), "Version isn't visible."
+    app_dialog.root["history_view"].listitems["001"].get().mouseClick()
+    # This mouseSlide() is to get the version item's tooltip showing up.
+    app_dialog.root["history_view"].listitems["001"].get().mouseSlide(width * 0.25)
+    topwindows[
+        "Version 001*This file was published by the Loader2 UI automation"
+    ].waitExist(timeout=30)
 
 
 @pytest.mark.skip(

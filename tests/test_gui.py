@@ -31,6 +31,7 @@ def context():
     sg = get_toolkit_user().create_sg_connection()
 
     # Create or update the integration_tests local storage with the current test run
+    storage_name = "Loader UI Tests"
     local_storage = sg.find_one(
         "LocalStorage", [["code", "is", storage_name]], ["code"]
     )

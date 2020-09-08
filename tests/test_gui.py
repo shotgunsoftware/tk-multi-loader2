@@ -30,6 +30,17 @@ def context():
     # Get credentials from TK_TOOLCHAIN
     sg = get_toolkit_user().create_sg_connection()
 
+    # Create or update the integration_tests local storage with the current test run
+    local_storage = sg.find_one(
+        "LocalStorage", [["code", "is", storage_name]], ["code"]
+    )
+    if local_storage is None:
+        local_storage = sg.create("LocalStorage", {"code": storage_name})
+        local_storage["path"] = os.path.expandvars("${SHOTGUN_CURRENT_REPO_ROOT}")
+        sg.update(
+            "LocalStorage", local_storage["id"], {"windows_path": local_storage["path"]}
+        )
+
     # Make sure there is not already an automation project created
     filters = [["name", "is", "Toolkit Loader2 UI Automation"]]
     existed_project = sg.find_one("Project", filters)

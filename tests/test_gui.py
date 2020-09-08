@@ -81,10 +81,6 @@ def context():
     }
     asset = sg.create("Asset", asset_data)
 
-    # Get the publish_file_type id to be passed in the publish creation
-    published_file_type_filters = [["code", "is", "Image"]]
-    published_file_type = sg.find_one("PublishedFileType", published_file_type_filters)
-
     # File to publish
     file_to_publish = os.path.normpath(
         os.path.expandvars("${TK_TEST_FIXTURES}/files/images/achmed.JPG")
@@ -96,11 +92,6 @@ def context():
         "code": "achmed.JPG",
         "name": "achmed.JPG",
         "description": "This file was published by the Loader2 UI automation",
-        # Published_file_type is commented out because the published file isn't showing up if it is set. Need more investigation
-        # "published_file_type": {
-        #     "type": published_file_type["type"],
-        #     "id": published_file_type["id"],
-        # },
         "path": {"local_path": file_to_publish},
         "entity": asset,
         "version_number": 1,
@@ -429,8 +420,12 @@ def test_publish_type(app_dialog):
 
     # Make sure publish item is showing up correctly
     app_dialog.root["publish_view"].listitems["Assets"].get().mouseDoubleClick()
-    app_dialog.root["publish_view"].listitems["Assets with no Type"].waitExist(timeout=30)
-    app_dialog.root["publish_view"].listitems["Assets with no Type"].get().mouseDoubleClick()
+    app_dialog.root["publish_view"].listitems["Assets with no Type"].waitExist(
+        timeout=30
+    )
+    app_dialog.root["publish_view"].listitems[
+        "Assets with no Type"
+    ].get().mouseDoubleClick()
     app_dialog.root["publish_view"].listitems["AssetAutomation"].waitExist(timeout=30)
     app_dialog.root["publish_view"].listitems[
         "AssetAutomation"

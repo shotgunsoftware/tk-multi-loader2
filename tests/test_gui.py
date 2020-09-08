@@ -275,6 +275,8 @@ def test_search(app_dialog):
 def test_context_selection(app_dialog):
     # Select an asset
     app_dialog.root.outlineitems["Assets"].get().mouseDoubleClick()
+    app_dialog.root.outlineitems["Assets with no Type"].waitExist(timeout=30)
+    app_dialog.root.outlineitems["Assets with no Type"].get().mouseDoubleClick()
     app_dialog.root.outlineitems["AssetAutomation"].waitExist(timeout=30)
 
     # Validate Show/Hide button and make sure history view is visible
@@ -303,11 +305,11 @@ def test_context_selection(app_dialog):
 def test_breadcrumb_widget(app_dialog):
     # Validate Breadcrumb widget current state
     assert app_dialog.root.captions[
-        "Project * Assets"
+        "Project * Assets * Assets with no Type"
     ].exists(), "Breadcrumb widget is not set correctly"
 
     # Click on the back navigation button until back to the project context
-    for _i in range(0, 1):
+    for _i in range(0, 2):
         # Click on the back navigation button
         app_dialog.root.buttons["navigation_prev"].mouseClick()
 
@@ -316,14 +318,14 @@ def test_breadcrumb_widget(app_dialog):
         "Project * Shots * Sequence seq_001"
     ].exists(), "Breadcrumb widget is not set correctly"
 
-    # Click on the next navigation button until back to the character context
-    for _i in range(0, 1):
+    # Click on the next navigation button until back to the Assets with no Type context
+    for _i in range(0, 2):
         # Click on the back navigation button
         app_dialog.root.buttons["navigation_next"].mouseClick()
 
     # Validate Breadcrumb widget current state
     assert app_dialog.root.captions[
-        "Project * Assets"
+        "Project * Assets * Assets with no Type"
     ].exists(), "Breadcrumb widget is not set correctly"
 
     # Click on the home navigation button
@@ -427,6 +429,8 @@ def test_publish_type(app_dialog):
 
     # Make sure publish item is showing up correctly
     app_dialog.root["publish_view"].listitems["Assets"].get().mouseDoubleClick()
+    app_dialog.root["publish_view"].listitems["Assets with no Type"].waitExist(timeout=30)
+    app_dialog.root["publish_view"].listitems["Assets with no Type"].get().mouseDoubleClick()
     app_dialog.root["publish_view"].listitems["AssetAutomation"].waitExist(timeout=30)
     app_dialog.root["publish_view"].listitems[
         "AssetAutomation"

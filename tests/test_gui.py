@@ -37,10 +37,11 @@ def context():
     )
     if local_storage is None:
         local_storage = sg.create("LocalStorage", {"code": storage_name})
-        local_storage["path"] = os.path.expandvars("${SHOTGUN_CURRENT_REPO_ROOT}")
-        sg.update(
-            "LocalStorage", local_storage["id"], {"windows_path": local_storage["path"]}
-        )
+    # Always update local storage path
+    local_storage["path"] = os.path.expandvars("${SHOTGUN_CURRENT_REPO_ROOT}")
+    sg.update(
+        "LocalStorage", local_storage["id"], {"windows_path": local_storage["path"]}
+    )
 
     # Make sure there is not already an automation project created
     filters = [["name", "is", "Toolkit Loader2 UI Automation"]]

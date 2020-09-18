@@ -84,14 +84,14 @@ def context():
 
     # File to publish
     file_to_publish = os.path.normpath(
-        os.path.expandvars("${TK_TEST_FIXTURES}/files/images/achmed.JPG")
+        os.path.expandvars("${TK_TEST_FIXTURES}/files/images/sven.png")
     )
 
     # Create a published file
     publish_data = {
         "project": {"type": new_project["type"], "id": new_project["id"]},
-        "code": "achmed.JPG",
-        "name": "achmed.JPG",
+        "code": "sven.png",
+        "name": "sven.png",
         "description": "This file was published by the Loader2 UI automation",
         "path": {"local_path": file_to_publish},
         "entity": asset,
@@ -431,13 +431,13 @@ def test_publish_type(app_dialog):
     app_dialog.root["publish_view"].listitems[
         "AssetAutomation"
     ].get().mouseDoubleClick()
-    app_dialog.root["publish_view"].listitems["achmed.JPG"].waitExist(timeout=30)
+    app_dialog.root["publish_view"].listitems["sven.png"].waitExist(timeout=30)
 
     # Make sure published file detail view is good
-    app_dialog.root["publish_view"].listitems["achmed.JPG"].get().mouseClick()
+    app_dialog.root["publish_view"].listitems["sven.png"].get().mouseClick()
     app_dialog.root["details_image"].waitExist(timeout=30)
     assert app_dialog.root.captions[
-        "Name*achmed.JPG*Type*No Type*Version*001*Link*Asset AssetAutomation"
+        "Name*sven.png*Type*No Type*Version*001*Link*Asset AssetAutomation"
     ].exists(), "Published File informations is missing."
     assert (
         app_dialog.root["history_view"].listitems["001"].exists()

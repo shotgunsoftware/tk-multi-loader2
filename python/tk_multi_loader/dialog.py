@@ -1687,9 +1687,11 @@ class AppDialog(QtGui.QWidget):
             tree_view.setStyleSheet(
                 """QTreeView { border-width: 3px;
                                                    border-style: solid;
-                                                   border-color: #2C93E2; }
+                                                   border-color: {highlight}; }
                                        QTreeView::item { padding: 6px; }
-                                    """
+                """.format(
+                    highlight=self.palette().highlight().color().name()
+                )
             )
             # expand all nodes in the tree
             tree_view.expandAll()
@@ -1842,8 +1844,11 @@ class AppDialog(QtGui.QWidget):
 
         if show_sub_items:
             # indicate this with a special background color
+            color = self.palette().highlight()
             self.ui.publish_view.setStyleSheet(
-                "#publish_view { background-color: rgba(44, 147, 226, 20%); }"
+                "#publish_view { background-color: rgba({red}, {green}, {blue}, 20%); }".format(
+                    red=color.red(), green=color().green(), blue=color.blue()
+                )
             )
             if len(child_folders) > 0:
                 # delegates are rendered in a special way

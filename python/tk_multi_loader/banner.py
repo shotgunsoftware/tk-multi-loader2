@@ -33,11 +33,14 @@ class Banner(QtGui.QLabel):
         # Sets the style sheet for the widget.
         self.setStyleSheet(
             """
-            background-color: rgb(67, 131, 168);
-            color: rgb(255, 255, 255);
+            background-color: {highlight};
+            color: {text};
             border-bottom-left-radius: 10px;
             border-bottom-right-radius: 10px;
-        """
+        """.format(
+                highlight=self.palette().highlight().color().name(),
+                text=self.palette().text().color().name(),
+            )
         )
 
         # Hide the widget by default.

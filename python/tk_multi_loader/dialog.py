@@ -1847,7 +1847,7 @@ class AppDialog(QtGui.QWidget):
             color = self.palette().highlight().color()
             self.ui.publish_view.setStyleSheet(
                 "#publish_view { background-color: rgba({red}, {green}, {blue}, 20%); }".format(
-                    red=color.red(), green=color().green(), blue=color.blue()
+                    red=color.red(), green=color.green(), blue=color.blue()
                 )
             )
             if len(child_folders) > 0:

@@ -1844,7 +1844,7 @@ class AppDialog(QtGui.QWidget):
 
         if show_sub_items:
             # indicate this with a special background color
-            color = self.palette().highlight()
+            color = self.palette().highlight().color()
             self.ui.publish_view.setStyleSheet(
                 "#publish_view { background-color: rgba({red}, {green}, {blue}, 20%); }".format(
                     red=color.red(), green=color().green(), blue=color.blue()

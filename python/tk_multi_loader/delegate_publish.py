@@ -38,9 +38,8 @@ class PublishWidget(QtGui.QWidget):
         self.ui.button.setMenu(self._menu)
         self.ui.button.setVisible(False)
 
-        # compute hilight colors
-        p = QtGui.QPalette()
-        highlight_col = p.color(QtGui.QPalette.Active, QtGui.QPalette.Highlight)
+        # compute highlight colors
+        highlight_col = self.palette().highlight().color()
         self._highlight_str = "rgb(%s, %s, %s)" % (
             highlight_col.red(),
             highlight_col.green(),

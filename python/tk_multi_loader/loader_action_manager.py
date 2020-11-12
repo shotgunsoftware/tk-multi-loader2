@@ -10,6 +10,7 @@
 
 import sgtk
 import datetime
+from functools import partial
 import os
 import sys
 from sgtk.platform.qt import QtCore, QtGui
@@ -229,11 +230,8 @@ class LoaderActionManager(ActionManager):
             ]
 
             # Bind all the action params to a single invocation of the _execute_hook.
-            a.triggered[()].connect(
-                lambda qt_action=a, actions=actions: self._execute_hook(
-                    qt_action, actions
-                )
-            )
+            cb = partial(self._execute_hook, a, actions)
+            a.triggered[()].connect(cb)
             a.setData(actions)
             qt_actions.append(a)
 
@@ -358,11 +356,8 @@ class LoaderActionManager(ActionManager):
                 ]
 
                 # Bind all the action params to a single invocation of the _execute_hook.
-                a.triggered[()].connect(
-                    lambda qt_action=a, actions=actions: self._execute_hook(
-                        qt_action, actions
-                    )
-                )
+                cb = partial(self._execute_hook, a, actions)
+                a.triggered[()].connect(cb)
                 a.setData(actions)
                 qt_actions.append(a)
 
@@ -371,15 +366,18 @@ class LoaderActionManager(ActionManager):
         # Add the action only when there are some paths.
         if paths:
             fs = QtGui.QAction("Show in the file system", None)
-            fs.triggered[()].connect(lambda f=paths: self._show_in_fs(f))
+            cb = partial(self._show_in_fs, paths)
+            fs.triggered[()].connect(cb)
             qt_actions.append(fs)
 
         sg = QtGui.QAction("Show details in Shotgun", None)
-        sg.triggered[()].connect(lambda f=sg_data: self._show_in_sg(f))
+        cb = partial(self._show_in_sg, sg_data)
+        sg.triggered[()].connect(cb)
         qt_actions.append(sg)
 
         sr = QtGui.QAction("Show in Media Center", None)
-        sr.triggered[()].connect(lambda f=sg_data: self._show_in_sr(f))
+        cb = partial(self._show_in_sr, sg_data)
+        sr.triggered[()].connect(cb)
         qt_actions.append(sr)
 
         return qt_actions

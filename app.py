@@ -55,7 +55,7 @@ class MultiLoader(sgtk.platform.Application):
         """
         return True
 
-    def open_publish(self, title="Open Publish", action="Open", publish_types=[]):
+    def open_publish(self, title="Open Publish", action="Open", publish_types=None):
         """
         Display the loader UI in an open-file style where a publish can be selected and the
         artist can then click the action button.  This will then return the selected publish.
@@ -71,5 +71,6 @@ class MultiLoader(sgtk.platform.Application):
                                         contain a much more complete list of fields from the
                                         Shotgun PublishedFile entity
         """
+        publish_types = publish_types or []
         tk_multi_loader = self.import_module("tk_multi_loader")
         return tk_multi_loader.open_publish_browser(self, title, action, publish_types)

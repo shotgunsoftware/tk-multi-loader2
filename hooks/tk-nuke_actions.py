@@ -179,6 +179,12 @@ class NukeActions(HookBaseClass):
     ##############################################################################################################
     # helper methods which can be subclassed in custom hooks to fine tune the behavior of things
 
+    def _resolve_variable_path(self, path):
+        new_path = sgtk.util.ShotgunPath.expand(path)
+        if new_path != path:
+            self.parent.log_debug("Variable root path swap: '{} -> {}'".format(path, new_path))
+        return new_path
+
     def _import_clip(self, path, sg_publish_data):
         """
         Imports the given publish data into Nuke Studio or Hiero as a clip.
@@ -220,6 +226,9 @@ class NukeActions(HookBaseClass):
         """
         import nuke
 
+        # Resolve variable root env vars in the path
+        path = self._resolve_variable_path(path)
+
         # must use unicode otherwise path won't be found
         if not os.path.exists(path.decode("utf-8")):
             raise Exception("File not found on disk - '%s'" % path)
@@ -255,6 +264,9 @@ class NukeActions(HookBaseClass):
         :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
         """
         import nuke
+
+        # Resolve variable root env vars in the path
+        path = self._resolve_variable_path(path)
 
         (_, ext) = os.path.splitext(path)
 

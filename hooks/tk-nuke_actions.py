@@ -182,7 +182,9 @@ class NukeActions(HookBaseClass):
     def _resolve_variable_path(self, path):
         new_path = sgtk.util.ShotgunPath.expand(path)
         if new_path != path:
-            self.parent.log_debug("Variable root path swap: '{} -> {}'".format(path, new_path))
+            self.parent.log_debug(
+                "Variable root path swap: '{} -> {}'".format(path, new_path)
+            )
         return new_path
 
     def _import_clip(self, path, sg_publish_data):

@@ -406,9 +406,7 @@ def test_publish_type(app_dialog, context):
 
     # Make sure Toolkit Loader2 UI Automation project is no more showing up in the publish view
     assert (
-        app_dialog.root["publish_view"]
-        .listitems["*" + str(context["name"])]
-        .exists()
+        app_dialog.root["publish_view"].listitems["*" + str(context["name"])].exists()
         is False
     ), "Toolkit Loader2 UI Automation project shouldn't be visible."
 
@@ -417,9 +415,7 @@ def test_publish_type(app_dialog, context):
 
     # Make sure Toolkit Loader2 UI Automation project is showing up in the publish view
     assert (
-        app_dialog.root["publish_view"]
-        .listitems["*" + str(context["name"])]
-        .exists()
+        app_dialog.root["publish_view"].listitems["*" + str(context["name"])].exists()
     ), "Toolkit Loader2 UI Automation project ins't available."
 
     # Make sure publish item is showing up correctly

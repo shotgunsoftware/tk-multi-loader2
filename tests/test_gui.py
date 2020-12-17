@@ -45,7 +45,7 @@ def context():
 
     # Make sure there is not already an automation project created
     project_name = (
-        "Toolkit Panel UI Automation " + os.environ["SHOTGUN_TEST_ENTITY_SUFFIX"]
+        "Toolkit Loader2 UI Automation " + os.environ["SHOTGUN_TEST_ENTITY_SUFFIX"]
     )
     filters = [["name", "is", project_name]]
     existed_project = sg.find_one("Project", filters)

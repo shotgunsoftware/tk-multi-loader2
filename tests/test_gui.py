@@ -44,7 +44,10 @@ def context():
     )
 
     # Make sure there is not already an automation project created
-    filters = [["name", "is", "Toolkit Loader2 UI Automation"]]
+    project_name = (
+        "Toolkit Panel UI Automation " + os.environ["SHOTGUN_TEST_ENTITY_SUFFIX"]
+    )
+    filters = [["name", "is", project_name]]
     existed_project = sg.find_one("Project", filters)
     if existed_project is not None:
         sg.delete(existed_project["type"], existed_project["id"])
@@ -52,7 +55,7 @@ def context():
     # Create a new project with the Film VFX Template
     project_data = {
         "sg_description": "Project Created by Automation",
-        "name": "Toolkit Loader2 UI Automation",
+        "name": project_name,
     }
     new_project = sg.create("Project", project_data)
 
@@ -366,14 +369,14 @@ def test_view_mode(app_dialog):
     thumbnailSlider.mouseDrag(width * 15, height * 0)
 
 
-def test_action_items(app_dialog):
+def test_action_items(app_dialog, context):
     # Click on the Actions drop down menu. That menu is hidden from qt so I need to do some hack to select it.
     folderThumbnail = first(
-        app_dialog.root["publish_view"].listitems["*Toolkit Loader2 UI Automation"]
+        app_dialog.root["publish_view"].listitems["*" + str(context["name"])]
     )
     width, height = folderThumbnail.size
     app_dialog.root["publish_view"].listitems[
-        "*Toolkit Loader2 UI Automation"
+        "*" + str(context["name"])
     ].get().mouseSlide()
     folderThumbnail.mouseClick(width * 0.9, height * 0.9)
 
@@ -386,7 +389,7 @@ def test_action_items(app_dialog):
     ].exists(), "Show in Media Center isn't available."
 
 
-def test_publish_type(app_dialog):
+def test_publish_type(app_dialog, context):
     # Make sure buttons are available
     assert app_dialog.root.buttons[
         "Select All"
@@ -404,7 +407,7 @@ def test_publish_type(app_dialog):
     # Make sure Toolkit Loader2 UI Automation project is no more showing up in the publish view
     assert (
         app_dialog.root["publish_view"]
-        .listitems["*Toolkit Loader2 UI Automation"]
+        .listitems["*" + str(context["name"])]
         .exists()
         is False
     ), "Toolkit Loader2 UI Automation project shouldn't be visible."
@@ -415,7 +418,7 @@ def test_publish_type(app_dialog):
     # Make sure Toolkit Loader2 UI Automation project is showing up in the publish view
     assert (
         app_dialog.root["publish_view"]
-        .listitems["*Toolkit Loader2 UI Automation"]
+        .listitems["*" + str(context["name"])]
         .exists()
     ), "Toolkit Loader2 UI Automation project ins't available."
 
@@ -462,7 +465,7 @@ def test_reload(app_dialog):
     # Make sure items are still showing up in the entity view
     assert (
         app_dialog.root["entity_preset_tabs"]
-        .outlineitems["*Toolkit Loader2 UI Automation"]
+        .outlineitems["*" + str(context["name"])]
         .exists()
     ), "Toolkit Loader2 UI Automation project ins't available."
     assert (

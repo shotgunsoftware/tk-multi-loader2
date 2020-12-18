@@ -152,6 +152,9 @@ class PhotoshopActions(HookBaseClass):
         # so convert the path to ensure filenames containing complex characters are supported
         path = six.ensure_text(self.get_publish_path(sg_publish_data))
 
+        # Resolve variable roots env vars
+        path = sgtk.util.ShotgunPath.expand(path)
+
         if not os.path.exists(path):
             raise Exception("File not found on disk - '%s'" % path)
 

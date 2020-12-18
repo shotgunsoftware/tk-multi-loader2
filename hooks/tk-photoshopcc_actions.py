@@ -193,7 +193,7 @@ class PhotoshopActions(HookBaseClass):
         # We can't import in an empty scene.
         try:
             adobe.app.activeDocument
-        except RuntimeError:
+        except (RuntimeError, AttributeError):
             QtGui.QMessageBox.warning(
                 None, "Add To Layer", "Please open a document first.",
             )

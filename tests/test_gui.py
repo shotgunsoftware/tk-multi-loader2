@@ -289,7 +289,9 @@ def test_view_mode(app_dialog):
 def test_action_items(app_dialog, tk_test_create_project):
     # Click on the Actions drop down menu. That menu is hidden from qt so I need to do some hack to select it.
     folderThumbnail = first(
-        app_dialog.root["publish_view"].listitems["*" + str(tk_test_create_project["name"])]
+        app_dialog.root["publish_view"].listitems[
+            "*" + str(tk_test_create_project["name"])
+        ]
     )
     width, height = folderThumbnail.size
     app_dialog.root["publish_view"].listitems[
@@ -323,7 +325,9 @@ def test_publish_type(app_dialog, tk_test_create_project):
 
     # Make sure Toolkit UI Automation project is no more showing up in the publish view
     assert (
-        app_dialog.root["publish_view"].listitems["*" + str(tk_test_create_project["name"])].exists()
+        app_dialog.root["publish_view"]
+        .listitems["*" + str(tk_test_create_project["name"])]
+        .exists()
         is False
     ), "Toolkit UI Automation project shouldn't be visible."
 
@@ -332,17 +336,15 @@ def test_publish_type(app_dialog, tk_test_create_project):
 
     # Make sure Toolkit UI Automation project is showing up in the publish view
     assert (
-        app_dialog.root["publish_view"].listitems["*" + str(tk_test_create_project["name"])].exists()
+        app_dialog.root["publish_view"]
+        .listitems["*" + str(tk_test_create_project["name"])]
+        .exists()
     ), "Toolkit UI Automation project ins't available."
 
     # Make sure publish item is showing up correctly
     app_dialog.root["publish_view"].listitems["Assets"].get().mouseDoubleClick()
-    app_dialog.root["publish_view"].listitems["Character"].waitExist(
-        timeout=30
-    )
-    app_dialog.root["publish_view"].listitems[
-        "Character"
-    ].get().mouseDoubleClick()
+    app_dialog.root["publish_view"].listitems["Character"].waitExist(timeout=30)
+    app_dialog.root["publish_view"].listitems["Character"].get().mouseDoubleClick()
     app_dialog.root["publish_view"].listitems["AssetAutomation"].waitExist(timeout=30)
     app_dialog.root["publish_view"].listitems[
         "AssetAutomation"

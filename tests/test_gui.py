@@ -14,8 +14,6 @@ import time
 import os
 import sys
 import sgtk
-from tk_toolchain.authentication import get_toolkit_user
-from tk_toolchain.testing import create_unique_name
 
 try:
     from MA.UI import topwindows
@@ -24,98 +22,18 @@ except ImportError:
     pytestmark = pytest.mark.skip()
 
 
-@pytest.fixture(scope="session")
-def context():
-    # Tasks in Toolkit Loader2 UI Automation project which we're going to use
-    # in different test cases.
-    # Get credentials from TK_TOOLCHAIN
-    sg = get_toolkit_user().create_sg_connection()
-
-    # Create or update the integration_tests local storage with the current test run
-    storage_name = "Loader UI Tests"
-    local_storage = sg.find_one(
-        "LocalStorage", [["code", "is", storage_name]], ["code"]
-    )
-    if local_storage is None:
-        local_storage = sg.create("LocalStorage", {"code": storage_name})
-    # Always update local storage path
-    local_storage["path"] = os.path.expandvars("${SHOTGUN_CURRENT_REPO_ROOT}")
-    sg.update(
-        "LocalStorage", local_storage["id"], {"windows_path": local_storage["path"]}
-    )
-
-    # Make sure there is not already an automation project created
-    project_name = create_unique_name("Toolkit Loader2 UI Automation")
-    filters = [["name", "is", project_name]]
-    existed_project = sg.find_one("Project", filters)
-    if existed_project is not None:
-        sg.delete(existed_project["type"], existed_project["id"])
-
-    # Create a new project with the Film VFX Template
-    project_data = {
-        "sg_description": "Project Created by Automation",
-        "name": project_name,
-    }
-    new_project = sg.create("Project", project_data)
-
-    # Create a Sequence to be used by the Shot creation
-    sequence_data = {
-        "project": {"type": new_project["type"], "id": new_project["id"]},
-        "code": "seq_001",
-        "sg_status_list": "ip",
-    }
-    new_sequence = sg.create("Sequence", sequence_data)
-
-    # Create a new shot
-    shot_data = {
-        "project": {"type": new_project["type"], "id": new_project["id"]},
-        "sg_sequence": {"type": new_sequence["type"], "id": new_sequence["id"]},
-        "code": "shot_001",
-        "sg_status_list": "ip",
-    }
-    sg.create("Shot", shot_data)
-
-    # Create a new asset
-    asset_data = {
-        "project": {"type": new_project["type"], "id": new_project["id"]},
-        "code": "AssetAutomation",
-        "description": "This asset was created by the Loader2 UI automation",
-        "sg_status_list": "ip",
-    }
-    asset = sg.create("Asset", asset_data)
-
-    # File to publish
-    file_to_publish = os.path.normpath(
-        os.path.expandvars("${TK_TEST_FIXTURES}/files/images/sven.png")
-    )
-
-    # Create a published file
-    publish_data = {
-        "project": {"type": new_project["type"], "id": new_project["id"]},
-        "code": "sven.png",
-        "name": "sven.png",
-        "description": "This file was published by the Loader2 UI automation",
-        "path": {"local_path": file_to_publish},
-        "entity": asset,
-        "version_number": 1,
-    }
-    sg.create("PublishedFile", publish_data)
-
-    return new_project
-
-
 # This fixture will launch tk-run-app on first usage
 # and will remain valid until the test run ends.
 @pytest.fixture(scope="session")
-def host_application(context):
+def host_application(tk_test_create_project, tk_test_create_entities):
     """
     Launch the host application for the Toolkit application.
 
     TODO: This can probably be refactored, as it is not
-    likely to change between apps, except for the context.
-    One way to pass in a context would be to have the repo being
-    tested to define a fixture named context and this fixture
-    would consume it.
+     likely to change between apps, except for the context.
+     One way to pass in a context would be to have the repo being
+     tested to define a fixture named context and this fixture
+     would consume it.
     """
     process = subprocess.Popen(
         [
@@ -129,9 +47,9 @@ def host_application(context):
             "--location",
             os.path.dirname(__file__),
             "--context-entity-type",
-            context["type"],
+            tk_test_create_project["type"],
             "--context-entity-id",
-            str(context["id"]),
+            str(tk_test_create_project["id"]),
         ]
     )
     try:
@@ -269,8 +187,8 @@ def test_search(app_dialog):
 def test_context_selection(app_dialog):
     # Select an asset
     app_dialog.root.outlineitems["Assets"].get().mouseDoubleClick()
-    app_dialog.root.outlineitems["Assets with no Type"].waitExist(timeout=30)
-    app_dialog.root.outlineitems["Assets with no Type"].get().mouseDoubleClick()
+    app_dialog.root.outlineitems["Character"].waitExist(timeout=30)
+    app_dialog.root.outlineitems["Character"].get().mouseDoubleClick()
     app_dialog.root.outlineitems["AssetAutomation"].waitExist(timeout=30)
 
     # Validate Show/Hide button and make sure history view is visible
@@ -292,14 +210,14 @@ def test_context_selection(app_dialog):
     app_dialog.root.listitems["AssetAutomation"].get().mouseClick()
     assert app_dialog.root["details_image"].exists(), "Details view isn't visible."
     assert app_dialog.root.captions[
-        "Name*Asset AssetAutomation*Status*In Progress*Description*This asset was created by the Loader2 UI automation"
+        "Name*Asset AssetAutomation*Status*In Progress*Description*This asset was created by the toolkit ui automation"
     ].exists(), "Details view Asset informations is missing."
 
 
 def test_breadcrumb_widget(app_dialog):
     # Validate Breadcrumb widget current state
     assert app_dialog.root.captions[
-        "Project * Assets * Assets with no Type"
+        "Project * Assets * Character"
     ].exists(), "Breadcrumb widget is not set correctly"
 
     # Click on the back navigation button until back to the project context
@@ -312,14 +230,14 @@ def test_breadcrumb_widget(app_dialog):
         "Project * Shots * Sequence seq_001"
     ].exists(), "Breadcrumb widget is not set correctly"
 
-    # Click on the next navigation button until back to the Assets with no Type context
+    # Click on the next navigation button until back to the Character context
     for _i in range(0, 2):
         # Click on the back navigation button
         app_dialog.root.buttons["navigation_next"].mouseClick()
 
     # Validate Breadcrumb widget current state
     assert app_dialog.root.captions[
-        "Project * Assets * Assets with no Type"
+        "Project * Assets * Character"
     ].exists(), "Breadcrumb widget is not set correctly"
 
     # Click on the home navigation button
@@ -368,14 +286,14 @@ def test_view_mode(app_dialog):
     thumbnailSlider.mouseDrag(width * 15, height * 0)
 
 
-def test_action_items(app_dialog, context):
+def test_action_items(app_dialog, tk_test_create_project):
     # Click on the Actions drop down menu. That menu is hidden from qt so I need to do some hack to select it.
     folderThumbnail = first(
-        app_dialog.root["publish_view"].listitems["*" + str(context["name"])]
+        app_dialog.root["publish_view"].listitems["*" + str(tk_test_create_project["name"])]
     )
     width, height = folderThumbnail.size
     app_dialog.root["publish_view"].listitems[
-        "*" + str(context["name"])
+        "*" + str(tk_test_create_project["name"])
     ].get().mouseSlide()
     folderThumbnail.mouseClick(width * 0.9, height * 0.9)
 
@@ -388,7 +306,7 @@ def test_action_items(app_dialog, context):
     ].exists(), "Show in Media Center isn't available."
 
 
-def test_publish_type(app_dialog, context):
+def test_publish_type(app_dialog, tk_test_create_project):
     # Make sure buttons are available
     assert app_dialog.root.buttons[
         "Select All"
@@ -403,27 +321,27 @@ def test_publish_type(app_dialog, context):
     app_dialog.root["publish_type_list"].listitems["Folders"].get().mouseSlide()
     foldersCheckbox.mouseClick(width * 0.05, height * 0.5)
 
-    # Make sure Toolkit Loader2 UI Automation project is no more showing up in the publish view
+    # Make sure Toolkit UI Automation project is no more showing up in the publish view
     assert (
-        app_dialog.root["publish_view"].listitems["*" + str(context["name"])].exists()
+        app_dialog.root["publish_view"].listitems["*" + str(tk_test_create_project["name"])].exists()
         is False
-    ), "Toolkit Loader2 UI Automation project shouldn't be visible."
+    ), "Toolkit UI Automation project shouldn't be visible."
 
     # Click on Select All button
     app_dialog.root.buttons["Select All"].mouseClick()
 
-    # Make sure Toolkit Loader2 UI Automation project is showing up in the publish view
+    # Make sure Toolkit UI Automation project is showing up in the publish view
     assert (
-        app_dialog.root["publish_view"].listitems["*" + str(context["name"])].exists()
-    ), "Toolkit Loader2 UI Automation project ins't available."
+        app_dialog.root["publish_view"].listitems["*" + str(tk_test_create_project["name"])].exists()
+    ), "Toolkit UI Automation project ins't available."
 
     # Make sure publish item is showing up correctly
     app_dialog.root["publish_view"].listitems["Assets"].get().mouseDoubleClick()
-    app_dialog.root["publish_view"].listitems["Assets with no Type"].waitExist(
+    app_dialog.root["publish_view"].listitems["Character"].waitExist(
         timeout=30
     )
     app_dialog.root["publish_view"].listitems[
-        "Assets with no Type"
+        "Character"
     ].get().mouseDoubleClick()
     app_dialog.root["publish_view"].listitems["AssetAutomation"].waitExist(timeout=30)
     app_dialog.root["publish_view"].listitems[
@@ -435,7 +353,7 @@ def test_publish_type(app_dialog, context):
     app_dialog.root["publish_view"].listitems["sven.png"].get().mouseClick()
     app_dialog.root["details_image"].waitExist(timeout=30)
     assert app_dialog.root.captions[
-        "Name*sven.png*Type*No Type*Version*001*Link*Asset AssetAutomation"
+        "Name*sven.png*Type*No Type*Version*001*Link*Asset AssetAutomation*Task*Model*Waiting to Start*Review*Pending Review"
     ].exists(), "Published File informations is missing."
     assert (
         app_dialog.root["history_view"].listitems["001"].exists()
@@ -444,14 +362,14 @@ def test_publish_type(app_dialog, context):
     # This mouseSlide() is to get the version item's tooltip showing up.
     app_dialog.root["history_view"].listitems["001"].get().mouseSlide(width * 0.25)
     topwindows[
-        "Version 001*This file was published by the Loader2 UI automation"
+        "Version 001*This file was published by the toolkit ui automation"
     ].waitExist(timeout=30)
 
 
 @pytest.mark.skip(
     reason="Need to fix this known issue: https://jira.autodesk.com/browse/SG-9294"
 )
-def test_reload(app_dialog):
+def test_reload(app_dialog, tk_test_create_project):
     # Click on the cog button and select reload
     app_dialog.root.buttons["cog_button"].mouseClick()
     topwindows.menuitems["Reload"].waitExist(timeout=30)
@@ -460,9 +378,9 @@ def test_reload(app_dialog):
     # Make sure items are still showing up in the entity view
     assert (
         app_dialog.root["entity_preset_tabs"]
-        .outlineitems["*" + str(context["name"])]
+        .outlineitems["*" + str(tk_test_create_project["name"])]
         .exists()
-    ), "Toolkit Loader2 UI Automation project ins't available."
+    ), "Toolkit UI Automation project ins't available."
     assert (
         app_dialog.root["entity_preset_tabs"].outlineitems["Assets"].exists()
     ), "Assets ins't available."

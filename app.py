@@ -12,10 +12,7 @@
 A loader application that lets you add new items to the scene.
 """
 
-from sgtk.platform.qt import QtCore, QtGui
-
 import sgtk
-import sys
 import os
 
 

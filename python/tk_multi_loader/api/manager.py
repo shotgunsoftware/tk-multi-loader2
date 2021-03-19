@@ -168,9 +168,6 @@ class LoaderManager(object):
                 )
             intersection_actions[action_name] = actions_list
 
-        import pprint
-        pprint.pprint(intersection_actions)
-
         return intersection_actions
 
     def execute_action_for_publish(self, sg_data, action):

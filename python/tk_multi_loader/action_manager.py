@@ -38,7 +38,7 @@ class ActionManager(QtCore.QObject):
                         Currently one of UI_AREA_MAIN, UI_AREA_DETAILS and UI_AREA_HISTORY
         :returns:       List of QAction objects, ready to be parented to some QT Widgetry.
         """
-        return []
+        return {}
 
     def has_actions(self, publish_type):
         """
@@ -61,7 +61,7 @@ class ActionManager(QtCore.QObject):
         :param sg_data: The data associated with this folder
         :returns:       A list of actions that are available for this folder
         """
-        return []
+        return {}
 
     def get_default_action_for_publish(self, sg_data, ui_area):
         """

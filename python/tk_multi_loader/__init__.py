@@ -8,6 +8,7 @@
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
+from .api import LoaderManager
 from .open_publish_form import open_publish_browser
 
 import sgtk
@@ -36,7 +37,6 @@ def show_dialog(app):
 
     # create the action manager for the Loader UI:
     from .loader_action_manager import LoaderActionManager
-
     action_manager = LoaderActionManager()
 
     # start ui

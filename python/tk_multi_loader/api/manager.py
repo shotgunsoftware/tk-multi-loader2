@@ -117,7 +117,7 @@ class LoaderManager(object):
 
         # If the selection is empty, there's no actions to return.
         if len(sg_data_list) == 0:
-            return []
+            return {}
 
         # We are going to do an intersection of all the entities' actions. We'll pick the actions from
         # the first item to initialize the intersection...
@@ -168,6 +168,9 @@ class LoaderManager(object):
                 )
             intersection_actions[action_name] = actions_list
 
+        import pprint
+        pprint.pprint(intersection_actions)
+
         return intersection_actions
 
     def execute_action_for_publish(self, sg_data, action):
@@ -195,6 +198,21 @@ class LoaderManager(object):
             )
         except Exception as e:
             self._logger.exception("Could not execute execute_action hook: {}".format(e))
+
+    def has_actions(self, publish_type):
+        """
+        Returns true if the given publish type has any actions associated with it.
+
+        :param publish_type: A Shotgun publish type (e.g. 'Maya Render')
+        :returns: True if the current actions setup knows how to handle this.
+        """
+        mappings = self._bundle.get_setting("action_mappings")
+
+        # returns a structure on the form
+        # { "Maya Scene": ["reference", "import"] }
+        my_mappings = mappings.get(publish_type, [])
+
+        return len(my_mappings) > 0
 
     @staticmethod
     def _fix_timestamp(sg_data):

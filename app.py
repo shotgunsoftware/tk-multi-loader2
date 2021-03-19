@@ -29,6 +29,11 @@ class MultiLoader(sgtk.platform.Application):
 
         tk_multi_loader = self.import_module("tk_multi_loader")
 
+        # the manager class provides the interface for loading. We store a
+        # reference to it to enable the create_loader_action_manager method exposed on
+        # the application itself
+        self._manager_class = tk_multi_loader.LoaderManager
+
         # register command
         cb = lambda: tk_multi_loader.show_dialog(self)
         menu_caption = "%s..." % self.get_setting("menu_name")
@@ -70,3 +75,9 @@ class MultiLoader(sgtk.platform.Application):
         """
         tk_multi_loader = self.import_module("tk_multi_loader")
         return tk_multi_loader.open_publish_browser(self, title, action, publish_types)
+
+    def create_loader_manager(self):
+        """
+        :return:
+        """
+        return self._manager_class(self)

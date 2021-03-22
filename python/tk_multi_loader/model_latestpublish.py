@@ -8,11 +8,12 @@
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
+import datetime
 from collections import defaultdict
-from sgtk.platform.qt import QtCore, QtGui
 
 import sgtk
-import datetime
+from sgtk.platform.qt import QtCore, QtGui
+
 from . import utils, constants
 from . import model_item_data
 
@@ -22,8 +23,11 @@ shotgun_model = sgtk.platform.import_framework(
 )
 ShotgunModel = shotgun_model.ShotgunModel
 
+delegates = sgtk.platform.import_framework("tk-framework-qtwidgets", "delegates")
+ViewItemRolesMixin = delegates.ViewItemRolesMixin
 
-class SgLatestPublishModel(ShotgunModel):
+
+class SgLatestPublishModel(ShotgunModel, ViewItemRolesMixin):
 
     """
     Model which handles the main spreadsheet view which displays the latest version of all
@@ -32,11 +36,16 @@ class SgLatestPublishModel(ShotgunModel):
     All images returned by this model will be 512x400 pixels.
     """
 
-    TYPE_ID_ROLE = QtCore.Qt.UserRole + 101
-    IS_FOLDER_ROLE = QtCore.Qt.UserRole + 102
-    ASSOCIATED_TREE_VIEW_ITEM_ROLE = QtCore.Qt.UserRole + 103
-    PUBLISH_TYPE_NAME_ROLE = QtCore.Qt.UserRole + 104
-    SEARCHABLE_NAME = QtCore.Qt.UserRole + 105
+    # Additional data roles defined for the model
+    _BASE_ROLE = QtCore.Qt.UserRole + 100
+    TYPE_ID_ROLE = _BASE_ROLE + 1
+    IS_FOLDER_ROLE = _BASE_ROLE + 2
+    ASSOCIATED_TREE_VIEW_ITEM_ROLE = _BASE_ROLE + 3
+    PUBLISH_TYPE_NAME_ROLE = _BASE_ROLE + 4
+    SEARCHABLE_NAME = _BASE_ROLE + 5
+    # Keep track of the last model role. This will be used by the ViewItemRolesMixin as an offset when
+    # adding more roles to the model. Update this if more custom roles are added.
+    LAST_ROLE = SEARCHABLE_NAME
 
     def __init__(self, parent, publish_type_model, bg_task_manager):
         """
@@ -46,8 +55,22 @@ class SgLatestPublishModel(ShotgunModel):
         self._folder_icon = QtGui.QIcon(QtGui.QPixmap(":/res/folder_512x400.png"))
         self._loading_icon = QtGui.QIcon(QtGui.QPixmap(":/res/loading_512x400.png"))
         self._associated_items = {}
+        self._show_subfolders = False
 
         app = sgtk.platform.current_bundle()
+
+        # Initialize the roles for the ViewItemDelegate
+        self.initialize_roles(self.LAST_ROLE)
+
+        view_item_config_hook_path = app.get_setting("view_item_configuration_hook")
+        view_item_config_hook = app.create_hook_instance(view_item_config_hook_path)
+        self.role_methods = {
+            SgLatestPublishModel.VIEW_ITEM_THUMBNAIL_ROLE: view_item_config_hook.get_item_thumbnail,
+            SgLatestPublishModel.VIEW_ITEM_TITLE_ROLE: view_item_config_hook.get_item_title,
+            SgLatestPublishModel.VIEW_ITEM_SUBTITLE_ROLE: view_item_config_hook.get_item_subtitle,
+            SgLatestPublishModel.VIEW_ITEM_DETAILS_ROLE: view_item_config_hook.get_item_details,
+            SgLatestPublishModel.VIEW_ITEM_SHORT_TEXT_ROLE: view_item_config_hook.get_item_short_text,
+        }
 
         # init base class
         ShotgunModel.__init__(
@@ -58,6 +81,17 @@ class SgLatestPublishModel(ShotgunModel):
             bg_load_thumbs=True,
             bg_task_manager=bg_task_manager,
         )
+
+    @property
+    def show_subfolders(self):
+        """
+        Get or set the flag indicating if the model items are in 'show subfolders mode'.
+        """
+        return self._show_subfolders
+
+    @show_subfolders.setter
+    def show_subfolders(self, show):
+        self._show_subfolders = show
 
     ############################################################################################
     # public interface
@@ -362,6 +396,9 @@ class SgLatestPublishModel(ShotgunModel):
                 tree_view_field_data, SgLatestPublishModel.SG_ASSOCIATED_FIELD_ROLE
             )
 
+            # Set up the methods to be called for each item data role defined.
+            self.set_data_for_role_methods(item)
+
             # see if we can get a thumbnail for this node!
             if tree_view_sg_data and tree_view_sg_data.get("image"):
                 # there is a thumbnail for this item!
@@ -416,6 +453,9 @@ class SgLatestPublishModel(ShotgunModel):
             # exclude v112:s
             search_str += " v%03d" % sg_data["version_number"]
         item.setData(search_str, SgLatestPublishModel.SEARCHABLE_NAME)
+
+        # Set up the methods to be called for each item data role defined.
+        self.set_data_for_role_methods(item)
 
     def _populate_default_thumbnail(self, item):
         """
@@ -581,3 +621,25 @@ class SgLatestPublishModel(ShotgunModel):
         self._publish_type_model.set_active_types(type_id_aggregates)
 
         return new_sg_data
+
+    def _get_args_for_role_method(self, item):
+        """
+        Override the :class:`ViewItemRolesMixin` method.
+
+        This method will be called before executing the method to retrieve the item
+        data for a given role.
+
+        Return any additional positional or keyword arguments to pass along to the
+        method executed for a role.staticmethod
+
+        :param item:
+        :type item: :class:`sgtk.platform.qt.QtGui.QStandardItem`
+        :return: Positional or keyword arguments to pass to a method executed to retreive
+                 item data for a role.
+        :rtype: tuple(list, dict)
+        """
+
+        (sg_data, field_value) = model_item_data.get_item_data(item.index())
+        is_folder = item.data(SgLatestPublishModel.IS_FOLDER_ROLE)
+        args = (sg_data, field_value, is_folder, self.show_subfolders)
+        return (args, {})

@@ -19,14 +19,26 @@ shotgun_model = sgtk.platform.import_framework(
 )
 ShotgunModel = shotgun_model.ShotgunModel
 
+qtwidgets_utils = sgtk.platform.import_framework("tk-framework-qtwidgets", "utils")
 
-class SgPublishHistoryModel(ShotgunModel):
+delegates = sgtk.platform.import_framework("tk-framework-qtwidgets", "delegates")
+ViewItemRolesMixin = delegates.ViewItemRolesMixin
+
+
+class SgPublishHistoryModel(ShotgunModel, ViewItemRolesMixin):
     """
     This model represents the version history for a publish.
     """
 
-    USER_THUMB_ROLE = QtCore.Qt.UserRole + 101
-    PUBLISH_THUMB_ROLE = QtCore.Qt.UserRole + 102
+    VIEW_ITEM_CONFIG_HOOK_PATH = "view_item_configuration_hook"
+
+    # Additional data roles defined for the model
+    _BASE_ROLE = QtCore.Qt.UserRole + 100
+    USER_THUMB_ROLE = _BASE_ROLE + 1
+    PUBLISH_THUMB_ROLE = _BASE_ROLE + 2
+    # Keep track of the last model role. This will be used by the ViewItemRolesMixin as an offset when
+    # adding more roles to the model. Update this if more custom roles are added.
+    LAST_ROLE = PUBLISH_THUMB_ROLE
 
     def __init__(self, parent, bg_task_manager):
         """
@@ -43,6 +55,24 @@ class SgPublishHistoryModel(ShotgunModel):
             bg_load_thumbs=True,
             bg_task_manager=bg_task_manager,
         )
+
+        # Initialize the roles for the ViewItemDelegate
+        self.initialize_roles(self.LAST_ROLE)
+
+        # Get the hook instance for configuring the display for model view items.
+        view_item_config_hook_path = app.get_setting(self.VIEW_ITEM_CONFIG_HOOK_PATH)
+        view_item_config_hook = app.create_hook_instance(view_item_config_hook_path)
+
+        # Create a mapping of model item data roles to the method that will be called to retrieve
+        # the data for the item. The methods defined for each role must accept two parameters:
+        # (1) QStandardItem (2) dict
+        self.role_methods = {
+            SgPublishHistoryModel.VIEW_ITEM_THUMBNAIL_ROLE: view_item_config_hook.get_history_item_thumbnail,
+            SgPublishHistoryModel.VIEW_ITEM_TITLE_ROLE: view_item_config_hook.get_history_item_title,
+            SgPublishHistoryModel.VIEW_ITEM_SUBTITLE_ROLE: view_item_config_hook.get_history_item_subtitle,
+            SgPublishHistoryModel.VIEW_ITEM_DETAILS_ROLE: view_item_config_hook.get_history_item_details,
+            QtCore.Qt.ToolTipRole: view_item_config_hook.get_history_item_tooltip,
+        }
 
     ############################################################################################
     # public interface
@@ -137,6 +167,9 @@ class SgPublishHistoryModel(ShotgunModel):
                 sg_data["created_by"]["id"],
             )
 
+        # Set up the methods to be called for each item data role defined.
+        self.set_data_for_role_methods(item, sg_data)
+
     def _before_data_processing(self, sg_data_list):
         """
         Called just after data has been retrieved from Shotgun but before any processing
@@ -201,3 +234,19 @@ class SgPublishHistoryModel(ShotgunModel):
             item.data(SgPublishHistoryModel.USER_THUMB_ROLE),
         )
         item.setIcon(QtGui.QIcon(thumb))
+
+    def _set_tooltip(self, item, sg_item):
+        """
+        Sets a tooltip for this model item.
+
+        :param item: ShotgunStandardItem associated with the publish.
+        :param sg_item: Publish information from Shotgun.
+        """
+
+        tooltip = item.data(QtCore.Qt.ToolTipRole)
+
+        if callable(tooltip):
+            (template_str, sg_data) = tooltip()
+            tooltip = qtwidgets_utils.convert_token_string(template_str, sg_data)
+
+        item.setToolTip(tooltip)

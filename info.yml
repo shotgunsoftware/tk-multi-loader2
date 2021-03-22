@@ -37,6 +37,11 @@ configuration:
         description: Specify a hook that, if needed, can filter the raw list of publishes returned
                      from Shotgun for the current location.
 
+    view_item_configuration_hook:
+        type: hook
+        default_value: "{self}/view_item_configuration.py"
+        description: Specify a hook that, if needed, can configure the how the views are rendered.
+
     download_thumbnails:
         type: bool
         default_value: true

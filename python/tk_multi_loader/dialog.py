@@ -20,10 +20,7 @@ from .model_publishtype import SgPublishTypeModel
 from .model_status import SgStatusModel
 from .proxymodel_latestpublish import SgLatestPublishProxyModel
 from .proxymodel_entity import SgEntityProxyModel
-from .delegate_publish_thumb import SgPublishThumbDelegate
-from .delegate_publish_list import SgPublishListDelegate
 from .model_publishhistory import SgPublishHistoryModel
-from .delegate_publish_history import SgPublishHistoryDelegate
 from .search_widget import SearchWidget
 from .banner import Banner
 from .loader_action_manager import LoaderActionManager
@@ -43,6 +40,7 @@ help_screen = sgtk.platform.import_framework("tk-framework-qtwidgets", "help_scr
 overlay_widget = sgtk.platform.import_framework(
     "tk-framework-qtwidgets", "overlay_widget"
 )
+delegates = sgtk.platform.import_framework("tk-framework-qtwidgets", "delegates")
 shotgun_search_widget = sgtk.platform.import_framework(
     "tk-framework-qtwidgets", "shotgun_search_widget"
 )
@@ -54,15 +52,14 @@ shotgun_globals = sgtk.platform.import_framework(
 )
 
 ShotgunModelOverlayWidget = overlay_widget.ShotgunModelOverlayWidget
+ViewItemDelegate = delegates.ViewItemDelegate
+ThumbnailItemDelegate = delegates.ThumbnailItemDelegate
 
 
 class AppDialog(QtGui.QWidget):
     """
     Main dialog window for the App
     """
-
-    # enum to control the mode of the main view
-    (MAIN_VIEW_LIST, MAIN_VIEW_THUMB) = range(2)
 
     # signal emitted whenever the selected publish changes
     # in either the main view or the details history view
@@ -130,9 +127,6 @@ class AppDialog(QtGui.QWidget):
 
         self.ui.info.clicked.connect(self._toggle_details_pane)
 
-        self.ui.thumbnail_mode.clicked.connect(self._on_thumbnail_mode_clicked)
-        self.ui.list_mode.clicked.connect(self._on_list_mode_clicked)
-
         self._publish_history_model = SgPublishHistoryModel(self, self._task_manager)
 
         self._publish_history_model_overlay = ShotgunModelOverlayWidget(
@@ -154,10 +148,7 @@ class AppDialog(QtGui.QWidget):
         self._publish_history_proxy.sort(0, QtCore.Qt.DescendingOrder)
 
         self.ui.history_view.setModel(self._publish_history_proxy)
-        self._history_delegate = SgPublishHistoryDelegate(
-            self.ui.history_view, self._status_model, self._action_manager
-        )
-        self.ui.history_view.setItemDelegate(self._history_delegate)
+        self._create_history_item_delegate(self.ui.history_view)
 
         # event handler for when the selection in the history view is changing
         # note! Because of some GC issues (maya 2012 Pyside), need to first establish
@@ -224,19 +215,52 @@ class AppDialog(QtGui.QWidget):
         # hook up view -> proxy model -> model
         self.ui.publish_view.setModel(self._publish_proxy_model)
 
-        # set up custom delegates to use when drawing the main area
-        self._publish_thumb_delegate = SgPublishThumbDelegate(
-            self.ui.publish_view, self._action_manager
+        # View icons
+        list_view_icon = QtGui.QIcon(":/res/mode_switch_card.png")
+        list_view_icon.addPixmap(
+            QtGui.QPixmap(":/res/mode_switch_card_active.png"),
+            QtGui.QIcon.Mode.Normal,
+            QtGui.QIcon.State.On,
         )
+        self.ui.list_mode.setIcon(list_view_icon)
+        file_view_icon = QtGui.QIcon(":/res/mode_switch_thumb.png")
+        file_view_icon.addPixmap(
+            QtGui.QPixmap(":/res/mode_switch_thumb_active.png"),
+            QtGui.QIcon.Mode.Normal,
+            QtGui.QIcon.State.On,
+        )
+        self.ui.thumbnail_mode.setIcon(file_view_icon)
 
-        self._publish_list_delegate = SgPublishListDelegate(
-            self.ui.publish_view, self._action_manager
+        self._thumbnail_delegate = self._create_thumbnail_item_delegate(
+            self.ui.publish_view
         )
+        self._list_item_delegate = self._create_list_item_delegate(self.ui.publish_view)
+        self.view_modes = [
+            {
+                "mode": QtGui.QListView.IconMode,
+                "button": self.ui.thumbnail_mode,
+                "delegate": self._thumbnail_delegate,
+            },
+            {
+                "mode": QtGui.QListView.ListMode,
+                "button": self.ui.list_mode,
+                "delegate": self._list_item_delegate,
+            },
+        ]
+        for i, view_mode in enumerate(self.view_modes):
+            view_mode["button"].clicked.connect(
+                lambda checked=False, mode=i: self._set_main_view_mode(mode)
+            )
 
-        # recall which the most recently mode used was and set that
-        main_view_mode = self._settings_manager.retrieve(
-            "main_view_mode", self.MAIN_VIEW_THUMB
-        )
+        # Enable mouse tracking to allow the delegates to receive mouse events
+        self.ui.publish_view.setMouseTracking(True)
+        self.ui.history_view.setMouseTracking(True)
+        # Disable uniform item sizes to allow expanding/collapsing rows.
+        self.ui.publish_view.setUniformItemSizes(False)
+        self.ui.history_view.setUniformItemSizes(False)
+
+        # recall which the most recently mode used was and set that, default to the first mode
+        main_view_mode = self._settings_manager.retrieve("main_view_mode", 0)
         self._set_main_view_mode(main_view_mode)
 
         # whenever the type list is checked, update the publish filters
@@ -264,7 +288,6 @@ class AppDialog(QtGui.QWidget):
         self.ui.publish_view.customContextMenuRequested.connect(
             self._show_publish_actions
         )
-
         #################################################
         # popdown publish filter widget for the main view
         # note:
@@ -297,6 +320,8 @@ class AppDialog(QtGui.QWidget):
         # position both slider and view
         self.ui.thumb_scale.setValue(scale_val)
         self.ui.publish_view.setIconSize(QtCore.QSize(scale_val, scale_val))
+        self._thumbnail_delegate.thumbnail_size = QtCore.QSize(scale_val, scale_val)
+        self._list_item_delegate.row_height = scale_val
         # and track subsequent changes
         self.ui.thumb_scale.valueChanged.connect(self._on_thumb_size_slider_change)
 
@@ -340,27 +365,6 @@ class AppDialog(QtGui.QWidget):
 
         # trigger an initial evaluation of filter proxy model
         self._apply_type_filters_on_publishes()
-
-    def _show_publish_actions(self, pos):
-        """
-        Shows the actions for the current publish selection.
-
-        :param pos: Local coordinates inside the viewport when the context menu was requested.
-        """
-
-        # Build a menu with all the actions.
-        menu = QtGui.QMenu(self)
-        actions = self._action_manager.get_actions_for_publishes(
-            self.selected_publishes, self._action_manager.UI_AREA_MAIN
-        )
-        menu.addActions(actions)
-
-        # Qt is our friend here. If there are no actions available, the separator won't be added, yay!
-        menu.addSeparator()
-        menu.addAction(self._refresh_action)
-
-        # Wait for the user to pick something.
-        menu.exec_(self.ui.publish_view.mapToGlobal(pos))
 
     @property
     def selected_publishes(self):
@@ -527,62 +531,24 @@ class AppDialog(QtGui.QWidget):
             )
             self._search_widget.disable()
 
-    def _on_thumbnail_mode_clicked(self):
-        """
-        Executed when someone clicks the thumbnail mode button
-        """
-        self._set_main_view_mode(self.MAIN_VIEW_THUMB)
-
-    def _on_list_mode_clicked(self):
-        """
-        Executed when someone clicks the list mode button
-        """
-        self._set_main_view_mode(self.MAIN_VIEW_LIST)
-
     def _set_main_view_mode(self, mode):
         """
         Sets up the view mode for the main view.
-
-        :param mode: either MAIN_VIEW_LIST or MAIN_VIEW_THUMB
         """
-        if mode == self.MAIN_VIEW_LIST:
-            self.ui.list_mode.setIcon(
-                QtGui.QIcon(QtGui.QPixmap(":/res/mode_switch_card_active.png"))
-            )
-            self.ui.list_mode.setChecked(True)
-            self.ui.thumbnail_mode.setIcon(
-                QtGui.QIcon(QtGui.QPixmap(":/res/mode_switch_thumb.png"))
-            )
-            self.ui.thumbnail_mode.setChecked(False)
-            self.ui.publish_view.setViewMode(QtGui.QListView.ListMode)
-            self.ui.publish_view.setItemDelegate(self._publish_list_delegate)
-            self._show_thumb_scale(False)
-        elif mode == self.MAIN_VIEW_THUMB:
-            self.ui.list_mode.setIcon(
-                QtGui.QIcon(QtGui.QPixmap(":/res/mode_switch_card.png"))
-            )
-            self.ui.list_mode.setChecked(False)
-            self.ui.thumbnail_mode.setIcon(
-                QtGui.QIcon(QtGui.QPixmap(":/res/mode_switch_thumb_active.png"))
-            )
-            self.ui.thumbnail_mode.setChecked(True)
-            self.ui.publish_view.setViewMode(QtGui.QListView.IconMode)
-            self.ui.publish_view.setItemDelegate(self._publish_thumb_delegate)
-            self._show_thumb_scale(True)
-        else:
-            raise TankError("Undefined view mode!")
+
+        assert 0 <= mode < len(self.view_modes), "Undefined view mode"
+
+        for mode_index, view_mode in enumerate(self.view_modes):
+            is_cur_mode = mode_index == mode
+            view_mode["button"].setChecked(is_cur_mode)
+            if is_cur_mode:
+                self.ui.publish_view.setViewMode(
+                    view_mode.get("mode", QtGui.QListView.IconMode)
+                )
+                self.ui.publish_view.setItemDelegate(view_mode["delegate"])
 
         self.ui.publish_view.selectionModel().clear()
         self._settings_manager.store("main_view_mode", mode)
-
-    def _show_thumb_scale(self, is_visible):
-        """
-        Shows or hides the scale widgets.
-
-        :param bool is_visible: If True, scale slider will be shown.
-        """
-        self.ui.thumb_scale.setVisible(is_visible)
-        self.ui.scale_label.setVisible(is_visible)
 
     def _toggle_details_pane(self):
         """
@@ -1020,7 +986,10 @@ class AppDialog(QtGui.QWidget):
         """
         When scale slider is manipulated
         """
+        self._thumbnail_delegate.thumbnail_size = QtCore.QSize(value, value)
+        self._list_item_delegate.row_height = value
         self.ui.publish_view.setIconSize(QtCore.QSize(value, value))
+
         self._settings_manager.store("thumb_size_scale", value)
 
     def _on_publish_selection(self, selected, deselected):
@@ -1858,17 +1827,14 @@ class AppDialog(QtGui.QWidget):
             if len(child_folders) > 0:
                 # delegates are rendered in a special way
                 # if we are on a non-leaf node in the tree (e.g there are subfolders)
-                self._publish_thumb_delegate.set_sub_items_mode(True)
-                self._publish_list_delegate.set_sub_items_mode(True)
+                self._publish_model.show_subfolders = True
             else:
                 # we are at leaf level and the subitems check box is checked
                 # render the cells
-                self._publish_thumb_delegate.set_sub_items_mode(False)
-                self._publish_list_delegate.set_sub_items_mode(False)
+                self._publish_model.show_subfolders = False
         else:
             self.ui.publish_view.setStyleSheet("")
-            self._publish_thumb_delegate.set_sub_items_mode(False)
-            self._publish_list_delegate.set_sub_items_mode(False)
+            self._publish_model.show_subfolders = False
 
         # now finally load up the data in the publish model
         publish_filters = self._entity_presets[
@@ -1953,6 +1919,238 @@ class AppDialog(QtGui.QWidget):
         breadcrumbs = " <span style='color:#2C93E2'>&#9656;</span> ".join(crumbs[::-1])
 
         self.ui.entity_breadcrumbs.setText("<big>%s</big>" % breadcrumbs)
+
+    def _show_publish_actions(self, pos):
+        """
+        Shows the actions for the current publish selection.
+
+        :param pos: Local coordinates inside the viewport when the context menu was requested.
+        """
+
+        # Build a menu with all the actions.
+        menu = QtGui.QMenu(self)
+        actions = self._action_manager.get_actions_for_publishes(
+            self.selected_publishes, self._action_manager.UI_AREA_MAIN
+        )
+        menu.addActions(actions)
+
+        # Qt is our friend here. If there are no actions available, the separator won't be added, yay!
+        menu.addSeparator()
+        menu.addAction(self._refresh_action)
+
+        # Wait for the user to pick something.
+        menu.exec_(self.ui.publish_view.mapToGlobal(pos))
+
+    def _show_publish_actions_for_index(self, delegate_parent, index, pos):
+        """
+        Callback triggered by the ViewItemDelegate to request the publish actions menu for
+        the publish item, at the specified position.
+
+        :param delegate_parent: The parent widget of the ViewItemDelegate.
+        :type delegate_parent: :class:`sgtk.platform.qt.QtGui.QAbstractItemView`
+        :param index: The index associated with the publish item.
+        :type index: :class:`sgtk.platform.qt.QtCore.QModelIndex`
+        :param pos: The point to show the menu at.
+        :type pos: :class:`sgtk.platform.qt.QtCore.QPoint`
+
+        :return: None
+        """
+
+        # Clear and select the index before showing the menu for the index.
+        self.ui.publish_view.selectionModel().select(
+            index, QtGui.QItemSelectionModel.ClearAndSelect
+        )
+        self._show_publish_actions(pos)
+
+    def _show_actions_for_history_item(self, delegate_parent, index, pos):
+        """
+        Callback triggered by the ViewItemDelegate to request the actions menu for the publish
+        history item, at the specified position.
+
+        :param delegate_parent: The parent widget of the ViewItemDelegate.
+        :type delegate_parent: :class:`sgtk.platform.qt.QtGui.QAbstractItemView`
+        :param index: The index associated with the publish history item.
+        :type index: :class:`sgtk.platform.qt.QtCore.QModelIndex`
+        :param pos: The point to show the menu at.
+        :type pos: :class:`sgtk.platform.qt.QtCore.QPoint`
+
+        :return: None
+        """
+
+        actions = []
+
+        # Get the data from the file history item to update the selected file item with. The index
+        # passed in references the file history item.
+        if isinstance(index.model(), QtGui.QSortFilterProxyModel):
+            index = index.model().mapToSource(index)
+        history_item = index.model().itemFromIndex(index)
+        sg_data = history_item.get_sg_data()
+
+        actions = self._action_manager.get_actions_for_publish(
+            sg_data, self._action_manager.UI_AREA_HISTORY
+        )
+
+        # if there is a version associated, add View in Media Center Action
+        if sg_data.get("version"):
+            # redirect to std shotgun player, same as you go to if you click the
+            # play icon inside of the shotgun web ui
+            sg_url = sgtk.platform.current_bundle().shotgun.base_url
+            url = "%s/page/media_center?type=Version&id=%d" % (
+                sg_url,
+                sg_data["version"]["id"],
+            )
+
+            fn = lambda: QtGui.QDesktopServices.openUrl(QtCore.QUrl(url))
+            a = QtGui.QAction("View in Media Center", None)
+            a.triggered[()].connect(fn)
+            actions.append(a)
+
+        if not actions:
+            no_action = QtGui.QAction("No Actions")
+            no_action.setEnabled(False)
+            actions.append(no_action)
+
+        menu = QtGui.QMenu()
+        menu.addActions(actions)
+        menu.exec_(delegate_parent.mapToGlobal(pos))
+
+    def _create_list_item_delegate(self, view):
+        """
+        Create and set up a :class:`ViewItemDelegate` object for the given view. It is expected
+        that the view's source model has the necessary item data roles set up (it is not required,
+        but it is most convenient if the model inherits the ViewItemRolesMixin class).
+
+        :param view: The view object for this delegate.
+        :type view: :class:`sgtk.platform.qt.QtGui.QAbstractItemView`
+
+        :return: The delegated that was created.
+        :rtype: :class:`ViewItemDelegate`
+        """
+
+        delegate = ViewItemDelegate(view)
+
+        # Set the item data roles used by the delegate to render an item.
+        if isinstance(view.model(), QtGui.QSortFilterProxyModel):
+            model_class = view.model().sourceModel().__class__
+        else:
+            model_class = view.model().__class__
+
+        delegate.thumbnail_role = model_class.VIEW_ITEM_THUMBNAIL_ROLE
+        delegate.title_role = model_class.VIEW_ITEM_TITLE_ROLE
+        delegate.subtitle_role = model_class.VIEW_ITEM_SUBTITLE_ROLE
+        delegate.details_role = model_class.VIEW_ITEM_DETAILS_ROLE
+        # Set the item data role used by the delegate to expand and collapse an item row.
+        delegate.expand_role = model_class.VIEW_ITEM_EXPAND_ROLE
+
+        # Set the background pen to draw a border around each view item.
+        background_pen = QtGui.QPen(QtCore.Qt.black)
+        background_pen.setWidthF(0.5)
+        delegate.background_pen = background_pen
+
+        # Add a menu button to display and execute the item's actions.
+        delegate.add_actions(
+            [{"name": "Actions", "callback": self._show_publish_actions_for_index,},],
+            ViewItemDelegate.TOP_RIGHT,
+        )
+
+        return delegate
+
+    def _create_thumbnail_item_delegate(self, view):
+        """
+        Create and set up a :class:`ThumbnailItemDelegate` object for the given view. It is expected
+        that the view's source model has the necessary item data roles set up (it is not required,
+        but it is most convenient if the model inherits the ViewItemRolesMixin class).
+
+        :param view: The view object for this delegate.
+        :type view: :class:`sgtk.platform.qt.QtGui.QAbstractItemView`
+
+        :return: The delegated that was created.
+        :rtype: :class:`ViewItemDelegate`
+        """
+
+        delegate = ThumbnailItemDelegate(view)
+
+        # Set the item data roles used by the delegate to render an item.
+        if isinstance(view.model(), QtGui.QSortFilterProxyModel):
+            model_class = view.model().sourceModel().__class__
+        else:
+            model_class = view.model().__class__
+
+        # Set the item data roles used by the delegate to render an item.
+        delegate.title_role = None
+        delegate.short_text_role = model_class.VIEW_ITEM_SHORT_TEXT_ROLE
+        # Set the item data role used by the delegate to expand and collapse an item row.
+        delegate.expand_role = model_class.VIEW_ITEM_EXPAND_ROLE
+
+        # Set the background pen to draw a border around each view item.
+        background_pen = QtGui.QPen(QtCore.Qt.black)
+        background_pen.setWidthF(0.5)
+        delegate.background_pen = background_pen
+
+        # Add a menu button to display and execute the item's actions.
+        delegate.add_actions(
+            [
+                {
+                    "icon": ":/res/down_arrow.png",
+                    "padding": 0,
+                    "callback": self._show_publish_actions_for_index,
+                },
+            ],
+            ViewItemDelegate.FLOAT_TOP_RIGHT,
+        )
+
+        return delegate
+
+    def _create_history_item_delegate(self, view):
+        """
+        Create and set up a :class:`ViewItemDelegate` object for the given view. It is expected
+        that the view's source model has the necessary item data roles set up (it is not required,
+        but it is most convenient if the model inherits the ViewItemRolesMixin class).
+
+        :param view: The view object for this delegate.
+        :type view: :class:`sgtk.platform.qt.QtGui.QAbstractItemView`
+
+        :return: The delegated that was created.
+        :rtype: :class:`ViewItemDelegate`
+        """
+
+        delegate = ViewItemDelegate(view)
+
+        if isinstance(view.model(), QtGui.QSortFilterProxyModel):
+            model_class = view.model().sourceModel().__class__
+        else:
+            model_class = view.model().__class__
+
+        # Set the item data roles used by the delegate to render an item.
+        delegate.title_role = model_class.VIEW_ITEM_TITLE_ROLE
+        delegate.details_role = model_class.VIEW_ITEM_DETAILS_ROLE
+        # Set the item data role used by the delegate to expand and collapse an item row.
+        delegate.expand_role = model_class.VIEW_ITEM_EXPAND_ROLE
+
+        # Add padding around the item rect
+        delegate.item_padding = 5
+        # Fix the thumbnail size to ensure the text aligns between rows
+        delegate.thumbnail_height = 90
+
+        # Set the background pen to draw a border around each view item.
+        background_pen = QtGui.QPen(QtCore.Qt.black)
+        background_pen.setWidthF(0.5)
+        delegate.background_pen = background_pen
+
+        # Add a menu button to display and execute the item's actions.
+        delegate.add_actions(
+            [
+                {
+                    "icon": ":/res/down_arrow.png",
+                    "padding": 0,
+                    "callback": self._show_actions_for_history_item,
+                },
+            ],
+            ViewItemDelegate.BOTTOM_RIGHT,
+        )
+
+        view.setItemDelegate(delegate)
+        return delegate
 
 
 ################################################################################################

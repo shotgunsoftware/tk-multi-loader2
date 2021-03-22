@@ -40,9 +40,6 @@ function build_res {
 echo "building user interfaces..."
 build_ui dialog
 build_ui open_publish_form
-build_ui widget_publish_history
-build_ui widget_publish_thumb
-build_ui widget_publish_list
 build_ui search_widget
 
 # build resources

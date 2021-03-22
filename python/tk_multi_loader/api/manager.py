@@ -170,7 +170,7 @@ class LoaderManager(object):
 
         return intersection_actions
 
-    def execute_action_for_publish(self, sg_data, action):
+    def execute_action(self, sg_data, action):
         """
         :param sg_data:
         :param action:
@@ -183,7 +183,7 @@ class LoaderManager(object):
         except Exception as e:
             self._logger.exception("Could not execute execute_action hook: {}".format(e))
 
-    def execute_action_for_publishes(self, actions):
+    def execute_multiple_actions(self, actions):
         """
         :param actions:
         :return:
@@ -195,6 +195,40 @@ class LoaderManager(object):
             )
         except Exception as e:
             self._logger.exception("Could not execute execute_action hook: {}".format(e))
+
+    def get_actions_for_entity(self, sg_data):
+        """
+        :return:
+        """
+        entity_type = sg_data.get("type", None)
+
+        # check if we have logic configured to handle this publish type.
+        mappings = self._bundle.get_setting("entity_mappings")
+
+        # returns a structure on the form
+        # { "Shot": ["reference", "import"] }
+        actions = mappings.get(entity_type, [])
+
+        if len(actions) == 0:
+            return []
+
+        # convert created_at unix time stamp to shotgun time stamp
+        self._fix_timestamp(sg_data)
+
+        action_defs = []
+        try:
+            # call out to hook to give us the specifics.
+            action_defs = self._bundle.execute_hook_method(
+                "actions_hook",
+                "generate_actions",
+                sg_publish_data=sg_data,
+                actions=actions,
+                ui_area="main",
+            )  # folder options only found in main ui area
+        except Exception:
+            self._logger.exception("Could not execute generate_actions hook.")
+
+        return action_defs
 
     def has_actions(self, publish_type):
         """

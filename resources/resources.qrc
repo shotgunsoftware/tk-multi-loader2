@@ -47,5 +47,6 @@
     <file>icon_Ticket_dark.png</file>
     <file>icon_Version_dark.png</file>
     <file>icon_Folder.png</file>
+    <file>down_arrow.png</file>
   </qresource>
 </RCC>

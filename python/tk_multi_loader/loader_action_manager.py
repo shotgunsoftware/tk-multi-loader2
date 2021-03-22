@@ -9,11 +9,9 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import sgtk
-import datetime
 import os
 import sys
 from sgtk.platform.qt import QtCore, QtGui
-from tank_vendor import shotgun_api3
 from sgtk.util import login
 
 from .action_manager import ActionManager
@@ -142,44 +140,6 @@ class LoaderActionManager(ActionManager):
         """
         return self._loader_manager.has_actions(publish_type)
 
-    def _get_actions_for_folder(self, sg_data):
-        """
-        Retrieves the list of actions for a given folder.
-
-        :param sg_data: Publish to retrieve actions for
-        :return: List of actions.
-        """
-
-        publish_type = sg_data.get("type", None)
-
-        # check if we have logic configured to handle this publish type.
-        mappings = self._app.get_setting("entity_mappings")
-
-        # returns a structure on the form
-        # { "Shot": ["reference", "import"] }
-        actions = mappings.get(publish_type, [])
-
-        if len(actions) == 0:
-            return []
-
-        # convert created_at unix time stamp to shotgun time stamp
-        self._fix_timestamp(sg_data)
-
-        action_defs = []
-        try:
-            # call out to hook to give us the specifics.
-            action_defs = self._app.execute_hook_method(
-                "actions_hook",
-                "generate_actions",
-                sg_publish_data=sg_data,
-                actions=actions,
-                ui_area="main",
-            )  # folder options only found in main ui area
-        except Exception:
-            self._app.log_exception("Could not execute generate_actions hook.")
-
-        return action_defs
-
     def get_actions_for_folder(self, sg_data):
         """
         Returns a list of actions for a folder widget.
@@ -197,7 +157,8 @@ class LoaderActionManager(ActionManager):
         if len(sg_data) != 0:
 
             # Gets the actions for the folder
-            entity_actions = self._get_actions_for_folder(sg_data)
+            # entity_actions = self._get_actions_for_folder(sg_data)
+            entity_actions = self._loader_manager.get_actions_for_entity(sg_data)
 
             # For every action, create an associated QAction with appropriate callback
             # and hook parameters.
@@ -248,21 +209,6 @@ class LoaderActionManager(ActionManager):
 
         return qt_actions
 
-    @staticmethod
-    def _fix_timestamp(sg_data):
-        """
-        Convert created_at unix time stamp in sg_data to shotgun time stamp.
-
-        :param sg_data: Standard Shotgun entity dictionary with keys type, id and name.
-        """
-
-        unix_timestamp = sg_data.get("created_at")
-        if isinstance(unix_timestamp, float):
-            sg_timestamp = datetime.datetime.fromtimestamp(
-                unix_timestamp, shotgun_api3.sg_timezone.LocalTimezone()
-            )
-            sg_data["created_at"] = sg_timestamp
-
     ########################################################################################
     # callbacks
 
@@ -275,9 +221,7 @@ class LoaderActionManager(ActionManager):
         self.pre_execute_action.emit(qt_action)
 
         try:
-            self._app.execute_hook_method(
-                "actions_hook", "execute_multiple_actions", actions=actions
-            )
+            self._loader_manager.execute_multiple_actions(actions)
         except Exception as e:
             self._app.log_exception("Could not execute execute_action hook: %s" % e)
             QtGui.QMessageBox.critical(

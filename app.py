@@ -78,6 +78,10 @@ class MultiLoader(sgtk.platform.Application):
 
     def create_loader_manager(self):
         """
-        :return:
+        Create and return a :class:`tk_multi_loader.LoaderManager` instance.
+        See the :class:`tk_multi_loader.LoaderManager` docs for details on
+        how it can be used to automate your loading workflows.
+
+        :returns: A :class:`tk_multi_loader.LoaderManager` instance
         """
         return self._manager_class(self)

@@ -32,7 +32,9 @@ class LoaderManager(object):
         """
         Initialize the manager.
 
-        :param logger: This is a standard python logger to use during
+        :param bundle: The bundle (app, engine or framework) instance for the app
+            that the calling code is associated with.
+        :param loader_logger: This is a standard python logger to use during
             loading. A default logger will be provided if not supplied. This
             can be useful when implementing a custom UI, for example, with a
             specialized log handler
@@ -54,9 +56,18 @@ class LoaderManager(object):
 
     def get_actions_for_publish(self, sg_data, ui_area):
         """
-        :param sg_data:
-        :param ui_area:
-        :return:
+        Returns a list of actions for a publish.
+
+        Shotgun data representing a publish is passed in and forwarded on to hooks
+        to help them determine which actions may be applicable.
+
+        :param sg_data: Shotgun data dictionary with all the standard publish fields.
+        :param ui_area: Indicates which part of the UI the request is coming from.
+                        Currently one of:
+                        - :class:`tk_multi_loader.LoaderManager.UI_AREA_MAIN`
+                        - :class:`tk_multi_loader.LoaderManager.UI_AREA_DETAILS`
+                        - :class:`tk_multi_loader.LoaderManager.UI_AREA_HISTORY`
+        :returns List of dictionaries, each with keys name, params, caption and description
         """
 
         if self._publish_type_field not in sg_data.keys():
@@ -110,9 +121,19 @@ class LoaderManager(object):
 
     def get_actions_for_publishes(self, sg_data_list, ui_area):
         """
-        :param sg_data_list:
-        :param ui_area:
-        :return:
+        Returns common actions for a list of publishes.
+
+        Shotgun data representing a publish is passed in and forwarded on to hooks
+        to help them determine which actions may be applicable.
+
+        :param sg_data_list: List of Shotgun data dictionary with all the standard publish fields.
+        :param ui_area: Indicates which part of the UI the request is coming from.
+                        Currently one of:
+                        - :class:`tk_multi_loader.LoaderManager.UI_AREA_MAIN`
+                        - :class:`tk_multi_loader.LoaderManager.UI_AREA_DETAILS`
+                        - :class:`tk_multi_loader.LoaderManager.UI_AREA_HISTORY`
+        :returns Dictionary where the keys are the action names and the values contain the list of available actions.
+            One action will be defined for each publish.
         """
 
         # If the selection is empty, there's no actions to return.
@@ -172,9 +193,10 @@ class LoaderManager(object):
 
     def execute_action(self, sg_data, action):
         """
-        :param sg_data:
-        :param action:
-        :return:
+        Execute the given action for the selected publish.
+
+        :param sg_data: Shotgun data dictionary with all the standard publish fields.
+        :param action: Dictionary containing the action data has defined in the hook.
         """
         try:
             self._bundle.execute_hook_method(
@@ -185,8 +207,13 @@ class LoaderManager(object):
 
     def execute_multiple_actions(self, actions):
         """
-        :param actions:
-        :return:
+        Execute many actions for a list of publishes.
+
+        :param actions: List of dictionaries holding all the actions to execute.
+            Each entry will have the following values:
+                name: Name of the action to execute
+                sg_publish_data: Publish information coming from Shotgun
+                params: Parameters passed down from the generate_actions hook.
         """
 
         try:
@@ -198,7 +225,10 @@ class LoaderManager(object):
 
     def get_actions_for_entity(self, sg_data):
         """
-        :return:
+        Returns a list of actions for an entity type.
+
+        :param sg_data:  Shotgun data dictionary representing the entity we want to get actions for.
+        :return: List of dictionaries, each with keys name, params, caption and description
         """
         entity_type = sg_data.get("type", None)
 

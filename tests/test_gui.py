@@ -22,25 +22,18 @@ except ImportError:
     pytestmark = pytest.mark.skip()
 
 
-@pytest.fixture(scope="session")
-def context():
-    # A task in Big Buck Bunny which we're going to use
-    # for the current context.
-    return {"type": "Project", "id": 65}
-
-
 # This fixture will launch tk-run-app on first usage
 # and will remain valid until the test run ends.
 @pytest.fixture(scope="session")
-def host_application(context):
+def host_application(tk_test_project, tk_test_entities):
     """
     Launch the host application for the Toolkit application.
 
     TODO: This can probably be refactored, as it is not
-    likely to change between apps, except for the context.
-    One way to pass in a context would be to have the repo being
-    tested to define a fixture named context and this fixture
-    would consume it.
+     likely to change between apps, except for the context.
+     One way to pass in a context would be to have the repo being
+     tested to define a fixture named context and this fixture
+     would consume it.
     """
     process = subprocess.Popen(
         [
@@ -54,9 +47,9 @@ def host_application(context):
             "--location",
             os.path.dirname(__file__),
             "--context-entity-type",
-            context["type"],
+            tk_test_project["type"],
             "--context-entity-id",
-            str(context["id"]),
+            str(tk_test_project["id"]),
         ]
     )
     try:
@@ -179,18 +172,16 @@ def test_search(app_dialog):
     # Clear text field
     app_dialog.root["entity_preset_tabs"].buttons.mouseClick()
 
-    # Search for bunny_010 and select it
-    app_dialog.root.textfields.typeIn("bunny_010")
-    topwindows.listitems["bunny_010"].waitExist(timeout=30)
-    topwindows.listitems["bunny_010"].mouseClick()
-    app_dialog.root["entity_preset_tabs"].outlineitems["bunny_010"].waitExist(
-        timeout=30
-    )
+    # Search for seq_001 and select it
+    app_dialog.root.textfields.typeIn("seq_001")
+    topwindows.listitems["seq_001"].waitExist(timeout=30)
+    topwindows.listitems["seq_001"].mouseClick()
+    app_dialog.root["publish_view"].listitems["shot_001"].waitExist(timeout=30)
 
-    # Validate that bunny_010_0010 is showing up in publish view list items
+    # Validate that shot_001 is showing up in publish view list items
     assert (
-        app_dialog.root["publish_view"].listitems["bunny_010_0010"].exists()
-    ), "bunny_010_0010 isn't showing up in the entity list view."
+        app_dialog.root["publish_view"].listitems["shot_001"].exists()
+    ), "shot_001 isn't showing up in the entity list view."
 
 
 def test_context_selection(app_dialog):
@@ -198,7 +189,7 @@ def test_context_selection(app_dialog):
     app_dialog.root.outlineitems["Assets"].get().mouseDoubleClick()
     app_dialog.root.outlineitems["Character"].waitExist(timeout=30)
     app_dialog.root.outlineitems["Character"].get().mouseDoubleClick()
-    app_dialog.root.outlineitems["Alice"].waitExist(timeout=30)
+    app_dialog.root.outlineitems["AssetAutomation"].waitExist(timeout=30)
 
     # Validate Show/Hide button and make sure history view is visible
     if app_dialog.root.buttons["Show Details"].exists():
@@ -216,10 +207,10 @@ def test_context_selection(app_dialog):
         assert app_dialog.root["history_view"].exists(), "History view isn't visible."
 
     # Select an item and validate Details View
-    app_dialog.root.listitems["Alice"].get().mouseClick()
+    app_dialog.root.listitems["AssetAutomation"].get().mouseClick()
     assert app_dialog.root["details_image"].exists(), "Details view isn't visible."
     assert app_dialog.root.captions[
-        "Name*Asset Alice*Status*Final*Description*Now, thought Alice, Well, I hardly know No more, thank ye Im better now but Im grown up now, she added in a hurry. No, look"
+        "Name*Asset AssetAutomation*Status*In Progress*Description*This asset was created by the toolkit ui automation"
     ].exists(), "Details view Asset informations is missing."
 
 
@@ -236,10 +227,10 @@ def test_breadcrumb_widget(app_dialog):
 
     # Validate Breadcrumb widget back to project context
     assert app_dialog.root.captions[
-        "Project * Shots * Sequence bunny_010"
+        "Project * Shots * Sequence seq_001"
     ].exists(), "Breadcrumb widget is not set correctly"
 
-    # Click on the next navigation button until back to the character context
+    # Click on the next navigation button until back to the Character context
     for _i in range(0, 2):
         # Click on the back navigation button
         app_dialog.root.buttons["navigation_next"].mouseClick()
@@ -295,13 +286,15 @@ def test_view_mode(app_dialog):
     thumbnailSlider.mouseDrag(width * 15, height * 0)
 
 
-def test_action_items(app_dialog):
+def test_action_items(app_dialog, tk_test_project):
     # Click on the Actions drop down menu. That menu is hidden from qt so I need to do some hack to select it.
     folderThumbnail = first(
-        app_dialog.root["publish_view"].listitems["*Big Buck Bunny"]
+        app_dialog.root["publish_view"].listitems["*" + str(tk_test_project["name"])]
     )
     width, height = folderThumbnail.size
-    app_dialog.root["publish_view"].listitems["*Big Buck Bunny"].get().mouseSlide()
+    app_dialog.root["publish_view"].listitems[
+        "*" + str(tk_test_project["name"])
+    ].get().mouseSlide()
     folderThumbnail.mouseClick(width * 0.9, height * 0.9)
 
     # Validate action items.
@@ -313,7 +306,7 @@ def test_action_items(app_dialog):
     ].exists(), "Show in Media Center isn't available."
 
 
-def test_publish_type(app_dialog):
+def test_publish_type(app_dialog, tk_test_project):
     # Make sure buttons are available
     assert app_dialog.root.buttons[
         "Select All"
@@ -328,24 +321,55 @@ def test_publish_type(app_dialog):
     app_dialog.root["publish_type_list"].listitems["Folders"].get().mouseSlide()
     foldersCheckbox.mouseClick(width * 0.05, height * 0.5)
 
-    # Make sure Big Buck Bunny project is no more showing up in the publish view
+    # Make sure Toolkit UI Automation project is no more showing up in the publish view
     assert (
-        app_dialog.root["publish_view"].listitems["*Big Buck Bunny"].exists() is False
-    ), "Big Buck Bunny project shouldn't be visible."
+        app_dialog.root["publish_view"]
+        .listitems["*" + str(tk_test_project["name"])]
+        .exists()
+        is False
+    ), "Toolkit UI Automation project shouldn't be visible."
 
     # Click on Select All button
     app_dialog.root.buttons["Select All"].mouseClick()
 
-    # Make sure Big Buck Bunny project is showing up in the publish view
+    # Make sure Toolkit UI Automation project is showing up in the publish view
     assert (
-        app_dialog.root["publish_view"].listitems["*Big Buck Bunny"].exists()
-    ), "Big Buck Bunny project ins't available."
+        app_dialog.root["publish_view"]
+        .listitems["*" + str(tk_test_project["name"])]
+        .exists()
+    ), "Toolkit UI Automation project ins't available."
+
+    # Make sure publish item is showing up correctly
+    app_dialog.root["publish_view"].listitems["Assets"].get().mouseDoubleClick()
+    app_dialog.root["publish_view"].listitems["Character"].waitExist(timeout=30)
+    app_dialog.root["publish_view"].listitems["Character"].get().mouseDoubleClick()
+    app_dialog.root["publish_view"].listitems["AssetAutomation"].waitExist(timeout=30)
+    app_dialog.root["publish_view"].listitems[
+        "AssetAutomation"
+    ].get().mouseDoubleClick()
+    app_dialog.root["publish_view"].listitems["sven.png"].waitExist(timeout=30)
+
+    # Make sure published file detail view is good
+    app_dialog.root["publish_view"].listitems["sven.png"].get().mouseClick()
+    app_dialog.root["details_image"].waitExist(timeout=30)
+    assert app_dialog.root.captions[
+        "Name*sven.png*Type*No Type*Version*001*Link*Asset AssetAutomation*Task*Model*Waiting to Start*Review*Pending Review"
+    ].exists(), "Published File informations is missing."
+    assert (
+        app_dialog.root["history_view"].listitems["001"].exists()
+    ), "Version isn't visible."
+    app_dialog.root["history_view"].listitems["001"].get().mouseClick()
+    # This mouseSlide() is to get the version item's tooltip showing up.
+    app_dialog.root["history_view"].listitems["001"].get().mouseSlide(width * 0.25)
+    topwindows[
+        "Version 001*This file was published by the toolkit ui automation"
+    ].waitExist(timeout=30)
 
 
 @pytest.mark.skip(
     reason="Need to fix this known issue: https://jira.autodesk.com/browse/SG-9294"
 )
-def test_reload(app_dialog):
+def test_reload(app_dialog, tk_test_project):
     # Click on the cog button and select reload
     app_dialog.root.buttons["cog_button"].mouseClick()
     topwindows.menuitems["Reload"].waitExist(timeout=30)
@@ -353,8 +377,10 @@ def test_reload(app_dialog):
 
     # Make sure items are still showing up in the entity view
     assert (
-        app_dialog.root["entity_preset_tabs"].outlineitems["*Big Buck Bunny"].exists()
-    ), "Big Buck Bunny project ins't available."
+        app_dialog.root["entity_preset_tabs"]
+        .outlineitems["*" + str(tk_test_project["name"])]
+        .exists()
+    ), "Toolkit UI Automation project ins't available."
     assert (
         app_dialog.root["entity_preset_tabs"].outlineitems["Assets"].exists()
     ), "Assets ins't available."

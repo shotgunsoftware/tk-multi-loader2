@@ -51,8 +51,7 @@ class SearchWidget(QtGui.QWidget):
         # now grab the default background color and use that
         # in addition to that, apply the same styling that the search
         # bar in the tree view is using.
-        p = QtGui.QPalette()
-        bg_col = p.color(QtGui.QPalette.Active, QtGui.QPalette.Window)
+        bg_col = self.palette().window().color()
 
         style = """
         QGroupBox

@@ -38,14 +38,14 @@ class SgLatestPublishModel(ShotgunModel, ViewItemRolesMixin):
 
     # Additional data roles defined for the model
     _BASE_ROLE = QtCore.Qt.UserRole + 100
-    TYPE_ID_ROLE = _BASE_ROLE + 1
-    IS_FOLDER_ROLE = _BASE_ROLE + 2
-    ASSOCIATED_TREE_VIEW_ITEM_ROLE = _BASE_ROLE + 3
-    PUBLISH_TYPE_NAME_ROLE = _BASE_ROLE + 4
-    SEARCHABLE_NAME = _BASE_ROLE + 5
-    # Keep track of the last model role. This will be used by the ViewItemRolesMixin as an offset when
-    # adding more roles to the model. Update this if more custom roles are added.
-    LAST_ROLE = SEARCHABLE_NAME
+    (
+        TYPE_ID_ROLE,
+        IS_FOLDER_ROLE,
+        ASSOCIATED_TREE_VIEW_ITEM_ROLE,
+        PUBLISH_TYPE_NAME_ROLE,
+        SEARCHABLE_NAME,
+        NEXT_AVAILABLE_ROLE,  # Keep track of the next available custome role. Insert new roles above.
+    ) = range(_BASE_ROLE, _BASE_ROLE + 6)
 
     def __init__(self, parent, publish_type_model, bg_task_manager):
         """
@@ -59,8 +59,8 @@ class SgLatestPublishModel(ShotgunModel, ViewItemRolesMixin):
 
         app = sgtk.platform.current_bundle()
 
-        # Initialize the roles for the ViewItemDelegate
-        self.initialize_roles(self.LAST_ROLE)
+        # Add additional roles defined by the ViewItemRolesMixin class.
+        self.NEXT_AVAILABLE_ROLE = self.initialize_roles(self.NEXT_AVAILABLE_ROLE)
 
         view_item_config_hook_path = app.get_setting("view_item_configuration_hook")
         view_item_config_hook = app.create_hook_instance(view_item_config_hook_path)

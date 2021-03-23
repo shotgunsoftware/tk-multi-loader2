@@ -1,0 +1,42 @@
+# Copyright (c) 2021 Shotgun Software Inc.
+#
+# CONFIDENTIAL AND PROPRIETARY
+#
+# This work is provided "AS IS" and subject to the Shotgun Pipeline Toolkit
+# Source Code License included in this distribution package. See LICENSE.
+# By accessing, using, copying or modifying this work you indicate your
+# agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
+# not expressly granted therein are reserved by Shotgun Software Inc.
+#
+
+# All the bundles are relative to this repo, except for tk-shell, as there
+# is little chance it will need to be edited. All other repos are common
+# on dev machines.
+
+engines:
+  tk-testengine:
+    location:
+      type: dev
+      path: $SHOTGUN_TEST_ENGINE
+    apps:
+      tk-multi-loader2:
+        location:
+          type: path
+          path: $SHOTGUN_CURRENT_REPO_ROOT
+        actions_hook: "{config}/test_actions.py"
+        action_mappings:
+          TestPublishType1: [test_action1, test_action2, test_noaction]
+          TestPublishType2: [test_action3]
+          TestPublishType3: [test_action2, test_action4]
+        entity_mappings:
+          Shot: [test_action2, test_action5]
+
+frameworks:
+  tk-framework-qtwidgets_v2.x.x:
+    location:
+      type: path
+      path: $SHOTGUN_REPOS_ROOT/tk-framework-qtwidgets
+  tk-framework-shotgunutils_v5.x.x:
+    location:
+      type: path
+      path: $SHOTGUN_REPOS_ROOT/tk-framework-shotgunutils

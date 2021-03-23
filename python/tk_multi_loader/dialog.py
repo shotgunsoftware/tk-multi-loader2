@@ -2049,7 +2049,14 @@ class AppDialog(QtGui.QWidget):
 
         # Add a menu button to display and execute the item's actions.
         delegate.add_actions(
-            [{"name": "Actions", "callback": self._show_publish_actions_for_index,},],
+            [
+                {
+                    "name": "Actions",
+                    "tooltip": "Double-click to execute the first action in the button menu list.",
+                    "get_data": self._get_show_publish_action_data,
+                    "callback": self._show_publish_actions_for_index,
+                },
+            ],
             ViewItemDelegate.TOP_RIGHT,
         )
 
@@ -2151,6 +2158,49 @@ class AppDialog(QtGui.QWidget):
 
         view.setItemDelegate(delegate)
         return delegate
+
+    def _get_show_publish_action_data(self, parent, index):
+        """
+        Return the action data for the show publish actions action, and for the given index.
+        This data will determine how the action is displayed for the index.
+
+        :param parent: This is the parent of the :class:`ViewItemDelegate`, which is the file view.
+        :type parent: :class:`sgtk.platform.qt.QtGui.QAbstractItemView`
+        :param index: The index the action is for.
+        :type index: :class:`sgtk.platform.qt.QtCore.QModelIndex`
+        :return: The data for the action and index.
+        :rtype: dict, e.g.:
+            {
+                "visible": bool  # Flag indicating whether the action is displayed or not
+                "state": :class:`sgtk.platform.qt.QtGui.QStyle.StateFlag`  # Flag indicating state of the icon
+                                                                        # e.g. enabled/disabled, on/off, etc.
+                "name": str # Override the default action name for this index
+            }
+        """
+
+        data = {}
+
+        viewport_pos = parent.viewport().mapFromGlobal(QtGui.QCursor.pos())
+        proxy_index = parent.indexAt(viewport_pos)
+
+        if not proxy_index.isValid():
+            return data
+
+        source_index = proxy_index.model().mapToSource(proxy_index)
+        item = source_index.model().itemFromIndex(source_index)
+        sg_data = item.get_sg_data()
+        if sg_data:
+            actions = self._action_manager.get_actions_for_publishes(
+                [sg_data], self._action_manager.UI_AREA_MAIN
+            )
+            if actions:
+                data[
+                    "tooltip"
+                ] = "Double-click the item to execute the <i>{text}</i> action.".format(
+                    text=actions[0].text()
+                )
+
+        return data
 
 
 ################################################################################################

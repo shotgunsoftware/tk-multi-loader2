@@ -622,7 +622,7 @@ class SgLatestPublishModel(ShotgunModel, ViewItemRolesMixin):
 
         return new_sg_data
 
-    def _get_args_for_role_method(self, item):
+    def _get_args_for_role_method(self, item, role):
         """
         Override the :class:`ViewItemRolesMixin` method.
 
@@ -632,8 +632,11 @@ class SgLatestPublishModel(ShotgunModel, ViewItemRolesMixin):
         Return any additional positional or keyword arguments to pass along to the
         method executed for a role.staticmethod
 
-        :param item:
+        :param item: The model item.
         :type item: :class:`sgtk.platform.qt.QtGui.QStandardItem`
+        :param role: The item role.
+        :type role: :class:`sgtk.platform.qt.QtCore.Qt.ItemDataRole`
+
         :return: Positional or keyword arguments to pass to a method executed to retreive
                  item data for a role.
         :rtype: tuple(list, dict)

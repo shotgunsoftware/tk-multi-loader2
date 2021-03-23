@@ -157,7 +157,6 @@ class LoaderActionManager(ActionManager):
         if len(sg_data) != 0:
 
             # Gets the actions for the folder
-            # entity_actions = self._get_actions_for_folder(sg_data)
             entity_actions = self._loader_manager.get_actions_for_entity(sg_data)
 
             # For every action, create an associated QAction with appropriate callback

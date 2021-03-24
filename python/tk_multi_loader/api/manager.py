@@ -64,10 +64,12 @@ class LoaderManager(object):
         :param sg_data: Shotgun data dictionary with all the standard publish fields.
         :param ui_area: Indicates which part of the UI the request is coming from.
                         Currently one of:
+
                         - :class:`tk_multi_loader.LoaderManager.UI_AREA_MAIN`
                         - :class:`tk_multi_loader.LoaderManager.UI_AREA_DETAILS`
                         - :class:`tk_multi_loader.LoaderManager.UI_AREA_HISTORY`
-        :returns List of dictionaries, each with keys name, params, caption and description
+
+        :return: List of dictionaries, each with keys name, params, caption and description
         """
 
         if self._publish_type_field not in sg_data.keys():
@@ -129,10 +131,12 @@ class LoaderManager(object):
         :param sg_data_list: List of Shotgun data dictionary with all the standard publish fields.
         :param ui_area: Indicates which part of the UI the request is coming from.
                         Currently one of:
+
                         - :class:`tk_multi_loader.LoaderManager.UI_AREA_MAIN`
                         - :class:`tk_multi_loader.LoaderManager.UI_AREA_DETAILS`
                         - :class:`tk_multi_loader.LoaderManager.UI_AREA_HISTORY`
-        :returns Dictionary where the keys are the action names and the values contain the list of available actions.
+
+        :return: Dictionary where the keys are the action names and the values contain the list of available actions.
             One action will be defined for each publish.
         """
 
@@ -211,9 +215,10 @@ class LoaderManager(object):
 
         :param actions: List of dictionaries holding all the actions to execute.
             Each entry will have the following values:
-                name: Name of the action to execute
-                sg_publish_data: Publish information coming from Shotgun
-                params: Parameters passed down from the generate_actions hook.
+            name: Name of the action to execute
+            sg_publish_data: Publish information coming from Shotgun
+            params: Parameters passed down from the generate_actions hook.
+
         """
 
         try:
@@ -265,7 +270,7 @@ class LoaderManager(object):
         Returns true if the given publish type has any actions associated with it.
 
         :param publish_type: A Shotgun publish type (e.g. 'Maya Render')
-        :returns: True if the current actions setup knows how to handle this.
+        :return:: True if the current actions setup knows how to handle this.
         """
         mappings = self._bundle.get_setting("action_mappings")
 

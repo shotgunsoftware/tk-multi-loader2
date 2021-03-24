@@ -321,7 +321,7 @@ class AppDialog(QtGui.QWidget):
         self.ui.thumb_scale.setValue(scale_val)
         self.ui.publish_view.setIconSize(QtCore.QSize(scale_val, scale_val))
         self._thumbnail_delegate.thumbnail_size = QtCore.QSize(scale_val, scale_val)
-        self._list_item_delegate.row_height = scale_val
+        self._list_item_delegate.item_height = scale_val
         # and track subsequent changes
         self.ui.thumb_scale.valueChanged.connect(self._on_thumb_size_slider_change)
 
@@ -987,7 +987,7 @@ class AppDialog(QtGui.QWidget):
         When scale slider is manipulated
         """
         self._thumbnail_delegate.thumbnail_size = QtCore.QSize(value, value)
-        self._list_item_delegate.row_height = value
+        self._list_item_delegate.item_height = value
         self.ui.publish_view.setIconSize(QtCore.QSize(value, value))
 
         self._settings_manager.store("thumb_size_scale", value)

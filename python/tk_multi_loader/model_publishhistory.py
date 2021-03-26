@@ -68,9 +68,9 @@ class SgPublishHistoryModel(ShotgunModel, ViewItemRolesMixin):
         # (1) QStandardItem (2) dict
         self.role_methods = {
             SgPublishHistoryModel.VIEW_ITEM_THUMBNAIL_ROLE: view_item_config_hook.get_history_item_thumbnail,
-            SgPublishHistoryModel.VIEW_ITEM_TITLE_ROLE: view_item_config_hook.get_history_item_title,
+            SgPublishHistoryModel.VIEW_ITEM_HEADER_ROLE: view_item_config_hook.get_history_item_title,
             SgPublishHistoryModel.VIEW_ITEM_SUBTITLE_ROLE: view_item_config_hook.get_history_item_subtitle,
-            SgPublishHistoryModel.VIEW_ITEM_DETAILS_ROLE: view_item_config_hook.get_history_item_details,
+            SgPublishHistoryModel.VIEW_ITEM_TEXT_ROLE: view_item_config_hook.get_history_item_details,
             QtCore.Qt.ToolTipRole: view_item_config_hook.get_history_item_tooltip,
         }
 

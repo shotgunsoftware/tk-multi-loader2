@@ -66,9 +66,9 @@ class SgLatestPublishModel(ShotgunModel, ViewItemRolesMixin):
         view_item_config_hook = app.create_hook_instance(view_item_config_hook_path)
         self.role_methods = {
             SgLatestPublishModel.VIEW_ITEM_THUMBNAIL_ROLE: view_item_config_hook.get_item_thumbnail,
-            SgLatestPublishModel.VIEW_ITEM_TITLE_ROLE: view_item_config_hook.get_item_title,
+            SgLatestPublishModel.VIEW_ITEM_HEADER_ROLE: view_item_config_hook.get_item_title,
             SgLatestPublishModel.VIEW_ITEM_SUBTITLE_ROLE: view_item_config_hook.get_item_subtitle,
-            SgLatestPublishModel.VIEW_ITEM_DETAILS_ROLE: view_item_config_hook.get_item_details,
+            SgLatestPublishModel.VIEW_ITEM_TEXT_ROLE: view_item_config_hook.get_item_details,
             SgLatestPublishModel.VIEW_ITEM_SHORT_TEXT_ROLE: view_item_config_hook.get_item_short_text,
         }
 

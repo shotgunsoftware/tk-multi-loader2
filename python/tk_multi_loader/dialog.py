@@ -53,7 +53,7 @@ shotgun_globals = sgtk.platform.import_framework(
 
 ShotgunModelOverlayWidget = overlay_widget.ShotgunModelOverlayWidget
 ViewItemDelegate = delegates.ViewItemDelegate
-ThumbnailItemDelegate = delegates.ThumbnailItemDelegate
+ThumbnailViewItemDelegate = delegates.ThumbnailViewItemDelegate
 
 
 class AppDialog(QtGui.QWidget):
@@ -2036,9 +2036,9 @@ class AppDialog(QtGui.QWidget):
             model_class = view.model().__class__
 
         delegate.thumbnail_role = model_class.VIEW_ITEM_THUMBNAIL_ROLE
-        delegate.title_role = model_class.VIEW_ITEM_TITLE_ROLE
+        delegate.header_role = model_class.VIEW_ITEM_HEADER_ROLE
         delegate.subtitle_role = model_class.VIEW_ITEM_SUBTITLE_ROLE
-        delegate.details_role = model_class.VIEW_ITEM_DETAILS_ROLE
+        delegate.text_role = model_class.VIEW_ITEM_TEXT_ROLE
         # Set the item data role used by the delegate to expand and collapse an item row.
         delegate.expand_role = model_class.VIEW_ITEM_EXPAND_ROLE
 
@@ -2064,7 +2064,7 @@ class AppDialog(QtGui.QWidget):
 
     def _create_thumbnail_item_delegate(self, view):
         """
-        Create and set up a :class:`ThumbnailItemDelegate` object for the given view. It is expected
+        Create and set up a :class:`ThumbnailViewItemDelegate` object for the given view. It is expected
         that the view's source model has the necessary item data roles set up (it is not required,
         but it is most convenient if the model inherits the ViewItemRolesMixin class).
 
@@ -2075,7 +2075,7 @@ class AppDialog(QtGui.QWidget):
         :rtype: :class:`ViewItemDelegate`
         """
 
-        delegate = ThumbnailItemDelegate(view)
+        delegate = ThumbnailViewItemDelegate(view)
 
         # Set the item data roles used by the delegate to render an item.
         if isinstance(view.model(), QtGui.QSortFilterProxyModel):
@@ -2084,7 +2084,7 @@ class AppDialog(QtGui.QWidget):
             model_class = view.model().__class__
 
         # Set the item data roles used by the delegate to render an item.
-        delegate.title_role = None
+        delegate.header_role = None
         delegate.short_text_role = model_class.VIEW_ITEM_SHORT_TEXT_ROLE
         # Set the item data role used by the delegate to expand and collapse an item row.
         delegate.expand_role = model_class.VIEW_ITEM_EXPAND_ROLE
@@ -2098,7 +2098,7 @@ class AppDialog(QtGui.QWidget):
         delegate.add_actions(
             [
                 {
-                    "icon": ":/res/down_arrow.png",
+                    "icon": QtGui.QIcon(":/res/down_arrow.png"),
                     "padding": 0,
                     "callback": self._show_publish_actions_for_index,
                 },
@@ -2129,8 +2129,8 @@ class AppDialog(QtGui.QWidget):
             model_class = view.model().__class__
 
         # Set the item data roles used by the delegate to render an item.
-        delegate.title_role = model_class.VIEW_ITEM_TITLE_ROLE
-        delegate.details_role = model_class.VIEW_ITEM_DETAILS_ROLE
+        delegate.header_role = model_class.VIEW_ITEM_HEADER_ROLE
+        delegate.text_role = model_class.VIEW_ITEM_TEXT_ROLE
         # Set the item data role used by the delegate to expand and collapse an item row.
         delegate.expand_role = model_class.VIEW_ITEM_EXPAND_ROLE
 
@@ -2148,7 +2148,7 @@ class AppDialog(QtGui.QWidget):
         delegate.add_actions(
             [
                 {
-                    "icon": ":/res/down_arrow.png",
+                    "icon": QtGui.QIcon(":/res/down_arrow.png"),
                     "padding": 0,
                     "callback": self._show_actions_for_history_item,
                 },

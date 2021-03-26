@@ -301,7 +301,7 @@ class FlameActions(HookBaseClass):
         # Checks that we have the necessary info to proceed.
         if not all(f in sg_info for f in sg_fields):
             raise FlameActionError(
-                "Cannot load a Batch Group from Shotgun using this {}".format(sg_type)
+                "Cannot load a Batch Group from SG using this {}".format(sg_type)
             )
 
         # Create a new batch_group using this Shot

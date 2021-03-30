@@ -2153,7 +2153,7 @@ class AppDialog(QtGui.QWidget):
                     "callback": self._show_actions_for_history_item,
                 },
             ],
-            ViewItemDelegate.BOTTOM_RIGHT,
+            ViewItemDelegate.TOP_RIGHT,
         )
 
         view.setItemDelegate(delegate)

@@ -23,9 +23,7 @@ class ViewConfiguration(HookClass):
 
     # Template strings for history items
     HISTORY_TITLE_TEMPLATE_STR = "<b style='color:#2C93E2'>Version {version_number|0::zeropadded}</b>&nbsp;&nbsp;<small>{created_at}</small>"
-    HISTORY_DETAILS_TEMPLATE_STR = (
-        "<i>{created_by|Unspecified User}</i>: {description|No Description given}"
-    )
+    HISTORY_DETAILS_TEMPLATE_STR = "<i>{created_by|Unspecified User::nolink}</i>: {description|No description given.}"
     HISTORY_TOOLTIP_TEMPLATE_STR = "<br/>".join(
         [HISTORY_TITLE_TEMPLATE_STR, HISTORY_DETAILS_TEMPLATE_STR,]
     )

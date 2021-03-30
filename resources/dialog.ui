@@ -564,7 +564,7 @@ background-image: url(:/res/right_arrow_pressed.png);
 </string>
          </property>
          <property name="minimum">
-          <number>70</number>
+          <number>35</number>
          </property>
          <property name="maximum">
           <number>250</number>

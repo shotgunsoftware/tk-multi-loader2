@@ -255,7 +255,7 @@ class Ui_Dialog(object):
 "     border-radius: 3px;\n"
 " }\n"
 "")
-        self.thumb_scale.setMinimum(70)
+        self.thumb_scale.setMinimum(35)
         self.thumb_scale.setMaximum(250)
         self.thumb_scale.setProperty("value", 70)
         self.thumb_scale.setSliderPosition(70)

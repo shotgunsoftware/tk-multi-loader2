@@ -300,7 +300,7 @@ def test_action_items(app_dialog, tk_test_project):
     # Validate action items.
     assert topwindows.menuitems[
         "Show details in Shotgun"
-    ].exists(), "Show details in Shotgun isn't available."
+    ].exists(), "Show details in SG isn't available."
     assert topwindows.menuitems[
         "Show in Media Center"
     ].exists(), "Show in Media Center isn't available."

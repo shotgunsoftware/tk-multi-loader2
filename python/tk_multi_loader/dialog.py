@@ -1464,7 +1464,7 @@ class AppDialog(QtGui.QWidget):
 
                 action_reset = QtGui.QAction("Reset", view)
                 action_reset.setToolTip(
-                    "<nobr>Reset the tree to its Shotgun hierarchy root collapsed state.</nobr><br><br>"
+                    "<nobr>Reset the tree to its SG hierarchy root collapsed state.</nobr><br><br>"
                     "Any existing data contained in the tree will be cleared, "
                     "affecting selection and other related states, and "
                     "available cached data will be immediately reloaded.<br><br>"

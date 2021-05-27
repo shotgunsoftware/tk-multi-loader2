@@ -107,7 +107,7 @@ class AppDialogAppWrapper(object):
         """
         :param root:
         """
-        self.root = parent["Shotgun: Loader"].get()
+        self.root = parent["ShotGrid: Loader"].get()
 
     def exists(self):
         """
@@ -299,7 +299,7 @@ def test_action_items(app_dialog, tk_test_project):
 
     # Validate action items.
     assert topwindows.menuitems[
-        "Show details in Shotgun"
+        "Show details in ShotGrid"
     ].exists(), "Show details in SG isn't available."
     assert topwindows.menuitems[
         "Show in Media Center"

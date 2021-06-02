@@ -17,7 +17,7 @@ configuration:
     menu_name:
         type: str
         default_value: "Load"
-        description: Name to appear on the Shotgun menu.
+        description: Name to appear on the ShotGrid menu.
 
     title_name:
         type: str
@@ -35,12 +35,12 @@ configuration:
         type: hook
         default_value: "{self}/filter_publishes.py"
         description: Specify a hook that, if needed, can filter the raw list of publishes returned
-                     from Shotgun for the current location.
+                     from ShotGrid for the current location.
 
     download_thumbnails:
         type: bool
         default_value: true
-        description: Controls whether thumbnails should be downloaded from Shotgun or not. We
+        description: Controls whether thumbnails should be downloaded from ShotGrid or not. We
                      strongly recommend that thumbnails are downloaded since this greatly enhances
                      the user experience of the loader, however in some situations this may be
                      difficult due to bandwidth or infrastructural restrictions.
@@ -107,16 +107,16 @@ configuration:
 
         type: list
         description: "This setting defines the different tabs that will show up on the left hand side.
-                      Each tab represents a Shotgun query, grouped by some shotgun fields to form a tree.
+                      Each tab represents a ShotGrid query, grouped by some ShotGrid fields to form a tree.
                       This setting is a list of dictionaries. Each dictionary in the list defines one tab.
                       Dictionaries with their *type* key set to 'Hierarchy' should have they following keys:
                       *caption* specifies the name of the tab, *root* specifies the path to the root
                       of the project hierarchy to display.
                       Dictionaries with their *type* key set to 'Query' should have they following keys:
-                      *caption* specifies the name of the tab, *entity_type* specifies the shotgun entity
-                      type to display. *filters* is a list of standard API Shotgun filters.
-                      *hierarchy* is a list of shotgun fields, defining the grouping of the tree.
-                      Optionally, you can specify a *publish_filters* key, containing shotgun API filters to
+                      *caption* specifies the name of the tab, *entity_type* specifies the ShotGrid entity
+                      type to display. *filters* is a list of standard API ShotGrid filters.
+                      *hierarchy* is a list of ShotGrid fields, defining the grouping of the tree.
+                      Optionally, you can specify a *publish_filters* key, containing ShotGrid API filters to
                       apply to the publishes listing as it is being loaded in the main view."
         allows_empty: False
         values:
@@ -124,7 +124,7 @@ configuration:
 
     publish_filters:
         type: list
-        description: "List of additional shotgun filters to apply to the publish listings.  These
+        description: "List of additional ShotGrid filters to apply to the publish listings.  These
                       will be applied before any other filtering takes place and would allow you to
                       for example hide things with a certain status."
         values:

@@ -168,7 +168,7 @@ background-image: url(:/res/right_arrow_pressed.png);
         </size>
        </property>
        <property name="toolTip">
-        <string>This area shows &lt;i&gt;Shotgun objects&lt;/i&gt; such as Shots or Assets, grouped into sections. </string>
+        <string>This area shows &lt;i&gt;ShotGrid objects&lt;/i&gt; such as Shots or Assets, grouped into sections. </string>
        </property>
        <property name="accessibleName">
         <string>entity_preset_tabs</string>
@@ -333,7 +333,7 @@ background-image: url(:/res/right_arrow_pressed.png);
           </size>
          </property>
          <property name="toolTip">
-          <string>This &lt;i&gt;breadcrumbs listing&lt;/i&gt; shows your currently selected Shotgun location.</string>
+          <string>This &lt;i&gt;breadcrumbs listing&lt;/i&gt; shows your currently selected ShotGrid location.</string>
          </property>
          <property name="text">
           <string/>
@@ -741,7 +741,7 @@ background-image: url(:/res/right_arrow_pressed.png);
              </size>
             </property>
             <property name="toolTip">
-             <string>The most recent published version has some playable media associated. Click this button to launch the Shotgun &lt;b&gt;Media Center&lt;/b&gt; web player to see the review version and any notes and comments that have been submitted.</string>
+             <string>The most recent published version has some playable media associated. Click this button to launch the ShotGrid &lt;b&gt;Media Center&lt;/b&gt; web player to see the review version and any notes and comments that have been submitted.</string>
             </property>
             <property name="text">
              <string/>

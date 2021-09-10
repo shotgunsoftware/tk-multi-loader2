@@ -107,7 +107,7 @@ class AppDialogAppWrapper(object):
         """
         :param root:
         """
-        self.root = parent["Shotgun: Loader"].get()
+        self.root = parent["ShotGrid: Loader"].get()
 
     def exists(self):
         """
@@ -187,8 +187,6 @@ def test_search(app_dialog):
 def test_context_selection(app_dialog):
     # Select an asset
     app_dialog.root.outlineitems["Assets"].get().mouseDoubleClick()
-    app_dialog.root.outlineitems["Character"].waitExist(timeout=30)
-    app_dialog.root.outlineitems["Character"].get().mouseDoubleClick()
     app_dialog.root.outlineitems["AssetAutomation"].waitExist(timeout=30)
 
     # Validate Show/Hide button and make sure history view is visible
@@ -217,11 +215,11 @@ def test_context_selection(app_dialog):
 def test_breadcrumb_widget(app_dialog):
     # Validate Breadcrumb widget current state
     assert app_dialog.root.captions[
-        "Project * Assets * Character"
+        "Project * Assets"
     ].exists(), "Breadcrumb widget is not set correctly"
 
     # Click on the back navigation button until back to the project context
-    for _i in range(0, 2):
+    for _i in range(0, 1):
         # Click on the back navigation button
         app_dialog.root.buttons["navigation_prev"].mouseClick()
 
@@ -231,13 +229,13 @@ def test_breadcrumb_widget(app_dialog):
     ].exists(), "Breadcrumb widget is not set correctly"
 
     # Click on the next navigation button until back to the Character context
-    for _i in range(0, 2):
+    for _i in range(0, 1):
         # Click on the back navigation button
         app_dialog.root.buttons["navigation_next"].mouseClick()
 
     # Validate Breadcrumb widget current state
     assert app_dialog.root.captions[
-        "Project * Assets * Character"
+        "Project * Assets"
     ].exists(), "Breadcrumb widget is not set correctly"
 
     # Click on the home navigation button
@@ -299,8 +297,8 @@ def test_action_items(app_dialog, tk_test_project):
 
     # Validate action items.
     assert topwindows.menuitems[
-        "Show details in Shotgun"
-    ].exists(), "Show details in Shotgun isn't available."
+        "Show details in ShotGrid"
+    ].exists(), "Show details in SG isn't available."
     assert topwindows.menuitems[
         "Show in Media Center"
     ].exists(), "Show in Media Center isn't available."
@@ -341,8 +339,8 @@ def test_publish_type(app_dialog, tk_test_project):
 
     # Make sure publish item is showing up correctly
     app_dialog.root["publish_view"].listitems["Assets"].get().mouseDoubleClick()
-    app_dialog.root["publish_view"].listitems["Character"].waitExist(timeout=30)
-    app_dialog.root["publish_view"].listitems["Character"].get().mouseDoubleClick()
+    # app_dialog.root["publish_view"].listitems["Character"].waitExist(timeout=30)
+    # app_dialog.root["publish_view"].listitems["Character"].get().mouseDoubleClick()
     app_dialog.root["publish_view"].listitems["AssetAutomation"].waitExist(timeout=30)
     app_dialog.root["publish_view"].listitems[
         "AssetAutomation"

@@ -1464,7 +1464,7 @@ class AppDialog(QtGui.QWidget):
 
                 action_reset = QtGui.QAction("Reset", view)
                 action_reset.setToolTip(
-                    "<nobr>Reset the tree to its Shotgun hierarchy root collapsed state.</nobr><br><br>"
+                    "<nobr>Reset the tree to its SG hierarchy root collapsed state.</nobr><br><br>"
                     "Any existing data contained in the tree will be cleared, "
                     "affecting selection and other related states, and "
                     "available cached data will be immediately reloaded.<br><br>"
@@ -1491,9 +1491,9 @@ class AppDialog(QtGui.QWidget):
 
                 action_refresh = QtGui.QAction("Refresh", view)
                 action_refresh.setToolTip(
-                    "<nobr>Refresh the tree data to ensure it is up to date with Shotgun.</nobr><br><br>"
+                    "<nobr>Refresh the tree data to ensure it is up to date with ShotGrid.</nobr><br><br>"
                     "Since this action is done in the background, the tree update "
-                    "will be applied whenever the data is returned from Shotgun.<br><br>"
+                    "will be applied whenever the data is returned from ShotGrid.<br><br>"
                     "When data has been added, it will be added into the existing tree "
                     "without affecting selection and other related states.<br><br>"
                     "When data has been modified or deleted, a tree rebuild will be done, "

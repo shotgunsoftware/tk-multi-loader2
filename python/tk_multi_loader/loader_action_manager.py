@@ -72,7 +72,9 @@ class LoaderActionManager(ActionManager):
                         Currently one of UI_AREA_MAIN, UI_AREA_DETAILS and UI_AREA_HISTORY
         :returns: List of QAction objects, ready to be parented to some QT Widgetry.
         """
-        actions_per_name = self._loader_manager.get_actions_for_publishes(sg_data_list, ui_area)
+        actions_per_name = self._loader_manager.get_actions_for_publishes(
+            sg_data_list, ui_area
+        )
 
         qt_actions = []
         for action_name, action_list in actions_per_name.items():

@@ -30,7 +30,9 @@ class AppTestBase(TankTestBase):
         self.setup_fixtures()
 
         # get useful tank setting
-        self.published_file_entity_type = sgtk.util.get_published_file_entity_type(self.app.sgtk)
+        self.published_file_entity_type = sgtk.util.get_published_file_entity_type(
+            self.app.sgtk
+        )
         if self.published_file_entity_type == "PublishedFile":
             self.published_file_type_field = "published_file_type"
         else:
@@ -63,11 +65,13 @@ class AppTestBase(TankTestBase):
             "entity": self.shot,
             "step": self.step,
             "project": self.project,
-            "content": "task_content"
+            "content": "task_content",
         }
 
         # Add these to mocked shotgun
-        self.add_to_sg_mock_db([self.shot, self.seq, self.step, self.project, self.task])
+        self.add_to_sg_mock_db(
+            [self.shot, self.seq, self.step, self.project, self.task]
+        )
 
         # now make a context
         context = self.tk.context_from_entity(self.project["type"], self.project["id"])
@@ -113,63 +117,67 @@ class TestApi(AppTestBase):
         self.published_file_type1 = {
             "type": "PublishedFileType",
             "id": 123456,
-            "code": "TestPublishType1"
+            "code": "TestPublishType1",
         }
         self.published_file_type2 = {
             "type": "PublishedFileType",
             "id": 123457,
-            "code": "TestPublishType2"
+            "code": "TestPublishType2",
         }
         self.published_file_type3 = {
             "type": "PublishedFileType",
             "id": 123458,
-            "code": "TestPublishType3"
+            "code": "TestPublishType3",
         }
 
         # setup published files
         self.publish_file1 = {
-                "type": self.published_file_entity_type,
-                "id": 1,
-                "project": self.project,
-                "code": "publish1",
-                "task": self.task,
-                "entity": self.shot,
-                self.published_file_type_field: self.published_file_type1
+            "type": self.published_file_entity_type,
+            "id": 1,
+            "project": self.project,
+            "code": "publish1",
+            "task": self.task,
+            "entity": self.shot,
+            self.published_file_type_field: self.published_file_type1,
         }
         self.publish_file2 = {
-                "type": self.published_file_entity_type,
-                "id": 2,
-                "project": self.project,
-                "code": "publish2",
-                "task": self.task,
-                "entity": self.shot,
-                self.published_file_type_field: self.published_file_type2
+            "type": self.published_file_entity_type,
+            "id": 2,
+            "project": self.project,
+            "code": "publish2",
+            "task": self.task,
+            "entity": self.shot,
+            self.published_file_type_field: self.published_file_type2,
         }
         self.publish_file3 = {
-                "type": self.published_file_entity_type,
-                "id": 3,
-                "project": self.project,
-                "code": "publish3",
-                "task": self.task,
-                "entity": self.shot,
-                self.published_file_type_field: self.published_file_type3
+            "type": self.published_file_entity_type,
+            "id": 3,
+            "project": self.project,
+            "code": "publish3",
+            "task": self.task,
+            "entity": self.shot,
+            self.published_file_type_field: self.published_file_type3,
         }
 
         # add these to mocked shotgun
-        self.add_to_sg_mock_db([
-            self.published_file_type1,
-            self.published_file_type2,
-            self.published_file_type3,
-            self.publish_file1,
-            self.publish_file2,
-            self.publish_file3
-        ])
+        self.add_to_sg_mock_db(
+            [
+                self.published_file_type1,
+                self.published_file_type2,
+                self.published_file_type3,
+                self.publish_file1,
+                self.publish_file2,
+                self.publish_file3,
+            ]
+        )
 
     def test_get_actions_for_publish(self):
         """
         Test getting actions for only one PublishedFile
         """
-        loader_actions = self.manager.get_actions_for_publish(self.publish_file1, self.manager.UI_AREA_MAIN)
+        loader_actions = self.manager.get_actions_for_publish(
+            self.publish_file1, self.manager.UI_AREA_MAIN
+        )
         assert isinstance(loader_actions, list)
         assert len(loader_actions) == 2
 
@@ -185,8 +193,7 @@ class TestApi(AppTestBase):
         Test getting actions for many PublishedFiles with no action in common
         """
         loader_actions = self.manager.get_actions_for_publishes(
-            [self.publish_file1, self.publish_file2],
-            self.manager.UI_AREA_MAIN
+            [self.publish_file1, self.publish_file2], self.manager.UI_AREA_MAIN
         )
         assert isinstance(loader_actions, dict)
         assert len(loader_actions) == 0
@@ -196,8 +203,7 @@ class TestApi(AppTestBase):
         Test getting actions for many PublishedFiles with actions in common
         """
         loader_actions = self.manager.get_actions_for_publishes(
-            [self.publish_file1, self.publish_file3],
-            self.manager.UI_AREA_MAIN
+            [self.publish_file1, self.publish_file3], self.manager.UI_AREA_MAIN
         )
         assert isinstance(loader_actions, dict)
         assert len(loader_actions) == 1
@@ -220,7 +226,9 @@ class TestApi(AppTestBase):
         """
         Test executing a non-implemented action
         """
-        loader_action = self.manager.get_actions_for_publish(self.publish_file1, self.manager.UI_AREA_MAIN)
+        loader_action = self.manager.get_actions_for_publish(
+            self.publish_file1, self.manager.UI_AREA_MAIN
+        )
 
         # clear temp location where hook writes to
         sgtk._hook_item = None
@@ -236,7 +244,9 @@ class TestApi(AppTestBase):
         """
         Test executing a single action
         """
-        loader_action = self.manager.get_actions_for_publish(self.publish_file1, self.manager.UI_AREA_MAIN)
+        loader_action = self.manager.get_actions_for_publish(
+            self.publish_file1, self.manager.UI_AREA_MAIN
+        )
 
         # clear temp location where hook writes to
         sgtk._hook_item = None
@@ -259,8 +269,7 @@ class TestApi(AppTestBase):
         Test executing many actions
         """
         loader_actions = self.manager.get_actions_for_publishes(
-            [self.publish_file1, self.publish_file3],
-            self.manager.UI_AREA_MAIN
+            [self.publish_file1, self.publish_file3], self.manager.UI_AREA_MAIN
         )
 
         # clear temp location where hook writes to
@@ -273,7 +282,10 @@ class TestApi(AppTestBase):
         for idx, item in enumerate(sgtk._hook_items):
             assert item["name"] == loader_actions["test_action2"][idx]["name"]
             assert item["params"] == loader_actions["test_action2"][idx]["params"]
-            assert item["sg_publish_data"] == loader_actions["test_action2"][idx]["sg_publish_data"]
+            assert (
+                item["sg_publish_data"]
+                == loader_actions["test_action2"][idx]["sg_publish_data"]
+            )
 
     def test_get_actions_for_shot_entity(self):
         """

@@ -14,7 +14,6 @@ HookBaseClass = sgtk.get_hook_baseclass()
 
 
 class TestActions(HookBaseClass):
-
     def generate_actions(self, sg_publish_data, actions, ui_area):
         """
         Returns a list of action instances for a particular publish.
@@ -60,7 +59,7 @@ class TestActions(HookBaseClass):
                     "name": "test_action1",
                     "params": None,
                     "caption": "Test Action1",
-                    "description": "My Description1"
+                    "description": "My Description1",
                 }
             )
 
@@ -70,7 +69,7 @@ class TestActions(HookBaseClass):
                     "name": "test_action2",
                     "params": None,
                     "caption": "Test Action2",
-                    "description": "My Description2"
+                    "description": "My Description2",
                 }
             )
 
@@ -80,7 +79,7 @@ class TestActions(HookBaseClass):
                     "name": "test_action3",
                     "params": None,
                     "caption": "Test Action3",
-                    "description": "My Description3"
+                    "description": "My Description3",
                 }
             )
 
@@ -90,7 +89,7 @@ class TestActions(HookBaseClass):
                     "name": "test_action4",
                     "params": None,
                     "caption": "Test Action4",
-                    "description": "My Description4"
+                    "description": "My Description4",
                 }
             )
 
@@ -145,9 +144,5 @@ class TestActions(HookBaseClass):
             sgtk._hook_items = []
 
         if name == "test_action2":
-            item = {
-                "name": name,
-                "params": params,
-                "sg_publish_data": sg_publish_data
-            }
+            item = {"name": name, "params": params, "sg_publish_data": sg_publish_data}
             sgtk._hook_items.append(item)

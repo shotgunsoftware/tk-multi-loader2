@@ -37,6 +37,7 @@ def show_dialog(app):
 
     # create the action manager for the Loader UI:
     from .loader_action_manager import LoaderActionManager
+
     action_manager = LoaderActionManager()
 
     # start ui

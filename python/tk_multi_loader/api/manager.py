@@ -47,7 +47,9 @@ class LoaderManager(object):
         self._logger = loader_logger or logger
 
         # are we old school or new school with publishes?
-        publish_entity_type = sgtk.util.get_published_file_entity_type(self._bundle.sgtk)
+        publish_entity_type = sgtk.util.get_published_file_entity_type(
+            self._bundle.sgtk
+        )
 
         if publish_entity_type == "PublishedFile":
             self._publish_type_field = "published_file_type"
@@ -73,7 +75,11 @@ class LoaderManager(object):
         """
 
         if self._publish_type_field not in sg_data.keys():
-            raise TankError("Missing {} field in Shotgun data dictionary.".format(self._publish_type_field))
+            raise TankError(
+                "Missing {} field in Shotgun data dictionary.".format(
+                    self._publish_type_field
+                )
+            )
 
         # Figure out the type of the publish
         publish_type_dict = sg_data.get(self._publish_type_field)
@@ -151,7 +157,10 @@ class LoaderManager(object):
         # Dictionary of all actions that are common to all publishes in the selection.
         # The key is the action name, the value is the action item
         intersection_actions_per_name = dict(
-            [(action["name"], [(sg_data_list[0], action)]) for action in first_entity_actions]
+            [
+                (action["name"], [(sg_data_list[0], action)])
+                for action in first_entity_actions
+            ]
         )
 
         # So, for each publishes in the selection after the first one...
@@ -188,7 +197,7 @@ class LoaderManager(object):
                         "sg_publish_data": actions[0],
                         "action": actions[1],
                         "name": actions[1]["name"],
-                        "params": actions[1]["params"]
+                        "params": actions[1]["params"],
                     }
                 )
             intersection_actions[action_name] = actions_list
@@ -204,10 +213,16 @@ class LoaderManager(object):
         """
         try:
             self._bundle.execute_hook_method(
-                "actions_hook", "execute_action", name=action["name"], params=action["params"], sg_publish_data=sg_data
+                "actions_hook",
+                "execute_action",
+                name=action["name"],
+                params=action["params"],
+                sg_publish_data=sg_data,
             )
         except Exception as e:
-            self._logger.exception("Could not execute execute_action hook: {}".format(e))
+            self._logger.exception(
+                "Could not execute execute_action hook: {}".format(e)
+            )
 
     def execute_multiple_actions(self, actions):
         """
@@ -226,7 +241,9 @@ class LoaderManager(object):
                 "actions_hook", "execute_multiple_actions", actions=actions
             )
         except Exception as e:
-            self._logger.exception("Could not execute execute_action hook: {}".format(e))
+            self._logger.exception(
+                "Could not execute execute_action hook: {}".format(e)
+            )
 
     def get_actions_for_entity(self, sg_data):
         """

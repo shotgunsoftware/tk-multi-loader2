@@ -31,7 +31,7 @@ class AppTestBase(TankTestBase):
 
         # get useful tank setting
         self.published_file_entity_type = sgtk.util.get_published_file_entity_type(
-            self.app.sgtk
+            self.tk
         )
         if self.published_file_entity_type == "PublishedFile":
             self.published_file_type_field = "published_file_type"

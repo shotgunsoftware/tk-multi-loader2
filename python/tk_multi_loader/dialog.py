@@ -1407,6 +1407,7 @@ class AppDialog(QtGui.QWidget):
                     lambda checked=True, editor=search: editor.setText("")
                 )
                 clear_search.setToolTip("Click to clear your current search.")
+                clear_search.setObjectName("clear_search")
                 search_layout.addWidget(clear_search)
 
                 # Drive the proxy model with the search text.

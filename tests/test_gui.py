@@ -119,7 +119,7 @@ class AppDialogAppWrapper(object):
         self.root.buttons["Close"].get().mouseClick()
 
 
-@pytest.mark.skip()
+@pytest.mark.skip(reason="Not working with PySide2")
 def test_welcome_page(app_dialog):
     # Open the Welcome page
     app_dialog.root.buttons["cog_button"].mouseClick()
@@ -171,14 +171,13 @@ def test_search(app_dialog):
     app_dialog.root.textfields.typeIn("Popo")
     topwindows.listitems["No matches found!"].waitExist(timeout=30)
     # Clear text field
-    # app_dialog.root["entity_preset_tabs"].buttons.mouseClick()
     app_dialog.root.textfields.mouseDoubleClick()
     app_dialog.root.textfields.typeIn("{BACKSPACE}")
-
     # Search for seq_001 and select it
     app_dialog.root.textfields.typeIn("seq_001")
     topwindows.listitems["seq_001"].waitExist(timeout=30)
-    topwindows.listitems["seq_001"].get().mouseClick()
+    app_dialog.root["entity_preset_tabs"].outlineitems["Shots"].mouseClick()
+    app_dialog.root["publish_view"].listitems["seq_001"].mouseDoubleClick()
     app_dialog.root["publish_view"].listitems["shot_001"].waitExist(timeout=30)
 
     # Validate that shot_001 is showing up in publish view list items
@@ -317,11 +316,11 @@ def test_publish_type(app_dialog, tk_test_project):
     ].exists(), "Select None button is missing"
 
     # Unselect Folders. That checkbox is hidden from qt so I need to do some hack to select it.
+    app_dialog.root["publish_type_list"].mouseClick()
     foldersCheckbox = first(app_dialog.root["publish_type_list"].listitems["Folders"])
     width, height = foldersCheckbox.size
     app_dialog.root["publish_type_list"].listitems["Folders"].get().mouseSlide()
     foldersCheckbox.mouseClick(width * 0.05, height * 0.5)
-
     # Make sure Toolkit UI Automation project is no more showing up in the publish view
     assert (
         app_dialog.root["publish_view"]

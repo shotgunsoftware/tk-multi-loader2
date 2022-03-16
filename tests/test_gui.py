@@ -119,6 +119,7 @@ class AppDialogAppWrapper(object):
         self.root.buttons["Close"].get().mouseClick()
 
 
+@pytest.mark.skip()
 def test_welcome_page(app_dialog):
     # Open the Welcome page
     app_dialog.root.buttons["cog_button"].mouseClick()
@@ -170,12 +171,14 @@ def test_search(app_dialog):
     app_dialog.root.textfields.typeIn("Popo")
     topwindows.listitems["No matches found!"].waitExist(timeout=30)
     # Clear text field
-    app_dialog.root["entity_preset_tabs"].buttons.mouseClick()
+    # app_dialog.root["entity_preset_tabs"].buttons.mouseClick()
+    app_dialog.root.textfields.mouseDoubleClick()
+    app_dialog.root.textfields.typeIn("{BACKSPACE}")
 
     # Search for seq_001 and select it
     app_dialog.root.textfields.typeIn("seq_001")
     topwindows.listitems["seq_001"].waitExist(timeout=30)
-    topwindows.listitems["seq_001"].mouseClick()
+    topwindows.listitems["seq_001"].get().mouseClick()
     app_dialog.root["publish_view"].listitems["shot_001"].waitExist(timeout=30)
 
     # Validate that shot_001 is showing up in publish view list items
@@ -272,16 +275,16 @@ def test_view_mode(app_dialog):
 
     # Validate thumbnail slider
     # Move slider to get small thumbnails
-    thumbnailSlider = first(app_dialog.root["position"])
+    thumbnailSlider = first(app_dialog.root["thumb_scale"])
     width, height = thumbnailSlider.size
-    app_dialog.root["Position"].get().mouseSlide()
-    thumbnailSlider.mouseDrag(width * -15, height * 0)
+    app_dialog.root["thumb_scale"].get().mouseSlide(width * 0.95, height * 0.4)
+    thumbnailSlider.mouseDrag(width * 0, height * 0.4)
 
     # Move slider to get big thumbnails
-    thumbnailSlider = first(app_dialog.root["position"])
+    thumbnailSlider = first(app_dialog.root["thumb_scale"])
     width, height = thumbnailSlider.size
-    app_dialog.root["Position"].get().mouseSlide()
-    thumbnailSlider.mouseDrag(width * 15, height * 0)
+    app_dialog.root["thumb_scale"].get().mouseSlide(width * 0, height * 0.4)
+    thumbnailSlider.mouseDrag(width * 0.95, height * 0.4)
 
 
 def test_action_items(app_dialog, tk_test_project):
@@ -292,7 +295,7 @@ def test_action_items(app_dialog, tk_test_project):
     width, height = folderThumbnail.size
     app_dialog.root["publish_view"].listitems[
         "*" + str(tk_test_project["name"])
-    ].get().mouseSlide()
+    ].get().mouseClick()
     folderThumbnail.mouseClick(width * 0.9, height * 0.9)
 
     # Validate action items.

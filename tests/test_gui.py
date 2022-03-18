@@ -129,7 +129,12 @@ def test_welcome_page(app_dialog):
     # PySide2 is not able to see Help screen buttons except for the close one.
     # Adding a check to see if Scroll button exists, if not we are just closing the help screen.
     # Click on Scroll to the next slide until you reach the last slide
-    if app_dialog.root.dialogs["Toolkit Help"].buttons["Scroll to the next slide"].exists() is True:
+    if (
+        app_dialog.root.dialogs["Toolkit Help"]
+        .buttons["Scroll to the next slide"]
+        .exists()
+        is True
+    ):
         for _i in range(0, 3):
             # Make sure Scroll to the next slide button is available
             assert (

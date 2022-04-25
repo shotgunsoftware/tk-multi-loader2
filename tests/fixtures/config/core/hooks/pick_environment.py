@@ -15,6 +15,5 @@ from sgtk import Hook
 
 class PickEnvironment(Hook):
     def execute(self, context, **kwargs):
-        """
-        """
+        """ """
         return os.environ.get("LOADER2_API_TEST", "api_test")

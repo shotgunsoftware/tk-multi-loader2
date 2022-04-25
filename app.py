@@ -43,7 +43,9 @@ class MultiLoader(sgtk.platform.Application):
             "icons": {
                 "dark": {
                     "png": os.path.join(
-                        os.path.dirname(__file__), "resources", "load_menu_icon.png",
+                        os.path.dirname(__file__),
+                        "resources",
+                        "load_menu_icon.png",
                     ),
                 }
             },

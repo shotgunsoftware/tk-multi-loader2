@@ -9,15 +9,13 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import sgtk
-import datetime
 import os
 import sys
 from sgtk.platform.qt import QtCore, QtGui
-from tank_vendor import shotgun_api3
-from sgtk import TankError
 from sgtk.util import login
 
 from .action_manager import ActionManager
+from .api import LoaderManager
 
 
 class LoaderActionManager(ActionManager):
@@ -39,70 +37,7 @@ class LoaderActionManager(ActionManager):
         ActionManager.__init__(self)
 
         self._app = sgtk.platform.current_bundle()
-
-        # are we old school or new school with publishes?
-        publish_entity_type = sgtk.util.get_published_file_entity_type(self._app.sgtk)
-
-        if publish_entity_type == "PublishedFile":
-            self._publish_type_field = "published_file_type"
-        else:
-            self._publish_type_field = "tank_type"
-
-    def _get_actions_for_publish(self, sg_data, ui_area):
-        """
-        Retrieves the list of actions for a given publish.
-
-        :param sg_data: Publish to retrieve actions for
-        :param ui_area: Indicates which part of the UI the request is coming from.
-                        Currently one of UI_AREA_MAIN, UI_AREA_DETAILS and UI_AREA_HISTORY
-        :return: List of actions.
-        """
-
-        # Figure out the type of the publish
-        publish_type_dict = sg_data.get(self._publish_type_field)
-        if publish_type_dict is None:
-            # this publish does not have a type
-            publish_type = "undefined"
-        else:
-            publish_type = publish_type_dict["name"]
-
-        # check if we have logic configured to handle this publish type.
-        mappings = self._app.get_setting("action_mappings")
-        # returns a structure on the form
-        # { "Maya Scene": ["reference", "import"] }
-        actions = mappings.get(publish_type, [])
-
-        if len(actions) == 0:
-            return []
-
-        # cool so we have one or more actions for this publish type.
-        # resolve UI area
-        if ui_area == LoaderActionManager.UI_AREA_DETAILS:
-            ui_area_str = "details"
-        elif ui_area == LoaderActionManager.UI_AREA_HISTORY:
-            ui_area_str = "history"
-        elif ui_area == LoaderActionManager.UI_AREA_MAIN:
-            ui_area_str = "main"
-        else:
-            raise TankError("Unsupported UI_AREA. Contact support.")
-
-        # convert created_at unix time stamp to shotgun time stamp
-        self._fix_timestamp(sg_data)
-
-        action_defs = []
-        try:
-            # call out to hook to give us the specifics.
-            action_defs = self._app.execute_hook_method(
-                "actions_hook",
-                "generate_actions",
-                sg_publish_data=sg_data,
-                actions=actions,
-                ui_area=ui_area_str,
-            )
-        except Exception:
-            self._app.log_exception("Could not execute generate_actions hook.")
-
-        return action_defs
+        self._loader_manager = LoaderManager(self._app, self._app.logger)
 
     def get_actions_for_publishes(self, sg_data_list, ui_area):
         """
@@ -137,82 +72,17 @@ class LoaderActionManager(ActionManager):
                         Currently one of UI_AREA_MAIN, UI_AREA_DETAILS and UI_AREA_HISTORY
         :returns: List of QAction objects, ready to be parented to some QT Widgetry.
         """
-        # If the selection is empty, there's no actions to return.
-        if len(sg_data_list) == 0:
-            return []
-
-        # We are going to do an intersection of all the entities' actions. We'll pick the actions from
-        # the first item to initialize the intersection...
-        first_entity_actions = self._get_actions_for_publish(sg_data_list[0], ui_area)
-
-        # Dictionary of all actions that are common to all publishes in the selection.
-        # The key is the action name, the value is the a list of data pairs. Each data pair
-        # holds the Shotgun Item the action is for and the action description.
-        intersection_actions_per_name = dict(
-            [
-                (action["name"], [(sg_data_list[0], action)])
-                for action in first_entity_actions
-            ]
+        actions_per_name = self._loader_manager.get_actions_for_publishes(
+            sg_data_list, ui_area
         )
 
-        # ... and then we'll remove actions from that set as we encounter entities without those actions.
-
-        # So, for each publishes in the selection after the first one...
-        for sg_data in sg_data_list[1:]:
-
-            # Get all the actions for a publish.
-            publish_actions = self._get_actions_for_publish(
-                sg_data, self.UI_AREA_DETAILS
-            )
-
-            # Turn the list of actions into a dictionary of actions using the key
-            # as the name.
-            publish_actions = dict(
-                [(action["name"], action) for action in publish_actions]
-            )
-
-            # Check if the actions from the intersection are available for this publish
-            #
-            # Get a copy of the keys because we're about to remove items as they are visited.
-            for name in intersection_actions_per_name:
-                # If the action is available for that publish, add the publish's action to the intersection
-                publish_action = publish_actions.get(name)
-                if publish_action:
-                    intersection_actions_per_name[name].append(
-                        (sg_data, publish_action)
-                    )
-                else:
-                    # Otherwise remove this action from the intersection
-                    del intersection_actions_per_name[name]
-
-            # Early out, happens if the intersection has been made empty.
-            if not intersection_actions_per_name:
-                break
-
-        # We need to order the resulting intersection like the actions were returned
-        # originally, so muscle memory is intact. This whole sorting business would have
-        # been a lot simpler if the _get_actions_for_publish method could have returned
-        # an ordered dictionary, which is python 2.7 only!
-        intersection_actions = []
-        # Go through the original list
-        for action in first_entity_actions:
-            # If that action is still present in the intersection, add it to the final
-            # list of actions
-            if action["name"] in intersection_actions_per_name:
-                intersection_actions.append(
-                    intersection_actions_per_name[action["name"]]
-                )
-
-        # For every actions in the intersection, create an associated QAction with appropriate callback
-        # and hook parameters.
         qt_actions = []
-        for action_list in intersection_actions:
+        for action_name, action_list in actions_per_name.items():
 
             # We need to title the action, so pick the caption and description of the first item.
-            _, first_action_def = action_list[0]
-            name = first_action_def["name"]
-            caption = first_action_def["caption"]
-            description = first_action_def["description"]
+            first_action_def = action_list[0]
+            caption = first_action_def["action"]["caption"]
+            description = first_action_def["action"]["description"]
 
             a = QtGui.QAction(caption, None)
             a.setToolTip(description)
@@ -221,11 +91,11 @@ class LoaderActionManager(ActionManager):
             # the hook.
             actions = [
                 {
-                    "sg_publish_data": sg_data,
-                    "name": name,
-                    "params": action_def["params"],
+                    "sg_publish_data": action["sg_publish_data"],
+                    "name": action_name,
+                    "params": action["action"]["params"],
                 }
-                for (sg_data, action_def) in action_list
+                for action in action_list
             ]
 
             # Bind all the action params to a single invocation of the _execute_hook.
@@ -270,51 +140,7 @@ class LoaderActionManager(ActionManager):
         :param publish_type: A Shotgun publish type (e.g. 'Maya Render')
         :returns: True if the current actions setup knows how to handle this.
         """
-        mappings = self._app.get_setting("action_mappings")
-
-        # returns a structure on the form
-        # { "Maya Scene": ["reference", "import"] }
-        my_mappings = mappings.get(publish_type, [])
-
-        return len(my_mappings) > 0
-
-    def _get_actions_for_folder(self, sg_data):
-        """
-        Retrieves the list of actions for a given folder.
-
-        :param sg_data: Publish to retrieve actions for
-        :return: List of actions.
-        """
-
-        publish_type = sg_data.get("type", None)
-
-        # check if we have logic configured to handle this publish type.
-        mappings = self._app.get_setting("entity_mappings")
-
-        # returns a structure on the form
-        # { "Shot": ["reference", "import"] }
-        actions = mappings.get(publish_type, [])
-
-        if len(actions) == 0:
-            return []
-
-        # convert created_at unix time stamp to shotgun time stamp
-        self._fix_timestamp(sg_data)
-
-        action_defs = []
-        try:
-            # call out to hook to give us the specifics.
-            action_defs = self._app.execute_hook_method(
-                "actions_hook",
-                "generate_actions",
-                sg_publish_data=sg_data,
-                actions=actions,
-                ui_area="main",
-            )  # folder options only found in main ui area
-        except Exception:
-            self._app.log_exception("Could not execute generate_actions hook.")
-
-        return action_defs
+        return self._loader_manager.has_actions(publish_type)
 
     def get_actions_for_folder(self, sg_data):
         """
@@ -333,7 +159,7 @@ class LoaderActionManager(ActionManager):
         if len(sg_data) != 0:
 
             # Gets the actions for the folder
-            entity_actions = self._get_actions_for_folder(sg_data)
+            entity_actions = self._loader_manager.get_actions_for_entity(sg_data)
 
             # For every action, create an associated QAction with appropriate callback
             # and hook parameters.
@@ -384,21 +210,6 @@ class LoaderActionManager(ActionManager):
 
         return qt_actions
 
-    @staticmethod
-    def _fix_timestamp(sg_data):
-        """
-        Convert created_at unix time stamp in sg_data to shotgun time stamp.
-
-        :param sg_data: Standard Shotgun entity dictionary with keys type, id and name.
-        """
-
-        unix_timestamp = sg_data.get("created_at")
-        if isinstance(unix_timestamp, float):
-            sg_timestamp = datetime.datetime.fromtimestamp(
-                unix_timestamp, shotgun_api3.sg_timezone.LocalTimezone()
-            )
-            sg_data["created_at"] = sg_timestamp
-
     ########################################################################################
     # callbacks
 
@@ -411,13 +222,13 @@ class LoaderActionManager(ActionManager):
         self.pre_execute_action.emit(qt_action)
 
         try:
-            self._app.execute_hook_method(
-                "actions_hook", "execute_multiple_actions", actions=actions
-            )
+            self._loader_manager.execute_multiple_actions(actions)
         except Exception as e:
             self._app.log_exception("Could not execute execute_action hook: %s" % e)
             QtGui.QMessageBox.critical(
-                QtGui.QApplication.activeWindow(), "Hook Error", "Error: %s" % e,
+                QtGui.QApplication.activeWindow(),
+                "Hook Error",
+                "Error: %s" % e,
             )
         else:
 

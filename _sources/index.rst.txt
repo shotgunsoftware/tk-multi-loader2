@@ -1,5 +1,5 @@
-Shotgun Loader API reference
-############################
+ShotGrid Loader API reference
+#############################
 
 Loader API
 ==========

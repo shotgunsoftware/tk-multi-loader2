@@ -7,11 +7,10 @@
 <!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
+  
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Shotgun Loader API reference &mdash; tk-multi-loader2 v1.22.0 documentation</title>
+  <title>ShotGrid Loader API reference &mdash; tk-multi-loader2 v1.22.0 documentation</title>
   
 
   
@@ -24,10 +23,10 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/doctools.js"></script>
-        <script src="_static/language_data.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
     
     <script type="text/javascript" src="_static/js/theme.js"></script>
 
@@ -50,7 +49,7 @@
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
           
-    <a href='http://developer.shotgunsoftware.com'>
+    <a href='http://developer.shotgridsoftware.com'>
     
         <img style='width: 191px;
                 height: 60px;
@@ -94,7 +93,7 @@
             
               <!-- Local TOC -->
               <div class="local-toc"><ul>
-<li><a class="reference internal" href="#">Shotgun Loader API reference</a><ul>
+<li><a class="reference internal" href="#">ShotGrid Loader API reference</a><ul>
 <li><a class="reference internal" href="#loader-api">Loader API</a><ul>
 <li><a class="reference internal" href="#loadermanager">LoaderManager</a></li>
 </ul>
@@ -126,10 +125,10 @@
 
     <b>tk-multi-loader2</b> v1.22.0.<br>
     
-        This documentation is part of the Shotgun Pipeline Toolkit.
+        This documentation is part of the ShotGrid Pipeline Toolkit.
     
     For more information, please visit
-    <a class=custom_post_menu href='https://support.shotgunsoftware.com/home'>Shotgun Support</a>.
+    <a class=custom_post_menu href='https://developer.shotgridsoftware.com'>The ShotGrid developer portal.</a>.
     The code associated with this documentation can be found
     <a class=custom_post_menu href='https://github.com/shotgunsoftware/tk-multi-loader2'>here</a>.
 
@@ -178,7 +177,7 @@
     
       <li><a href="#">Docs</a> &raquo;</li>
         
-      <li>Shotgun Loader API reference</li>
+      <li>ShotGrid Loader API reference</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -195,9 +194,9 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <section id="shotgun-loader-api-reference">
-<h1>Shotgun Loader API reference<a class="headerlink" href="#shotgun-loader-api-reference" title="Permalink to this headline">¶</a></h1>
-<section id="loader-api">
+  <div class="section" id="shotgrid-loader-api-reference">
+<h1>ShotGrid Loader API reference<a class="headerlink" href="#shotgrid-loader-api-reference" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="loader-api">
 <h2>Loader API<a class="headerlink" href="#loader-api" title="Permalink to this headline">¶</a></h2>
 <p>The loader API gives developers access the underlying data structures and
 methods used by the loader UI to manage actions. They can use this interface to build more
@@ -236,7 +235,7 @@ for the actions management.</p>
 </div>
 <p>See the documentation for each of these classes below for more detail on how
 to use them.</p>
-<section id="loadermanager">
+<div class="section" id="loadermanager">
 <span id="loader-api-manager"></span><h3>LoaderManager<a class="headerlink" href="#loadermanager" title="Permalink to this headline">¶</a></h3>
 <p>This class gives developers direct access to the same methods and data
 structures used by the Loader UI to manage actions. You can create an instance of this class
@@ -256,9 +255,161 @@ directly via the configured loader app like this:</p>
 <span class="n">manager</span> <span class="o">=</span> <span class="n">loader_app</span><span class="o">.</span><span class="n">create_loader_manager</span><span class="p">()</span>
 </pre></div>
 </div>
-</section>
-</section>
-</section>
+<dl class="class">
+<dt id="tk_multi_loader.api.LoaderManager">
+<em class="property">class </em><code class="descclassname">tk_multi_loader.api.</code><code class="descname">LoaderManager</code><span class="sig-paren">(</span><em>bundle</em>, <em>loader_logger=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tk_multi_loader/api/manager.html#LoaderManager"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tk_multi_loader.api.LoaderManager" title="Permalink to this definition">¶</a></dt>
+<dd><p>This class is used for managing and executing loads.</p>
+<p>Initialize the manager.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>bundle</strong> – The bundle (app, engine or framework) instance for the app
+that the calling code is associated with.</li>
+<li><strong>loader_logger</strong> – This is a standard python logger to use during
+loading. A default logger will be provided if not supplied. This
+can be useful when implementing a custom UI, for example, with a
+specialized log handler</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="tk_multi_loader.api.LoaderManager.get_actions_for_publish">
+<code class="descname">get_actions_for_publish</code><span class="sig-paren">(</span><em>sg_data</em>, <em>ui_area</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tk_multi_loader/api/manager.html#LoaderManager.get_actions_for_publish"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tk_multi_loader.api.LoaderManager.get_actions_for_publish" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of actions for a publish.</p>
+<p>Shotgun data representing a publish is passed in and forwarded on to hooks
+to help them determine which actions may be applicable.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>sg_data</strong> – Shotgun data dictionary with all the standard publish fields.</li>
+<li><strong>ui_area</strong> – <p>Indicates which part of the UI the request is coming from.
+Currently one of:</p>
+<ul>
+<li><code class="xref py py-class docutils literal notranslate"><span class="pre">tk_multi_loader.LoaderManager.UI_AREA_MAIN</span></code></li>
+<li><code class="xref py py-class docutils literal notranslate"><span class="pre">tk_multi_loader.LoaderManager.UI_AREA_DETAILS</span></code></li>
+<li><code class="xref py py-class docutils literal notranslate"><span class="pre">tk_multi_loader.LoaderManager.UI_AREA_HISTORY</span></code></li>
+</ul>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">List of dictionaries, each with keys name, params, caption and description</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="tk_multi_loader.api.LoaderManager.get_actions_for_publishes">
+<code class="descname">get_actions_for_publishes</code><span class="sig-paren">(</span><em>sg_data_list</em>, <em>ui_area</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tk_multi_loader/api/manager.html#LoaderManager.get_actions_for_publishes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tk_multi_loader.api.LoaderManager.get_actions_for_publishes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns common actions for a list of publishes.</p>
+<p>Shotgun data representing a publish is passed in and forwarded on to hooks
+to help them determine which actions may be applicable.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>sg_data_list</strong> – List of Shotgun data dictionary with all the standard publish fields.</li>
+<li><strong>ui_area</strong> – <p>Indicates which part of the UI the request is coming from.
+Currently one of:</p>
+<ul>
+<li><code class="xref py py-class docutils literal notranslate"><span class="pre">tk_multi_loader.LoaderManager.UI_AREA_MAIN</span></code></li>
+<li><code class="xref py py-class docutils literal notranslate"><span class="pre">tk_multi_loader.LoaderManager.UI_AREA_DETAILS</span></code></li>
+<li><code class="xref py py-class docutils literal notranslate"><span class="pre">tk_multi_loader.LoaderManager.UI_AREA_HISTORY</span></code></li>
+</ul>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Dictionary where the keys are the action names and the values contain the list of available actions.
+One action will be defined for each publish.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="tk_multi_loader.api.LoaderManager.execute_action">
+<code class="descname">execute_action</code><span class="sig-paren">(</span><em>sg_data</em>, <em>action</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tk_multi_loader/api/manager.html#LoaderManager.execute_action"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tk_multi_loader.api.LoaderManager.execute_action" title="Permalink to this definition">¶</a></dt>
+<dd><p>Execute the given action for the selected publish.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>sg_data</strong> – Shotgun data dictionary with all the standard publish fields.</li>
+<li><strong>action</strong> – Dictionary containing the action data has defined in the hook.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="tk_multi_loader.api.LoaderManager.execute_multiple_actions">
+<code class="descname">execute_multiple_actions</code><span class="sig-paren">(</span><em>actions</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tk_multi_loader/api/manager.html#LoaderManager.execute_multiple_actions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tk_multi_loader.api.LoaderManager.execute_multiple_actions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Execute many actions for a list of publishes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>actions</strong> – List of dictionaries holding all the actions to execute.
+Each entry will have the following values:
+name: Name of the action to execute
+sg_publish_data: Publish information coming from Shotgun
+params: Parameters passed down from the generate_actions hook.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="tk_multi_loader.api.LoaderManager.get_actions_for_entity">
+<code class="descname">get_actions_for_entity</code><span class="sig-paren">(</span><em>sg_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tk_multi_loader/api/manager.html#LoaderManager.get_actions_for_entity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tk_multi_loader.api.LoaderManager.get_actions_for_entity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of actions for an entity type.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>sg_data</strong> – Shotgun data dictionary representing the entity we want to get actions for.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">List of dictionaries, each with keys name, params, caption and description</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="tk_multi_loader.api.LoaderManager.has_actions">
+<code class="descname">has_actions</code><span class="sig-paren">(</span><em>publish_type</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tk_multi_loader/api/manager.html#LoaderManager.has_actions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tk_multi_loader.api.LoaderManager.has_actions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns true if the given publish type has any actions associated with it.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>publish_type</strong> – A Shotgun publish type (e.g. ‘Maya Render’)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return::</th><td class="field-body">True if the current actions setup knows how to handle this.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+</div>
 
 
            </div>

@@ -1,0 +1,554 @@
+
+
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>tk_multi_loader.api.manager &mdash; tk-multi-loader2 v1.22.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+    <a href='http://developer.shotgridsoftware.com'>
+    
+        <img style='width: 191px;
+                height: 60px;
+                margin: 2px;
+                border-radius: 0px;
+                padding: 0px;'
+            src='../../../_static/logo@2x.png'/>
+    
+    </a>
+    
+
+          
+            <a href="../../../index.html" class="icon icon-home"> tk-multi-loader2
+          
+
+          
+          </a>
+
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+    
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+            
+          
+
+    <a href='genindex.html'>Alphabetic Index</a>
+
+    <div style='margin-top: 50px;
+                margin-left: 10px;
+                margin-right: 10px;
+                padding: 10px;
+                color: #b3b3b3;
+                font-size: 70%;
+                border-radius: 3px;
+                background-color: #444;
+                line-height: 18px;
+                '>
+    <style>
+        a.custom_post_menu { display: inline;
+                             padding: 0px;
+                             text-decoration: underline; }
+    </style>
+
+    <b>tk-multi-loader2</b> v1.22.0.<br>
+    
+        This documentation is part of the ShotGrid Pipeline Toolkit.
+    
+    For more information, please visit
+    <a class=custom_post_menu href='https://developer.shotgridsoftware.com'>The ShotGrid developer portal.</a>.
+    The code associated with this documentation can be found
+    <a class=custom_post_menu href='https://github.com/shotgunsoftware/tk-multi-loader2'>here</a>.
+
+    </div>
+
+
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">tk-multi-loader2</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>tk_multi_loader.api.manager</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for tk_multi_loader.api.manager</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (c) 2021 Shotgun Software Inc.</span>
+<span class="c1">#</span>
+<span class="c1"># CONFIDENTIAL AND PROPRIETARY</span>
+<span class="c1">#</span>
+<span class="c1"># This work is provided &quot;AS IS&quot; and subject to the Shotgun Pipeline Toolkit</span>
+<span class="c1"># Source Code License included in this distribution package. See LICENSE.</span>
+<span class="c1"># By accessing, using, copying or modifying this work you indicate your</span>
+<span class="c1"># agreement to the Shotgun Pipeline Toolkit Source Code License. All rights</span>
+<span class="c1"># not expressly granted therein are reserved by Shotgun Software Inc.</span>
+
+<span class="kn">import</span> <span class="nn">datetime</span>
+
+<span class="kn">import</span> <span class="nn">sgtk</span>
+<span class="kn">from</span> <span class="nn">sgtk</span> <span class="kn">import</span> <span class="n">TankError</span>
+<span class="kn">from</span> <span class="nn">tank_vendor</span> <span class="kn">import</span> <span class="n">shotgun_api3</span>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">sgtk</span><span class="o">.</span><span class="n">platform</span><span class="o">.</span><span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="LoaderManager"><a class="viewcode-back" href="../../../index.html#tk_multi_loader.api.LoaderManager">[docs]</a><span class="k">class</span> <span class="nc">LoaderManager</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This class is used for managing and executing loads.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># the area of the UI that an action is being requested/run for.</span>
+    <span class="n">UI_AREA_MAIN</span> <span class="o">=</span> <span class="mh">0x1</span>
+    <span class="n">UI_AREA_DETAILS</span> <span class="o">=</span> <span class="mh">0x2</span>
+    <span class="n">UI_AREA_HISTORY</span> <span class="o">=</span> <span class="mh">0x3</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bundle</span><span class="p">,</span> <span class="n">loader_logger</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the manager.</span>
+
+<span class="sd">        :param bundle: The bundle (app, engine or framework) instance for the app</span>
+<span class="sd">            that the calling code is associated with.</span>
+<span class="sd">        :param loader_logger: This is a standard python logger to use during</span>
+<span class="sd">            loading. A default logger will be provided if not supplied. This</span>
+<span class="sd">            can be useful when implementing a custom UI, for example, with a</span>
+<span class="sd">            specialized log handler</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># the current bundle (the loader instance)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_bundle</span> <span class="o">=</span> <span class="n">bundle</span>
+
+        <span class="c1"># a logger to be used by the various collector/publish plugins</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span> <span class="o">=</span> <span class="n">loader_logger</span> <span class="ow">or</span> <span class="n">logger</span>
+
+        <span class="c1"># are we old school or new school with publishes?</span>
+        <span class="n">publish_entity_type</span> <span class="o">=</span> <span class="n">sgtk</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">get_published_file_entity_type</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_bundle</span><span class="o">.</span><span class="n">sgtk</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">publish_entity_type</span> <span class="o">==</span> <span class="s2">&quot;PublishedFile&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_publish_type_field</span> <span class="o">=</span> <span class="s2">&quot;published_file_type&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_publish_type_field</span> <span class="o">=</span> <span class="s2">&quot;tank_type&quot;</span>
+
+<div class="viewcode-block" id="LoaderManager.get_actions_for_publish"><a class="viewcode-back" href="../../../index.html#tk_multi_loader.api.LoaderManager.get_actions_for_publish">[docs]</a>    <span class="k">def</span> <span class="nf">get_actions_for_publish</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sg_data</span><span class="p">,</span> <span class="n">ui_area</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a list of actions for a publish.</span>
+
+<span class="sd">        Shotgun data representing a publish is passed in and forwarded on to hooks</span>
+<span class="sd">        to help them determine which actions may be applicable.</span>
+
+<span class="sd">        :param sg_data: Shotgun data dictionary with all the standard publish fields.</span>
+<span class="sd">        :param ui_area: Indicates which part of the UI the request is coming from.</span>
+<span class="sd">                        Currently one of:</span>
+
+<span class="sd">                        - :class:`tk_multi_loader.LoaderManager.UI_AREA_MAIN`</span>
+<span class="sd">                        - :class:`tk_multi_loader.LoaderManager.UI_AREA_DETAILS`</span>
+<span class="sd">                        - :class:`tk_multi_loader.LoaderManager.UI_AREA_HISTORY`</span>
+
+<span class="sd">        :return: List of dictionaries, each with keys name, params, caption and description</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_publish_type_field</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sg_data</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="n">TankError</span><span class="p">(</span>
+                <span class="s2">&quot;Missing </span><span class="si">{}</span><span class="s2"> field in Shotgun data dictionary.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_publish_type_field</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Figure out the type of the publish</span>
+        <span class="n">publish_type_dict</span> <span class="o">=</span> <span class="n">sg_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_publish_type_field</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">publish_type_dict</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># this publish does not have a type</span>
+            <span class="n">publish_type</span> <span class="o">=</span> <span class="s2">&quot;undefined&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">publish_type</span> <span class="o">=</span> <span class="n">publish_type_dict</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span>
+
+        <span class="c1"># check if we have logic configured to handle this publish type.</span>
+        <span class="n">mappings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bundle</span><span class="o">.</span><span class="n">get_setting</span><span class="p">(</span><span class="s2">&quot;action_mappings&quot;</span><span class="p">)</span>
+        <span class="c1"># returns a structure on the form</span>
+        <span class="c1"># { &quot;Maya Scene&quot;: [&quot;reference&quot;, &quot;import&quot;] }</span>
+        <span class="n">actions</span> <span class="o">=</span> <span class="n">mappings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">publish_type</span><span class="p">,</span> <span class="p">[])</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">actions</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="c1"># cool so we have one or more actions for this publish type.</span>
+        <span class="c1"># resolve UI area</span>
+        <span class="k">if</span> <span class="n">ui_area</span> <span class="o">==</span> <span class="n">LoaderManager</span><span class="o">.</span><span class="n">UI_AREA_DETAILS</span><span class="p">:</span>
+            <span class="n">ui_area_str</span> <span class="o">=</span> <span class="s2">&quot;details&quot;</span>
+        <span class="k">elif</span> <span class="n">ui_area</span> <span class="o">==</span> <span class="n">LoaderManager</span><span class="o">.</span><span class="n">UI_AREA_HISTORY</span><span class="p">:</span>
+            <span class="n">ui_area_str</span> <span class="o">=</span> <span class="s2">&quot;history&quot;</span>
+        <span class="k">elif</span> <span class="n">ui_area</span> <span class="o">==</span> <span class="n">LoaderManager</span><span class="o">.</span><span class="n">UI_AREA_MAIN</span><span class="p">:</span>
+            <span class="n">ui_area_str</span> <span class="o">=</span> <span class="s2">&quot;main&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TankError</span><span class="p">(</span><span class="s2">&quot;Unsupported UI_AREA. Contact support.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># convert created_at unix time stamp to shotgun time stamp</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fix_timestamp</span><span class="p">(</span><span class="n">sg_data</span><span class="p">)</span>
+
+        <span class="n">action_defs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># call out to hook to give us the specifics.</span>
+            <span class="n">action_defs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bundle</span><span class="o">.</span><span class="n">execute_hook_method</span><span class="p">(</span>
+                <span class="s2">&quot;actions_hook&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;generate_actions&quot;</span><span class="p">,</span>
+                <span class="n">sg_publish_data</span><span class="o">=</span><span class="n">sg_data</span><span class="p">,</span>
+                <span class="n">actions</span><span class="o">=</span><span class="n">actions</span><span class="p">,</span>
+                <span class="n">ui_area</span><span class="o">=</span><span class="n">ui_area_str</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Could not execute generate_actions hook.&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">action_defs</span></div>
+
+<div class="viewcode-block" id="LoaderManager.get_actions_for_publishes"><a class="viewcode-back" href="../../../index.html#tk_multi_loader.api.LoaderManager.get_actions_for_publishes">[docs]</a>    <span class="k">def</span> <span class="nf">get_actions_for_publishes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sg_data_list</span><span class="p">,</span> <span class="n">ui_area</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns common actions for a list of publishes.</span>
+
+<span class="sd">        Shotgun data representing a publish is passed in and forwarded on to hooks</span>
+<span class="sd">        to help them determine which actions may be applicable.</span>
+
+<span class="sd">        :param sg_data_list: List of Shotgun data dictionary with all the standard publish fields.</span>
+<span class="sd">        :param ui_area: Indicates which part of the UI the request is coming from.</span>
+<span class="sd">                        Currently one of:</span>
+
+<span class="sd">                        - :class:`tk_multi_loader.LoaderManager.UI_AREA_MAIN`</span>
+<span class="sd">                        - :class:`tk_multi_loader.LoaderManager.UI_AREA_DETAILS`</span>
+<span class="sd">                        - :class:`tk_multi_loader.LoaderManager.UI_AREA_HISTORY`</span>
+
+<span class="sd">        :return: Dictionary where the keys are the action names and the values contain the list of available actions.</span>
+<span class="sd">            One action will be defined for each publish.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># If the selection is empty, there&#39;s no actions to return.</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sg_data_list</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{}</span>
+
+        <span class="c1"># We are going to do an intersection of all the entities&#39; actions. We&#39;ll pick the actions from</span>
+        <span class="c1"># the first item to initialize the intersection...</span>
+        <span class="n">first_entity_actions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_actions_for_publish</span><span class="p">(</span><span class="n">sg_data_list</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ui_area</span><span class="p">)</span>
+
+        <span class="c1"># Dictionary of all actions that are common to all publishes in the selection.</span>
+        <span class="c1"># The key is the action name, the value is the action item</span>
+        <span class="n">intersection_actions_per_name</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="p">(</span><span class="n">action</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">],</span> <span class="p">[(</span><span class="n">sg_data_list</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">action</span><span class="p">)])</span>
+                <span class="k">for</span> <span class="n">action</span> <span class="ow">in</span> <span class="n">first_entity_actions</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="c1"># So, for each publishes in the selection after the first one...</span>
+        <span class="k">for</span> <span class="n">sg_data</span> <span class="ow">in</span> <span class="n">sg_data_list</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+
+            <span class="c1"># Get all the actions for a publish.</span>
+            <span class="n">publish_actions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_actions_for_publish</span><span class="p">(</span>
+                <span class="n">sg_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">UI_AREA_DETAILS</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Turn the list of actions into a dictionary of actions using the key</span>
+            <span class="c1"># as the name.</span>
+            <span class="n">publish_actions</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+                <span class="p">[(</span><span class="n">action</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">],</span> <span class="n">action</span><span class="p">)</span> <span class="k">for</span> <span class="n">action</span> <span class="ow">in</span> <span class="n">publish_actions</span><span class="p">]</span>
+            <span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">action_name</span> <span class="ow">in</span> <span class="n">intersection_actions_per_name</span><span class="o">.</span><span class="n">copy</span><span class="p">():</span>
+                <span class="n">publish_action</span> <span class="o">=</span> <span class="n">publish_actions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">action_name</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">publish_action</span><span class="p">:</span>
+                    <span class="n">intersection_actions_per_name</span><span class="p">[</span><span class="n">action_name</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="p">(</span><span class="n">sg_data</span><span class="p">,</span> <span class="n">publish_action</span><span class="p">)</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># Otherwise remove this action from the intersection</span>
+                    <span class="k">del</span> <span class="n">intersection_actions_per_name</span><span class="p">[</span><span class="n">action_name</span><span class="p">]</span>
+
+        <span class="c1"># Reorder actions list to have something more functional matching the hook syntax</span>
+        <span class="n">intersection_actions</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">action_name</span> <span class="ow">in</span> <span class="n">intersection_actions_per_name</span><span class="p">:</span>
+            <span class="n">actions_list</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">actions</span> <span class="ow">in</span> <span class="n">intersection_actions_per_name</span><span class="p">[</span><span class="n">action_name</span><span class="p">]:</span>
+                <span class="n">actions_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;sg_publish_data&quot;</span><span class="p">:</span> <span class="n">actions</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                        <span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="n">actions</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">actions</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;name&quot;</span><span class="p">],</span>
+                        <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="n">actions</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;params&quot;</span><span class="p">],</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
+            <span class="n">intersection_actions</span><span class="p">[</span><span class="n">action_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">actions_list</span>
+
+        <span class="k">return</span> <span class="n">intersection_actions</span></div>
+
+<div class="viewcode-block" id="LoaderManager.execute_action"><a class="viewcode-back" href="../../../index.html#tk_multi_loader.api.LoaderManager.execute_action">[docs]</a>    <span class="k">def</span> <span class="nf">execute_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sg_data</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Execute the given action for the selected publish.</span>
+
+<span class="sd">        :param sg_data: Shotgun data dictionary with all the standard publish fields.</span>
+<span class="sd">        :param action: Dictionary containing the action data has defined in the hook.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_bundle</span><span class="o">.</span><span class="n">execute_hook_method</span><span class="p">(</span>
+                <span class="s2">&quot;actions_hook&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;execute_action&quot;</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="n">action</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">],</span>
+                <span class="n">params</span><span class="o">=</span><span class="n">action</span><span class="p">[</span><span class="s2">&quot;params&quot;</span><span class="p">],</span>
+                <span class="n">sg_publish_data</span><span class="o">=</span><span class="n">sg_data</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span>
+                <span class="s2">&quot;Could not execute execute_action hook: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="p">)</span></div>
+
+<div class="viewcode-block" id="LoaderManager.execute_multiple_actions"><a class="viewcode-back" href="../../../index.html#tk_multi_loader.api.LoaderManager.execute_multiple_actions">[docs]</a>    <span class="k">def</span> <span class="nf">execute_multiple_actions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actions</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Execute many actions for a list of publishes.</span>
+
+<span class="sd">        :param actions: List of dictionaries holding all the actions to execute.</span>
+<span class="sd">            Each entry will have the following values:</span>
+<span class="sd">            name: Name of the action to execute</span>
+<span class="sd">            sg_publish_data: Publish information coming from Shotgun</span>
+<span class="sd">            params: Parameters passed down from the generate_actions hook.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_bundle</span><span class="o">.</span><span class="n">execute_hook_method</span><span class="p">(</span>
+                <span class="s2">&quot;actions_hook&quot;</span><span class="p">,</span> <span class="s2">&quot;execute_multiple_actions&quot;</span><span class="p">,</span> <span class="n">actions</span><span class="o">=</span><span class="n">actions</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span>
+                <span class="s2">&quot;Could not execute execute_action hook: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="p">)</span></div>
+
+<div class="viewcode-block" id="LoaderManager.get_actions_for_entity"><a class="viewcode-back" href="../../../index.html#tk_multi_loader.api.LoaderManager.get_actions_for_entity">[docs]</a>    <span class="k">def</span> <span class="nf">get_actions_for_entity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sg_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a list of actions for an entity type.</span>
+
+<span class="sd">        :param sg_data:  Shotgun data dictionary representing the entity we want to get actions for.</span>
+<span class="sd">        :return: List of dictionaries, each with keys name, params, caption and description</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">entity_type</span> <span class="o">=</span> <span class="n">sg_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="c1"># check if we have logic configured to handle this publish type.</span>
+        <span class="n">mappings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bundle</span><span class="o">.</span><span class="n">get_setting</span><span class="p">(</span><span class="s2">&quot;entity_mappings&quot;</span><span class="p">)</span>
+
+        <span class="c1"># returns a structure on the form</span>
+        <span class="c1"># { &quot;Shot&quot;: [&quot;reference&quot;, &quot;import&quot;] }</span>
+        <span class="n">actions</span> <span class="o">=</span> <span class="n">mappings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">entity_type</span><span class="p">,</span> <span class="p">[])</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">actions</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="c1"># convert created_at unix time stamp to shotgun time stamp</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fix_timestamp</span><span class="p">(</span><span class="n">sg_data</span><span class="p">)</span>
+
+        <span class="n">action_defs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># call out to hook to give us the specifics.</span>
+            <span class="n">action_defs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bundle</span><span class="o">.</span><span class="n">execute_hook_method</span><span class="p">(</span>
+                <span class="s2">&quot;actions_hook&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;generate_actions&quot;</span><span class="p">,</span>
+                <span class="n">sg_publish_data</span><span class="o">=</span><span class="n">sg_data</span><span class="p">,</span>
+                <span class="n">actions</span><span class="o">=</span><span class="n">actions</span><span class="p">,</span>
+                <span class="n">ui_area</span><span class="o">=</span><span class="s2">&quot;main&quot;</span><span class="p">,</span>
+            <span class="p">)</span>  <span class="c1"># folder options only found in main ui area</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Could not execute generate_actions hook.&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">action_defs</span></div>
+
+<div class="viewcode-block" id="LoaderManager.has_actions"><a class="viewcode-back" href="../../../index.html#tk_multi_loader.api.LoaderManager.has_actions">[docs]</a>    <span class="k">def</span> <span class="nf">has_actions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">publish_type</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns true if the given publish type has any actions associated with it.</span>
+
+<span class="sd">        :param publish_type: A Shotgun publish type (e.g. &#39;Maya Render&#39;)</span>
+<span class="sd">        :return:: True if the current actions setup knows how to handle this.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mappings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bundle</span><span class="o">.</span><span class="n">get_setting</span><span class="p">(</span><span class="s2">&quot;action_mappings&quot;</span><span class="p">)</span>
+
+        <span class="c1"># returns a structure on the form</span>
+        <span class="c1"># { &quot;Maya Scene&quot;: [&quot;reference&quot;, &quot;import&quot;] }</span>
+        <span class="n">my_mappings</span> <span class="o">=</span> <span class="n">mappings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">publish_type</span><span class="p">,</span> <span class="p">[])</span>
+
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">my_mappings</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_fix_timestamp</span><span class="p">(</span><span class="n">sg_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert created_at unix time stamp in sg_data to shotgun time stamp.</span>
+
+<span class="sd">        :param sg_data: Standard Shotgun entity dictionary with keys type, id and name.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">unix_timestamp</span> <span class="o">=</span> <span class="n">sg_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;created_at&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">unix_timestamp</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+            <span class="n">sg_timestamp</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span>
+                <span class="n">unix_timestamp</span><span class="p">,</span> <span class="n">shotgun_api3</span><span class="o">.</span><span class="n">sg_timezone</span><span class="o">.</span><span class="n">LocalTimezone</span><span class="p">()</span>
+            <span class="p">)</span>
+            <span class="n">sg_data</span><span class="p">[</span><span class="s2">&quot;created_at&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sg_timestamp</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2022, Autodesk
+
+    </p>
+  </div> 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+  
+ 
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-2114792-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+</body>
+</html>

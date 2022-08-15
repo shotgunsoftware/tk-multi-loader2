@@ -225,11 +225,17 @@ class LoaderActionManager(ActionManager):
             self._loader_manager.execute_multiple_actions(actions)
         except Exception as e:
             self._app.log_exception("Could not execute execute_action hook: %s" % e)
-            QtGui.QMessageBox.critical(
-                QtGui.QApplication.activeWindow(),
+            msg_box = QtGui.QMessageBox(
+                QtGui.QMessageBox.Critical,
                 "Hook Error",
                 "Error: %s" % e,
+                QtGui.QMessageBox.Ok,
+                QtGui.QApplication.activeWindow(),
             )
+            msg_box.setDefaultButton(QtGui.QMessageBox.Ok)
+            msg_box.setTextFormat(QtCore.Qt.RichText)
+            msg_box.exec_()
+
         else:
 
             # Logging the "Loaded Published File" toolkit metric

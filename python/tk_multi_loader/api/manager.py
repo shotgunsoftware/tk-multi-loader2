@@ -244,6 +244,8 @@ class LoaderManager(object):
             self._logger.exception(
                 "Could not execute execute_action hook: {}".format(e)
             )
+            # Forward the exception so that a error message is popped up to the user
+            raise (e)
 
     def get_actions_for_entity(self, sg_data):
         """

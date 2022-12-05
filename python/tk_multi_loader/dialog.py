@@ -350,7 +350,10 @@ class AppDialog(QtGui.QWidget):
             # Menu has successfully restored, remove the signal to call this slot since
             # it no longer needs to restore the menu state.
             self._filter_menu.menu_refreshed.disconnect(self.restore_filter_menu_state)
-        
+            # Clear the settings for the filter menu state to indicate that nothing is waiting
+            # to be restored
+            self._settings_manager.store(self.FILTER_MENU_STATE, None)
+
     def _show_publish_actions(self, pos):
         """
         Shows the actions for the current publish selection.
@@ -467,9 +470,16 @@ class AppDialog(QtGui.QWidget):
         splash.close()
 
         # Save app user settings on close
-        self._settings_manager.store(
-            self.FILTER_MENU_STATE, self._filter_menu.save_state()
-        )
+        current_menu_state = self._filter_menu.save_state()
+        saved_menu_state = self._settings_manager.retrieve(self.FILTER_MENU_STATE, None)
+        if saved_menu_state:
+            # Part of the menu state was never restored, merge it with the current state to save.
+            for filter_group, filter_items in saved_menu_state.items():
+                if filter_group in current_menu_state:
+                    current_menu_state[filter_group].update(filter_items)
+                else:
+                    current_menu_state[filter_group] = filter_items
+        self._settings_manager.store(self.FILTER_MENU_STATE, current_menu_state)
 
         # okay to close dialog
         event.accept()

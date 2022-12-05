@@ -21,12 +21,7 @@ shotgun_model = sgtk.platform.import_framework(
 
 
 class SgLatestPublishProxyModel(FilterItemProxyModel):
-    """
-    Filter model to be used in conjunction with SgLatestPublishModel
-    """
-
-    # signal which is emitted whenever a filter changes
-    filter_changed = QtCore.Signal()
+    """Filter model to be used in conjunction with SgLatestPublishModel."""
 
     def __init__(self, parent):
         super(SgLatestPublishProxyModel, self).__init__(parent)
@@ -45,7 +40,6 @@ class SgLatestPublishProxyModel(FilterItemProxyModel):
             self.invalidateFilter()
         finally:
             self.layoutChanged.emit()
-            self.filter_changed.emit()
 
     def filterAcceptsRow(self, source_row, source_parent_idx):
         """

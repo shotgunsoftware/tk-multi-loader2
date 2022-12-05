@@ -209,8 +209,8 @@ class AppDialog(QtGui.QWidget):
         # check if we should display the "sorry, no publishes found" overlay
         self._publish_model.cache_loaded.connect(self._on_publish_content_change)
         self._publish_model.data_refreshed.connect(self._on_publish_content_change)
-        self._publish_proxy_model.filter_changed.connect(
-            self._on_publish_content_change
+        self._publish_proxy_model.layoutChanged.connect(
+            lambda parents, hint: self._on_publish_content_change()
         )
 
         # hook up view -> proxy model -> model

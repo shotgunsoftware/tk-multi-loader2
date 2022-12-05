@@ -312,7 +312,7 @@ class AppDialog(QtGui.QWidget):
         self.ui.cog_button.addAction(self._reload_action)
 
         # Set up filter menu
-        self._filter_menu = ShotgunFilterMenu(self)
+        self._filter_menu = ShotgunFilterMenu(self, refresh_on_show=False)
         self._filter_menu.set_filter_model(self._publish_proxy_model)
         self._filter_menu.menu_refreshed.connect(self.restore_filter_menu_state)
         self._filter_menu.initialize_menu()

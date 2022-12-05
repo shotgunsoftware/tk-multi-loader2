@@ -189,20 +189,9 @@ class AppDialog(QtGui.QWidget):
         self.ui.history_view.doubleClicked.connect(self._on_history_double_clicked)
 
         #################################################
-        # load and initialize cached publish type model
-        self._publish_type_model = SgPublishTypeModel(
-            self, self._action_manager, self._settings_manager, self._task_manager
-        )
-        self.ui.publish_type_list.setModel(self._publish_type_model)
-
-        self._publish_type_overlay = ShotgunModelOverlayWidget(
-            self._publish_type_model, self.ui.publish_type_list
-        )
-
-        #################################################
         # setup publish model
         self._publish_model = SgLatestPublishModel(
-            self, self._publish_type_model, self._task_manager
+            self, None, self._task_manager
         )
 
         self._publish_main_overlay = ShotgunModelOverlayWidget(
@@ -238,11 +227,6 @@ class AppDialog(QtGui.QWidget):
             "main_view_mode", self.MAIN_VIEW_THUMB
         )
         self._set_main_view_mode(main_view_mode)
-
-        # whenever the type list is checked, update the publish filters
-        self._publish_type_model.itemChanged.connect(
-            self._apply_type_filters_on_publishes
-        )
 
         # if an item in the table is double clicked the default action is run
         self.ui.publish_view.doubleClicked.connect(self._on_publish_double_clicked)
@@ -287,9 +271,6 @@ class AppDialog(QtGui.QWidget):
         #################################################
         # checkboxes, buttons etc
         self.ui.show_sub_items.toggled.connect(self._on_show_subitems_toggled)
-
-        self.ui.check_all.clicked.connect(self._publish_type_model.select_all)
-        self.ui.check_none.clicked.connect(self._publish_type_model.select_none)
 
         #################################################
         # thumb scaling
@@ -337,9 +318,6 @@ class AppDialog(QtGui.QWidget):
         # load visibility state for details pane
         show_details = self._settings_manager.retrieve("show_details", False)
         self._set_details_pane_visiblity(show_details)
-
-        # trigger an initial evaluation of filter proxy model
-        self._apply_type_filters_on_publishes()
 
     def _show_publish_actions(self, pos):
         """
@@ -955,20 +933,6 @@ class AppDialog(QtGui.QWidget):
         self._compute_history_button_visibility()
 
     ########################################################################################
-    # filter view
-
-    def _apply_type_filters_on_publishes(self):
-        """
-        Executed when the type listing changes
-        """
-        # go through and figure out which checkboxes are clicked and then
-        # update the publish proxy model so that only items of that type
-        # is displayed
-        sg_type_ids = self._publish_type_model.get_selected_types()
-        show_folders = self._publish_type_model.get_show_folders()
-        self._publish_proxy_model.set_filter_by_type_ids(sg_type_ids, show_folders)
-
-    ########################################################################################
     # publish view
 
     def _on_publish_content_change(self):
@@ -1133,7 +1097,6 @@ class AppDialog(QtGui.QWidget):
         """
         self._status_model.hard_refresh()
         self._publish_history_model.hard_refresh()
-        self._publish_type_model.hard_refresh()
         self._publish_model.hard_refresh()
         for p in self._entity_presets:
             self._entity_presets[p].model.hard_refresh()

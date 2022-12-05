@@ -18,6 +18,4 @@ import sgtk
 filtering = sgtk.platform.import_framework("tk-framework-qtwidgets", "filtering")
 FilterMenuButton = filtering.FilterMenuButton
 ShotgunFilterMenu = filtering.ShotgunFilterMenu
-
-# models = sgtk.platform.import_framework("tk-framework-qtwidgets", "models")
 FilterItemProxyModel = filtering.FilterItemProxyModel

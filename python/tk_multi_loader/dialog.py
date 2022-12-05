@@ -28,6 +28,7 @@ from .search_widget import SearchWidget
 from .banner import Banner
 from .loader_action_manager import LoaderActionManager
 from .utils import resolve_filters
+from .framework_qtwidgets import ShotgunFilterMenu
 
 from . import constants
 from . import model_item_data
@@ -63,6 +64,9 @@ class AppDialog(QtGui.QWidget):
 
     # enum to control the mode of the main view
     (MAIN_VIEW_LIST, MAIN_VIEW_THUMB) = range(2)
+
+    # settings keys
+    FILTER_MENU_STATE = "filter_menu_state"
 
     # signal emitted whenever the selected publish changes
     # in either the main view or the details history view
@@ -308,6 +312,13 @@ class AppDialog(QtGui.QWidget):
         self._reload_action.triggered.connect(self._on_reload_action)
         self.ui.cog_button.addAction(self._reload_action)
 
+        # Set up filter menu
+        self._filter_menu = ShotgunFilterMenu(self)
+        self._filter_menu.set_filter_model(self._publish_proxy_model)
+        self._filter_menu.menu_refreshed.connect(self.restore_filter_menu_state)
+        self._filter_menu.initialize_menu()
+        self.ui.filter_menu_btn.setMenu(self._filter_menu)
+
         #################################################
         # set up preset tabs and load and init tree views
         self._entity_presets = {}
@@ -319,6 +330,28 @@ class AppDialog(QtGui.QWidget):
         show_details = self._settings_manager.retrieve("show_details", False)
         self._set_details_pane_visiblity(show_details)
 
+    def restore_filter_menu_state(self):
+        """Restore the filter menu state."""
+
+        menu_state = self._settings_manager.retrieve(self.FILTER_MENU_STATE, None)
+        if not menu_state:
+            # Default menu state will show the published file type filter group when
+            # there are no app user settings saved.
+            menu_state = {
+                "PublishedFile.published_file_type": {},
+            }
+
+        not_restored = self._filter_menu.restore_state(menu_state)
+        if not_restored:
+            # Save the filter menu state that failed to be restored. This can happen if the
+            # state to restore contains data that is not currently available in the filter
+            # menu yet.
+            self._settings_manager.store(self.FILTER_MENU_STATE, not_restored)
+        else:
+            # Menu has successfully restored, remove the signal to call this slot since
+            # it no longer needs to restore the menu state.
+            self._filter_menu.menu_refreshed.disconnect(self.restore_filter_menu_state)
+        
     def _show_publish_actions(self, pos):
         """
         Shows the actions for the current publish selection.
@@ -433,6 +466,11 @@ class AppDialog(QtGui.QWidget):
 
         # close splash
         splash.close()
+
+        # Save app user settings on close
+        self._settings_manager.store(
+            self.FILTER_MENU_STATE, self._filter_menu.save_state()
+        )
 
         # okay to close dialog
         event.accept()

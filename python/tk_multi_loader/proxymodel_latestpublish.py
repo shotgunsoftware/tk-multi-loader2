@@ -13,13 +13,14 @@ from sgtk.platform.qt import QtCore, QtGui
 from tank_vendor import six
 
 from .model_latestpublish import SgLatestPublishModel
+from .framework_qtwidgets import FilterItemProxyModel
 
 shotgun_model = sgtk.platform.import_framework(
     "tk-framework-shotgunutils", "shotgun_model"
 )
 
 
-class SgLatestPublishProxyModel(QtGui.QSortFilterProxyModel):
+class SgLatestPublishProxyModel(FilterItemProxyModel):
     """
     Filter model to be used in conjunction with SgLatestPublishModel
     """
@@ -28,7 +29,8 @@ class SgLatestPublishProxyModel(QtGui.QSortFilterProxyModel):
     filter_changed = QtCore.Signal()
 
     def __init__(self, parent):
-        QtGui.QSortFilterProxyModel.__init__(self, parent)
+        super(SgLatestPublishProxyModel, self).__init__(parent)
+
         self._valid_type_ids = None
         self._show_folders = True
         self._search_filter = ""
@@ -60,6 +62,13 @@ class SgLatestPublishProxyModel(QtGui.QSortFilterProxyModel):
         This will check each row as it is passing through the proxy
         model and see if we should let it pass or not.
         """
+
+        # First check if the base model accepts the row or not. If it does not, do not accept and exit immediately.
+        base_model_accepts = super(SgLatestPublishProxyModel, self).filterAcceptsRow(
+            source_row, source_parent_idx
+        )
+        if not base_model_accepts:
+            return False
 
         if self._valid_type_ids is None:
             # accept all!

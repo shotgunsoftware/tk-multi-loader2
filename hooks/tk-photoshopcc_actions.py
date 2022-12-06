@@ -192,7 +192,9 @@ class PhotoshopActions(HookBaseClass):
             adobe.app.activeDocument
         except RuntimeError:
             QtGui.QMessageBox.warning(
-                None, "Add To Layer", "Please open a document first.",
+                None,
+                "Add To Layer",
+                "Please open a document first.",
             )
             return
 

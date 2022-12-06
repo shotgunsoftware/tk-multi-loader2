@@ -12,10 +12,7 @@
 A loader application that lets you add new items to the scene.
 """
 
-from sgtk.platform.qt import QtCore, QtGui
-
 import sgtk
-import sys
 import os
 
 
@@ -32,6 +29,11 @@ class MultiLoader(sgtk.platform.Application):
 
         tk_multi_loader = self.import_module("tk_multi_loader")
 
+        # the manager class provides the interface for loading. We store a
+        # reference to it to enable the create_loader_action_manager method exposed on
+        # the application itself
+        self._manager_class = tk_multi_loader.LoaderManager
+
         # register command
         cb = lambda: tk_multi_loader.show_dialog(self)
         menu_caption = "%s..." % self.get_setting("menu_name")
@@ -41,7 +43,9 @@ class MultiLoader(sgtk.platform.Application):
             "icons": {
                 "dark": {
                     "png": os.path.join(
-                        os.path.dirname(__file__), "resources", "load_menu_icon.png",
+                        os.path.dirname(__file__),
+                        "resources",
+                        "load_menu_icon.png",
                     ),
                 }
             },
@@ -73,3 +77,13 @@ class MultiLoader(sgtk.platform.Application):
         """
         tk_multi_loader = self.import_module("tk_multi_loader")
         return tk_multi_loader.open_publish_browser(self, title, action, publish_types)
+
+    def create_loader_manager(self):
+        """
+        Create and return a :class:`tk_multi_loader.LoaderManager` instance.
+        See the :class:`tk_multi_loader.LoaderManager` docs for details on
+        how it can be used to automate your loading workflows.
+
+        :returns: A :class:`tk_multi_loader.LoaderManager` instance
+        """
+        return self._manager_class(self)

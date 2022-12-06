@@ -301,7 +301,7 @@ class SgLatestPublishModel(ShotgunModel):
                 .data(SgLatestPublishModel.TYPE_ID_ROLE)
             )
             type_id_aggregates[type_id] += 1
-        
+
         if self._publish_type_model:
             self._publish_type_model.set_active_types(type_id_aggregates)
 

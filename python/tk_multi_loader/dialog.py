@@ -66,6 +66,7 @@ class AppDialog(QtGui.QWidget):
 
     # settings keys
     FILTER_MENU_STATE = "filter_menu_state"
+    SPLITTER_STATE = "splitter_state"
 
     # signal emitted whenever the selected publish changes
     # in either the main view or the details history view
@@ -321,6 +322,10 @@ class AppDialog(QtGui.QWidget):
         self._entity_presets = {}
         self._current_entity_preset = None
 
+        #################################################
+        # restore user app ui settings
+        self.restore_state()
+
         self._load_entity_presets()
 
         # load visibility state for details pane
@@ -468,16 +473,7 @@ class AppDialog(QtGui.QWidget):
         splash.close()
 
         # Save app user settings on close
-        current_menu_state = self._filter_menu.save_state()
-        saved_menu_state = self._settings_manager.retrieve(self.FILTER_MENU_STATE, None)
-        if saved_menu_state:
-            # Part of the menu state was never restored, merge it with the current state to save.
-            for filter_group, filter_items in saved_menu_state.items():
-                if filter_group in current_menu_state:
-                    current_menu_state[filter_group].update(filter_items)
-                else:
-                    current_menu_state[filter_group] = filter_items
-        self._settings_manager.store(self.FILTER_MENU_STATE, current_menu_state)
+        self.save_state()
 
         # okay to close dialog
         event.accept()
@@ -496,6 +492,33 @@ class AppDialog(QtGui.QWidget):
             )
 
         return not (ui_launched)
+
+    def save_state(self):
+        """Save the app UI settings."""
+
+        # Save the filters
+        current_menu_state = self._filter_menu.save_state()
+        saved_menu_state = self._settings_manager.retrieve(self.FILTER_MENU_STATE, None)
+        if saved_menu_state:
+            # Part of the menu state was never restored, merge it with the current state to save.
+            for filter_group, filter_items in saved_menu_state.items():
+                if filter_group in current_menu_state:
+                    current_menu_state[filter_group].update(filter_items)
+                else:
+                    current_menu_state[filter_group] = filter_items
+        self._settings_manager.store(self.FILTER_MENU_STATE, current_menu_state)
+
+        # Save the splitter layout state
+        self._settings_manager.store(
+            self.SPLITTER_STATE, self.ui.splitter.saveState(), pickle_setting=False
+        )
+
+    def restore_state(self):
+        """Restore the app UI settings."""
+
+        splitter_state = self._settings_manager.retrieve(self.SPLITTER_STATE, None)
+        self.ui.splitter.restoreState(splitter_state)
+
 
     ########################################################################################
     # info bar related

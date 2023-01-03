@@ -64,6 +64,9 @@ class AppDialog(QtGui.QWidget):
     # enum to control the mode of the main view
     (MAIN_VIEW_LIST, MAIN_VIEW_THUMB) = range(2)
 
+    # settings keys
+    SPLITTER_STATE = "splitter_state"
+
     # signal emitted whenever the selected publish changes
     # in either the main view or the details history view
     selection_changed = QtCore.Signal()
@@ -334,6 +337,10 @@ class AppDialog(QtGui.QWidget):
 
         self._load_entity_presets()
 
+        #################################################
+        # restore user app ui settings
+        self.restore_state()
+
         # load visibility state for details pane
         show_details = self._settings_manager.retrieve("show_details", False)
         self._set_details_pane_visiblity(show_details)
@@ -456,6 +463,9 @@ class AppDialog(QtGui.QWidget):
         # close splash
         splash.close()
 
+        # Save app user settings on close
+        self.save_state()
+
         # okay to close dialog
         event.accept()
 
@@ -473,6 +483,20 @@ class AppDialog(QtGui.QWidget):
             )
 
         return not (ui_launched)
+
+    def save_state(self):
+        """Save the app UI settings."""
+
+        # Save the splitter layout state
+        self._settings_manager.store(
+            self.SPLITTER_STATE, self.ui.splitter.saveState(), pickle_setting=False
+        )
+
+    def restore_state(self):
+        """Restore the app UI settings."""
+
+        splitter_state = self._settings_manager.retrieve(self.SPLITTER_STATE, None)
+        self.ui.splitter.restoreState(splitter_state)
 
     ########################################################################################
     # info bar related

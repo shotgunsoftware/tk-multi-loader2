@@ -312,6 +312,24 @@ class AppDialog(QtGui.QWidget):
 
         # Set up filter menu
         self._filter_menu = ShotgunFilterMenu(self, refresh_on_show=False)
+        self._filter_menu.set_accept_fields(
+            [
+                "Asset.code",
+                "Asset.sg_asset_type",
+                "PublishedFile.created_at",
+                "PublishedFile.created_by",
+                "PublishedFile.description",
+                "PublishedFile.entity",
+                "PublishedFile.name",
+                "PublishedFile.project",
+                "PublishedFile.published_file_type",
+                "PublishedFile.sg_status_list",
+                "PublishedFile.task",
+                "PublishedFile.task.Task.due_date",
+                "PublishedFile.task.Task.sg_status_list",
+                "PublishedFile.version_number",
+            ]
+        )
         self._filter_menu.set_filter_model(self._publish_proxy_model)
         self._filter_menu.menu_refreshed.connect(self.restore_filter_menu_state)
         self._filter_menu.initialize_menu()

@@ -331,8 +331,6 @@ class AppDialog(QtGui.QWidget):
             ]
         )
         self._filter_menu.set_filter_model(self._publish_proxy_model)
-        self._filter_menu.menu_refreshed.connect(self.restore_filter_menu_state)
-        self._filter_menu.initialize_menu()
         self.ui.filter_menu_btn.setMenu(self._filter_menu)
 
         #################################################
@@ -349,31 +347,6 @@ class AppDialog(QtGui.QWidget):
         # load visibility state for details pane
         show_details = self._settings_manager.retrieve("show_details", False)
         self._set_details_pane_visiblity(show_details)
-
-    def restore_filter_menu_state(self):
-        """Restore the filter menu state."""
-
-        menu_state = self._settings_manager.retrieve(self.FILTER_MENU_STATE, None)
-        if not menu_state:
-            # Default menu state will show the published file type filter group when
-            # there are no app user settings saved.
-            menu_state = {
-                "PublishedFile.published_file_type": {},
-            }
-
-        not_restored = self._filter_menu.restore_state(menu_state)
-        if not_restored:
-            # Save the filter menu state that failed to be restored. This can happen if the
-            # state to restore contains data that is not currently available in the filter
-            # menu yet.
-            self._settings_manager.store(self.FILTER_MENU_STATE, not_restored)
-        else:
-            # Menu has successfully restored, remove the signal to call this slot since
-            # it no longer needs to restore the menu state.
-            self._filter_menu.menu_refreshed.disconnect(self.restore_filter_menu_state)
-            # Clear the settings for the filter menu state to indicate that nothing is waiting
-            # to be restored
-            self._settings_manager.store(self.FILTER_MENU_STATE, None)
 
     def _show_publish_actions(self, pos):
         """
@@ -516,14 +489,6 @@ class AppDialog(QtGui.QWidget):
 
         # Save the filters
         current_menu_state = self._filter_menu.save_state()
-        saved_menu_state = self._settings_manager.retrieve(self.FILTER_MENU_STATE, None)
-        if saved_menu_state:
-            # Part of the menu state was never restored, merge it with the current state to save.
-            for filter_group, filter_items in saved_menu_state.items():
-                if filter_group in current_menu_state:
-                    current_menu_state[filter_group].update(filter_items)
-                else:
-                    current_menu_state[filter_group] = filter_items
         self._settings_manager.store(self.FILTER_MENU_STATE, current_menu_state)
 
         # Save the splitter layout state
@@ -534,9 +499,20 @@ class AppDialog(QtGui.QWidget):
     def restore_state(self):
         """Restore the app UI settings."""
 
+        # Restore the filters
+        filter_menu_state = self._settings_manager.retrieve(self.FILTER_MENU_STATE, None)
+        if filter_menu_state is None:
+            # Default menu state will show the published file type filter group when
+            # there are no app user settings saved.
+            filter_menu_state = {
+                "PublishedFile.published_file_type": {},
+            }
+
+        self._filter_menu.restore_state(filter_menu_state)
+
+        # Restore the splitter layout state
         splitter_state = self._settings_manager.retrieve(self.SPLITTER_STATE, None)
         self.ui.splitter.restoreState(splitter_state)
-
 
     ########################################################################################
     # info bar related

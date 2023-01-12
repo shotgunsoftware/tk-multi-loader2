@@ -500,7 +500,9 @@ class AppDialog(QtGui.QWidget):
         """Restore the app UI settings."""
 
         # Restore the filters
-        filter_menu_state = self._settings_manager.retrieve(self.FILTER_MENU_STATE, None)
+        filter_menu_state = self._settings_manager.retrieve(
+            self.FILTER_MENU_STATE, None
+        )
         if filter_menu_state is None:
             # Default menu state will show the published file type filter group when
             # there are no app user settings saved.

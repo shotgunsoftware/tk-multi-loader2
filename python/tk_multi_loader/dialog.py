@@ -503,7 +503,7 @@ class AppDialog(QtGui.QWidget):
         filter_menu_state = self._settings_manager.retrieve(
             self.FILTER_MENU_STATE, None
         )
-        if filter_menu_state is None:
+        if not filter_menu_state:
             # Default menu state will show the published file type filter group when
             # there are no app user settings saved.
             filter_menu_state = {

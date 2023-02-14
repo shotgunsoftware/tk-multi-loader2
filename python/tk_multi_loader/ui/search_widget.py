@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'search_widget.ui'
+# Form implementation generated from reading ui file 'C:\Users\qa\sg_envs\dv\tk\tk-multi-loader2\resources\search_widget.ui'
 #
+# Created: Tue Jan 03 11:47:20 2023
 #      by: pyside-uic 0.2.15 running on PySide 1.2.2
 #
 # WARNING! All changes made in this file will be lost!

@@ -211,98 +211,10 @@ background-image: url(:/res/right_arrow_pressed.png);
         </widget>
        </item>
        <item>
-         <widget class="QLabel" name="label_4">
-         <property name="text">
-           <string>&lt;small&gt;Filter by Published File Type&lt;/small&gt;</string>
-         </property>
-         <property name="alignment">
-           <set>Qt::AlignCenter</set>
-         </property>
-         </widget>
-       </item>
-       <item>
-         <widget class="QListView" name="publish_type_list">
-         <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-           </sizepolicy>
-         </property>
-         <property name="minimumSize">
-           <size>
-           <width>100</width>
-           <height>100</height>
-           </size>
-         </property>
-         <property name="toolTip">
-           <string>This list shows all the relevant &lt;i&gt;publish types&lt;/i&gt; for your current selection. By ticking and unticking items in this list, publishes in the main view will be shown or hidden. You can see a summary count next to each publish type, showing how many items of that sort are matching your current selection.</string>
-         </property>
-         <property name="accessibleName">
-           <string>publish_type_list</string>
-         </property>
-         <property name="styleSheet">
-           <string notr="true">QListView::item {
-            border-top: 1px dotted #888888;
-            padding: 5px;
-          }</string>
-         </property>
-         <property name="editTriggers">
-           <set>QAbstractItemView::NoEditTriggers</set>
-         </property>
-         <property name="showDropIndicator" stdset="0">
-           <bool>false</bool>
-         </property>
-         <property name="selectionMode">
-           <enum>QAbstractItemView::NoSelection</enum>
-         </property>
-         <property name="uniformItemSizes">
-           <bool>true</bool>
-         </property>
-         </widget>
-       </item>
-       <item>
         <layout class="QHBoxLayout" name="horizontalLayout_6">
          <property name="spacing">
           <number>2</number>
          </property>
-         <item>
-           <widget class="QToolButton" name="check_all">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-             <width>60</width>
-             <height>26</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>Select All</string>
-            </property>
-           </widget>
-         </item>
-         <item>
-           <widget class="QToolButton" name="check_none">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-             <width>75</width>
-             <height>26</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>Select None</string>
-            </property>
-           </widget>
-         </item>
          <item>
           <widget class="QLabel" name="label_3">
            <property name="text">
@@ -500,6 +412,13 @@ background-image: url(:/res/right_arrow_pressed.png);
            </property>
            <property name="checkable">
             <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="FilterMenuButton" name="filter_menu_btn">
+           <property name="text">
+            <string>Filter</string>
            </property>
           </widget>
          </item>
@@ -931,6 +850,13 @@ background-image: url(:/res/right_arrow_pressed.png);
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>FilterMenuButton</class>
+   <extends>QToolButton</extends>
+   <header>..framework_qtwidgets</header>
+  </customwidget>
+ </customwidgets>
  <tabstops>
   <tabstop>navigation_home</tabstop>
   <tabstop>navigation_prev</tabstop>

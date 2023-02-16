@@ -344,6 +344,10 @@ class AppDialog(QtGui.QWidget):
 
         self._load_entity_presets()
 
+        #################################################
+        # restore user app ui settings
+        self.restore_state()
+
         # load visibility state for details pane
         show_details = self._settings_manager.retrieve("show_details", False)
         self._set_details_pane_visiblity(show_details)

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'C:\Users\qa\sg_envs\dv\tk\tk-multi-loader2\resources\widget_publish_list.ui'
 #
-# Created: Thu Feb 16 16:04:15 2023
+# Created: Thu Feb 16 16:25:09 2023
 #      by: pyside-uic 0.2.15 running on PySide 1.2.2
 #
 # WARNING! All changes made in this file will be lost!

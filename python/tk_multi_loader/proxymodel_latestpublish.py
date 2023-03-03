@@ -13,24 +13,19 @@ from sgtk.platform.qt import QtCore, QtGui
 from tank_vendor import six
 
 from .model_latestpublish import SgLatestPublishModel
+from .framework_qtwidgets import FilterItemProxyModel
 
 shotgun_model = sgtk.platform.import_framework(
     "tk-framework-shotgunutils", "shotgun_model"
 )
 
 
-class SgLatestPublishProxyModel(QtGui.QSortFilterProxyModel):
-    """
-    Filter model to be used in conjunction with SgLatestPublishModel
-    """
-
-    # signal which is emitted whenever a filter changes
-    filter_changed = QtCore.Signal()
+class SgLatestPublishProxyModel(FilterItemProxyModel):
+    """Filter model to be used in conjunction with SgLatestPublishModel."""
 
     def __init__(self, parent):
-        QtGui.QSortFilterProxyModel.__init__(self, parent)
-        self._valid_type_ids = None
-        self._show_folders = True
+        super(SgLatestPublishProxyModel, self).__init__(parent)
+
         self._search_filter = ""
 
     def set_search_query(self, search_filter):
@@ -40,18 +35,11 @@ class SgLatestPublishProxyModel(QtGui.QSortFilterProxyModel):
         :param search_filter: search filter string
         """
         self._search_filter = search_filter
-        self.invalidateFilter()
-        self.filter_changed.emit()
-
-    def set_filter_by_type_ids(self, type_ids, show_folders):
-        """
-        Specify which type ids the publish model should allow through
-        """
-        self._valid_type_ids = type_ids
-        self._show_folders = show_folders
-        # tell model to repush data
-        self.invalidateFilter()
-        self.filter_changed.emit()
+        self.layoutAboutToBeChanged.emit()
+        try:
+            self.invalidateFilter()
+        finally:
+            self.layoutChanged.emit()
 
     def filterAcceptsRow(self, source_row, source_parent_idx):
         """
@@ -61,9 +49,12 @@ class SgLatestPublishProxyModel(QtGui.QSortFilterProxyModel):
         model and see if we should let it pass or not.
         """
 
-        if self._valid_type_ids is None:
-            # accept all!
-            return True
+        # First check if the base model accepts the row or not. If it does not, do not accept and exit immediately.
+        base_model_accepts = super(SgLatestPublishProxyModel, self).filterAcceptsRow(
+            source_row, source_parent_idx
+        )
+        if not base_model_accepts:
+            return False
 
         model = self.sourceModel()
 
@@ -88,18 +79,4 @@ class SgLatestPublishProxyModel(QtGui.QSortFilterProxyModel):
                 # item text is not matching search filter
                 return False
 
-        # now check if folders should be shown
-        is_folder = current_item.data(SgLatestPublishModel.IS_FOLDER_ROLE)
-        if is_folder:
-            return self._show_folders
-
-        # lastly, check out type filter checkboxes
-        sg_type_id = current_item.data(SgLatestPublishModel.TYPE_ID_ROLE)
-
-        if sg_type_id is None:
-            # no type. So always show.
-            return True
-        elif sg_type_id in self._valid_type_ids:
-            return True
-        else:
-            return False
+        return True

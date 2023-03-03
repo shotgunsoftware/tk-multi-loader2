@@ -16,7 +16,6 @@ from sgtk.platform.qt import QtCore, QtGui
 from .model_hierarchy import SgHierarchyModel
 from .model_entity import SgEntityModel
 from .model_latestpublish import SgLatestPublishModel
-from .model_publishtype import SgPublishTypeModel
 from .model_status import SgStatusModel
 from .proxymodel_latestpublish import SgLatestPublishProxyModel
 from .proxymodel_entity import SgEntityProxyModel
@@ -28,6 +27,7 @@ from .search_widget import SearchWidget
 from .banner import Banner
 from .loader_action_manager import LoaderActionManager
 from .utils import resolve_filters
+from .framework_qtwidgets import ShotgunFilterMenu
 
 from . import constants
 from . import model_item_data
@@ -65,6 +65,7 @@ class AppDialog(QtGui.QWidget):
     (MAIN_VIEW_LIST, MAIN_VIEW_THUMB) = range(2)
 
     # settings keys
+    FILTER_MENU_STATE = "filter_menu_state"
     SPLITTER_STATE = "splitter_state"
 
     # signal emitted whenever the selected publish changes
@@ -192,21 +193,8 @@ class AppDialog(QtGui.QWidget):
         self.ui.history_view.doubleClicked.connect(self._on_history_double_clicked)
 
         #################################################
-        # load and initialize cached publish type model
-        self._publish_type_model = SgPublishTypeModel(
-            self, self._action_manager, self._settings_manager, self._task_manager
-        )
-        self.ui.publish_type_list.setModel(self._publish_type_model)
-
-        self._publish_type_overlay = ShotgunModelOverlayWidget(
-            self._publish_type_model, self.ui.publish_type_list
-        )
-
-        #################################################
         # setup publish model
-        self._publish_model = SgLatestPublishModel(
-            self, self._publish_type_model, self._task_manager
-        )
+        self._publish_model = SgLatestPublishModel(self, None, self._task_manager)
 
         self._publish_main_overlay = ShotgunModelOverlayWidget(
             self._publish_model, self.ui.publish_view
@@ -220,8 +208,8 @@ class AppDialog(QtGui.QWidget):
         # check if we should display the "sorry, no publishes found" overlay
         self._publish_model.cache_loaded.connect(self._on_publish_content_change)
         self._publish_model.data_refreshed.connect(self._on_publish_content_change)
-        self._publish_proxy_model.filter_changed.connect(
-            self._on_publish_content_change
+        self._publish_proxy_model.layoutChanged.connect(
+            lambda parents, hint: self._on_publish_content_change()
         )
 
         # hook up view -> proxy model -> model
@@ -241,11 +229,6 @@ class AppDialog(QtGui.QWidget):
             "main_view_mode", self.MAIN_VIEW_THUMB
         )
         self._set_main_view_mode(main_view_mode)
-
-        # whenever the type list is checked, update the publish filters
-        self._publish_type_model.itemChanged.connect(
-            self._apply_type_filters_on_publishes
-        )
 
         # if an item in the table is double clicked the default action is run
         self.ui.publish_view.doubleClicked.connect(self._on_publish_double_clicked)
@@ -291,9 +274,6 @@ class AppDialog(QtGui.QWidget):
         # checkboxes, buttons etc
         self.ui.show_sub_items.toggled.connect(self._on_show_subitems_toggled)
 
-        self.ui.check_all.clicked.connect(self._publish_type_model.select_all)
-        self.ui.check_none.clicked.connect(self._publish_type_model.select_none)
-
         #################################################
         # thumb scaling
         scale_val = self._settings_manager.retrieve("thumb_size_scale", 140)
@@ -330,10 +310,37 @@ class AppDialog(QtGui.QWidget):
         self._reload_action.triggered.connect(self._on_reload_action)
         self.ui.cog_button.addAction(self._reload_action)
 
+        # Set up filter menu
+        self._filter_menu = ShotgunFilterMenu(self, refresh_on_show=False)
+        self._filter_menu.set_accept_fields(
+            [
+                "Asset.code",
+                "Asset.sg_asset_type",
+                "PublishedFile.created_at",
+                "PublishedFile.created_by",
+                "PublishedFile.description",
+                "PublishedFile.entity",
+                "PublishedFile.name",
+                "PublishedFile.project",
+                "PublishedFile.published_file_type",
+                "PublishedFile.sg_status_list",
+                "PublishedFile.task",
+                "PublishedFile.task.Task.due_date",
+                "PublishedFile.task.Task.sg_status_list",
+                "PublishedFile.version_number",
+            ]
+        )
+        self._filter_menu.set_filter_model(self._publish_proxy_model)
+        self.ui.filter_menu_btn.setMenu(self._filter_menu)
+
         #################################################
         # set up preset tabs and load and init tree views
         self._entity_presets = {}
         self._current_entity_preset = None
+
+        #################################################
+        # restore user app ui settings
+        self.restore_state()
 
         self._load_entity_presets()
 
@@ -344,9 +351,6 @@ class AppDialog(QtGui.QWidget):
         # load visibility state for details pane
         show_details = self._settings_manager.retrieve("show_details", False)
         self._set_details_pane_visiblity(show_details)
-
-        # trigger an initial evaluation of filter proxy model
-        self._apply_type_filters_on_publishes()
 
     def _show_publish_actions(self, pos):
         """
@@ -487,6 +491,10 @@ class AppDialog(QtGui.QWidget):
     def save_state(self):
         """Save the app UI settings."""
 
+        # Save the filters
+        current_menu_state = self._filter_menu.save_state()
+        self._settings_manager.store(self.FILTER_MENU_STATE, current_menu_state)
+
         # Save the splitter layout state
         self._settings_manager.store(
             self.SPLITTER_STATE, self.ui.splitter.saveState(), pickle_setting=False
@@ -495,6 +503,20 @@ class AppDialog(QtGui.QWidget):
     def restore_state(self):
         """Restore the app UI settings."""
 
+        # Restore the filters
+        filter_menu_state = self._settings_manager.retrieve(
+            self.FILTER_MENU_STATE, None
+        )
+        if not filter_menu_state:
+            # Default menu state will show the published file type filter group when
+            # there are no app user settings saved.
+            filter_menu_state = {
+                "PublishedFile.published_file_type": {},
+            }
+
+        self._filter_menu.restore_state(filter_menu_state)
+
+        # Restore the splitter layout state
         splitter_state = self._settings_manager.retrieve(self.SPLITTER_STATE, None)
         self.ui.splitter.restoreState(splitter_state)
 
@@ -979,20 +1001,6 @@ class AppDialog(QtGui.QWidget):
         self._compute_history_button_visibility()
 
     ########################################################################################
-    # filter view
-
-    def _apply_type_filters_on_publishes(self):
-        """
-        Executed when the type listing changes
-        """
-        # go through and figure out which checkboxes are clicked and then
-        # update the publish proxy model so that only items of that type
-        # is displayed
-        sg_type_ids = self._publish_type_model.get_selected_types()
-        show_folders = self._publish_type_model.get_show_folders()
-        self._publish_proxy_model.set_filter_by_type_ids(sg_type_ids, show_folders)
-
-    ########################################################################################
     # publish view
 
     def _on_publish_content_change(self):
@@ -1157,7 +1165,6 @@ class AppDialog(QtGui.QWidget):
         """
         self._status_model.hard_refresh()
         self._publish_history_model.hard_refresh()
-        self._publish_type_model.hard_refresh()
         self._publish_model.hard_refresh()
         for p in self._entity_presets:
             self._entity_presets[p].model.hard_refresh()

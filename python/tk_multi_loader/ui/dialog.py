@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'C:\Users\qa\sg_envs\dv\tk\tk-multi-loader2\resources\dialog.ui'
 #
-# Created: Tue Jan 03 11:47:20 2023
+# Created: Thu Feb 16 16:25:09 2023
 #      by: pyside-uic 0.2.15 running on PySide 1.2.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -119,48 +119,9 @@ class Ui_Dialog(object):
         self.entity_preset_tabs.setUsesScrollButtons(True)
         self.entity_preset_tabs.setObjectName("entity_preset_tabs")
         self.verticalLayout_2.addWidget(self.entity_preset_tabs)
-        self.label_4 = QtGui.QLabel(self.left_area_widget)
-        self.label_4.setAlignment(QtCore.Qt.AlignCenter)
-        self.label_4.setObjectName("label_4")
-        self.verticalLayout_2.addWidget(self.label_4)
-        self.publish_type_list = QtGui.QListView(self.left_area_widget)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Maximum)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.publish_type_list.sizePolicy().hasHeightForWidth())
-        self.publish_type_list.setSizePolicy(sizePolicy)
-        self.publish_type_list.setMinimumSize(QtCore.QSize(100, 100))
-        self.publish_type_list.setStyleSheet("QListView::item {\n"
-"            border-top: 1px dotted #888888;\n"
-"            padding: 5px;\n"
-"          }")
-        self.publish_type_list.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
-        self.publish_type_list.setProperty("showDropIndicator", False)
-        self.publish_type_list.setSelectionMode(QtGui.QAbstractItemView.NoSelection)
-        self.publish_type_list.setUniformItemSizes(True)
-        self.publish_type_list.setObjectName("publish_type_list")
-        self.verticalLayout_2.addWidget(self.publish_type_list)
         self.horizontalLayout_6 = QtGui.QHBoxLayout()
         self.horizontalLayout_6.setSpacing(2)
         self.horizontalLayout_6.setObjectName("horizontalLayout_6")
-        self.check_all = QtGui.QToolButton(self.left_area_widget)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.check_all.sizePolicy().hasHeightForWidth())
-        self.check_all.setSizePolicy(sizePolicy)
-        self.check_all.setMinimumSize(QtCore.QSize(60, 26))
-        self.check_all.setObjectName("check_all")
-        self.horizontalLayout_6.addWidget(self.check_all)
-        self.check_none = QtGui.QToolButton(self.left_area_widget)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.check_none.sizePolicy().hasHeightForWidth())
-        self.check_none.setSizePolicy(sizePolicy)
-        self.check_none.setMinimumSize(QtCore.QSize(75, 26))
-        self.check_none.setObjectName("check_none")
-        self.horizontalLayout_6.addWidget(self.check_none)
         self.label_3 = QtGui.QLabel(self.left_area_widget)
         self.label_3.setText("")
         self.label_3.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
@@ -233,6 +194,9 @@ class Ui_Dialog(object):
         self.search_publishes.setCheckable(True)
         self.search_publishes.setObjectName("search_publishes")
         self.horizontalLayout_2.addWidget(self.search_publishes)
+        self.filter_menu_btn = FilterMenuButton(self.middle_area_widget)
+        self.filter_menu_btn.setObjectName("filter_menu_btn")
+        self.horizontalLayout_2.addWidget(self.filter_menu_btn)
         self.info = QtGui.QToolButton(self.middle_area_widget)
         self.info.setMinimumSize(QtCore.QSize(80, 26))
         self.info.setObjectName("info")
@@ -405,11 +369,6 @@ class Ui_Dialog(object):
         self.navigation_next.setAccessibleName(QtGui.QApplication.translate("Dialog", "navigation_next", None, QtGui.QApplication.UnicodeUTF8))
         self.entity_preset_tabs.setToolTip(QtGui.QApplication.translate("Dialog", "This area shows <i>ShotGrid objects</i> such as Shots or Assets, grouped into sections. ", None, QtGui.QApplication.UnicodeUTF8))
         self.entity_preset_tabs.setAccessibleName(QtGui.QApplication.translate("Dialog", "entity_preset_tabs", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_4.setText(QtGui.QApplication.translate("Dialog", "<small>Filter by Published File Type</small>", None, QtGui.QApplication.UnicodeUTF8))
-        self.publish_type_list.setToolTip(QtGui.QApplication.translate("Dialog", "This list shows all the relevant <i>publish types</i> for your current selection. By ticking and unticking items in this list, publishes in the main view will be shown or hidden. You can see a summary count next to each publish type, showing how many items of that sort are matching your current selection.", None, QtGui.QApplication.UnicodeUTF8))
-        self.publish_type_list.setAccessibleName(QtGui.QApplication.translate("Dialog", "publish_type_list", None, QtGui.QApplication.UnicodeUTF8))
-        self.check_all.setText(QtGui.QApplication.translate("Dialog", "Select All", None, QtGui.QApplication.UnicodeUTF8))
-        self.check_none.setText(QtGui.QApplication.translate("Dialog", "Select None", None, QtGui.QApplication.UnicodeUTF8))
         self.cog_button.setToolTip(QtGui.QApplication.translate("Dialog", "Tools and Settings", None, QtGui.QApplication.UnicodeUTF8))
         self.cog_button.setAccessibleName(QtGui.QApplication.translate("Dialog", "cog_button", None, QtGui.QApplication.UnicodeUTF8))
         self.entity_breadcrumbs.setToolTip(QtGui.QApplication.translate("Dialog", "This <i>breadcrumbs listing</i> shows your currently selected ShotGrid location.", None, QtGui.QApplication.UnicodeUTF8))
@@ -421,6 +380,7 @@ class Ui_Dialog(object):
         self.list_mode.setText(QtGui.QApplication.translate("Dialog", "...", None, QtGui.QApplication.UnicodeUTF8))
         self.search_publishes.setToolTip(QtGui.QApplication.translate("Dialog", "Filter Publishes", None, QtGui.QApplication.UnicodeUTF8))
         self.search_publishes.setAccessibleName(QtGui.QApplication.translate("Dialog", "search_publishes", None, QtGui.QApplication.UnicodeUTF8))
+        self.filter_menu_btn.setText(QtGui.QApplication.translate("Dialog", "Filter", None, QtGui.QApplication.UnicodeUTF8))
         self.info.setToolTip(QtGui.QApplication.translate("Dialog", "Use this button to <i>toggle details on and off</i>. ", None, QtGui.QApplication.UnicodeUTF8))
         self.info.setText(QtGui.QApplication.translate("Dialog", "Show Details", None, QtGui.QApplication.UnicodeUTF8))
         self.publish_view.setAccessibleName(QtGui.QApplication.translate("Dialog", "publish_view", None, QtGui.QApplication.UnicodeUTF8))
@@ -437,4 +397,5 @@ class Ui_Dialog(object):
         self.version_history_label.setText(QtGui.QApplication.translate("Dialog", "<small>Complete Version History</small>", None, QtGui.QApplication.UnicodeUTF8))
         self.history_view.setAccessibleName(QtGui.QApplication.translate("Dialog", "history_view", None, QtGui.QApplication.UnicodeUTF8))
 
+from ..framework_qtwidgets import FilterMenuButton
 from . import resources_rc

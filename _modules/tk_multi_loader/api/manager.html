@@ -10,7 +10,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>tk_multi_loader.api.manager &mdash; tk-multi-loader2 v1.22.1 documentation</title>
+  <title>tk_multi_loader.api.manager &mdash; tk-multi-loader2 v1.23.0 documentation</title>
   
 
   
@@ -114,7 +114,7 @@
                              text-decoration: underline; }
     </style>
 
-    <b>tk-multi-loader2</b> v1.22.1.<br>
+    <b>tk-multi-loader2</b> v1.23.0.<br>
     
         This documentation is part of the ShotGrid Pipeline Toolkit.
     
@@ -213,7 +213,7 @@
 
 
 <div class="viewcode-block" id="LoaderManager"><a class="viewcode-back" href="../../../index.html#tk_multi_loader.api.LoaderManager">[docs]</a><span class="k">class</span> <span class="nc">LoaderManager</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This class is used for managing and executing loads.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -223,7 +223,7 @@
     <span class="n">UI_AREA_HISTORY</span> <span class="o">=</span> <span class="mh">0x3</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bundle</span><span class="p">,</span> <span class="n">loader_logger</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize the manager.</span>
 
 <span class="sd">        :param bundle: The bundle (app, engine or framework) instance for the app</span>
@@ -251,7 +251,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_publish_type_field</span> <span class="o">=</span> <span class="s2">&quot;tank_type&quot;</span>
 
 <div class="viewcode-block" id="LoaderManager.get_actions_for_publish"><a class="viewcode-back" href="../../../index.html#tk_multi_loader.api.LoaderManager.get_actions_for_publish">[docs]</a>    <span class="k">def</span> <span class="nf">get_actions_for_publish</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sg_data</span><span class="p">,</span> <span class="n">ui_area</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns a list of actions for a publish.</span>
 
 <span class="sd">        Shotgun data representing a publish is passed in and forwarded on to hooks</span>
@@ -322,7 +322,7 @@
         <span class="k">return</span> <span class="n">action_defs</span></div>
 
 <div class="viewcode-block" id="LoaderManager.get_actions_for_publishes"><a class="viewcode-back" href="../../../index.html#tk_multi_loader.api.LoaderManager.get_actions_for_publishes">[docs]</a>    <span class="k">def</span> <span class="nf">get_actions_for_publishes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sg_data_list</span><span class="p">,</span> <span class="n">ui_area</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns common actions for a list of publishes.</span>
 
 <span class="sd">        Shotgun data representing a publish is passed in and forwarded on to hooks</span>
@@ -399,7 +399,7 @@
         <span class="k">return</span> <span class="n">intersection_actions</span></div>
 
 <div class="viewcode-block" id="LoaderManager.execute_action"><a class="viewcode-back" href="../../../index.html#tk_multi_loader.api.LoaderManager.execute_action">[docs]</a>    <span class="k">def</span> <span class="nf">execute_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sg_data</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Execute the given action for the selected publish.</span>
 
 <span class="sd">        :param sg_data: Shotgun data dictionary with all the standard publish fields.</span>
@@ -419,7 +419,7 @@
             <span class="p">)</span></div>
 
 <div class="viewcode-block" id="LoaderManager.execute_multiple_actions"><a class="viewcode-back" href="../../../index.html#tk_multi_loader.api.LoaderManager.execute_multiple_actions">[docs]</a>    <span class="k">def</span> <span class="nf">execute_multiple_actions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actions</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Execute many actions for a list of publishes.</span>
 
 <span class="sd">        :param actions: List of dictionaries holding all the actions to execute.</span>
@@ -442,7 +442,7 @@
             <span class="k">raise</span> <span class="p">(</span><span class="n">e</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="LoaderManager.get_actions_for_entity"><a class="viewcode-back" href="../../../index.html#tk_multi_loader.api.LoaderManager.get_actions_for_entity">[docs]</a>    <span class="k">def</span> <span class="nf">get_actions_for_entity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sg_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns a list of actions for an entity type.</span>
 
 <span class="sd">        :param sg_data:  Shotgun data dictionary representing the entity we want to get actions for.</span>
@@ -479,7 +479,7 @@
         <span class="k">return</span> <span class="n">action_defs</span></div>
 
 <div class="viewcode-block" id="LoaderManager.has_actions"><a class="viewcode-back" href="../../../index.html#tk_multi_loader.api.LoaderManager.has_actions">[docs]</a>    <span class="k">def</span> <span class="nf">has_actions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">publish_type</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns true if the given publish type has any actions associated with it.</span>
 
 <span class="sd">        :param publish_type: A Shotgun publish type (e.g. &#39;Maya Render&#39;)</span>
@@ -495,7 +495,7 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_fix_timestamp</span><span class="p">(</span><span class="n">sg_data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Convert created_at unix time stamp in sg_data to shotgun time stamp.</span>
 
 <span class="sd">        :param sg_data: Standard Shotgun entity dictionary with keys type, id and name.</span>
@@ -519,7 +519,7 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2022, Autodesk
+        &copy; Copyright 2023, Autodesk
 
     </p>
   </div> 

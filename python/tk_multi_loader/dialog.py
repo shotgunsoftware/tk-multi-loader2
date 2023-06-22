@@ -926,6 +926,16 @@ class AppDialog(QtGui.QWidget):
         finally:
             self._history_navigation_mode = False
 
+    def _get_item_from_entity(self, ctx, model):
+        if ctx.task:
+            return model.item_from_entity(
+                ctx.task["type"],
+                ctx.task["id"]
+            )
+        return model.item_from_entity(
+            ctx.entity["type"],
+            ctx.entity["id"]
+        )
 
     def _on_home_clicked(self):
         """

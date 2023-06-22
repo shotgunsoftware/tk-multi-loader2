@@ -8,7 +8,7 @@
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
-
+import sys
 import sgtk
 from sgtk import TankError
 from sgtk.platform.qt import QtCore, QtGui
@@ -926,6 +926,7 @@ class AppDialog(QtGui.QWidget):
         finally:
             self._history_navigation_mode = False
 
+
     def _on_home_clicked(self):
         """
         User clicks the home button.
@@ -948,15 +949,39 @@ class AppDialog(QtGui.QWidget):
                     found_hierarchy_preset = preset_index
                     break
                 else:
-                    if preset.entity_type == ctx.entity["type"]:
+                    # First check if we're into a task context.
+                    if (
+                            ctx.task and
+                            preset.entity_type == ctx.task.get("type")
+                    ):
                         # found an at least partially matching entity profile.
                         found_preset = preset_index
 
                         # now see if our context object also exists in the tree of this profile
                         model = preset.model
-                        item = model.item_from_entity(
-                            ctx.entity["type"], ctx.entity["id"]
-                        )
+                        # retrieve the item
+                        item = self._get_item_from_entity(ctx, model)
+
+                        if item is not None:
+                            # find an absolute match! Break the search.
+                            found_item = item
+                            break
+
+                    # this avoids that the Shot tab gets opened when for example we
+                    # launch into a Task context, and we have a Shot entity.
+                    # In this scope we only want that the "Shot" or "Asset" tabs get
+                    # opened when there's no a related Task in the context.
+                    if (
+                            preset.entity_type == ctx.entity["type"]
+                            and not ctx.task
+                    ):
+                        # found an at least partially matching entity profile.
+                        found_preset = preset_index
+
+                        # now see if our context object also exists in the tree of this profile
+                        model = preset.model
+                        # retrieve the item
+                        item = self._get_item_from_entity(ctx, model)
 
                         if item is not None:
                             # find an absolute match! Break the search.

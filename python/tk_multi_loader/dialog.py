@@ -927,6 +927,15 @@ class AppDialog(QtGui.QWidget):
             self._history_navigation_mode = False
 
     def _get_item_from_entity(self, ctx, model):
+        """
+        Retrieve the item object based on
+        entity type and entity id.
+
+        :param Sgtk Context ctx: Context object.
+        :param model: The SG model.
+
+        :returns: Model item object or None if not found.
+        """
         if ctx.task:
             return model.item_from_entity(
                 ctx.task["type"],
@@ -959,7 +968,8 @@ class AppDialog(QtGui.QWidget):
                     found_hierarchy_preset = preset_index
                     break
                 else:
-                    # First check if we're into a task context.
+                    # First check if there's a task associated with this
+                    # context.If there is, let's check if it does match entity profile.
                     if (
                             ctx.task and
                             preset.entity_type == ctx.task.get("type")
@@ -977,12 +987,11 @@ class AppDialog(QtGui.QWidget):
                             found_item = item
                             break
 
-                    # this avoids that the Shot tab gets opened when for example we
-                    # launch into a Task context, and we have a Shot entity.
-                    # In this scope we only want that the "Shot" or "Asset" tabs get
-                    # opened when there's no a related Task in the context.
+                    # this avoids that the wrong tab gets selected.
+                    # For example if we launch into a Task context, we expect the
+                    # tab that matches with the Task entity profile to be selected.
                     if (
-                            preset.entity_type == ctx.entity["type"]
+                            preset.entity_type == ctx.entity.get("type")
                             and not ctx.task
                     ):
                         # found an at least partially matching entity profile.

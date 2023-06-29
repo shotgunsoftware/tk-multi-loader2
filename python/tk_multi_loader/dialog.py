@@ -937,14 +937,8 @@ class AppDialog(QtGui.QWidget):
         :returns: Model item object or None if not found.
         """
         if ctx.task:
-            return model.item_from_entity(
-                ctx.task["type"],
-                ctx.task["id"]
-            )
-        return model.item_from_entity(
-            ctx.entity["type"],
-            ctx.entity["id"]
-        )
+            return model.item_from_entity(ctx.task["type"], ctx.task["id"])
+        return model.item_from_entity(ctx.entity["type"], ctx.entity["id"])
 
     def _on_home_clicked(self):
         """
@@ -970,10 +964,7 @@ class AppDialog(QtGui.QWidget):
                 else:
                     # First check if there's a task associated with this
                     # context.If there is, let's check if it does match entity profile.
-                    if (
-                            ctx.task and
-                            preset.entity_type == ctx.task.get("type")
-                    ):
+                    if ctx.task and preset.entity_type == ctx.task.get("type"):
                         # found an at least partially matching entity profile.
                         found_preset = preset_index
 
@@ -990,10 +981,7 @@ class AppDialog(QtGui.QWidget):
                     # this avoids that the wrong tab gets selected.
                     # For example if we launch into a Task context, we expect the
                     # tab that matches with the Task entity profile to be selected.
-                    if (
-                            preset.entity_type == ctx.entity.get("type")
-                            and not ctx.task
-                    ):
+                    if preset.entity_type == ctx.entity.get("type") and not ctx.task:
                         # found an at least partially matching entity profile.
                         found_preset = preset_index
 

@@ -936,9 +936,8 @@ class AppDialog(QtGui.QWidget):
 
         :returns: Model item object or None if not found.
         """
-        if ctx.task:
-            return model.item_from_entity(ctx.task["type"], ctx.task["id"])
-        return model.item_from_entity(ctx.entity["type"], ctx.entity["id"])
+        ctx_object = ctx.task if ctx.task else ctx.entity
+        return model.item_from_entity(ctx_object["type"], ctx_object["id"])
 
     def _on_home_clicked(self):
         """
@@ -962,26 +961,15 @@ class AppDialog(QtGui.QWidget):
                     found_hierarchy_preset = preset_index
                     break
                 else:
-                    # First check if there's a task associated with this
+                    # Check if there's a task associated with this
                     # context.If there is, let's check if it does match entity profile.
-                    if ctx.task and preset.entity_type == ctx.task.get("type"):
-                        # found an at least partially matching entity profile.
-                        found_preset = preset_index
-
-                        # now see if our context object also exists in the tree of this profile
-                        model = preset.model
-                        # retrieve the item
-                        item = self._get_item_from_entity(ctx, model)
-
-                        if item is not None:
-                            # find an absolute match! Break the search.
-                            found_item = item
-                            break
-
-                    # this avoids that the wrong tab gets selected.
+                    # this also avoids that the wrong tab gets selected.
                     # For example if we launch into a Task context, we expect the
                     # tab that matches with the Task entity profile to be selected.
-                    if preset.entity_type == ctx.entity.get("type") and not ctx.task:
+                    if (
+                            ctx.task and preset.entity_type == ctx.task.get("type") or
+                            preset.entity_type == ctx.entity.get("type") and not ctx.task
+                    ):
                         # found an at least partially matching entity profile.
                         found_preset = preset_index
 

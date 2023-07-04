@@ -967,8 +967,10 @@ class AppDialog(QtGui.QWidget):
                     # For example if we launch into a Task context, we expect the
                     # tab that matches with the Task entity profile to be selected.
                     if (
-                            ctx.task and preset.entity_type == ctx.task.get("type") or
-                            preset.entity_type == ctx.entity.get("type") and not ctx.task
+                        ctx.task
+                        and preset.entity_type == ctx.task.get("type")
+                        or preset.entity_type == ctx.entity.get("type")
+                        and not ctx.task
                     ):
                         # found an at least partially matching entity profile.
                         found_preset = preset_index

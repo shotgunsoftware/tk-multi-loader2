@@ -239,7 +239,7 @@ class AppDialog(QtGui.QWidget):
         )
         self._set_main_view_mode(main_view_mode)
 
-        # whenever the type list is checked, update the publish filters
+        # whenever the publish type model is updated, also update the publish filters
         self._publish_type_model.itemChanged.connect(
             self._apply_type_filters_on_publishes
         )
@@ -1048,7 +1048,11 @@ class AppDialog(QtGui.QWidget):
         """
         # go through and figure out which checkboxes are clicked and then
         # update the publish proxy model so that only items of that type
-        # is displayed
+        # is displayed. NOTE the published file type filter widget has been
+        # removed, so this will retrieve all published file types that are
+        # set in the config. This establishes the base view to only show
+        # files that correspond to the config setting. To filter by publish
+        # file types, use the Filter menu
         sg_type_ids = self._publish_type_model.get_selected_types()
         self._publish_proxy_model.set_filter_by_type_ids(sg_type_ids)
 

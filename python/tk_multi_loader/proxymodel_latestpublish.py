@@ -24,7 +24,7 @@ class SgLatestPublishProxyModel(FilterItemProxyModel):
 
     def __init__(self, parent):
         super(SgLatestPublishProxyModel, self).__init__(parent)
-
+        self._valid_type_ids = None
         self._search_filter = ""
 
     def set_search_query(self, search_filter):
@@ -40,6 +40,17 @@ class SgLatestPublishProxyModel(FilterItemProxyModel):
         finally:
             self.layoutChanged.emit()
 
+    def set_filter_by_type_ids(self, type_ids):
+        """
+        Specify which type ids the publish model should allow through
+        """
+        self._valid_type_ids = type_ids
+        self.layoutAboutToBeChanged.emit()
+        try:
+            self.invalidateFilter()
+        finally:
+            self.layoutChanged.emit()
+
     def filterAcceptsRow(self, source_row, source_parent_idx):
         """
         Overridden from base class.
@@ -48,7 +59,6 @@ class SgLatestPublishProxyModel(FilterItemProxyModel):
         model and see if we should let it pass or not.
         """
 
-        # First check if the base model accepts the row or not. If it does not, do not accept and exit immediately.
         base_model_accepts = super(SgLatestPublishProxyModel, self).filterAcceptsRow(
             source_row, source_parent_idx
         )
@@ -78,4 +88,16 @@ class SgLatestPublishProxyModel(FilterItemProxyModel):
                 # item text is not matching search filter
                 return False
 
-        return True
+        if not self._valid_type_ids:
+            # accept all!
+            return True
+
+        # lastly, apply published file type filters
+        sg_type_id = current_item.data(SgLatestPublishModel.TYPE_ID_ROLE)
+        if sg_type_id is None:
+            # no type. So always show.
+            return True
+        if sg_type_id in self._valid_type_ids:
+            # valid type, show it.
+            return True
+        return False

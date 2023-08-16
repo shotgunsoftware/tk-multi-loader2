@@ -203,7 +203,9 @@ class AppDialog(QtGui.QWidget):
 
         #################################################
         # setup publish model
-        self._publish_model = SgLatestPublishModel(self, self._publish_type_model, self._task_manager)
+        self._publish_model = SgLatestPublishModel(
+            self, self._publish_type_model, self._task_manager
+        )
 
         self._publish_main_overlay = ShotgunModelOverlayWidget(
             self._publish_model, self.ui.publish_view

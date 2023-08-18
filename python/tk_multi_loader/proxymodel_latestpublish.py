@@ -51,7 +51,10 @@ class SgLatestPublishProxyModel(FilterItemProxyModel):
         Specify which type ids the publish model should allow through
         """
 
-        if set(self._valid_type_ids or []) == set(type_ids or []) and self._show_folders == show_folders:
+        if (
+            set(self._valid_type_ids or []) == set(type_ids or [])
+            and self._show_folders == show_folders
+        ):
             return  # Nothing changed
 
         self._valid_type_ids = type_ids

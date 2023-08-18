@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'C:\Users\qa\sg_envs\dv\tk\tk-multi-loader2\resources\dialog.ui'
 #
-# Created: Fri Aug 18 11:07:38 2023
+# Created: Fri Aug 18 11:46:58 2023
 #      by: pyside-uic 0.2.15 running on PySide 1.2.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -119,10 +119,10 @@ class Ui_Dialog(object):
         self.entity_preset_tabs.setUsesScrollButtons(True)
         self.entity_preset_tabs.setObjectName("entity_preset_tabs")
         self.verticalLayout_2.addWidget(self.entity_preset_tabs)
-        self.label_4 = QtGui.QLabel(self.left_area_widget)
-        self.label_4.setAlignment(QtCore.Qt.AlignCenter)
-        self.label_4.setObjectName("label_4")
-        self.verticalLayout_2.addWidget(self.label_4)
+        self.publish_type_filter_title = QtGui.QLabel(self.left_area_widget)
+        self.publish_type_filter_title.setAlignment(QtCore.Qt.AlignCenter)
+        self.publish_type_filter_title.setObjectName("publish_type_filter_title")
+        self.verticalLayout_2.addWidget(self.publish_type_filter_title)
         self.publish_type_list = QtGui.QListView(self.left_area_widget)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
@@ -408,7 +408,7 @@ class Ui_Dialog(object):
         self.navigation_next.setAccessibleName(QtGui.QApplication.translate("Dialog", "navigation_next", None, QtGui.QApplication.UnicodeUTF8))
         self.entity_preset_tabs.setToolTip(QtGui.QApplication.translate("Dialog", "This area shows <i>ShotGrid objects</i> such as Shots or Assets, grouped into sections. ", None, QtGui.QApplication.UnicodeUTF8))
         self.entity_preset_tabs.setAccessibleName(QtGui.QApplication.translate("Dialog", "entity_preset_tabs", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_4.setText(QtGui.QApplication.translate("Dialog", "<small>Filter by Published File Type</small>", None, QtGui.QApplication.UnicodeUTF8))
+        self.publish_type_filter_title.setText(QtGui.QApplication.translate("Dialog", "<small>Filter by Published File Type</small>", None, QtGui.QApplication.UnicodeUTF8))
         self.publish_type_list.setToolTip(QtGui.QApplication.translate("Dialog", "This list shows all the relevant <i>publish types</i> for your current selection. By ticking and unticking items in this list, publishes in the main view will be shown or hidden. You can see a summary count next to each publish type, showing how many items of that sort are matching your current selection.", None, QtGui.QApplication.UnicodeUTF8))
         self.publish_type_list.setAccessibleName(QtGui.QApplication.translate("Dialog", "publish_type_list", None, QtGui.QApplication.UnicodeUTF8))
         self.check_all.setText(QtGui.QApplication.translate("Dialog", "Select All", None, QtGui.QApplication.UnicodeUTF8))

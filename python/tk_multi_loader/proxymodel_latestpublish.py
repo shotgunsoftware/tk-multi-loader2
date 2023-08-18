@@ -9,6 +9,7 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import sgtk
+from sgtk.platform.qt import QtCore
 from tank_vendor import six
 
 from .model_latestpublish import SgLatestPublishModel
@@ -22,9 +23,13 @@ shotgun_model = sgtk.platform.import_framework(
 class SgLatestPublishProxyModel(FilterItemProxyModel):
     """Filter model to be used in conjunction with SgLatestPublishModel."""
 
+    # signal which is emitted whenever a filter changes
+    filter_changed = QtCore.Signal()
+
     def __init__(self, parent):
         super(SgLatestPublishProxyModel, self).__init__(parent)
         self._valid_type_ids = None
+        self._show_folders = True
         self._search_filter = ""
 
     def set_search_query(self, search_filter):
@@ -39,17 +44,24 @@ class SgLatestPublishProxyModel(FilterItemProxyModel):
             self.invalidateFilter()
         finally:
             self.layoutChanged.emit()
+        self.filter_changed.emit()
 
-    def set_filter_by_type_ids(self, type_ids):
+    def set_filter_by_type_ids(self, type_ids, show_folders):
         """
         Specify which type ids the publish model should allow through
         """
+
+        if set(self._valid_type_ids or []) == set(type_ids or []) and self._show_folders == show_folders:
+            return  # Nothing changed
+
         self._valid_type_ids = type_ids
+        self._show_folders = show_folders
         self.layoutAboutToBeChanged.emit()
         try:
             self.invalidateFilter()
         finally:
             self.layoutChanged.emit()
+        self.filter_changed.emit()
 
     def filterAcceptsRow(self, source_row, source_parent_idx):
         """
@@ -64,6 +76,10 @@ class SgLatestPublishProxyModel(FilterItemProxyModel):
         )
         if not base_model_accepts:
             return False
+
+        if self._valid_type_ids is None:
+            # accept all!
+            return True
 
         model = self.sourceModel()
 
@@ -88,9 +104,10 @@ class SgLatestPublishProxyModel(FilterItemProxyModel):
                 # item text is not matching search filter
                 return False
 
-        if not self._valid_type_ids:
-            # accept all!
-            return True
+        # now check if folders should be shown
+        is_folder = current_item.data(SgLatestPublishModel.IS_FOLDER_ROLE)
+        if is_folder:
+            return self._show_folders
 
         # lastly, apply published file type filters
         sg_type_id = current_item.data(SgLatestPublishModel.TYPE_ID_ROLE)

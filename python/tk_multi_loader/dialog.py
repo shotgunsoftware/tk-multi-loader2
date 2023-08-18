@@ -200,6 +200,10 @@ class AppDialog(QtGui.QWidget):
         self._publish_type_model = SgPublishTypeModel(
             self, self._action_manager, self._settings_manager, self._task_manager
         )
+        self.ui.publish_type_list.setModel(self._publish_type_model)
+        self._publish_type_overlay = ShotgunModelOverlayWidget(
+            self._publish_type_model, self.ui.publish_type_list
+        )
 
         #################################################
         # setup publish model
@@ -289,6 +293,8 @@ class AppDialog(QtGui.QWidget):
         #################################################
         # checkboxes, buttons etc
         self.ui.show_sub_items.toggled.connect(self._on_show_subitems_toggled)
+        self.ui.check_all.clicked.connect(self._publish_type_model.select_all)
+        self.ui.check_none.clicked.connect(self._publish_type_model.select_none)
 
         #################################################
         # thumb scaling
@@ -326,28 +332,43 @@ class AppDialog(QtGui.QWidget):
         self._reload_action.triggered.connect(self._on_reload_action)
         self.ui.cog_button.addAction(self._reload_action)
 
-        # Set up filter menu
-        self._filter_menu = ShotgunFilterMenu(self, refresh_on_show=False)
-        self._filter_menu.set_accept_fields(
-            [
-                "Asset.code",
-                "Asset.sg_asset_type",
-                "PublishedFile.created_at",
-                "PublishedFile.created_by",
-                "PublishedFile.description",
-                "PublishedFile.entity",
-                "PublishedFile.name",
-                "PublishedFile.project",
-                "PublishedFile.published_file_type",
-                "PublishedFile.sg_status_list",
-                "PublishedFile.task",
-                "PublishedFile.task.Task.due_date",
-                "PublishedFile.task.Task.sg_status_list",
-                "PublishedFile.version_number",
-            ]
-        )
-        self._filter_menu.set_filter_model(self._publish_proxy_model)
-        self.ui.filter_menu_btn.setMenu(self._filter_menu)
+        # Set up filtering
+        app = sgtk.platform.current_bundle()
+        if app.get_setting("use_legacy_published_file_type_filter", False):
+            # Hide the Filter menu button.
+            # The legacy filter functionality is always set up, since the filter menu still
+            # requires some of that functionality.
+            self._filter_menu = None
+            self.ui.filter_menu_btn.hide()
+        else:
+            # Hide the legacy filter widgets
+            self.ui.publish_type_list.hide()
+            self.ui.publish_type_filter_title.hide()
+            self.ui.check_all.hide()
+            self.ui.check_none.hide()
+
+            # Set up the Filter menu
+            self._filter_menu = ShotgunFilterMenu(self, refresh_on_show=False)
+            self._filter_menu.set_accept_fields(
+                [
+                    "Asset.code",
+                    "Asset.sg_asset_type",
+                    "PublishedFile.created_at",
+                    "PublishedFile.created_by",
+                    "PublishedFile.description",
+                    "PublishedFile.entity",
+                    "PublishedFile.name",
+                    "PublishedFile.project",
+                    "PublishedFile.published_file_type",
+                    "PublishedFile.sg_status_list",
+                    "PublishedFile.task",
+                    "PublishedFile.task.Task.due_date",
+                    "PublishedFile.task.Task.sg_status_list",
+                    "PublishedFile.version_number",
+                ]
+            )
+            self._filter_menu.set_filter_model(self._publish_proxy_model)
+            self.ui.filter_menu_btn.setMenu(self._filter_menu)
 
         #################################################
         # set up preset tabs and load and init tree views
@@ -510,9 +531,10 @@ class AppDialog(QtGui.QWidget):
     def save_state(self):
         """Save the app UI settings."""
 
-        # Save the filters
-        current_menu_state = self._filter_menu.save_state()
-        self._settings_manager.store(self.FILTER_MENU_STATE, current_menu_state)
+        if self._filter_menu:
+            # Save the filters
+            current_menu_state = self._filter_menu.save_state()
+            self._settings_manager.store(self.FILTER_MENU_STATE, current_menu_state)
 
         # Save the splitter layout state
         self._settings_manager.store(
@@ -522,18 +544,18 @@ class AppDialog(QtGui.QWidget):
     def restore_state(self):
         """Restore the app UI settings."""
 
-        # Restore the filters
-        filter_menu_state = self._settings_manager.retrieve(
-            self.FILTER_MENU_STATE, None
-        )
-        if not filter_menu_state:
-            # Default menu state will show the published file type filter group when
-            # there are no app user settings saved.
-            filter_menu_state = {
-                "PublishedFile.published_file_type": {},
-            }
-
-        self._filter_menu.restore_state(filter_menu_state)
+        if self._filter_menu:
+            # Restore the filters
+            filter_menu_state = self._settings_manager.retrieve(
+                self.FILTER_MENU_STATE, None
+            )
+            if not filter_menu_state:
+                # Default menu state will show the published file type filter group when
+                # there are no app user settings saved.
+                filter_menu_state = {
+                    "PublishedFile.published_file_type": {},
+                }
+            self._filter_menu.restore_state(filter_menu_state)
 
         # Restore the splitter layout state
         splitter_state = self._settings_manager.retrieve(self.SPLITTER_STATE, None)
@@ -1056,7 +1078,8 @@ class AppDialog(QtGui.QWidget):
         # files that correspond to the config setting. To filter by publish
         # file types, use the Filter menu
         sg_type_ids = self._publish_type_model.get_selected_types()
-        self._publish_proxy_model.set_filter_by_type_ids(sg_type_ids)
+        show_folders = self._publish_type_model.get_show_folders()
+        self._publish_proxy_model.set_filter_by_type_ids(sg_type_ids, show_folders)
 
     ########################################################################################
     # publish view

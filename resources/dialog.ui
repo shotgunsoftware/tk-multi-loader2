@@ -211,7 +211,7 @@ background-image: url(:/res/right_arrow_pressed.png);
         </widget>
        </item>
        <item>
-         <widget class="QLabel" name="label_4">
+         <widget class="QLabel" name="publish_type_filter_title">
          <property name="text">
            <string>&lt;small&gt;Filter by Published File Type&lt;/small&gt;</string>
          </property>

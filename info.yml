@@ -26,7 +26,7 @@ configuration:
 
     use_legacy_published_file_type_filter:
         type: bool
-        default_value: true
+        default_value: false
         description: Set to True to use the legacy Published File Type filtering component.
                      This will show the filter widget in the bottom-left corner, but will
                      hide the more extensive Filter menu (which includes filtering options for

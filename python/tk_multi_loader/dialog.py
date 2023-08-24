@@ -350,9 +350,11 @@ class AppDialog(QtGui.QWidget):
 
         ################################################
         # set up welcome window
-        welcome_msg = "<strong>Welcome - click <a " \
-                      "href='https://developer.shotgridsoftware.com/d587be80/?title=Integrations+User+Guide' " \
-                      "style='text-decoration: none;'>here</a> for the documentation.</strong>"
+        welcome_msg = (
+            "<strong>Welcome - click <a "
+            "href='https://developer.shotgridsoftware.com/d587be80/?title=Integrations+User+Guide' "
+            "style='text-decoration: none;'>here</a> for the documentation.</strong>"
+        )
 
         self.welcome_widget = QtGui.QMessageBox(
             QtGui.QMessageBox.Information,

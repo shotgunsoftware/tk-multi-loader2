@@ -298,10 +298,6 @@ class AppDialog(QtGui.QWidget):
 
         #################################################
         # set up cog button actions
-        self._help_action = QtGui.QAction("Show Help Screen", self)
-        self._help_action.triggered.connect(self.show_help_popup)
-        self.ui.cog_button.addAction(self._help_action)
-
         self._doc_action = QtGui.QAction("View Documentation", self)
         self._doc_action.triggered.connect(self._on_doc_action)
         self.ui.cog_button.addAction(self._doc_action)
@@ -351,6 +347,22 @@ class AppDialog(QtGui.QWidget):
         # load visibility state for details pane
         show_details = self._settings_manager.retrieve("show_details", False)
         self._set_details_pane_visiblity(show_details)
+
+        ################################################
+        # set up welcome window
+        welcome_msg = "<strong>Welcome - click <a " \
+                      "href='https://developer.shotgridsoftware.com/d587be80/?title=Integrations+User+Guide' " \
+                      "style='text-decoration: none;'>here</a> for the documentation.</strong>"
+
+        self.welcome_widget = QtGui.QMessageBox(
+            QtGui.QMessageBox.Information,
+            "",
+            welcome_msg,
+            QtGui.QMessageBox.Ok,
+            self,
+        )
+        self.welcome_widget.setDefaultButton(QtGui.QMessageBox.Ok)
+        self.welcome_widget.setTextFormat(QtCore.Qt.RichText)
 
     def _show_publish_actions(self, pos):
         """
@@ -1062,7 +1074,7 @@ class AppDialog(QtGui.QWidget):
                     QtGui.QPixmap(":/res/subitems_help_1.png"),
                     QtGui.QPixmap(":/res/subitems_help_2.png"),
                     QtGui.QPixmap(":/res/subitems_help_3.png"),
-                    QtGui.QPixmap(":/res/help_4.png"),
+                    QtGui.QPixmap(":/res/subitems_help_4.png"),
                 ]
                 help_screen.show_help_screen(self.window(), app, help_pix)
 
@@ -1159,19 +1171,6 @@ class AppDialog(QtGui.QWidget):
         # leave space for the event loop to update the UI.
         self.window().repaint()
         QtGui.QApplication.processEvents()
-
-    def show_help_popup(self):
-        """
-        Someone clicked the show help screen action
-        """
-        app = sgtk.platform.current_bundle()
-        help_pix = [
-            QtGui.QPixmap(":/res/help_1.png"),
-            QtGui.QPixmap(":/res/help_2.png"),
-            QtGui.QPixmap(":/res/help_3.png"),
-            QtGui.QPixmap(":/res/help_4.png"),
-        ]
-        help_screen.show_help_screen(self.window(), app, help_pix)
 
     def _on_doc_action(self):
         """

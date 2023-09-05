@@ -110,6 +110,9 @@ class AppDialog(QtGui.QWidget):
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
 
+        # Do not allow items to be dragged and moved around.
+        self.ui.publish_view.setMovement(QtGui.QListView.Static)
+
         #################################################
         # maintain a list where we keep a reference to
         # all the dynamic UI we create. This is to make

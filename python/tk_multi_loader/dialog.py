@@ -352,9 +352,10 @@ class AppDialog(QtGui.QWidget):
         # set up welcome window
         highlight_color = self.palette().highlight().color().name()
         welcome_msg = (
-                "Welcome! Learn more about the Loader App <a "
-                "href='https://developer.shotgridsoftware.com/d587be80/?title=Integrations+User+Guide' "
-                "style='text-decoration: none;'><font color='%s'>here.</font></a>" % highlight_color
+            "Welcome! Learn more about the Loader App <a "
+            "href='https://developer.shotgridsoftware.com/d587be80/?title=Integrations+User+Guide' "
+            "style='text-decoration: none;'><font color='%s'>here.</font></a>"
+            % highlight_color
         )
 
         self.welcome_widget = QtGui.QMessageBox(
@@ -364,7 +365,9 @@ class AppDialog(QtGui.QWidget):
             QtGui.QMessageBox.Ok,
         )
         # force the QMessageBox to be on top of other dialogs.
-        self.welcome_widget.setWindowFlags(self.welcome_widget.windowFlags() | QtCore.Qt.WindowStaysOnTopHint)
+        self.welcome_widget.setWindowFlags(
+            self.welcome_widget.windowFlags() | QtCore.Qt.WindowStaysOnTopHint
+        )
         self.welcome_widget.setDefaultButton(QtGui.QMessageBox.Ok)
         self.welcome_widget.setTextFormat(QtCore.Qt.RichText)
         self.welcome_widget.setWindowTitle("Loader App")

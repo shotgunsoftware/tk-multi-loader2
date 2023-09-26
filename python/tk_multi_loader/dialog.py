@@ -362,8 +362,11 @@ class AppDialog(QtGui.QWidget):
             welcome_msg,
             QtGui.QMessageBox.Ok,
         )
+        # force the QMessageBox to be on top of other dialogs.
+        self.welcome_widget.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
         self.welcome_widget.setDefaultButton(QtGui.QMessageBox.Ok)
         self.welcome_widget.setTextFormat(QtCore.Qt.RichText)
+        self.welcome_widget.setWindowTitle("Loader App")
 
     def _show_publish_actions(self, pos):
         """

@@ -361,7 +361,7 @@ class AppDialog(QtGui.QWidget):
             "",
             welcome_msg,
             QtGui.QMessageBox.Ok,
-        )   
+        )
         self.welcome_widget.setDefaultButton(QtGui.QMessageBox.Ok)
         self.welcome_widget.setTextFormat(QtCore.Qt.RichText)
 

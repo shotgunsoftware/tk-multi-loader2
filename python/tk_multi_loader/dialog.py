@@ -350,10 +350,11 @@ class AppDialog(QtGui.QWidget):
 
         ################################################
         # set up welcome window
+        highlight_color = self.palette().highlight().color().name()
         welcome_msg = (
-            "<strong>Welcome - click <a "
-            "href='https://developer.shotgridsoftware.com/d587be80/?title=Integrations+User+Guide' "
-            "style='text-decoration: none;'>here</a> for the documentation.</strong>"
+                "Welcome! Learn more about the Loader App <a "
+                "href='https://developer.shotgridsoftware.com/d587be80/?title=Integrations+User+Guide' "
+                "style='text-decoration: none;'><font color='%s'>here.</font></a>" % highlight_color
         )
 
         self.welcome_widget = QtGui.QMessageBox(

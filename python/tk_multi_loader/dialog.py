@@ -351,16 +351,11 @@ class AppDialog(QtGui.QWidget):
         ################################################
         # set up welcome window
         highlight_color = self.palette().highlight().color().name()
-        documentation_url = (
-            "https://help.autodesk.com/view/SGDEV/ENU/?guid=SG_Supervisor_Artist_sa_integrations_sa_integrations_user_guide_html#the-loader"
-        )
+        documentation_url = "https://help.autodesk.com/view/SGDEV/ENU/?guid=SG_Supervisor_Artist_sa_integrations_sa_integrations_user_guide_html#the-loader"
         welcome_msg = (
             "Welcome! Learn more about the Loader App <a href='{url}' "
             "style='text-decoration: none;'><font color='{color}'>here</font></a>."
-            "".format(
-                color=highlight_color,
-                url=documentation_url
-            )
+            "".format(color=highlight_color, url=documentation_url)
         )
 
         self.welcome_widget = QtGui.QMessageBox(

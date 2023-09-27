@@ -374,7 +374,6 @@ class AppDialog(QtGui.QWidget):
         self.welcome_widget.setTextFormat(QtCore.Qt.RichText)
         self.welcome_widget.setWindowTitle("Loader App")
 
-
     def _welcome_msg(self):
         """
         Displays a QMessageBox dialog with a documentation URL the first time the Loader UI

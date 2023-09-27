@@ -353,7 +353,7 @@ class AppDialog(QtGui.QWidget):
         highlight_color = self.palette().highlight().color().name()
         welcome_msg = (
             "Welcome! Learn more about the Loader App <a "
-            "href='https://developer.shotgridsoftware.com/d587be80/?title=Integrations+User+Guide' "
+            "href='https://help.autodesk.com/view/SGDEV/ENU/?guid=SG_Supervisor_Artist_sa_integrations_sa_integrations_user_guide_html#the-loader' "
             "style='text-decoration: none;'><font color='%s'>here.</font></a>"
             % highlight_color
         )

@@ -54,6 +54,6 @@ def show_dialog(app):
     splash.finish(w.window())
 
     # pop up welcome window
-    if not w.is_first_launch():
+    if w.is_first_launch():
         welcome_widget = w._welcome_msg()
         welcome_widget.exec_()

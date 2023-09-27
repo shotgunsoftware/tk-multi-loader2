@@ -348,6 +348,7 @@ class AppDialog(QtGui.QWidget):
         show_details = self._settings_manager.retrieve("show_details", False)
         self._set_details_pane_visiblity(show_details)
 
+        # TESTING !!!!
         ################################################
         # set up welcome window
         highlight_color = self.palette().highlight().color().name()
@@ -363,6 +364,7 @@ class AppDialog(QtGui.QWidget):
             "",
             welcome_msg,
             QtGui.QMessageBox.Ok,
+            # parent=self,
         )
         # force the QMessageBox to be on top of other dialogs.
         self.welcome_widget.setWindowFlags(
@@ -371,6 +373,35 @@ class AppDialog(QtGui.QWidget):
         self.welcome_widget.setDefaultButton(QtGui.QMessageBox.Ok)
         self.welcome_widget.setTextFormat(QtCore.Qt.RichText)
         self.welcome_widget.setWindowTitle("Loader App")
+
+
+    def _welcome_msg(self):
+        """
+        Displays a QMessageBox dialog with a documentation URL the first time the Loader UI
+        is launched.
+        """
+        # set up welcome window
+        highlight_color = self.palette().highlight().color().name()
+        documentation_url = "https://help.autodesk.com/view/SGDEV/ENU/?guid=SG_Supervisor_Artist_sa_integrations_sa_integrations_user_guide_html#the-loader"
+        welcome_msg = (
+            "Welcome! Learn more about the Loader App <a href='{url}' "
+            "style='text-decoration: none;'><font color='{color}'>here</font></a>."
+            "".format(color=highlight_color, url=documentation_url)
+        )
+
+        # Passing the parent parameter 'self' here, makes
+        # Nuke versions<=13 crash when closing the Loader App.
+        self.welcome_widget = QtGui.QMessageBox(
+            QtGui.QMessageBox.Information,
+            "",
+            welcome_msg,
+            QtGui.QMessageBox.Ok,
+            parent=QtGui.QApplication.activeWindow(),
+        )
+        self.welcome_widget.setDefaultButton(QtGui.QMessageBox.Ok)
+        self.welcome_widget.setTextFormat(QtCore.Qt.RichText)
+        self.welcome_widget.setWindowTitle("Loader App")
+        return self.welcome_widget
 
     def _show_publish_actions(self, pos):
         """

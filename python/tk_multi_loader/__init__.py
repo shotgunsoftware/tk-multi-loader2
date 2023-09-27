@@ -55,4 +55,5 @@ def show_dialog(app):
 
     # pop up welcome window
     if w.is_first_launch():
-        w.welcome_widget.exec_()
+        welcome_widget = w._welcome_msg()
+        welcome_widget.exec_()

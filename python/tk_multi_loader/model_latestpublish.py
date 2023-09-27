@@ -302,8 +302,7 @@ class SgLatestPublishModel(ShotgunModel):
             )
             type_id_aggregates[type_id] += 1
 
-        if self._publish_type_model:
-            self._publish_type_model.set_active_types(type_id_aggregates)
+        self._publish_type_model.set_active_types(type_id_aggregates)
 
         # and now trigger a refresh
         self._refresh_data()
@@ -491,9 +490,8 @@ class SgLatestPublishModel(ShotgunModel):
         # publish type model.
 
         if len(sg_data_list) == 0 and len(self._treeview_folder_items) == 0:
-            if self._publish_type_model:
-                # tell publish type setup that there is nothing to display
-                self._publish_type_model.set_active_types({})
+            # tell publish type setup that there is nothing to display
+            self._publish_type_model.set_active_types({})
             return []
 
         # and process sg publish data
@@ -579,9 +577,8 @@ class SgLatestPublishModel(ShotgunModel):
             type_id = second_pass_data["type_id"]
             type_id_aggregates[type_id] += 1
 
-        if self._publish_type_model:
-            # tell the type model to reshuffle and reformat itself
-            # based on the types contained in this search
-            self._publish_type_model.set_active_types(type_id_aggregates)
+        # tell the type model to reshuffle and reformat itself
+        # based on the types contained in this search
+        self._publish_type_model.set_active_types(type_id_aggregates)
 
         return new_sg_data

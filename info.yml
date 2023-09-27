@@ -24,6 +24,14 @@ configuration:
         default_value: "Loader"
         description: Name to appear on the title of the UI Dialog.
 
+    use_legacy_published_file_type_filter:
+        type: bool
+        default_value: false
+        description: Set to True to use the legacy Published File Type filtering component.
+                     This will show the filter widget in the bottom-left corner, but will
+                     hide the more extensive Filter menu (which includes filtering options for
+                     Published File Types). The legacy Published File Type filter widget
+                     cannot be used in combination with the Filter menu.
 
     # hooks
     actions_hook:

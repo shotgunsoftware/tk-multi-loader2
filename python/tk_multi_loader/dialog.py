@@ -323,10 +323,6 @@ class AppDialog(QtGui.QWidget):
 
         #################################################
         # set up cog button actions
-        self._help_action = QtGui.QAction("Show Help Screen", self)
-        self._help_action.triggered.connect(self.show_help_popup)
-        self.ui.cog_button.addAction(self._help_action)
-
         self._doc_action = QtGui.QAction("View Documentation", self)
         self._doc_action.triggered.connect(self._on_doc_action)
         self.ui.cog_button.addAction(self._doc_action)
@@ -394,6 +390,34 @@ class AppDialog(QtGui.QWidget):
 
         # initialize proxy model with published file types filter set from the config
         self._apply_type_filters_on_publishes()
+
+    def _welcome_msg(self):
+        """
+        Displays a QMessageBox dialog with a documentation URL the first time the Loader UI
+        is launched.
+        """
+        # set up welcome window
+        highlight_color = self.palette().highlight().color().name()
+        documentation_url = "https://help.autodesk.com/view/SGDEV/ENU/?guid=SG_Supervisor_Artist_sa_integrations_sa_integrations_user_guide_html#the-loader"
+        welcome_msg = (
+            "Welcome! Learn more about the Loader App <a href='{url}' "
+            "style='text-decoration: none;'><font color='{color}'>here</font></a>."
+            "".format(color=highlight_color, url=documentation_url)
+        )
+
+        # Passing the parent parameter 'self' here, makes
+        # Nuke versions<=13 crash when closing the Loader App.
+        self.welcome_widget = QtGui.QMessageBox(
+            QtGui.QMessageBox.Information,
+            "",
+            welcome_msg,
+            QtGui.QMessageBox.Ok,
+            parent=QtGui.QApplication.activeWindow(),
+        )
+        self.welcome_widget.setDefaultButton(QtGui.QMessageBox.Ok)
+        self.welcome_widget.setTextFormat(QtCore.Qt.RichText)
+        self.welcome_widget.setWindowTitle("Loader App")
+        return self.welcome_widget
 
     def _show_publish_actions(self, pos):
         """
@@ -1124,7 +1148,7 @@ class AppDialog(QtGui.QWidget):
                     QtGui.QPixmap(":/res/subitems_help_1.png"),
                     QtGui.QPixmap(":/res/subitems_help_2.png"),
                     QtGui.QPixmap(":/res/subitems_help_3.png"),
-                    QtGui.QPixmap(":/res/help_4.png"),
+                    QtGui.QPixmap(":/res/subitems_help_4.png"),
                 ]
                 help_screen.show_help_screen(self.window(), app, help_pix)
 
@@ -1221,19 +1245,6 @@ class AppDialog(QtGui.QWidget):
         # leave space for the event loop to update the UI.
         self.window().repaint()
         QtGui.QApplication.processEvents()
-
-    def show_help_popup(self):
-        """
-        Someone clicked the show help screen action
-        """
-        app = sgtk.platform.current_bundle()
-        help_pix = [
-            QtGui.QPixmap(":/res/help_1.png"),
-            QtGui.QPixmap(":/res/help_2.png"),
-            QtGui.QPixmap(":/res/help_3.png"),
-            QtGui.QPixmap(":/res/help_4.png"),
-        ]
-        help_screen.show_help_screen(self.window(), app, help_pix)
 
     def _on_doc_action(self):
         """

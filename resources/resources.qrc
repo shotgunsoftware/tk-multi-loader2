@@ -16,13 +16,10 @@
     <file>loading_100x100.png</file>
     <file>splash.png</file>
     <file>exit_splash.png</file>
-    <file>help_1.png</file>
-    <file>help_2.png</file>
-    <file>help_3.png</file>
-    <file>help_4.png</file>
     <file>subitems_help_1.png</file>
     <file>subitems_help_2.png</file>
     <file>subitems_help_3.png</file>
+    <file>subitems_help_4.png</file>
     <file>right_arrow_hover.png</file>
     <file>right_arrow_pressed.png</file>
     <file>right_arrow.png</file>

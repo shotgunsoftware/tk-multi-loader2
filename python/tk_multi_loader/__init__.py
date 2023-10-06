@@ -53,7 +53,7 @@ def show_dialog(app):
     # hide splash screen after loader UI show
     splash.finish(w.window())
 
-    # pop up help screen
+    # pop up welcome window
     if w.is_first_launch():
-        # wait a bit before show window
-        QtCore.QTimer.singleShot(1400, w.show_help_popup)
+        welcome_widget = w._welcome_msg()
+        welcome_widget.exec_()

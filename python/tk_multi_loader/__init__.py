@@ -18,6 +18,9 @@ from .ui import resources_rc
 
 help_screen = sgtk.platform.import_framework("tk-framework-qtwidgets", "help_screen")
 
+def show_materials_dialog(app):
+    from .materials_dialog import MaterialsAppDialog
+    return app.engine.show_dialog("Materials", app, MaterialsAppDialog)
 
 def show_dialog(app):
     """

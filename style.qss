@@ -15,3 +15,16 @@ QWidget {
     font-family: "Open Sans";
     font-style: "Regular";
 }
+
+
+SGQToolButton
+{
+  border: none;
+  outline: none;
+  padding: 4px;
+}
+SGQToolButton:hover
+{
+  background-color: palette(light);
+  border-radius: 4px;
+}

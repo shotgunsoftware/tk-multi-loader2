@@ -34,6 +34,11 @@ configuration:
                      cannot be used in combination with the Filter menu.
 
     # hooks
+    hook_materials_ui_config:
+        type: hook
+        default_value: "{self}/materials_ui_config.py"
+        description: Specify a hook that, if desired, configures the Materials UI.
+
     actions_hook:
         type: hook
         default_value: "{self}/{engine_name}_actions.py"

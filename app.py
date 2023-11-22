@@ -52,6 +52,17 @@ class MultiLoader(sgtk.platform.Application):
         }
         self.engine.register_command(menu_caption, cb, menu_options)
 
+        # Prototype a Material app which is essentially a loader for materials
+        self.engine.register_command(
+            "Materials...",
+            self.create_materials_dialog,
+            {"type": "dialog", "short_name": "materials"},
+        )
+
+    def create_materials_dialog(self):
+        tk_multi_loader = self.import_module("tk_multi_loader")
+        return tk_multi_loader.show_materials_dialog(self)
+
     @property
     def context_change_allowed(self):
         """

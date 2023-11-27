@@ -410,7 +410,7 @@ class MaterialsAppDialog(QtGui.QWidget):
                             "in",
                             [library]
                         ]
-                        filters.apepnd(library_filter)
+                        filters.append(library_filter)
 
             # Load the entity data 
             self.__content_model.load(entity, filters, fields, order)

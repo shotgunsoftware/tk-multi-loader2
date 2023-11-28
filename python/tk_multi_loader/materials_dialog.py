@@ -814,7 +814,7 @@ class MaterialsAppDialog(QtGui.QWidget):
         :param pnt: The position for the context menu relative to the source widget.
         """
 
-        selection_model = self.__ui.content_view.selectionModel()
+        selection_model = widget.selectionModel()
         if not selection_model:
             return
 

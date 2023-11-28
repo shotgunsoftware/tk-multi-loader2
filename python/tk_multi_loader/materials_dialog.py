@@ -436,7 +436,7 @@ class MaterialsAppDialog(QtGui.QWidget):
             self.FILTER_MENU_DOCKED_SETTING, self._filter_menu.docked,
         )
         self._settings_manager.store(self.DETAILS_PANEL_VISIBILITY_SETTING, self.__ui.details_panel.isVisible())
-        # self._settings_manager.store(self.SETTINGS_ENTITY_DATA, self.__ui.entity_combobox.currentText())
+        self._settings_manager.store(self.SETTINGS_ENTITY_DATA, self.__ui.entity_combobox.currentText())
 
     def restore_state(self):
         """

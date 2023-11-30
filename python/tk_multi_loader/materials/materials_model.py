@@ -179,7 +179,7 @@ class MaterialsModel(QtCore.QAbstractListModel, ViewItemRolesMixin):
     # Public methods
 
     @sgtk.LogManager.log_timing
-    def load(self, entity, entity_filters=None, entity_fields=None, order=None, only_latest=True):
+    def load(self, entity, entity_filters=None, entity_fields=None, order=None, only_latest=True, published_file_filters=None):
         """Load the Material data from ShotGrid."""
 
         self.beginResetModel()
@@ -192,6 +192,9 @@ class MaterialsModel(QtCore.QAbstractListModel, ViewItemRolesMixin):
         for entity_filter in entity_filters:
             entity_filter[0] = f"entity.{entity}.{entity_filter[0]}"
         filters.extend(entity_filters)
+
+        published_file_filters = published_file_filters or []
+        filters.extend(published_file_filters)
 
         fields = list(self.__fields or [])
         entity_fields = entity_fields or []

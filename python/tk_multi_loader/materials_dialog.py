@@ -257,7 +257,7 @@ class MaterialsAppDialog(QtGui.QWidget):
 
         self.__ui.refresh_button.clicked.connect(self.refresh)
 
-        # self.__ui.material_library_combobox.currentIndexChanged.connect(self.__on_material_library_query_changed)
+        self.__ui.material_library_combobox.currentIndexChanged.connect(self.__on_material_library_query_changed)
         self.__ui.entity_combobox.currentIndexChanged.connect(self.__on_material_library_query_changed)
 
         # -----------------------------------------------------
@@ -341,26 +341,27 @@ class MaterialsAppDialog(QtGui.QWidget):
         # Get the entity data 
         entity_data = self.__ui.entity_combobox.currentData()
         entity = entity_data["entity_type"]
-        filters = entity_data.get("filters", [])
+        entity_filters = entity_data.get("filters", [])
         fields = entity_data.get("fields", [])
         hierarchy = entity_data.get("hierarchy", [])
         fields.extend(hierarchy)
         order = entity_data.get("order", [])
 
-        # # Get entity query filters
-        # # TODO allow query filters to be customizable and change filters based on entity type
-        # material_library_data = self.__ui.material_library_combobox.currentData()
-        # if material_library_data:
-        #     library_id = material_library_data["id"]
-        #     if library_id is not None:
-        #         filters.append([
-        #             "asset_library_sg_published_files_asset_libraries",
-        #             "in",
-        #             [material_library_data]
-        #         ])
+        # Get entity query filters
+        # TODO allow query filters to be customizable and change filters based on entity type
+        published_file_filters = []
+        material_library_data = self.__ui.material_library_combobox.currentData()
+        if material_library_data:
+            library_id = material_library_data["id"]
+            if library_id is not None:
+                published_file_filters.append([
+                    "asset_library_sg_published_files_asset_libraries",
+                    "in",
+                    [material_library_data]
+                ])
         
         # Load the material data 
-        self.__content_model.load(entity, filters, fields, order)
+        self.__content_model.load(entity, entity_filters, fields, order, published_file_filters=published_file_filters)
 
     @wait_cursor
     def refresh(self):
@@ -383,34 +384,35 @@ class MaterialsAppDialog(QtGui.QWidget):
             fields.extend(hierarchy)
             order = entity_data.get("order", [])
 
-            # # Load the material libraries
-            # material_libraries = self.__bundle.shotgun.find(
-            #     "AssetLibrary",
-            #     filters=[
-            #         ["sg_type", "is", "Material"],
-            #     ],
-            #     fields=["id", "code", "project"],
-            # )
-            # material_libraries.insert(0, {"code": "All", "id": None})
+            # Load the material libraries
+            material_libraries = self.__bundle.shotgun.find(
+                "AssetLibrary",
+                filters=[
+                    ["sg_type", "is", "Material"],
+                ],
+                fields=["id", "code", "project"],
+            )
+            material_libraries.insert(0, {"code": "All", "id": None})
 
-            # # Set up the combobox UI
-            # selected = self.__ui.material_library_combobox.currentData()
-            # self.__ui.material_library_combobox.clear()
-            # for index, library in enumerate(material_libraries):
-            #     self.__ui.material_library_combobox.addItem(library["code"], library)
-            #     library_id = library["id"]
-            #     if selected and library_id == selected["id"]:
-            #         self.__ui.material_library_combobox.setCurrentIndex(index)
-            #         if library_id is not None:
-            #             library_filter = [
-            #                 "asset_library_sg_published_files_asset_libraries",
-            #                 "in",
-            #                 [library]
-            #             ]
-            #             filters.append(library_filter)
+            # Set up the combobox UI
+            selected = self.__ui.material_library_combobox.currentData()
+            self.__ui.material_library_combobox.clear()
+            published_file_filters = []
+            for index, library in enumerate(material_libraries):
+                self.__ui.material_library_combobox.addItem(library["code"], library)
+                library_id = library["id"]
+                if selected and library_id == selected["id"]:
+                    self.__ui.material_library_combobox.setCurrentIndex(index)
+                    if library_id is not None:
+                        library_filter = [
+                            "asset_library_sg_published_files_asset_libraries",
+                            "in",
+                            [library]
+                        ]
+                        published_file_filters.append(library_filter)
 
             # Load the entity data 
-            self.__content_model.load(entity, filters, fields, order)
+            self.__content_model.load(entity, filters, fields, order, published_file_filters=published_file_filters)
         finally:
             self.blockSignals(restore_state)
             self.__refreshing = False
@@ -522,14 +524,14 @@ class MaterialsAppDialog(QtGui.QWidget):
         # Spacer
         spacer_item = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         top_toolbar_layout.addItem(spacer_item)
-        # # Query presets
-        # material_library_label = QtGui.QLabel("Material Library", self)
-        # top_toolbar_layout.addWidget(material_library_label)
-        # material_library_combobox = QtGui.QComboBox(self)
-        # top_toolbar_layout.addWidget(material_library_combobox)
-        # # Spacer
-        # spacer_item = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-        # top_toolbar_layout.addItem(spacer_item)
+        # Query presets
+        material_library_label = QtGui.QLabel("Material Library", self)
+        top_toolbar_layout.addWidget(material_library_label)
+        material_library_combobox = QtGui.QComboBox(self)
+        top_toolbar_layout.addWidget(material_library_combobox)
+        # Spacer
+        spacer_item = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        top_toolbar_layout.addItem(spacer_item)
         # View mode buttons
         view_mode_hlayout = QtGui.QHBoxLayout()
         view_mode_hlayout.setSpacing(5)
@@ -671,7 +673,7 @@ class MaterialsAppDialog(QtGui.QWidget):
             "thumbnail_view_button",
             "list_view_button",
             "refresh_button",
-            # "material_library_combobox",
+            "material_library_combobox",
             "entity_combobox",
         ]
         UI = namedtuple("UI", ui_fields)
@@ -689,7 +691,7 @@ class MaterialsAppDialog(QtGui.QWidget):
             content_item_history_view=content_item_history_view,
             content_size_slider=content_size_slider,
             refresh_button=refresh_button,
-            # material_library_combobox=material_library_combobox,
+            material_library_combobox=material_library_combobox,
             entity_combobox=entity_combobox,
         )
         return ui

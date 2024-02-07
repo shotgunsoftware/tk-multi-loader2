@@ -200,7 +200,7 @@ class LoaderActionManager(ActionManager):
             fs.triggered[()].connect(lambda f=paths: self._show_in_fs(f))
             qt_actions.append(fs)
 
-        sg = QtGui.QAction("Show details in ShotGrid", None)
+        sg = QtGui.QAction("Show details in Flow Production Tracking", None)
         sg.triggered[()].connect(lambda f=sg_data: self._show_in_sg(f))
         qt_actions.append(sg)
 

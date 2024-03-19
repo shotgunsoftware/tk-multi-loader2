@@ -96,7 +96,7 @@ class LoaderManager(object):
         # returns a structure on the form
         # { "Maya Scene": ["reference", "import"] }
         actions = mappings.get(publish_type, [])
-
+        actions.extend(mappings.get("All", []))
         if len(actions) == 0:
             return []
 
@@ -302,6 +302,7 @@ class LoaderManager(object):
         # returns a structure on the form
         # { "Maya Scene": ["reference", "import"] }
         my_mappings = mappings.get(publish_type, [])
+        my_mappings.extend(mappings.get("All", []))
 
         return len(my_mappings) > 0
 

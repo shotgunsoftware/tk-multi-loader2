@@ -79,12 +79,19 @@ class MultiLoader(sgtk.platform.Application):
         tk_multi_loader = self.import_module("tk_multi_loader")
         return tk_multi_loader.open_publish_browser(self, title, action, publish_types)
 
-    def create_loader_manager(self):
+    def create_loader_manager(self, bundle=None):
         """
         Create and return a :class:`tk_multi_loader.LoaderManager` instance.
         See the :class:`tk_multi_loader.LoaderManager` docs for details on
         how it can be used to automate your loading workflows.
 
+        :param bundle: The bundle to use the loader manager with. If not
+                       specified, the current Loader App bundle will be used.
+                       Specifying a bundle is useful when you want to use the
+                       LoaderManager api to create actions for a different app
+                       and use the settings defined in that app's configuration.
+        :type bundle: :class:`sgtk.platform.TankBundle`
+
         :returns: A :class:`tk_multi_loader.LoaderManager` instance
         """
-        return self._manager_class(self)
+        return self._manager_class(bundle or self)

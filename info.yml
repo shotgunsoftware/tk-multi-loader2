@@ -56,7 +56,8 @@ configuration:
     action_mappings:
         type: dict
         description: Associates published file types with actions. The actions are all defined
-                     inside the actions hook.
+                     inside the actions hook. Use special key 'All' to define actions for all
+                     published file types.
         default_value: {}
         default_value_tk-3dsmax:
             3dsmax Scene: [import, reference]

@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>tk_multi_loader.api.manager &mdash; tk-multi-loader2 v1.24.0 documentation</title>
+  <title>tk_multi_loader.api.manager &mdash; tk-multi-loader2 v1.25.0 documentation</title>
       <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/graphviz.css" type="text/css" />
@@ -76,7 +76,7 @@
                              text-decoration: underline; }
     </style>
 
-    <b>tk-multi-loader2</b> v1.24.0.<br>
+    <b>tk-multi-loader2</b> v1.25.0.<br>
     
         This documentation is part of the Flow Production Tracking.
     
@@ -213,10 +213,12 @@
 
         <span class="c1"># check if we have logic configured to handle this publish type.</span>
         <span class="n">mappings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bundle</span><span class="o">.</span><span class="n">get_setting</span><span class="p">(</span><span class="s2">&quot;action_mappings&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">mappings</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
         <span class="c1"># returns a structure on the form</span>
         <span class="c1"># { &quot;Maya Scene&quot;: [&quot;reference&quot;, &quot;import&quot;] }</span>
         <span class="n">actions</span> <span class="o">=</span> <span class="n">mappings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">publish_type</span><span class="p">,</span> <span class="p">[])</span>
-
+        <span class="n">actions</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">mappings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;All&quot;</span><span class="p">,</span> <span class="p">[]))</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">actions</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[]</span>
 
@@ -380,6 +382,8 @@
 
         <span class="c1"># check if we have logic configured to handle this publish type.</span>
         <span class="n">mappings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bundle</span><span class="o">.</span><span class="n">get_setting</span><span class="p">(</span><span class="s2">&quot;entity_mappings&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">mappings</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
 
         <span class="c1"># returns a structure on the form</span>
         <span class="c1"># { &quot;Shot&quot;: [&quot;reference&quot;, &quot;import&quot;] }</span>
@@ -414,10 +418,13 @@
 <span class="sd">        :return:: True if the current actions setup knows how to handle this.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">mappings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bundle</span><span class="o">.</span><span class="n">get_setting</span><span class="p">(</span><span class="s2">&quot;action_mappings&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">mappings</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
 
         <span class="c1"># returns a structure on the form</span>
         <span class="c1"># { &quot;Maya Scene&quot;: [&quot;reference&quot;, &quot;import&quot;] }</span>
         <span class="n">my_mappings</span> <span class="o">=</span> <span class="n">mappings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">publish_type</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="n">my_mappings</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">mappings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;All&quot;</span><span class="p">,</span> <span class="p">[]))</span>
 
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">my_mappings</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span></div>
 

@@ -517,11 +517,15 @@ class AppDialog(QtGui.QWidget):
             # disconnect some signals so we don't go all crazy when
             # the cascading model deletes begin as part of the destroy calls
             for p in self._entity_presets:
-                self._entity_presets[
-                    p
-                ].view.selectionModel().selectionChanged.disconnect(
-                    self._on_treeview_item_selected
-                )
+                try:
+                    self._entity_presets[
+                        p
+                    ].view.selectionModel().selectionChanged.disconnect(
+                        self._on_treeview_item_selected
+                    )
+                except RuntimeError:
+                    app = sgtk.platform.current_bundle()
+                    app.log_debug("Error disconnecting on closeEvent()")
 
             # gracefully close all connections
             shotgun_globals.unregister_bg_task_manager(self._task_manager)

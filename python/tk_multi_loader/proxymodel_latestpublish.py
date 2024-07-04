@@ -10,7 +10,7 @@
 
 import sgtk
 from sgtk.platform.qt import QtCore
-from tank_vendor import six
+from tank_vendor import sgutils
 
 from .model_latestpublish import SgLatestPublishModel
 from .framework_qtwidgets import FilterItemProxyModel
@@ -101,7 +101,7 @@ class SgLatestPublishProxyModel(FilterItemProxyModel):
             # all input we are getting from pyside is as unicode objects
             # all data from shotgun is utf-8. By converting to utf-8,
             # filtering on items containing unicode text also work.
-            search_str = six.ensure_str(self._search_filter)
+            search_str = sgutils.ensure_str(self._search_filter)
 
             if search_str.lower() not in field_data.lower():
                 # item text is not matching search filter

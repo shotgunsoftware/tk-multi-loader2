@@ -17,7 +17,7 @@ import glob
 import sys
 
 import sgtk
-from tank_vendor import six
+from tank_vendor import sgutils
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
@@ -222,7 +222,7 @@ class NukeActions(HookBaseClass):
         import nuke
 
         # must use unicode otherwise path won't be found
-        if not os.path.exists(six.ensure_str(path)):
+        if not os.path.exists(sgutils.ensure_str(path)):
             raise Exception("File not found on disk - '%s'" % path)
 
         nuke.nodePaste(path)

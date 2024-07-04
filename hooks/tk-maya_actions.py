@@ -19,7 +19,7 @@ import maya.cmds as cmds
 import maya.mel as mel
 import sgtk
 
-from tank_vendor import six
+from tank_vendor import sgutils
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
@@ -179,7 +179,7 @@ class MayaActions(HookBaseClass):
         # resolve path
         # toolkit uses utf-8 encoded strings internally and Maya API expects unicode
         # so convert the path to ensure filenames containing complex characters are supported
-        path = six.ensure_str(self.get_publish_path(sg_publish_data))
+        path = sgutils.ensure_str(self.get_publish_path(sg_publish_data))
 
         if name == "reference":
             self._create_reference(path, sg_publish_data)

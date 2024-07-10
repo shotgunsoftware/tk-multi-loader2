@@ -10,10 +10,14 @@
 
 import sgtk
 from sgtk.platform.qt import QtCore
-from tank_vendor import sgutils
 
 from .model_latestpublish import SgLatestPublishModel
 from .framework_qtwidgets import FilterItemProxyModel
+
+try:
+    from tank_vendor import sgutils
+except ImportError:
+    from tank_vendor import six as sgutils
 
 shotgun_model = sgtk.platform.import_framework(
     "tk-framework-shotgunutils", "shotgun_model"

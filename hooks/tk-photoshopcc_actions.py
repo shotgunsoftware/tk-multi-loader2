@@ -16,7 +16,11 @@ import os
 
 import sgtk
 from sgtk.platform.qt import QtGui
-from tank_vendor import sgutils
+
+try:
+    from tank_vendor import sgutils
+except ImportError:
+    from tank_vendor import six as sgutils
 
 HookBaseClass = sgtk.get_hook_baseclass()
 

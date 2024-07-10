@@ -19,7 +19,10 @@ import maya.cmds as cmds
 import maya.mel as mel
 import sgtk
 
-from tank_vendor import sgutils
+try:
+    from tank_vendor import sgutils
+except ImportError:
+    from tank_vendor import six as sgutils
 
 HookBaseClass = sgtk.get_hook_baseclass()
 

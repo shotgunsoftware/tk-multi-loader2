@@ -1,61 +1,80 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'C:\Users\qa\sg_envs\dv\tk\tk-multi-loader2\resources\widget_publish_thumb.ui'
-#
-# Created: Thu Feb 16 16:25:09 2023
-#      by: pyside-uic 0.2.15 running on PySide 1.2.2
-#
-# WARNING! All changes made in this file will be lost!
+################################################################################
+## Form generated from reading UI file 'widget_publish_thumb.ui'
+##
+## Created by: Qt User Interface Compiler version 5.15.2
+##
+## WARNING! All changes made in this file will be lost when recompiling UI file!
+################################################################################
 
-from sgtk.platform.qt import QtCore, QtGui
+from sgtk.platform.qt import QtCore
+for name, cls in QtCore.__dict__.items():
+    if isinstance(cls, type): globals()[name] = cls
+
+from sgtk.platform.qt import QtGui
+for name, cls in QtGui.__dict__.items():
+    if isinstance(cls, type): globals()[name] = cls
+
+
+from  . import resources_rc
 
 class Ui_PublishThumbWidget(object):
     def setupUi(self, PublishThumbWidget):
-        PublishThumbWidget.setObjectName("PublishThumbWidget")
+        if not PublishThumbWidget.objectName():
+            PublishThumbWidget.setObjectName(u"PublishThumbWidget")
         PublishThumbWidget.resize(1226, 782)
-        self.verticalLayout_2 = QtGui.QVBoxLayout(PublishThumbWidget)
+        self.verticalLayout_2 = QVBoxLayout(PublishThumbWidget)
         self.verticalLayout_2.setSpacing(1)
         self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
-        self.verticalLayout_2.setObjectName("verticalLayout_2")
-        self.box = QtGui.QFrame(PublishThumbWidget)
-        self.box.setFrameShape(QtGui.QFrame.StyledPanel)
-        self.box.setFrameShadow(QtGui.QFrame.Raised)
-        self.box.setObjectName("box")
-        self.verticalLayout = QtGui.QVBoxLayout(self.box)
+        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.box = QFrame(PublishThumbWidget)
+        self.box.setObjectName(u"box")
+        self.box.setFrameShape(QFrame.StyledPanel)
+        self.box.setFrameShadow(QFrame.Raised)
+        self.verticalLayout = QVBoxLayout(self.box)
         self.verticalLayout.setSpacing(0)
         self.verticalLayout.setContentsMargins(3, 3, 3, 3)
-        self.verticalLayout.setObjectName("verticalLayout")
-        self.thumbnail = QtGui.QLabel(self.box)
-        self.thumbnail.setText("")
-        self.thumbnail.setPixmap(QtGui.QPixmap(":/res/loading_512x400.png"))
+        self.verticalLayout.setObjectName(u"verticalLayout")
+        self.thumbnail = QLabel(self.box)
+        self.thumbnail.setObjectName(u"thumbnail")
+        self.thumbnail.setPixmap(QPixmap(u":/res/loading_512x400.png"))
         self.thumbnail.setScaledContents(True)
-        self.thumbnail.setAlignment(QtCore.Qt.AlignCenter)
-        self.thumbnail.setObjectName("thumbnail")
+        self.thumbnail.setAlignment(Qt.AlignCenter)
+
         self.verticalLayout.addWidget(self.thumbnail)
-        self.horizontalLayout = QtGui.QHBoxLayout()
+
+        self.horizontalLayout = QHBoxLayout()
         self.horizontalLayout.setSpacing(4)
+        self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.horizontalLayout.setContentsMargins(2, -1, 2, 2)
-        self.horizontalLayout.setObjectName("horizontalLayout")
-        self.label = QtGui.QLabel(self.box)
-        self.label.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignTop)
-        self.label.setObjectName("label")
+        self.label = QLabel(self.box)
+        self.label.setObjectName(u"label")
+        self.label.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignTop)
+
         self.horizontalLayout.addWidget(self.label)
-        self.button = QtGui.QToolButton(self.box)
-        self.button.setMinimumSize(QtCore.QSize(50, 0))
-        self.button.setPopupMode(QtGui.QToolButton.InstantPopup)
-        self.button.setToolButtonStyle(QtCore.Qt.ToolButtonTextOnly)
-        self.button.setObjectName("button")
+
+        self.button = QToolButton(self.box)
+        self.button.setObjectName(u"button")
+        self.button.setMinimumSize(QSize(50, 0))
+        self.button.setPopupMode(QToolButton.InstantPopup)
+        self.button.setToolButtonStyle(Qt.ToolButtonTextOnly)
+
         self.horizontalLayout.addWidget(self.button)
+
         self.verticalLayout.addLayout(self.horizontalLayout)
+
         self.verticalLayout_2.addWidget(self.box)
 
         self.retranslateUi(PublishThumbWidget)
-        QtCore.QMetaObject.connectSlotsByName(PublishThumbWidget)
+
+        QMetaObject.connectSlotsByName(PublishThumbWidget)
+    # setupUi
 
     def retranslateUi(self, PublishThumbWidget):
-        PublishThumbWidget.setWindowTitle(QtGui.QApplication.translate("PublishThumbWidget", "Form", None, QtGui.QApplication.UnicodeUTF8))
-        self.label.setText(QtGui.QApplication.translate("PublishThumbWidget", "TextLabel\n"
-"Foo", None, QtGui.QApplication.UnicodeUTF8))
-        self.button.setText(QtGui.QApplication.translate("PublishThumbWidget", "Actions", None, QtGui.QApplication.UnicodeUTF8))
-
-from . import resources_rc
+        PublishThumbWidget.setWindowTitle(QCoreApplication.translate("PublishThumbWidget", u"Form", None))
+        self.thumbnail.setText("")
+        self.label.setText(QCoreApplication.translate("PublishThumbWidget", u"TextLabel\n"
+"Foo", None))
+        self.button.setText(QCoreApplication.translate("PublishThumbWidget", u"Actions", None))
+    # retranslateUi

@@ -1,55 +1,78 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'C:\Users\qa\sg_envs\dv\tk\tk-multi-loader2\resources\open_publish_form.ui'
-#
-# Created: Thu Feb 16 16:25:09 2023
-#      by: pyside-uic 0.2.15 running on PySide 1.2.2
-#
-# WARNING! All changes made in this file will be lost!
+################################################################################
+## Form generated from reading UI file 'open_publish_form.ui'
+##
+## Created by: Qt User Interface Compiler version 5.15.2
+##
+## WARNING! All changes made in this file will be lost when recompiling UI file!
+################################################################################
 
-from sgtk.platform.qt import QtCore, QtGui
+from tank.platform.qt import QtCore
+for name, cls in QtCore.__dict__.items():
+    if isinstance(cls, type): globals()[name] = cls
+
+from tank.platform.qt import QtGui
+for name, cls in QtGui.__dict__.items():
+    if isinstance(cls, type): globals()[name] = cls
+
 
 class Ui_OpenPublishForm(object):
     def setupUi(self, OpenPublishForm):
-        OpenPublishForm.setObjectName("OpenPublishForm")
+        if not OpenPublishForm.objectName():
+            OpenPublishForm.setObjectName(u"OpenPublishForm")
         OpenPublishForm.resize(1228, 818)
-        self.verticalLayout = QtGui.QVBoxLayout(OpenPublishForm)
+        self.verticalLayout = QVBoxLayout(OpenPublishForm)
         self.verticalLayout.setSpacing(4)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
-        self.verticalLayout.setObjectName("verticalLayout")
-        self.loader_form = QtGui.QWidget(OpenPublishForm)
-        self.loader_form.setStyleSheet("#loader_form {\n"
+        self.verticalLayout.setObjectName(u"verticalLayout")
+        self.loader_form = QWidget(OpenPublishForm)
+        self.loader_form.setObjectName(u"loader_form")
+        self.loader_form.setStyleSheet(u"#loader_form {\n"
 "background-color: rgb(255, 128, 0);\n"
 "}")
-        self.loader_form.setObjectName("loader_form")
+
         self.verticalLayout.addWidget(self.loader_form)
-        self.break_line = QtGui.QFrame(OpenPublishForm)
-        self.break_line.setFrameShape(QtGui.QFrame.HLine)
-        self.break_line.setFrameShadow(QtGui.QFrame.Sunken)
-        self.break_line.setObjectName("break_line")
+
+        self.break_line = QFrame(OpenPublishForm)
+        self.break_line.setObjectName(u"break_line")
+        self.break_line.setFrameShape(QFrame.HLine)
+        self.break_line.setFrameShadow(QFrame.Sunken)
+
         self.verticalLayout.addWidget(self.break_line)
-        self.horizontalLayout_3 = QtGui.QHBoxLayout()
+
+        self.horizontalLayout_3 = QHBoxLayout()
+        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
         self.horizontalLayout_3.setContentsMargins(12, 8, 12, 12)
-        self.horizontalLayout_3.setObjectName("horizontalLayout_3")
-        spacerItem = QtGui.QSpacerItem(0, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-        self.horizontalLayout_3.addItem(spacerItem)
-        self.cancel_btn = QtGui.QPushButton(OpenPublishForm)
-        self.cancel_btn.setMinimumSize(QtCore.QSize(90, 0))
-        self.cancel_btn.setObjectName("cancel_btn")
+        self.horizontalSpacer = QSpacerItem(0, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.horizontalLayout_3.addItem(self.horizontalSpacer)
+
+        self.cancel_btn = QPushButton(OpenPublishForm)
+        self.cancel_btn.setObjectName(u"cancel_btn")
+        self.cancel_btn.setMinimumSize(QSize(90, 0))
+
         self.horizontalLayout_3.addWidget(self.cancel_btn)
-        self.open_btn = QtGui.QPushButton(OpenPublishForm)
-        self.open_btn.setMinimumSize(QtCore.QSize(90, 0))
-        self.open_btn.setDefault(True)
-        self.open_btn.setObjectName("open_btn")
+
+        self.open_btn = QPushButton(OpenPublishForm)
+        self.open_btn.setObjectName(u"open_btn")
+        self.open_btn.setMinimumSize(QSize(90, 0))
+
         self.horizontalLayout_3.addWidget(self.open_btn)
+
         self.verticalLayout.addLayout(self.horizontalLayout_3)
+
         self.verticalLayout.setStretch(0, 1)
 
         self.retranslateUi(OpenPublishForm)
-        QtCore.QMetaObject.connectSlotsByName(OpenPublishForm)
+
+        self.open_btn.setDefault(True)
+
+        QMetaObject.connectSlotsByName(OpenPublishForm)
+    # setupUi
 
     def retranslateUi(self, OpenPublishForm):
-        OpenPublishForm.setWindowTitle(QtGui.QApplication.translate("OpenPublishForm", "Form", None, QtGui.QApplication.UnicodeUTF8))
-        self.cancel_btn.setText(QtGui.QApplication.translate("OpenPublishForm", "Cancel", None, QtGui.QApplication.UnicodeUTF8))
-        self.open_btn.setText(QtGui.QApplication.translate("OpenPublishForm", "Open", None, QtGui.QApplication.UnicodeUTF8))
-
+        OpenPublishForm.setWindowTitle(QCoreApplication.translate("OpenPublishForm", u"Form", None))
+        self.cancel_btn.setText(QCoreApplication.translate("OpenPublishForm", u"Cancel", None))
+        self.open_btn.setText(QCoreApplication.translate("OpenPublishForm", u"Open", None))
+    # retranslateUi

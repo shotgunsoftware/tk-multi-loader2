@@ -24,7 +24,6 @@ ShotgunModel = shotgun_model.ShotgunModel
 
 
 class SgLatestPublishModel(ShotgunModel):
-
     """
     Model which handles the main spreadsheet view which displays the latest version of all
     publishes.

@@ -197,9 +197,9 @@ class MariActions(HookBaseClass):
         # prefer uv (UDIM) over ptex
         options["MappingScheme"] = mari.projects.UV_OR_PTEX
         # create selection sets from face groups based on shader assignments
-        options[
-            "CreateSelectionSets"
-        ] = mari.geo.SELECTION_GROUPS_CREATE_FROM_FACE_GROUPS
+        options["CreateSelectionSets"] = (
+            mari.geo.SELECTION_GROUPS_CREATE_FROM_FACE_GROUPS
+        )
         # merge nodes within file but not all geometry into a single mesh
         options["MergeType"] = mari.geo.MERGETYPE_JUST_MERGE_NODES
 

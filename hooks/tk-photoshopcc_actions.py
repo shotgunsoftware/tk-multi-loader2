@@ -17,11 +17,6 @@ import os
 import sgtk
 from sgtk.platform.qt import QtGui
 
-try:
-    from tank_vendor import sgutils
-except ImportError:
-    from tank_vendor import six as sgutils
-
 HookBaseClass = sgtk.get_hook_baseclass()
 
 # Name of available actions. Corresponds to both the environment config values and the action instance names.
@@ -151,10 +146,7 @@ class PhotoshopActions(HookBaseClass):
             "Parameters: %s. Publish Data: %s" % (name, params, sg_publish_data)
         )
 
-        # resolve path
-        # toolkit uses utf-8 encoded strings internally and the Photoshop API expects unicode
-        # so convert the path to ensure filenames containing complex characters are supported
-        path = sgutils.ensure_text(self.get_publish_path(sg_publish_data))
+        path = self.get_publish_path(sg_publish_data)
 
         if not os.path.exists(path):
             raise Exception("File not found on disk - '%s'" % path)

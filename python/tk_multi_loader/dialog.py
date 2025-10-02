@@ -134,6 +134,7 @@ class AppDialog(QtGui.QWidget):
         self._details_pane_visible = False
 
         self._details_action_menu = QtGui.QMenu()
+        self._details_action_menu.setToolTipsVisible(True)
         self.ui.detail_actions_btn.setMenu(self._details_action_menu)
 
         self.ui.info.clicked.connect(self._toggle_details_pane)
@@ -428,6 +429,7 @@ class AppDialog(QtGui.QWidget):
 
         # Build a menu with all the actions.
         menu = QtGui.QMenu(self)
+        menu.setToolTipsVisible(True)
         actions = self._action_manager.get_actions_for_publishes(
             self.selected_publishes, self._action_manager.UI_AREA_MAIN
         )

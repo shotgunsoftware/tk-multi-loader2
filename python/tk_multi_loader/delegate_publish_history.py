@@ -46,6 +46,7 @@ class PublishHistoryWidget(QtGui.QWidget):
 
         # set up action menu
         self._menu = QtGui.QMenu()
+        self._menu.setToolTipsVisible(True)
         self._actions = []
         self.ui.button.setMenu(self._menu)
         self.ui.button.setVisible(False)

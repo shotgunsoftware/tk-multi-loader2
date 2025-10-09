@@ -273,6 +273,7 @@ class NukeActions(HookBaseClass):
             ".tiff",
             ".tif",
             ".mov",
+            ".mxf",
             ".mp4",
             ".psd",
             ".tga",

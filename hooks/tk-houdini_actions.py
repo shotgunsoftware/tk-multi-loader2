@@ -251,7 +251,7 @@ class HoudiniActions(HookBaseClass):
         # characters. Then use it to replace any matches with an underscore
 
         # cannot use special characters to create nodes
-        pattern = re.compile("[\W_]+")
+        pattern = re.compile("[\\W_]+")
         publish_name = pattern.sub("_", publish_name)
 
         # get the publish path
@@ -281,7 +281,7 @@ class HoudiniActions(HookBaseClass):
 
         # replace any %0#d format string with the corresponding houdini frame
         # env variable. example %04d => $F4
-        frame_pattern = re.compile("(%0(\d)d)")
+        frame_pattern = re.compile("(%0(\\d)d)")
         frame_match = re.search(frame_pattern, path)
         if frame_match:
             full_frame_spec = frame_match.group(1)

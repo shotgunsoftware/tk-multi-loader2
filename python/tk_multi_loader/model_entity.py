@@ -24,7 +24,15 @@ class SgEntityModel(ShotgunModel):
     on the left hand side.
     """
 
-    def __init__(self, parent, entity_type, filters, hierarchy, bg_task_manager, disable_folder_thumbnails=False):
+    def __init__(
+            self,
+            parent,
+            entity_type,
+            filters,
+            hierarchy,
+            bg_task_manager,
+            disable_folder_thumbnails=False,
+    ):
         """
         Constructor
         """

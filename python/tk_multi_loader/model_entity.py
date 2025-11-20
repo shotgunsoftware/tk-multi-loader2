@@ -25,13 +25,13 @@ class SgEntityModel(ShotgunModel):
     """
 
     def __init__(
-            self,
-            parent,
-            entity_type,
-            filters,
-            hierarchy,
-            bg_task_manager,
-            disable_folder_thumbnails=False,
+        self,
+        parent,
+        entity_type,
+        filters,
+        hierarchy,
+        bg_task_manager,
+        disable_folder_thumbnails=False,
     ):
         """
         Constructor
@@ -84,6 +84,7 @@ class SgEntityModel(ShotgunModel):
             bg_task_manager=bg_task_manager,
         )
         fields = ["image", "sg_status_list", "description"]
+
         # To significantly speed up the query, conditionally remove the 'image' field
         if disable_folder_thumbnails:
             fields.remove("image")

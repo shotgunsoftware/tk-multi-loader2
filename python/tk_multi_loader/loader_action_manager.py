@@ -11,6 +11,7 @@
 import sgtk
 import os
 import sys
+from functools import partial
 from sgtk.platform.qt import QtCore, QtGui
 from sgtk.util import login
 
@@ -99,11 +100,9 @@ class LoaderActionManager(ActionManager):
             ]
 
             # Bind all the action params to a single invocation of the _execute_hook.
-            a.triggered[()].connect(
-                lambda qt_action=a, actions=actions: self._execute_hook(
-                    qt_action, actions
-                )
-            )
+            handler = partial(self._execute_hook, a, actions)
+            a.triggered[()].connect(handler)
+
             a.setData(actions)
             qt_actions.append(a)
 
@@ -184,11 +183,9 @@ class LoaderActionManager(ActionManager):
                 ]
 
                 # Bind all the action params to a single invocation of the _execute_hook.
-                a.triggered[()].connect(
-                    lambda qt_action=a, actions=actions: self._execute_hook(
-                        qt_action, actions
-                    )
-                )
+                handler = partial(self._execute_hook, a, actions)
+                a.triggered[()].connect(handler)
+
                 a.setData(actions)
                 qt_actions.append(a)
 

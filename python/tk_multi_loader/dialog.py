@@ -1792,6 +1792,7 @@ class AppDialog(QtGui.QWidget):
             setting_dict["filters"],
             setting_dict["hierarchy"],
             self._task_manager,
+            setting_dict.get("disable_folder_thumbnails"),
         )
 
         # Create a proxy model.

@@ -39,7 +39,7 @@ class Banner(QtGui.QLabel):
             border-bottom-right-radius: 10px;
         """.format(
                 highlight=self.palette().highlight().color().name(),
-                text=self.palette().text().color().name(),
+                text=self.palette().highlightedText().color().name(),
             )
         )
 

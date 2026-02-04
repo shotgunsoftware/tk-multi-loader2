@@ -311,9 +311,7 @@ class MayaActions(HookBaseClass):
                 return
 
         # create an image plane for the supplied path, visible in all views
-        (img_plane, img_plane_shape) = cmds.imagePlane(
-            fileName=path, showInAllViews=True
-        )
+        img_plane, img_plane_shape = cmds.imagePlane(fileName=path, showInAllViews=True)
         app.logger.debug("Created image plane %s with path %s" % (img_plane, path))
 
         if has_frame_spec:

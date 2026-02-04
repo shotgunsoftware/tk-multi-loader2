@@ -11,6 +11,7 @@
 """
 Hook that loads defines all the available actions, broken down by publish type.
 """
+
 import sgtk
 from pyfbsdk import FBApplication
 import os
@@ -148,7 +149,7 @@ class MotionbuilderActions(HookBaseClass):
         if not os.path.exists(path):
             raise Exception("File not found on disk - '%s'" % path)
 
-        (_, ext) = os.path.splitext(path)
+        _, ext = os.path.splitext(path)
 
         if ext.lower() != ".fbx":
             raise Exception(

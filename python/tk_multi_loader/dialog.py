@@ -63,7 +63,7 @@ class AppDialog(QtGui.QWidget):
     """
 
     # enum to control the mode of the main view
-    (MAIN_VIEW_LIST, MAIN_VIEW_THUMB) = range(2)
+    MAIN_VIEW_LIST, MAIN_VIEW_THUMB = range(2)
 
     # settings keys
     FILTER_MENU_STATE = "filter_menu_state"
@@ -1452,9 +1452,9 @@ class AppDialog(QtGui.QWidget):
             # Create the model.
             if type_hierarchy:
                 entity_root = self._get_entity_root(setting_dict["root"])
-                (model, proxy_model) = self._setup_hierarchy_model(app, entity_root)
+                model, proxy_model = self._setup_hierarchy_model(app, entity_root)
             else:
-                (model, proxy_model) = self._setup_query_model(app, setting_dict)
+                model, proxy_model = self._setup_query_model(app, setting_dict)
 
             # Add a new tab and its layout to the main tab bar.
             tab = QtGui.QWidget()
@@ -1817,8 +1817,7 @@ class AppDialog(QtGui.QWidget):
         # once we have typed a couple of characters
         if pattern and len(pattern) >= constants.TREE_SEARCH_TRIGGER_LENGTH:
             # indicate with a blue border that a search is active
-            tree_view.setStyleSheet(
-                """
+            tree_view.setStyleSheet("""
                 QTreeView {{
                     border-width: 3px;
                     border-style: solid;
@@ -1827,10 +1826,7 @@ class AppDialog(QtGui.QWidget):
                 QTreeView::item {{
                     padding: 6px;
                 }}
-                """.format(
-                    highlight=self.palette().highlight().color().name()
-                )
-            )
+                """.format(highlight=self.palette().highlight().color().name()))
             # expand all nodes in the tree
             tree_view.expandAll()
         else:
@@ -2029,7 +2025,7 @@ class AppDialog(QtGui.QWidget):
             while tmp_item:
 
                 # Extract the Shotgun data and field value from the node item.
-                (sg_data, field_value) = model_item_data.get_item_data(tmp_item)
+                sg_data, field_value = model_item_data.get_item_data(tmp_item)
 
                 # now figure out the associated value and type for this node
 

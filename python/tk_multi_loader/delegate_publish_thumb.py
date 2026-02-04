@@ -87,7 +87,7 @@ class SgPublishThumbDelegate(PublishDelegate):
         """
 
         # Extract the Shotgun data and field value from the model index.
-        (sg_data, field_value) = model_item_data.get_item_data(model_index)
+        sg_data, field_value = model_item_data.get_item_data(model_index)
 
         header_text = ""
         details_text = ""

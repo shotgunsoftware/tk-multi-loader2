@@ -11,6 +11,7 @@
 """
 Hook that loads defines all the available actions, broken down by publish type.
 """
+
 import os
 import re
 import glob
@@ -256,7 +257,7 @@ class NukeActions(HookBaseClass):
         """
         import nuke
 
-        (_, ext) = os.path.splitext(path)
+        _, ext = os.path.splitext(path)
 
         # If this is an Alembic cache, use a ReadGeo2 and we're done.
         if ext.lower() == ".abc":

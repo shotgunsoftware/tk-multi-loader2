@@ -14,7 +14,6 @@ import sgtk
 from sgtk import TankError
 from tank_vendor import shotgun_api3
 
-
 logger = sgtk.platform.get_logger(__name__)
 
 

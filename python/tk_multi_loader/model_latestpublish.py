@@ -142,7 +142,7 @@ class SgLatestPublishModel(ShotgunModel):
                 # show matches.
 
                 # Extract the Shotgun data and field value from the node item.
-                (sg_data, field_value) = model_item_data.get_item_data(item)
+                sg_data, field_value = model_item_data.get_item_data(item)
 
                 if sg_data:
                     # leaf node!
@@ -347,7 +347,7 @@ class SgLatestPublishModel(ShotgunModel):
             )
 
             # Extract the Shotgun data and field value from the tree view item.
-            (tree_view_sg_data, field_value) = model_item_data.get_item_data(
+            tree_view_sg_data, field_value = model_item_data.get_item_data(
                 tree_view_item
             )
 

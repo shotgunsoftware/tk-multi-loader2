@@ -4,7 +4,6 @@
 [![Build Status](https://dev.azure.com/shotgun-ecosystem/Toolkit/_apis/build/status/Apps/tk-multi-loader2?branchName=master)](https://dev.azure.com/shotgun-ecosystem/Toolkit/_build/latest?definitionId=73&branchName=master)
 [![codecov](https://codecov.io/gh/shotgunsoftware/tk-multi-loader2/branch/master/graph/badge.svg)](https://codecov.io/gh/shotgunsoftware/tk-multi-loader2)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Linting](https://img.shields.io/badge/PEP8%20by-Hound%20CI-a873d1.svg)](https://houndci.com)
 
 ## Documentation
 This repository is a part of the Flow Production Tracking Toolkit.

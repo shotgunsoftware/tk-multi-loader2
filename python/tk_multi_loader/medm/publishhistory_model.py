@@ -62,7 +62,9 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
 
     # MEDM-specific roles
     SG_DATA_ROLE = QtCore.Qt.UserRole + 1  # To maintain compatibility with ShotgunModel
-    ASSET_ROLE = QtCore.Qt.UserRole + 200  # Stores MEDM Asset object (shared with all MEDM models)
+    ASSET_ROLE = (
+        QtCore.Qt.UserRole + 200
+    )  # Stores MEDM Asset object (shared with all MEDM models)
     VERSION_ROLE = QtCore.Qt.UserRole + 201  # Stores MEDM AssetVersion object
     DRAFT_ROLE = QtCore.Qt.UserRole + 202  # Stores DraftInfo for draft rows
 
@@ -95,11 +97,15 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         super().__init__(parent)
 
         self._app = sgtk.platform.current_bundle()
-        self._flow_module = sgtk.platform.import_framework("tk-framework-flowam", "flow")
+        self._flow_module = sgtk.platform.import_framework(
+            "tk-framework-flowam", "flow"
+        )
 
         self._bg_task_manager = bg_task_manager
         self._cache = cache if cache is not None else MedmSharedCache()
-        self._thumbnail_service = thumbnail_service or MedmThumbnailService(self._cache, self)
+        self._thumbnail_service = thumbnail_service or MedmThumbnailService(
+            self._cache, self
+        )
         self._owns_thumbnail_service = thumbnail_service is None
         self._loading_icon = QtGui.QPixmap(":/res/loading_100x100.png")
         self._current_sg_data = None
@@ -137,7 +143,10 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
             # A NewDraftInfo card has no published asset yet.  Show the draft
             # itself as the sole history entry so the user can still open it.
             draft_info = sg_data.get("_medm_draft")
-            if draft_info is not None and getattr(draft_info, "draft_type", None) == "new":
+            if (
+                draft_info is not None
+                and getattr(draft_info, "draft_type", None) == "new"
+            ):
                 self._add_draft_as_qt_item(draft_info, asset=None)
                 self.cache_loaded.emit()
                 self.data_refreshed.emit(True)
@@ -159,13 +168,17 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
             for asset_version in versions:
                 self._add_version_as_qt_item(asset_version, medm_asset)
 
-            self._app.log_debug(f"MEDM History: Loaded {len(versions)} published versions")
+            self._app.log_debug(
+                f"MEDM History: Loaded {len(versions)} published versions"
+            )
 
             try:
                 if asset_id in self._cache.drafts:
                     drafts = self._cache.drafts[asset_id]
                 else:
-                    drafts = self._flow_module.asset_management.get_asset_drafts(asset_id)
+                    drafts = self._flow_module.asset_management.get_asset_drafts(
+                        asset_id
+                    )
                     self._cache.drafts[asset_id] = drafts
                 for draft_info in drafts:
                     self._add_draft_as_qt_item(draft_info, medm_asset)
@@ -345,7 +358,9 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         if not type_ids:
             type_ids = getattr(draft_info, "type_ids", None) or []
         if type_ids:
-            sg_publish_type_id, sg_publish_type_code = self._resolve_publish_type(type_ids[0])
+            sg_publish_type_id, sg_publish_type_code = self._resolve_publish_type(
+                type_ids[0]
+            )
 
         sg_dict = build_draft_sg_dict(
             draft_info,
@@ -425,7 +440,9 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
 
         display_name = medm_type_id_str
         try:
-            schema_name = self._flow_module.schema.get_schema_display_name(medm_type_id_str)
+            schema_name = self._flow_module.schema.get_schema_display_name(
+                medm_type_id_str
+            )
             if schema_name:
                 display_name = schema_name
         except Exception as e:
@@ -473,9 +490,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         """
         self._thumbnail_service.request(qt_item, revision_id, self._apply_thumbnail)
 
-    def _apply_thumbnail(
-        self, qt_item: QtGui.QStandardItem, image_data: bytes
-    ) -> None:
+    def _apply_thumbnail(self, qt_item: QtGui.QStandardItem, image_data: bytes) -> None:
         """
         Apply downloaded image bytes to *qt_item* as a composite publish thumbnail.
         Called on the main thread by :class:`MedmThumbnailService`.

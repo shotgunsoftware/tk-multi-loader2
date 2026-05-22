@@ -62,8 +62,12 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
     # Additional MEDM-specific roles
     SG_DATA_ROLE = QtCore.Qt.UserRole + 1  # To maintain compatibility with ShotgunModel
     SG_ASSOCIATED_FIELD_ROLE = QtCore.Qt.UserRole + 2
-    ASSET_ROLE = QtCore.Qt.UserRole + 200  # Stores MEDM Asset object (shared with all MEDM models)
-    DRAFT_ROLE = QtCore.Qt.UserRole + 202  # Stores DraftInfo for draft rows (shared with history model)
+    ASSET_ROLE = (
+        QtCore.Qt.UserRole + 200
+    )  # Stores MEDM Asset object (shared with all MEDM models)
+    DRAFT_ROLE = (
+        QtCore.Qt.UserRole + 202
+    )  # Stores DraftInfo for draft rows (shared with history model)
 
     # Signals
     loadingStarted = QtCore.Signal()
@@ -100,12 +104,16 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         super().__init__(parent)
 
         self._app = sgtk.platform.current_bundle()
-        self._flow_module = sgtk.platform.import_framework("tk-framework-flowam", "flow")
+        self._flow_module = sgtk.platform.import_framework(
+            "tk-framework-flowam", "flow"
+        )
 
         self._publish_type_model = publish_type_model
         self._bg_task_manager = bg_task_manager
         self._cache = cache if cache is not None else MedmSharedCache()
-        self._thumbnail_service = thumbnail_service or MedmThumbnailService(self._cache, self)
+        self._thumbnail_service = thumbnail_service or MedmThumbnailService(
+            self._cache, self
+        )
         self._owns_thumbnail_service = thumbnail_service is None
 
         self._loading_icon = QtGui.QIcon.fromTheme("view-refresh")
@@ -281,7 +289,10 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
                 published_count += 1
 
         # Surface drafts for the leaf-fallback asset.
-        if leaf_asset_fallback is not None and leaf_asset_fallback.id in drafts_by_asset_id:
+        if (
+            leaf_asset_fallback is not None
+            and leaf_asset_fallback.id in drafts_by_asset_id
+        ):
             for draft_sg_dict in drafts_by_asset_id[leaf_asset_fallback.id]:
                 self._add_sg_dict_as_qt_item(draft_sg_dict)
                 draft_count += 1
@@ -389,9 +400,17 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
             "version_number": asset.version_number,
             "description": asset.description or "",
             "created_at": asset.created_at,
-            "created_by": {"type": "HumanUser", "id": 1, "name": asset.created_by or "MEDM User"},
+            "created_by": {
+                "type": "HumanUser",
+                "id": 1,
+                "name": asset.created_by or "MEDM User",
+            },
             "entity": {"type": "Asset", "id": None, "name": asset.name},
-            "project": {"type": "Project", "id": self._project_id, "name": self._project_name},
+            "project": {
+                "type": "Project",
+                "id": self._project_id,
+                "name": self._project_name,
+            },
             "task": None,
             "task_uniqueness": True,
             "published_file_type": {
@@ -443,13 +462,17 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         if not type_ids:
             type_ids = getattr(draft_info, "type_ids", None) or []
         if type_ids:
-            sg_publish_type_id, sg_publish_type_code = self._resolve_publish_type(type_ids[0])
+            sg_publish_type_id, sg_publish_type_code = self._resolve_publish_type(
+                type_ids[0]
+            )
 
         # For checkout drafts the parent asset's revision_id provides the
         # thumbnail; for new drafts there is no published revision.
         draft_type = getattr(draft_info, "draft_type", "unknown")
         thumb_revision_id = (
-            asset.revision_id if (draft_type == "checkout" and asset is not None) else None
+            asset.revision_id
+            if (draft_type == "checkout" and asset is not None)
+            else None
         )
 
         sg_dict = build_draft_sg_dict(
@@ -541,7 +564,9 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
 
         display_name = medm_type_id_str
         try:
-            schema_name = self._flow_module.schema.get_schema_display_name(medm_type_id_str)
+            schema_name = self._flow_module.schema.get_schema_display_name(
+                medm_type_id_str
+            )
             if schema_name:
                 display_name = schema_name
         except Exception as e:
@@ -651,9 +676,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         date_str = str(sg_item.get("created_at", "Unknown"))
 
         tooltip += f"<br><br><b>Version:</b> {vers_str} by {author_str} at {date_str}"
-        tooltip += (
-            f"<br><br><b>Description:</b> {sg_item.get('description', 'No description given.')}"
-        )
+        tooltip += f"<br><br><b>Description:</b> {sg_item.get('description', 'No description given.')}"
 
         item.setToolTip(tooltip)
 
@@ -670,9 +693,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         """
         self._thumbnail_service.request(qt_item, revision_id, self._apply_thumbnail)
 
-    def _apply_thumbnail(
-        self, qt_item: QtGui.QStandardItem, image_data: bytes
-    ) -> None:
+    def _apply_thumbnail(self, qt_item: QtGui.QStandardItem, image_data: bytes) -> None:
         """
         Apply downloaded image bytes as a scaled icon on *qt_item*.
         Called on the main thread by :class:`MedmThumbnailService`.

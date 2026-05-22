@@ -72,7 +72,9 @@ class MedmThumbnailService(QtCore.QObject):
         super().__init__(parent)
 
         self._app = sgtk.platform.current_bundle()
-        self._flow_module = sgtk.platform.import_framework("tk-framework-flowam", "flow")
+        self._flow_module = sgtk.platform.import_framework(
+            "tk-framework-flowam", "flow"
+        )
 
         # Both dicts are references into the shared cache - not owned here.
         self._url_cache: Dict[str, Optional[str]] = cache.thumbnail_urls
@@ -111,7 +113,11 @@ class MedmThumbnailService(QtCore.QObject):
         # Fast path: both URL and image bytes already cached.
         cached_url = self._url_cache.get(revision_id)
         if cached_url and cached_url in self._data_cache:
-            self._pending[id(qt_item)] = (qt_item, self._data_cache[cached_url], callback)
+            self._pending[id(qt_item)] = (
+                qt_item,
+                self._data_cache[cached_url],
+                callback,
+            )
             return
 
         threading.Thread(
@@ -138,9 +144,7 @@ class MedmThumbnailService(QtCore.QObject):
             self._timer.timeout.connect(self._process_pending)
             self._timer.start(100)
 
-    def _resolve_and_fetch(
-        self, qt_item, revision_id: str, callback: Callable
-    ) -> None:
+    def _resolve_and_fetch(self, qt_item, revision_id: str, callback: Callable) -> None:
         """Background-thread worker: resolve URL then download bytes."""
         # 1. Resolve the thumbnail URL (hits the API at most once per revision).
         url = self._url_cache.get(revision_id)
@@ -168,7 +172,9 @@ class MedmThumbnailService(QtCore.QObject):
             old_timeout = socket.getdefaulttimeout()
             try:
                 socket.setdefaulttimeout(self._CONNECTION_TIMEOUT + self._READ_TIMEOUT)
-                with urllib.request.urlopen(req, timeout=self._CONNECTION_TIMEOUT) as response:
+                with urllib.request.urlopen(
+                    req, timeout=self._CONNECTION_TIMEOUT
+                ) as response:
                     if response.status != 200:
                         self._app.log_debug(
                             f"MEDM ThumbnailService: HTTP {response.status} for {revision_id}"

@@ -51,7 +51,9 @@ class MedmEntityModel(QtGui.QStandardItemModel):
     # Custom roles - matching ShotgunModel interface
     SG_DATA_ROLE = QtCore.Qt.UserRole + 1
     SG_ASSOCIATED_FIELD_ROLE = QtCore.Qt.UserRole + 2
-    ASSET_ROLE = QtCore.Qt.UserRole + 200  # Stores MEDM Asset object (shared with all MEDM models)
+    ASSET_ROLE = (
+        QtCore.Qt.UserRole + 200
+    )  # Stores MEDM Asset object (shared with all MEDM models)
 
     # Lazy-loading bookkeeping role: True once children have been fetched for a node.
     CHILDREN_LOADED_ROLE = QtCore.Qt.UserRole + 201
@@ -88,7 +90,9 @@ class MedmEntityModel(QtGui.QStandardItemModel):
         super().__init__(parent)
 
         self._app = sgtk.platform.current_bundle()
-        self._flow_module = sgtk.platform.import_framework("tk-framework-flowam", "flow")
+        self._flow_module = sgtk.platform.import_framework(
+            "tk-framework-flowam", "flow"
+        )
 
         self._cache = cache if cache is not None else MedmSharedCache()
         self._folder_icon = QtGui.QIcon(QtGui.QPixmap(":/res/icon_Folder.png"))
@@ -229,7 +233,9 @@ class MedmEntityModel(QtGui.QStandardItemModel):
         try:
             session_project = self._flow_module.data.get_session_project()
             self._project = self._flow_module.data.Project(session_project.id)
-            self._app.log_debug(f"MEDM Entity: Initialized project '{self._project.name}'")
+            self._app.log_debug(
+                f"MEDM Entity: Initialized project '{self._project.name}'"
+            )
         except Exception as e:
             self._app.log_error(
                 f"MEDM Entity: Failed to initialize project: {type(e).__name__}: {e}. "
@@ -329,7 +335,9 @@ class MedmEntityModel(QtGui.QStandardItemModel):
         Called asynchronously after a short delay to show the loading spinner.
         """
         if self._project is None:
-            self._app.log_warning("MEDM Entity: Cannot load assets - project not initialized")
+            self._app.log_warning(
+                "MEDM Entity: Cannot load assets - project not initialized"
+            )
             self.data_refresh_fail.emit("Project not initialized")
             return
 

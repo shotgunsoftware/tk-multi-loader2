@@ -27,7 +27,6 @@ from .shared_cache import MedmSharedCache
 from .thumbnail_service import MedmThumbnailService
 from .utils import build_draft_sg_dict
 
-
 if TYPE_CHECKING:
     from adsk.flow.am import (
         Asset,

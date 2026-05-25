@@ -8,10 +8,18 @@
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
-import sgtk
-from sgtk.platform.qt import QtCore, QtGui
 import datetime
+
+import sgtk
+from sgtk.platform.qt import QtCore
+
 from .model_latestpublish import SgLatestPublishModel
+from .medm import MedmLatestPublishModel
+from .ui.widget_publish_list import Ui_PublishListWidget
+from .delegate_publish import PublishWidget, PublishDelegate
+from .utils import create_fields_display_html
+
+from . import model_item_data
 
 # import the shotgun_model and view modules from the shotgun utils framework
 shotgun_model = sgtk.platform.import_framework(
@@ -21,10 +29,6 @@ shotgun_globals = sgtk.platform.import_framework(
     "tk-framework-shotgunutils", "shotgun_globals"
 )
 shotgun_view = sgtk.platform.import_framework("tk-framework-qtwidgets", "views")
-
-from .ui.widget_publish_list import Ui_PublishListWidget
-from .delegate_publish import PublishWidget, PublishDelegate
-from . import model_item_data
 
 
 class PublishListWidget(PublishWidget):
@@ -65,6 +69,17 @@ class SgPublishListDelegate(PublishDelegate):
     Delegate which 'glues up' the List widget with a QT View.
     """
 
+    def __init__(self, *args, **kwargs):
+        """
+        Initialize the delegate and load app settings.
+        """
+        super(SgPublishListDelegate, self).__init__(*args, **kwargs)
+
+        self._app = sgtk.platform.current_bundle()
+        self._list_entity_fields = self._app.get_setting(
+            "entity_fields_middle_panel_list", {}
+        )
+
     def _create_widget(self, parent):
         """
         Widget factory as required by base class. The base class will call this
@@ -84,6 +99,7 @@ class SgPublishListDelegate(PublishDelegate):
 
         # Extract the Shotgun data and field value from the model index.
         sg_data, field_value = model_item_data.get_item_data(model_index)
+        entity_type = sg_data.get("type") if sg_data else None
 
         # by default, just display the value
         main_text = field_value
@@ -94,7 +110,6 @@ class SgPublishListDelegate(PublishDelegate):
             and "name" in field_value
             and "type" in field_value
         ):
-            # intermediate node with entity link
             field_value_type = shotgun_globals.get_type_display_name(
                 field_value["type"]
             )
@@ -103,6 +118,23 @@ class SgPublishListDelegate(PublishDelegate):
                 field_value_type,
                 field_value["name"],
             )
+
+            intermediate_entity_type = field_value.get("type")
+            configured_fields = self._list_entity_fields.get(
+                intermediate_entity_type, []
+            )
+            try:
+                small_text = create_fields_display_html(
+                    configured_fields, field_value, max_chars_per_line=60, max_lines=3
+                )
+            except Exception as exc:
+                self._app.logger.warning(
+                    "Unable to render configured fields for %s entity in list view. Error: %s",
+                    intermediate_entity_type,
+                    exc,
+                    exc_info=True,
+                )
+                small_text = ""
 
         elif isinstance(field_value, list):
             # this is a list of some sort. Loop over all elements and extract a comma separated list.
@@ -126,13 +158,52 @@ class SgPublishListDelegate(PublishDelegate):
             main_text = "<b>%s</b><br>%s" % (types, names)
 
         elif sg_data:
-            # this is a leaf node
-            display_name = shotgun_globals.get_type_display_name(sg_data["type"])
+            display_name = shotgun_globals.get_type_display_name(entity_type)
             main_text = "<b>%s</b> <b style='color:#2C93E2'>%s</b>" % (
                 display_name,
                 field_value,
             )
-            small_text = sg_data.get("description") or "No description given."
+
+            html_parts = []
+
+            default_small_text_field = ["description"]
+            try:
+                default_field_html = create_fields_display_html(
+                    default_small_text_field,
+                    sg_data,
+                    max_chars_per_line=60,
+                    max_lines=3,
+                )
+                if default_field_html:
+                    html_parts.append(default_field_html)
+            except Exception as exc:
+                self._app.logger.warning(
+                    "Unable to render default fields for %s entity in list view. Error: %s",
+                    entity_type,
+                    exc,
+                    exc_info=True,
+                )
+
+            configured_fields = self._list_entity_fields.get(entity_type, [])
+            try:
+                additional_fields_html = create_fields_display_html(
+                    configured_fields,
+                    sg_data,
+                    filter_fields=default_small_text_field,
+                    max_chars_per_line=60,
+                    max_lines=3,
+                )
+                if additional_fields_html:
+                    html_parts.append(additional_fields_html)
+            except Exception as exc:
+                self._app.logger.warning(
+                    "Unable to render configured fields for %s entity in list view. Error: %s",
+                    entity_type,
+                    exc,
+                    exc_info=True,
+                )
+
+            small_text = "<br/>".join(html_parts)
 
         widget.set_text(main_text, small_text)
 
@@ -144,62 +215,26 @@ class SgPublishListDelegate(PublishDelegate):
         :param widget: widget to adjust
         """
 
-        # example data:
-
-        # {'code': 'aaa_00010_F004_C003_0228F8_v000.%04d.dpx',
-        #  'created_at': 1425378837.0,
-        #  'created_by': {'id': 42, 'name': 'Manne Ohrstrom', 'type': 'HumanUser'},
-        #  'created_by.HumanUser.image': 'https://...',
-        #  'description': 'testing testing, 1,2,3',
-        #  'entity': {'id': 1660, 'name': 'aaa_00010', 'type': 'Shot'},
-        #  'id': 1340,
-        #  'image': 'https:...',
-        #  'name': 'aaa_00010, F004_C003_0228F8',
-        #  'path': {'content_type': 'image/dpx',
-        #           'id': 24116,
-        #           'link_type': 'local',
-        #           'local_path': '/mnt/projects...',
-        #           'local_path_linux': '/mnt/projects...',
-        #           'local_path_mac': '/mnt/projects...',
-        #           'local_path_windows': 'z:\\mnt\\projects...',
-        #           'local_storage': {'id': 4,
-        #                             'name': 'primary',
-        #                             'type': 'LocalStorage'},
-        #           'name': 'aaa_00010_F004_C003_0228F8_v000.%04d.dpx',
-        #           'type': 'Attachment',
-        #           'url': 'file:///mnt/projects...'},
-        #  'project': {'id': 289, 'name': 'Climp', 'type': 'Project'},
-        #  'published_file_type': {'id': 53,
-        #                          'name': 'Flame Render',
-        #                          'type': 'PublishedFileType'},
-        #  'task': None,
-        #  'task.Task.content': None,
-        #  'task.Task.due_date': None,
-        #  'task.Task.sg_status_list': None,
-        #  'task_uniqueness': False,
-        #  'type': 'PublishedFile',
-        #  'version': {'id': 6697,
-        #              'name': 'aaa_00010_F004_C003_0228F8_v000',
-        #              'type': 'Version'},
-        #  'version.Version.sg_status_list': 'rev',
-        #  'version_number': 2}
-
-        # Publish Name Version 002
         sg_data = shotgun_model.get_sg_data(model_index)
+        entity_type = sg_data.get("type") if sg_data else None
+
+        main_text_fields = ["name", "version_number", "entity", "task"]
+        default_small_text_fields = ["created_by", "created_at"]
+
+        configured_fields = self._list_entity_fields.get(entity_type, [])
+        filter_fields = list(set(main_text_fields + default_small_text_fields))
+
         main_text = "<b>%s</b>" % (sg_data.get("name") or "Unnamed")
 
         version = sg_data.get("version_number")
-        vers_str = "%03d" % version if version is not None else "N/A"
+        if version == MedmLatestPublishModel.DRAFT_VERSION_IDENTIFIER:
+            vers_str = "[DRAFT]"
+        else:
+            vers_str = "%03d" % version if version is not None else "N/A"
 
         main_text += " Version %s" % vers_str
 
-        # If we are in "show subfolders mode, this line will contain
-        # the entity information (because we are displaying info from several entities
-        # in a single view. If show subfolders mode is off, the latest description is shown.
         if self._sub_items_mode:
-            # show items in subfolders mode enabled
-            # get the name of the associated entity
-
             main_text += "  ("
 
             entity_link = sg_data.get("entity")
@@ -217,28 +252,58 @@ class SgPublishListDelegate(PublishDelegate):
 
             main_text += ")"
         elif sg_data.get("task") is not None:
-            # When not in subfolders mode always show Task info
-            # (similar to the logic in the thumbnail view, but always show)
             main_text += "  (Task %s)" % sg_data["task"]["name"]
 
-        # Quicktime by John Smith at 2014-02-23 10:34
         pub_type_str = shotgun_model.get_sanitized_data(
             model_index, SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE
         )
         created_unixtime = sg_data.get("created_at") or 0
-        date_str = datetime.datetime.fromtimestamp(created_unixtime).strftime(
-            "%Y-%m-%d %H:%M"
-        )
-        # created_by is set to None if the user has been deleted.
+        try:
+            if isinstance(created_unixtime, datetime.datetime):
+                date_str = created_unixtime.strftime("%Y-%m-%d %H:%M")
+            elif isinstance(created_unixtime, (int, float)):
+                date_str = datetime.datetime.fromtimestamp(created_unixtime).strftime(
+                    "%Y-%m-%d %H:%M"
+                )
+            else:
+                date_str = "Unknown"
+        except (ValueError, OSError) as exc:
+            self._app.logger.warning(
+                "Unable to convert created_at timestamp for %s publish in list view. Error: %s",
+                entity_type,
+                exc,
+            )
+            date_str = "Unknown"
+
         if sg_data.get("created_by") and sg_data["created_by"].get("name"):
             author_str = sg_data["created_by"].get("name")
         else:
             author_str = "Unspecified User"
+
         small_text = "<span style='color:#2C93E2'>%s</span> by %s at %s" % (
             pub_type_str,
             author_str,
             date_str,
         )
+
+        try:
+            additional_fields_html = create_fields_display_html(
+                configured_fields,
+                sg_data,
+                filter_fields=filter_fields,
+                max_chars_per_line=60,
+                max_lines=3,
+            )
+            if additional_fields_html:
+                small_text += "<br/>" + additional_fields_html
+        except Exception as exc:
+            self._app.logger.warning(
+                "Unable to render configured fields for %s publish in list view. Error: %s",
+                entity_type,
+                exc,
+                exc_info=True,
+            )
+
         widget.set_text(main_text, small_text)
 
     def sizeHint(self, style_options, model_index):

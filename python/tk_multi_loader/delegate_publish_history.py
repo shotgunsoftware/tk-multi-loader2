@@ -124,7 +124,7 @@ class PublishHistoryWidget(QtGui.QWidget):
 
         :returns: Size of the widget
         """
-        return QtCore.QSize(200, 90)
+        return QtCore.QSize(200, 50)
 
 
 class SgPublishHistoryDelegate(shotgun_view.EditSelectedWidgetDelegate):
@@ -201,11 +201,6 @@ class SgPublishHistoryDelegate(shotgun_view.EditSelectedWidgetDelegate):
         :param model_index: The model index to operate on
         :param style_options: QT style options
         """
-        icon = shotgun_model.get_sanitized_data(model_index, QtCore.Qt.DecorationRole)
-        if icon:
-            thumb = icon.pixmap(512)
-            widget.set_thumbnail(thumb)
-
         # fill in the rest of the widget based on the raw sg data
         # this is not totally clean separation of concerns, but
         # introduces a coupling between the delegate and the model.
@@ -217,7 +212,7 @@ class SgPublishHistoryDelegate(shotgun_view.EditSelectedWidgetDelegate):
         # v004 (2014-02-21 12:34)
 
         header_str = ""
-        header_str += "<b style='color:#2C93E2'>Version %03d</b>" % (
+        header_str += "<b style='color:#F5F5F5'>Version %03d</b>" % (
             sg_item.get("version_number") or 0
         )
 
@@ -226,12 +221,12 @@ class SgPublishHistoryDelegate(shotgun_view.EditSelectedWidgetDelegate):
             date_str = datetime.datetime.fromtimestamp(created_unixtime).strftime(
                 "%Y-%m-%d %H:%M"
             )
-            header_str += "&nbsp;&nbsp;<small>(%s)</small>" % date_str
+            header_str += "&nbsp;-&nbsp;<b>%s</b>" % date_str
         except:
             pass
 
         # set the little description bit next to the artist icon
-        desc_str = sg_item.get("description") or "No Description Given"
+        desc_str = sg_item.get("description") or "N/A"
         # created_by is set to None if the user has been deleted.
         if sg_item.get("created_by") and sg_item["created_by"].get("name"):
             author_str = sg_item["created_by"].get("name")

@@ -23,11 +23,11 @@ class Ui_PublishHistoryWidget(object):
     def setupUi(self, PublishHistoryWidget):
         if not PublishHistoryWidget.objectName():
             PublishHistoryWidget.setObjectName(u"PublishHistoryWidget")
-        PublishHistoryWidget.resize(1226, 782)
+        PublishHistoryWidget.resize(1226, 130)
         self.horizontalLayout_3 = QHBoxLayout(PublishHistoryWidget)
         self.horizontalLayout_3.setSpacing(1)
-        self.horizontalLayout_3.setContentsMargins(1, 1, 1, 1)
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
+        self.horizontalLayout_3.setContentsMargins(1, 1, 1, 1)
         self.box = QFrame(PublishHistoryWidget)
         self.box.setObjectName(u"box")
         self.box.setFrameShape(QFrame.StyledPanel)
@@ -38,9 +38,10 @@ class Ui_PublishHistoryWidget(object):
         self.horizontalLayout_2.setContentsMargins(1, 2, 1, 2)
         self.thumbnail = QLabel(self.box)
         self.thumbnail.setObjectName(u"thumbnail")
-        self.thumbnail.setMinimumSize(QSize(75, 75))
-        self.thumbnail.setMaximumSize(QSize(75, 75))
-        self.thumbnail.setScaledContents(True)
+        self.thumbnail.setMinimumSize(QSize(5, 45))
+        self.thumbnail.setMaximumSize(QSize(45, 45))
+        self.thumbnail.setPixmap(QPixmap(u":/res/icon_branch.png"))
+        self.thumbnail.setScaledContents(False)
         self.thumbnail.setAlignment(Qt.AlignCenter)
 
         self.horizontalLayout_2.addWidget(self.thumbnail)

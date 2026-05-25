@@ -13,26 +13,88 @@ Constants used by the loader.
 
 """
 
-# fields to pull down for published files
-PUBLISHED_FILES_FIELDS = [
-    "name",
-    "version_number",
-    "image",
-    "entity",
-    "path",
-    "description",
-    "sg_status_list",
-    "task",
-    "task.Task.sg_status_list",
-    "task.Task.due_date",
-    "project",
-    "task.Task.content",
-    "created_by",
-    "created_at",
-    "version",  # note: not supported on TankPublishedFile so always None
-    "version.Version.sg_status_list",
-    "created_by.HumanUser.image",
-]
+# Fields to query during model initialization for different entity types for detail panel usage
+ENTITY_TYPE_DETAIL_PANEL_FIELDS = {
+    "PublishedFile": [
+        "name",
+        "description",
+        "entity",
+        "project",
+        "version_number",
+        "version",
+        "version.Version.sg_status_list",
+        "sg_status_list",
+        "task",
+        "task.Task.content",
+        "task.Task.sg_status_list",
+        "task.Task.due_date",
+        "path",
+        "created_by",
+        "created_at",
+        "image",
+        "created_by.HumanUser.image",
+    ],
+    "Task": [
+        "content",
+        "sg_status_list",
+        "assigned_to",
+        "due_date",
+        "entity",
+        "project",
+        "step",
+    ],
+    "Asset": [
+        "name",
+        "description",
+        "sg_status_list",
+        "project",
+        "created_by",
+        "shots",
+    ],
+    "Shot": [
+        "name",
+        "description",
+        "sg_status_list",
+        "project",
+        "created_by",
+        "assets",
+        "sg_cut_in",
+        "sg_cut_out",
+    ],
+}
+
+# Fields to query for different entity types to display in the middle panel
+ENTITY_TYPE_MIDDLE_PANEL_FIELDS = {
+    "PublishedFile": [
+        "name",
+        "description",
+        "entity",
+        "project",
+        "version_number",
+        "version",
+        "version.Version.sg_status_list",
+        "sg_status_list",
+        "task",
+        "task.Task.content",
+        "task.Task.sg_status_list",
+        "task.Task.due_date",
+        "path",
+        "created_by",
+        "created_at",
+        "image",
+        "created_by.HumanUser.image",
+    ],
+    "Asset": ["name", "description", "sg_status_list", "created_by"],
+    "Shot": [
+        "name",
+        "description",
+        "sg_status_list",
+        "project",
+        "sg_sequence",
+        "sg_cut_in",
+        "sg_cut_out",
+    ],
+}
 
 # left hand side tree view search only kicks in
 # after a certain number have been typed in.

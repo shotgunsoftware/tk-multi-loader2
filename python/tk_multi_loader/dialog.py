@@ -9,6 +9,9 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 
+from typing import Any
+
+import os
 import sgtk
 from sgtk import TankError
 from sgtk.platform.qt import QtCore, QtGui
@@ -16,6 +19,13 @@ from sgtk.platform.qt import QtCore, QtGui
 from .model_hierarchy import SgHierarchyModel
 from .model_entity import SgEntityModel
 from .model_latestpublish import SgLatestPublishModel
+from .medm import (
+    MedmEntityModel,
+    MedmLatestPublishModel,
+    MedmPublishHistoryModel,
+    MedmSharedCache,
+    MedmThumbnailService,
+)
 from .model_publishtype import SgPublishTypeModel
 from .model_status import SgStatusModel
 from .proxymodel_latestpublish import SgLatestPublishProxyModel
@@ -27,7 +37,7 @@ from .delegate_publish_history import SgPublishHistoryDelegate
 from .search_widget import SearchWidget
 from .banner import Banner
 from .loader_action_manager import LoaderActionManager
-from .utils import resolve_filters
+from .utils import resolve_filters, get_field_display_name, get_human_readable_value
 from .framework_qtwidgets import ShotgunFilterMenu
 
 from . import constants
@@ -84,6 +94,12 @@ class AppDialog(QtGui.QWidget):
         QtGui.QWidget.__init__(self, parent)
         self._action_manager = action_manager
 
+        # Hold a reference to the current animation to prevent GC mid-run
+        self._current_animation = None
+
+        # MEDM tree view - only created when use_medm_data is enabled
+        self._medm_tree_view = None
+
         # The loader app can be invoked from other applications with a custom
         # action manager as a File Open-like dialog. For these managers, we won't
         # be using the banner system.
@@ -114,6 +130,12 @@ class AppDialog(QtGui.QWidget):
         # Do not allow items to be dragged and moved around.
         self.ui.publish_view.setMovement(QtGui.QListView.Static)
 
+        # Set initial splitter proportions: left panel, middle publish area, right details
+        self.ui.splitter.setStretchFactor(0, 3)
+        self.ui.splitter.setStretchFactor(1, 7)
+        self.ui.splitter.setStretchFactor(2, 3)
+        self.ui.splitter.setSizes([360, 840, 380])
+
         #################################################
         # maintain a list where we keep a reference to
         # all the dynamic UI we create. This is to make
@@ -143,6 +165,15 @@ class AppDialog(QtGui.QWidget):
         self.ui.list_mode.clicked.connect(self._on_list_mode_clicked)
 
         self._publish_history_model = SgPublishHistoryModel(self, self._task_manager)
+
+        # All MEDM caches in one place; passed to every MEDM model and service.
+        self._medm_cache = MedmSharedCache()
+        self._medm_thumbnail_service = MedmThumbnailService(self._medm_cache, self)
+
+        # MEDM history model for MEDM publish items
+        self._medm_history_model = MedmPublishHistoryModel(
+            self, self._task_manager, self._medm_cache, self._medm_thumbnail_service
+        )
 
         self._publish_history_model_overlay = ShotgunModelOverlayWidget(
             self._publish_history_model, self.ui.history_view
@@ -183,19 +214,23 @@ class AppDialog(QtGui.QWidget):
         self._no_selection_pixmap = QtGui.QPixmap(":/res/no_item_selected_512x400.png")
         self._no_pubs_found_icon = QtGui.QPixmap(":/res/no_publishes_found.png")
 
-        self.ui.detail_playback_btn.clicked.connect(self._on_detail_version_playback)
         self._current_version_detail_playback_url = None
 
         # set up right click menu for the main publish view
         self._refresh_history_action = QtGui.QAction("Refresh", self.ui.history_view)
         self._refresh_history_action.triggered.connect(
-            self._publish_history_model.async_refresh
+            self._refresh_current_history_model
         )
         self.ui.history_view.addAction(self._refresh_history_action)
         self.ui.history_view.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
 
         # if an item in the list is double clicked the default action is run
         self.ui.history_view.doubleClicked.connect(self._on_history_double_clicked)
+
+        # Make the versions list shrink to fit its content instead of
+        # claiming a large fixed area regardless of how many versions exist.
+        self._history_view_max_height = 350
+        self._patch_history_view_sizing()
 
         #################################################
         # load and initialize cached publish type model
@@ -299,6 +334,7 @@ class AppDialog(QtGui.QWidget):
         self.ui.show_sub_items.toggled.connect(self._on_show_subitems_toggled)
         self.ui.check_all.clicked.connect(self._publish_type_model.select_all)
         self.ui.check_none.clicked.connect(self._publish_type_model.select_none)
+        self.ui.details_button.toggled.connect(self._on_details_button_toggled)
 
         #################################################
         # thumb scaling
@@ -334,10 +370,15 @@ class AppDialog(QtGui.QWidget):
 
         # Set up filtering
         app = sgtk.platform.current_bundle()
+        use_medm = app.get_setting("use_medm_data", False)
         if app.get_setting("use_legacy_published_file_type_filter", False):
             # Hide the Filter menu button.
             # The legacy filter functionality is always set up, since the filter menu still
             # requires some of that functionality.
+            self._filter_menu = None
+            self.ui.filter_menu_btn.hide()
+        elif use_medm:
+            # Disable filter menu for MEDM mode - it expects ShotgunModel data
             self._filter_menu = None
             self.ui.filter_menu_btn.hide()
         else:
@@ -380,6 +421,10 @@ class AppDialog(QtGui.QWidget):
         self.restore_state()
 
         self._load_entity_presets()
+
+        # Set up the MEDM tree panel when Flow Asset Management is enabled
+        if use_medm:
+            self._setup_medm_tree_panel()
 
         #################################################
         # restore user app ui settings
@@ -533,6 +578,10 @@ class AppDialog(QtGui.QWidget):
             shotgun_globals.unregister_bg_task_manager(self._task_manager)
             self._task_manager.shut_down()
 
+            # Shut down the MEDM thumbnail service if it is running
+            if self._medm_thumbnail_service is not None:
+                self._medm_thumbnail_service.destroy()
+
         except:
             app = sgtk.platform.current_bundle()
             app.log_exception("Error running Loader App closeEvent()")
@@ -597,15 +646,142 @@ class AppDialog(QtGui.QWidget):
     ########################################################################################
     # info bar related
 
+    def _patch_history_view_sizing(self):
+        """
+        Override the history QListView's sizeHint so the layout allocates only
+        enough vertical space for the actual version rows (up to a maximum).
+
+        The default QListView.sizeHint() returns a large constant regardless of
+        content, which leaves a big empty gap when there are few versions.
+        """
+        view = self.ui.history_view
+        max_h = self._history_view_max_height
+        original_width = view.sizeHint().width()
+
+        def _content_size_hint():
+            model = view.model()
+            if model and model.rowCount() > 0:
+                row_h = view.sizeHintForRow(0)
+                content_h = row_h * model.rowCount() + 4
+                return QtCore.QSize(original_width, min(content_h, max_h))
+            return QtCore.QSize(original_width, 0)
+
+        view.sizeHint = _content_size_hint
+
+        # Re-evaluate height whenever the model's row count changes
+        if view.model():
+            view.model().rowsInserted.connect(self._update_history_view_height)
+            view.model().rowsRemoved.connect(self._update_history_view_height)
+            view.model().modelReset.connect(self._update_history_view_height)
+
+    def _update_history_view_height(self):
+        """Notify the layout that the history view's ideal size has changed."""
+        self.ui.history_view.updateGeometry()
+
+    def _on_details_button_toggled(self, checked):
+        """
+        Triggers a show/hide of the details header with an animation.
+        """
+        content_height = 0
+        try:
+            content_height = self.ui.details_header.sizeHint().height()
+        except Exception:
+            pass
+
+        if (
+            self._current_animation
+            and self._current_animation.state() == QtCore.QAbstractAnimation.Running
+        ):
+            self._current_animation.stop()
+
+        animation = QtCore.QPropertyAnimation(self.ui.details_header, b"maximumHeight")
+        animation.setDuration(200)
+        animation.setEasingCurve(QtCore.QEasingCurve.InOutQuad)
+
+        if checked:
+            animation.setStartValue(0)
+            animation.setEndValue(content_height)
+        else:
+            animation.setStartValue(content_height)
+            animation.setEndValue(0)
+
+        self._current_animation = animation
+        animation.start(QtCore.QAbstractAnimation.DeleteWhenStopped)
+
     def _on_history_selection(self, selected, deselected):
         """
-        Called when the selection changes in the history view in the details panel
+        Called when the selection changes in the history view in the details panel.
+        Updates the main thumbnail in the dialog.
 
         :param selected:    Items that have been selected
         :param deselected:  Items that have been deselected
         """
         # emit the selection_changed signal
         self.selection_changed.emit()
+
+        # Clear image if no selection
+        indexes = selected.indexes()
+        if not indexes:
+            self.ui.details_image.setScaledContents(True)
+            self.ui.details_image.clear()
+            return
+
+        # Get the selected item from the model
+        proxy_index = indexes[0]
+        proxy_model = proxy_index.model()
+        if not proxy_model:
+            self.ui.details_image.clear()
+            return
+
+        source_index = proxy_model.mapToSource(proxy_index)
+        if not source_index.isValid():
+            self.ui.details_image.clear()
+            return
+
+        source_model = proxy_model.sourceModel()
+        item = source_model.itemFromIndex(source_index)
+        if not item:
+            self.ui.details_image.clear()
+            return
+
+        # Prefer the full downloaded image path stored by the model
+        full_image_path = item.data(SgPublishHistoryModel.FULL_IMAGE_PATH_ROLE)
+        pixmap = None
+
+        if full_image_path and os.path.exists(full_image_path):
+            pixmap = QtGui.QPixmap(full_image_path)
+            if pixmap.isNull():
+                pixmap = None
+
+        # For MEDM data, fall back to the publish thumbnail role
+        if not pixmap:
+            publish_thumb = item.data(SgPublishHistoryModel.PUBLISH_THUMB_ROLE)
+            if (
+                publish_thumb
+                and isinstance(publish_thumb, QtGui.QPixmap)
+                and not publish_thumb.isNull()
+            ):
+                pixmap = publish_thumb
+
+        # Last resort: item icon
+        if not pixmap:
+            icon = item.icon()
+            if not icon.isNull():
+                pixmap = icon.pixmap(256, 256)
+
+        if not pixmap or pixmap.isNull():
+            self.ui.details_image.clear()
+            return
+
+        # Scale to fit the image label while preserving aspect ratio
+        target_size = self.ui.details_image.size()
+        scaled_pixmap = pixmap.scaled(
+            target_size,
+            QtCore.Qt.KeepAspectRatio,
+            QtCore.Qt.SmoothTransformation,
+        )
+        self.ui.details_image.setPixmap(scaled_pixmap)
+        self.ui.details_image.setScaledContents(False)
 
     def _on_history_double_clicked(self, model_index):
         """
@@ -724,13 +900,13 @@ class AppDialog(QtGui.QWidget):
             # hide details pane
             self._details_pane_visible = False
             self.ui.details.setVisible(False)
-            self.ui.info.setText("Show Details")
+            self.ui.info.setIcon(QtGui.QIcon(":/res/icon_plus.png"))
 
         else:
             # show details pane
             self._details_pane_visible = True
             self.ui.details.setVisible(True)
-            self.ui.info.setText("Hide Details")
+            self.ui.info.setIcon(QtGui.QIcon(":/res/icon_minus.png"))
 
             # if there is something selected, make sure the detail
             # section is focused on this
@@ -738,39 +914,127 @@ class AppDialog(QtGui.QWidget):
 
             self._setup_details_panel(selection_model.selectedIndexes())
 
+    def _format_folder_field_value(
+        self,
+        field_name: str,
+        field_value: Any,
+        sg_data: dict,
+        entity_type: str,
+    ):
+        """Formats field values for Shotgun entity folder items in the details panel.
+
+        :param field_name: Shotgun field name (e.g., 'sg_status_list', 'description')
+        :param field_value: Raw field value from Shotgun
+        :param sg_data: Complete Shotgun entity data dictionary
+        :param entity_type: Shotgun entity type
+        :returns: HTML-formatted string for display in details panel
+        """
+        if field_name == "sg_status_list":
+            if field_value is None:
+                status_name = "No Status"
+            else:
+                status_name = self._status_model.get_long_name(field_value)
+
+            status_color = self._status_model.get_color_str(field_value)
+            if status_color:
+                status_name = "%s&nbsp;<span style='color: rgb(%s)'>&#9608;</span>" % (
+                    status_name,
+                    status_color,
+                )
+            return status_name
+
+        elif field_name == "description":
+            return field_value or "No description entered."
+
+        elif field_name == "code":
+            display_name = shotgun_globals.get_type_display_name(sg_data["type"])
+            return "%s %s" % (display_name, field_value)
+
+        else:
+            return get_human_readable_value(field_value, field_name, entity_type)
+
+    def _format_published_file_field_value(
+        self,
+        field_name: str,
+        field_value: Any,
+        sg_item: dict,
+        entity_type: str,
+    ):
+        """Formats field values for published file items in the details panel.
+
+        :param field_name: Shotgun field name (e.g., 'name', 'version_number', 'entity')
+        :param field_value: Raw field value from Shotgun
+        :param sg_item: Complete published file data dictionary
+        :param entity_type: Shotgun entity type
+        :returns: Formatted string for display in details panel (may contain HTML)
+        """
+        if field_name == "name":
+            return field_value or "No Name"
+
+        elif field_name == "type":
+            return field_value
+
+        elif field_name == "version_number":
+            if field_value == MedmLatestPublishModel.DRAFT_VERSION_IDENTIFIER:
+                return "DRAFT"
+            return "%03d" % field_value if field_value is not None else "N/A"
+
+        elif field_name == "entity":
+            if field_value:
+                display_name = shotgun_globals.get_type_display_name(
+                    field_value.get("type")
+                )
+                entity_name = field_value.get("name")
+                return "<b>%s</b> %s" % (display_name, entity_name)
+
+        elif field_name == "task":
+            if field_value:
+                task_name = sg_item.get("task.Task.content", "Unnamed")
+                task_status_code = sg_item.get("task.Task.sg_status_list")
+                if task_status_code:
+                    task_status_str = self._status_model.get_long_name(task_status_code)
+                else:
+                    task_status_str = "No Status"
+                return "%s (%s)" % (task_name, task_status_str)
+            else:
+                return "No Task"
+
+        elif field_name == "version.Version.sg_status_list":
+            if field_value:
+                return self._status_model.get_long_name(field_value)
+            else:
+                return "No Status"
+
+        else:
+            return get_human_readable_value(field_value, field_name, entity_type)
+
     def _setup_details_panel(self, items):
         """
         Sets up the details panel with info for a given item.
         """
 
-        def __make_table_row(left, right):
-            """
-            Helper method to make a detail table row
-            """
+        def __make_table_row(left, right, max_chars=80):
+            from .utils import smart_truncate
+
+            if isinstance(right, str) and len(right) > max_chars:
+                right = smart_truncate(right, max_chars)
+            if isinstance(left, str):
+                left = left.replace(" ", "&nbsp;")
             return (
-                "<tr><td><b style='color:#2C93E2'>%s</b>&nbsp;</td><td>%s</td></tr>"
+                "<tr><td style='color:rgba(245,245,245,178)'>%s&nbsp;</td>"
+                "<td style='color:rgb(245,245,245);font-weight:bold'>%s</td></tr>"
                 % (left, right)
             )
 
         def __set_publish_ui_visibility(is_publish):
-            """
-            Helper method to enable disable publish specific details UI
-            """
-            # disable version history stuff
-            self.ui.version_history_label.setEnabled(is_publish)
             self.ui.history_view.setEnabled(is_publish)
-
-            # hide actions and playback stuff
             self.ui.detail_actions_btn.setVisible(is_publish)
-            self.ui.detail_playback_btn.setVisible(is_publish)
+            self.ui.details_widget.setVisible(is_publish)
 
         def __clear_publish_history(pixmap):
-            """
-            Helper method that clears the history view on the right hand side.
-
-            :param pixmap: image to set at the top of the history view.
-            """
             self._publish_history_model.clear()
+            self._medm_history_model.clear()
+            self._update_history_view_height()
             self.ui.details_header.setText("")
             self.ui.details_image.setPixmap(pixmap)
             __set_publish_ui_visibility(False)
@@ -785,65 +1049,57 @@ class AppDialog(QtGui.QWidget):
         elif len(items) > 1:
             __clear_publish_history(self._multiple_publishes_pixmap)
         else:
-
             model_index = items[0]
-            # the incoming model index is an index into our proxy model
-            # before continuing, translate it to an index into the
-            # underlying model
             proxy_model = model_index.model()
             source_index = proxy_model.mapToSource(model_index)
-
-            # now we have arrived at our model derived from StandardItemModel
-            # so let's retrieve the standarditem object associated with the index
             item = source_index.model().itemFromIndex(source_index)
 
-            # render out details
             thumb_pixmap = item.icon().pixmap(512)
             self.ui.details_image.setPixmap(thumb_pixmap)
-
             sg_data = item.get_sg_data()
 
+            app = sgtk.platform.current_bundle()
+            detail_panel_entity_fields = app.get_setting(
+                "entity_fields_detail_panel", {}
+            )
+
+            if sg_data is not None:
+                entity_type = sg_data.get("type", "Unknown")
+            else:
+                entity_type = "Unknown"
+            configured_fields = detail_panel_entity_fields.get(entity_type, [])
+
             if sg_data is None:
-                # an item which doesn't have any sg data directly associated
-                # typically an item higher up the tree
-                # just use the default text
                 folder_name = __make_table_row("Name", item.text())
                 self.ui.details_header.setText("<table>%s</table>" % folder_name)
                 __set_publish_ui_visibility(False)
 
             elif item.data(SgLatestPublishModel.IS_FOLDER_ROLE):
                 # folder with sg data - basically a leaf node in the entity tree
-
-                status_code = sg_data.get("sg_status_list")
-                if status_code is None:
-                    status_name = "No Status"
-                else:
-                    status_name = self._status_model.get_long_name(status_code)
-
-                status_color = self._status_model.get_color_str(status_code)
-                if status_color:
-                    status_name = (
-                        "%s&nbsp;<span style='color: rgb(%s)'>&#9608;</span>"
-                        % (status_name, status_color)
-                    )
-
-                if sg_data.get("description"):
-                    desc_str = sg_data.get("description")
-                else:
-                    desc_str = "No description entered."
+                required_fields = ["code", "sg_status_list", "description"]
+                all_fields = list(dict.fromkeys(required_fields + configured_fields))
 
                 msg = ""
-                display_name = shotgun_globals.get_type_display_name(sg_data["type"])
-                msg += __make_table_row(
-                    "Name", "%s %s" % (display_name, sg_data.get("code"))
-                )
-                msg += __make_table_row("Status", status_name)
-                msg += __make_table_row("Description", desc_str)
+                for field_name in all_fields:
+                    if sg_data.get(field_name) is None:
+                        continue
+
+                    display_name = get_field_display_name(entity_type, field_name)
+                    formatted_value = self._format_folder_field_value(
+                        field_name,
+                        sg_data.get(field_name),
+                        sg_data,
+                        entity_type,
+                    )
+
+                    if field_name in required_fields or formatted_value:
+                        msg += __make_table_row(display_name, formatted_value)
+
                 self.ui.details_header.setText("<table>%s</table>" % msg)
 
-                # blank out the version history
-                __set_publish_ui_visibility(False)
+                __set_publish_ui_visibility(True)
                 self._publish_history_model.clear()
+                self._update_history_view_height()
 
             else:
                 # this is a publish!
@@ -851,92 +1107,81 @@ class AppDialog(QtGui.QWidget):
 
                 sg_item = item.get_sg_data()
 
-                # sort out the actions button
+                required_fields = ["name", "type", "version_number"]
+                optional_fields = [
+                    "entity",
+                    "task",
+                    "version.Version.sg_status_list",
+                ]
+                all_fields = list(
+                    dict.fromkeys(required_fields + optional_fields + configured_fields)
+                )
+
                 actions = self._action_manager.get_actions_for_publish(
                     sg_item, self._action_manager.UI_AREA_DETAILS
                 )
                 if len(actions) == 0:
                     self.ui.detail_actions_btn.setVisible(False)
                 else:
-                    self.ui.detail_playback_btn.setVisible(True)
                     self._details_action_menu.clear()
                     for a in actions:
                         self._dynamic_widgets.append(a)
                         self._details_action_menu.addAction(a)
 
-                # if there is an associated version, show the play button
                 if sg_item.get("version"):
                     sg_url = sgtk.platform.current_bundle().shotgun.base_url
                     url = "%s/page/media_center?type=Version&id=%d" % (
                         sg_url,
                         sg_item["version"]["id"],
                     )
-
-                    self.ui.detail_playback_btn.setVisible(True)
                     self._current_version_detail_playback_url = url
                 else:
-                    self.ui.detail_playback_btn.setVisible(False)
                     self._current_version_detail_playback_url = None
 
-                if sg_item.get("name") is None:
-                    name_str = "No Name"
-                else:
-                    name_str = sg_item.get("name")
-
+                msg = ""
                 type_str = shotgun_model.get_sanitized_data(
                     item, SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE
                 )
 
-                msg = ""
-                msg += __make_table_row("Name", name_str)
-                msg += __make_table_row("Type", type_str)
-
-                version = sg_item.get("version_number")
-                vers_str = "%03d" % version if version is not None else "N/A"
-
-                msg += __make_table_row("Version", "%s" % vers_str)
-
-                if sg_item.get("entity"):
-                    display_name = shotgun_globals.get_type_display_name(
-                        sg_item.get("entity").get("type")
+                for field_name in all_fields:
+                    display_name = get_field_display_name(
+                        sg_item.get("type", "Unknown"), field_name
                     )
-                    entity_str = "<b>%s</b> %s" % (
-                        display_name,
-                        sg_item.get("entity").get("name"),
-                    )
-                    msg += __make_table_row("Link", entity_str)
-
-                # sort out the task label
-                if sg_item.get("task"):
-
-                    if sg_item.get("task.Task.content") is None:
-                        task_name_str = "Unnamed"
+                    if field_name == "type":
+                        formatted_value = self._format_published_file_field_value(
+                            field_name, type_str, sg_item, entity_type
+                        )
                     else:
-                        task_name_str = sg_item.get("task.Task.content")
-
-                    if sg_item.get("task.Task.sg_status_list") is None:
-                        task_status_str = "No Status"
-                    else:
-                        task_status_code = sg_item.get("task.Task.sg_status_list")
-                        task_status_str = self._status_model.get_long_name(
-                            task_status_code
+                        formatted_value = self._format_published_file_field_value(
+                            field_name,
+                            sg_item.get(field_name),
+                            sg_item,
+                            entity_type,
                         )
 
-                    msg += __make_table_row(
-                        "Task", "%s (%s)" % (task_name_str, task_status_str)
-                    )
-
-                # if there is a version associated, get the status for this
-                if sg_item.get("version.Version.sg_status_list"):
-                    task_status_code = sg_item.get("version.Version.sg_status_list")
-                    task_status_str = self._status_model.get_long_name(task_status_code)
-                    msg += __make_table_row("Review", task_status_str)
+                    if field_name in required_fields or formatted_value:
+                        msg += __make_table_row(display_name, formatted_value)
 
                 self.ui.details_header.setText("<table>%s</table>" % msg)
 
-                # tell details pane to load stuff
                 sg_data = item.get_sg_data()
-                self._publish_history_model.load_data(sg_data)
+
+                # Route to the correct history model.
+                # MEDM data is identified by _medm_asset or _medm_draft keys.
+                if (
+                    sg_data.get("_medm_asset") is not None
+                    or sg_data.get("_medm_draft") is not None
+                ):
+                    self._publish_history_proxy.setSourceModel(self._medm_history_model)
+                    self._medm_history_model.load_data(sg_data)
+                else:
+                    self._publish_history_proxy.setSourceModel(
+                        self._publish_history_model
+                    )
+                    self._publish_history_model.load_data(sg_data)
+                self._update_history_view_height()
+
+            self.ui.details_header.updateGeometry()
 
             self.ui.details_header.updateGeometry()
 
@@ -953,6 +1198,16 @@ class AppDialog(QtGui.QWidget):
 
     ########################################################################################
     # history related
+
+    def _refresh_current_history_model(self):
+        """
+        Refresh the currently active history model (either SG or MEDM).
+        """
+        current_source = self._publish_history_proxy.sourceModel()
+        if current_source == self._medm_history_model:
+            self._medm_history_model.async_refresh()
+        else:
+            self._publish_history_model.async_refresh()
 
     def _compute_history_button_visibility(self):
         """
@@ -1266,6 +1521,7 @@ class AppDialog(QtGui.QWidget):
         """
         self._status_model.hard_refresh()
         self._publish_history_model.hard_refresh()
+        self._medm_history_model.hard_refresh()
         self._publish_type_model.hard_refresh()
         self._publish_model.hard_refresh()
         for p in self._entity_presets:
@@ -1897,6 +2153,12 @@ class AppDialog(QtGui.QWidget):
 
         selected_item = self._get_selected_entity()
 
+        # Clear MEDM tree selection when a classic entity tree item is selected,
+        # and restore the Shotgun publish model as the source
+        if self._medm_tree_view is not None:
+            self._medm_tree_view.selectionModel().clearSelection()
+            self._publish_proxy_model.setSourceModel(self._publish_model)
+
         # update breadcrumbs
         self._populate_entity_breadcrumbs(selected_item)
 
@@ -2082,6 +2344,104 @@ class AppDialog(QtGui.QWidget):
         breadcrumbs = " <span style='color:#2C93E2'>&#9656;</span> ".join(crumbs[::-1])
 
         self.ui.entity_breadcrumbs.setText("<big>%s</big>" % breadcrumbs)
+
+    def _setup_medm_tree_panel(self):
+        """
+        Set up the MEDM tree view panel as the left-most panel in the splitter.
+        This panel shows the Flow Asset Management hierarchy.
+        """
+        medm_panel = QtGui.QWidget()
+        medm_layout = QtGui.QVBoxLayout(medm_panel)
+        medm_layout.setContentsMargins(0, 0, 0, 0)
+        medm_layout.setSpacing(2)
+
+        title_label = QtGui.QLabel("<b>Flow Asset Management</b>")
+        title_label.setStyleSheet("padding: 5px; background-color: #2C2C2C;")
+        medm_layout.addWidget(title_label)
+
+        self._medm_tree_view = QtGui.QTreeView()
+        self._medm_tree_view.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
+        self._medm_tree_view.setIconSize(QtCore.QSize(20, 20))
+        self._medm_tree_view.setStyleSheet("QTreeView::item { padding: 6px; }")
+        self._medm_tree_view.setUniformRowHeights(True)
+        self._medm_tree_view.setHeaderHidden(True)
+        self._medm_tree_view.setAlternatingRowColors(True)
+        medm_layout.addWidget(self._medm_tree_view)
+
+        self._medm_entity_model = MedmEntityModel(
+            self,
+            None,
+            None,
+            None,
+            self._task_manager,
+            self._medm_cache,
+        )
+        self._medm_tree_view.setModel(self._medm_entity_model)
+
+        self._medm_entity_overlay = ShotgunModelOverlayWidget(
+            self._medm_entity_model, self._medm_tree_view
+        )
+
+        # Both models share _medm_cache so tree expansion and publish
+        # loading never duplicate API calls.
+        self._medm_publish_model = MedmLatestPublishModel(
+            self,
+            self._publish_type_model,
+            self._task_manager,
+            self._medm_cache,
+            self._medm_thumbnail_service,
+        )
+
+        self._medm_tree_view.selectionModel().selectionChanged.connect(
+            self._on_medm_tree_selection_changed
+        )
+
+        # Insert the MEDM panel as the first (left-most) widget in the splitter
+        self.ui.splitter.insertWidget(0, medm_panel)
+
+        # Adjust stretch factors: [MEDM, classic-left, middle, right]
+        self.ui.splitter.setStretchFactor(0, 2)
+        self.ui.splitter.setStretchFactor(1, 3)
+        self.ui.splitter.setStretchFactor(2, 7)
+        self.ui.splitter.setStretchFactor(3, 3)
+        self.ui.splitter.setSizes([250, 360, 840, 380])
+
+        self._dynamic_widgets.extend([medm_panel, title_label])
+
+    def _on_medm_tree_selection_changed(self, selected, deselected):
+        """
+        Called when selection changes in the MEDM tree view. Updates the
+        publish view to show publishes for the selected MEDM entity.
+        """
+        app = sgtk.platform.current_bundle()
+
+        # Clear all classic entity tree selections to avoid conflicts
+        for preset in self._entity_presets.values():
+            preset.view.selectionModel().clearSelection()
+
+        indexes = selected.indexes()
+        if not indexes:
+            self._publish_proxy_model.setSourceModel(self._publish_model)
+            self._publish_model.load_data(None, [], False, [])
+            return
+
+        index = indexes[0]
+        item = self._medm_entity_model.itemFromIndex(index)
+
+        if item:
+            # Switch to MEDM publish model
+            self._publish_proxy_model.setSourceModel(self._medm_publish_model)
+
+            # Clear type filters - MEDM items don't use SG publish types
+            self._publish_proxy_model.set_filter_by_type_ids(None, True)
+
+            # Load publishes for the selected MEDM asset
+            self._medm_publish_model.load_data(item)
+
+            # Re-evaluate all proxy filter items
+            self._publish_proxy_model.invalidateFilter()
+        else:
+            app.log_warning("MEDM: Could not get item from index")
 
 
 ################################################################################################

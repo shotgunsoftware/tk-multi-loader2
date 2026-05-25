@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1226</width>
-    <height>782</height>
+    <width>1632</width>
+    <height>863</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -28,7 +28,7 @@
      <widget class="QWidget" name="left_area_widget" native="true">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-        <horstretch>0</horstretch>
+        <horstretch>3</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
       </property>
@@ -211,54 +211,54 @@ background-image: url(:/res/right_arrow_pressed.png);
         </widget>
        </item>
        <item>
-         <widget class="QLabel" name="publish_type_filter_title">
+        <widget class="QLabel" name="publish_type_filter_title">
          <property name="text">
-           <string>&lt;small&gt;Filter by Published File Type&lt;/small&gt;</string>
+          <string>&lt;small&gt;Filter by Published File Type&lt;/small&gt;</string>
          </property>
          <property name="alignment">
-           <set>Qt::AlignCenter</set>
+          <set>Qt::AlignCenter</set>
          </property>
-         </widget>
+        </widget>
        </item>
        <item>
-         <widget class="QListView" name="publish_type_list">
+        <widget class="QListView" name="publish_type_list">
          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+          <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
-           </sizepolicy>
+          </sizepolicy>
          </property>
          <property name="minimumSize">
-           <size>
+          <size>
            <width>100</width>
            <height>100</height>
-           </size>
+          </size>
          </property>
          <property name="toolTip">
-           <string>This list shows all the relevant &lt;i&gt;publish types&lt;/i&gt; for your current selection. By ticking and unticking items in this list, publishes in the main view will be shown or hidden. You can see a summary count next to each publish type, showing how many items of that sort are matching your current selection.</string>
+          <string>This list shows all the relevant &lt;i&gt;publish types&lt;/i&gt; for your current selection. By ticking and unticking items in this list, publishes in the main view will be shown or hidden. You can see a summary count next to each publish type, showing how many items of that sort are matching your current selection.</string>
          </property>
          <property name="accessibleName">
-           <string>publish_type_list</string>
+          <string>publish_type_list</string>
          </property>
          <property name="styleSheet">
-           <string notr="true">QListView::item {
+          <string notr="true">QListView::item {
             border-top: 1px dotted #888888;
             padding: 5px;
           }</string>
          </property>
          <property name="editTriggers">
-           <set>QAbstractItemView::NoEditTriggers</set>
+          <set>QAbstractItemView::NoEditTriggers</set>
          </property>
          <property name="showDropIndicator" stdset="0">
-           <bool>false</bool>
+          <bool>false</bool>
          </property>
          <property name="selectionMode">
-           <enum>QAbstractItemView::NoSelection</enum>
+          <enum>QAbstractItemView::NoSelection</enum>
          </property>
          <property name="uniformItemSizes">
-           <bool>true</bool>
+          <bool>true</bool>
          </property>
-         </widget>
+        </widget>
        </item>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_6">
@@ -266,42 +266,42 @@ background-image: url(:/res/right_arrow_pressed.png);
           <number>2</number>
          </property>
          <item>
-           <widget class="QToolButton" name="check_all">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <widget class="QToolButton" name="check_all">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
              <width>60</width>
              <height>26</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>Select All</string>
-            </property>
-           </widget>
+            </size>
+           </property>
+           <property name="text">
+            <string>Select All</string>
+           </property>
+          </widget>
          </item>
          <item>
-           <widget class="QToolButton" name="check_none">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <widget class="QToolButton" name="check_none">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
              <width>75</width>
              <height>26</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>Select None</string>
-            </property>
-           </widget>
+            </size>
+           </property>
+           <property name="text">
+            <string>Select None</string>
+           </property>
+          </widget>
          </item>
          <item>
           <widget class="QLabel" name="label_3">
@@ -343,7 +343,7 @@ background-image: url(:/res/right_arrow_pressed.png);
      <widget class="QWidget" name="middle_area_widget" native="true">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-        <horstretch>0</horstretch>
+        <horstretch>8</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
       </property>
@@ -433,6 +433,9 @@ background-image: url(:/res/right_arrow_pressed.png);
            <property name="checked">
             <bool>true</bool>
            </property>
+           <property name="autoRaise">
+            <bool>true</bool>
+           </property>
           </widget>
          </item>
          <item>
@@ -457,6 +460,9 @@ background-image: url(:/res/right_arrow_pressed.png);
              <normaloff>:/res/mode_switch_card.png</normaloff>:/res/mode_switch_card.png</iconset>
            </property>
            <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoRaise">
             <bool>true</bool>
            </property>
           </widget>
@@ -501,12 +507,25 @@ background-image: url(:/res/right_arrow_pressed.png);
            <property name="checkable">
             <bool>true</bool>
            </property>
+           <property name="autoRaise">
+            <bool>true</bool>
+           </property>
           </widget>
          </item>
          <item>
           <widget class="FilterMenuButton" name="filter_menu_btn">
            <property name="text">
-            <string>Filter</string>
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="resources.qrc">
+             <normaloff>:/res/icon_filter.png</normaloff>:/res/icon_filter.png</iconset>
+           </property>
+           <property name="toolButtonStyle">
+            <enum>Qt::ToolButtonIconOnly</enum>
+           </property>
+           <property name="autoRaise">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
@@ -514,7 +533,7 @@ background-image: url(:/res/right_arrow_pressed.png);
           <widget class="QToolButton" name="info">
            <property name="minimumSize">
             <size>
-             <width>80</width>
+             <width>26</width>
              <height>26</height>
             </size>
            </property>
@@ -523,6 +542,13 @@ background-image: url(:/res/right_arrow_pressed.png);
            </property>
            <property name="text">
             <string>Show Details</string>
+           </property>
+           <property name="icon">
+            <iconset resource="resources.qrc">
+             <normaloff>:/res/icon_minus.png</normaloff>:/res/icon_minus.png</iconset>
+           </property>
+           <property name="autoRaise">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
@@ -648,16 +674,16 @@ background-image: url(:/res/right_arrow_pressed.png);
 </string>
            </property>
            <property name="minimum">
-            <number>70</number>
+            <number>100</number>
            </property>
            <property name="maximum">
-            <number>250</number>
+            <number>400</number>
            </property>
            <property name="value">
-            <number>70</number>
+            <number>100</number>
            </property>
            <property name="sliderPosition">
-            <number>70</number>
+            <number>100</number>
            </property>
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
@@ -677,7 +703,7 @@ background-image: url(:/res/right_arrow_pressed.png);
      <widget class="QWidget" name="details" native="true">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-        <horstretch>0</horstretch>
+        <horstretch>3</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
       </property>
@@ -771,99 +797,30 @@ background-image: url(:/res/right_arrow_pressed.png);
            </property>
           </spacer>
          </item>
-        </layout>
-       </item>
-       <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_5">
-         <item>
-          <widget class="QLabel" name="details_header">
-           <property name="text">
-            <string>TextLabel</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-           </property>
-           <property name="wordWrap">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <spacer name="horizontalSpacer_2">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
+         <item alignment="Qt::AlignBottom">
+          <widget class="QToolButton" name="detail_actions_btn">
+           <property name="minimumSize">
             <size>
-             <width>40</width>
-             <height>20</height>
+             <width>55</width>
+             <height>0</height>
             </size>
            </property>
-          </spacer>
-         </item>
-         <item>
-          <layout class="QVBoxLayout" name="verticalLayout_4">
-           <item>
-            <widget class="QToolButton" name="detail_playback_btn">
-             <property name="minimumSize">
-              <size>
-               <width>55</width>
-               <height>55</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>55</width>
-               <height>55</height>
-              </size>
-             </property>
-             <property name="toolTip">
-              <string>The most recent published version has some playable media associated. Click this button to launch the Flow Production Tracking &lt;b&gt;Media Center&lt;/b&gt; web player to see the review version and any notes and comments that have been submitted.</string>
-             </property>
-             <property name="text">
-              <string/>
-             </property>
-             <property name="icon">
-              <iconset resource="resources.qrc">
-               <normaloff>:/res/play_icon.png</normaloff>:/res/play_icon.png</iconset>
-             </property>
-             <property name="iconSize">
-              <size>
-               <width>40</width>
-               <height>40</height>
-              </size>
-             </property>
-             <property name="toolButtonStyle">
-              <enum>Qt::ToolButtonTextBesideIcon</enum>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QToolButton" name="detail_actions_btn">
-             <property name="minimumSize">
-              <size>
-               <width>55</width>
-               <height>0</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>55</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>Actions</string>
-             </property>
-             <property name="popupMode">
-              <enum>QToolButton::InstantPopup</enum>
-             </property>
-             <property name="toolButtonStyle">
-              <enum>Qt::ToolButtonTextOnly</enum>
-             </property>
-            </widget>
-           </item>
-          </layout>
+           <property name="maximumSize">
+            <size>
+             <width>55</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Actions</string>
+           </property>
+           <property name="popupMode">
+            <enum>QToolButton::InstantPopup</enum>
+           </property>
+           <property name="toolButtonStyle">
+            <enum>Qt::ToolButtonTextOnly</enum>
+           </property>
+          </widget>
          </item>
         </layout>
        </item>
@@ -873,31 +830,27 @@ background-image: url(:/res/right_arrow_pressed.png);
           <number>2</number>
          </property>
          <item>
-          <widget class="QLabel" name="version_history_label">
+          <widget class="QListView" name="history_view">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+            <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
-           <property name="styleSheet">
-            <string notr="true">QLabel { padding-top: 14px}</string>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>350</height>
+            </size>
            </property>
-           <property name="text">
-            <string>&lt;small&gt;Complete Version History&lt;/small&gt;</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-           <property name="wordWrap">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QListView" name="history_view">
            <property name="accessibleName">
             <string>history_view</string>
+           </property>
+           <property name="autoFillBackground">
+            <bool>false</bool>
+           </property>
+           <property name="showDropIndicator" stdset="0">
+            <bool>true</bool>
            </property>
            <property name="verticalScrollMode">
             <enum>QAbstractItemView::ScrollPerPixel</enum>
@@ -905,31 +858,118 @@ background-image: url(:/res/right_arrow_pressed.png);
            <property name="horizontalScrollMode">
             <enum>QAbstractItemView::ScrollPerPixel</enum>
            </property>
+           <property name="isWrapping" stdset="0">
+            <bool>false</bool>
+           </property>
            <property name="uniformItemSizes">
             <bool>true</bool>
            </property>
           </widget>
          </item>
+         <item>
+          <widget class="QWidget" name="details_widget" native="true">
+           <layout class="QVBoxLayout" name="verticalLayout_4">
+            <item>
+             <spacer name="verticalSpacer">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QToolButton" name="details_button">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="cursor">
+               <cursorShape>PointingHandCursor</cursorShape>
+              </property>
+              <property name="text">
+               <string>Details</string>
+              </property>
+              <property name="checkable">
+               <bool>true</bool>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+              <property name="toolButtonStyle">
+               <enum>Qt::ToolButtonTextBesideIcon</enum>
+              </property>
+              <property name="autoRaise">
+               <bool>true</bool>
+              </property>
+              <property name="arrowType">
+               <enum>Qt::DownArrow</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="details_header">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>TextLabel</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+              </property>
+              <property name="wordWrap">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
         </layout>
+       </item>
+       <item alignment="Qt::AlignRight">
+        <widget class="QToolButton" name="detail_playback_btn">
+         <property name="minimumSize">
+          <size>
+           <width>160</width>
+           <height>24</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="toolTip">
+          <string>The most recent published version has some playable media associated. Click this button to launch the Flow Production Tracking &lt;b&gt;Media Center&lt;/b&gt; web player to see the review version and any notes and comments that have been submitted.</string>
+         </property>
+         <property name="text">
+          <string>Open</string>
+         </property>
+         <property name="toolButtonStyle">
+          <enum>Qt::ToolButtonTextOnly</enum>
+         </property>
+         <property name="autoRaise">
+          <bool>true</bool>
+         </property>
+        </widget>
        </item>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_3">
          <property name="spacing">
           <number>2</number>
          </property>
-         <item>
-          <spacer name="horizontalSpacer_6">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>40</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
         </layout>
        </item>
       </layout>

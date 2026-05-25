@@ -201,6 +201,11 @@ class SgPublishHistoryDelegate(shotgun_view.EditSelectedWidgetDelegate):
         :param model_index: The model index to operate on
         :param style_options: QT style options
         """
+        icon = shotgun_model.get_sanitized_data(model_index, QtCore.Qt.DecorationRole)
+        if icon:
+            thumb = icon.pixmap(512)
+            widget.set_thumbnail(thumb)
+
         # fill in the rest of the widget based on the raw sg data
         # this is not totally clean separation of concerns, but
         # introduces a coupling between the delegate and the model.

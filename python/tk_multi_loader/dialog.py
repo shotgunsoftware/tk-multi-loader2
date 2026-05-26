@@ -177,9 +177,7 @@ class AppDialog(QtGui.QWidget):
         self._medm_history_model = None
         if sgtk.platform.current_bundle().get_setting("use_medm_data", False):
             self._medm_cache = MedmSharedCache()
-            self._medm_thumbnail_service = MedmThumbnailService(
-                self._medm_cache, self
-            )
+            self._medm_thumbnail_service = MedmThumbnailService(self._medm_cache, self)
 
             # MEDM history model for MEDM publish items
             self._medm_history_model = MedmPublishHistoryModel(
@@ -1180,12 +1178,9 @@ class AppDialog(QtGui.QWidget):
 
                 # Route to the correct history model.
                 # MEDM data is identified by _medm_asset or _medm_draft keys.
-                if (
-                    self._medm_history_model is not None
-                    and (
-                        sg_data.get("_medm_asset") is not None
-                        or sg_data.get("_medm_draft") is not None
-                    )
+                if self._medm_history_model is not None and (
+                    sg_data.get("_medm_asset") is not None
+                    or sg_data.get("_medm_draft") is not None
                 ):
                     self._publish_history_proxy.setSourceModel(self._medm_history_model)
                     self._medm_history_model.load_data(sg_data)

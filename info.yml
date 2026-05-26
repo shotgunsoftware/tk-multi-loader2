@@ -207,5 +207,5 @@ documentation_url: "https://help.autodesk.com/view/SGDEV/ENU/?guid=SG_Supervisor
 frameworks:
     - {"name": "tk-framework-shotgunutils", "version": "v5.x.x", "minimum_version": "v5.8.6"}
     - {"name": "tk-framework-qtwidgets", "version": "v2.x.x", "minimum_version": "v2.10.6"}
-    # TODO: Commented out until SG-43459 is resolved
-    # - {"name": "tk-framework-flowam", "version": "v1.x.x"}
+    # TODO: Remove the following line after SG-43459.
+    - {"name": "tk-framework-flowam", "version": "v1.x.x"}

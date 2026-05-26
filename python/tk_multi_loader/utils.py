@@ -16,7 +16,7 @@ import sgtk
 from sgtk import TankError
 from sgtk.platform.qt import QtCore, QtGui
 
-logger = sgtk.platform.current_bundle().logger
+logger = sgtk.platform.get_logger(__name__)
 qtwidget_utils = sgtk.platform.import_framework("tk-framework-qtwidgets", "utils")
 shotgun_globals = sgtk.platform.import_framework(
     "tk-framework-shotgunutils", "shotgun_globals"

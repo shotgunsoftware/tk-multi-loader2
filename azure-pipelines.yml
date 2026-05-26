@@ -43,6 +43,7 @@ jobs:
   parameters:
 
     additional_repositories:
+    - name: tk-framework-flowam  # TODO: Remove me on SG-43459
     - name: tk-framework-qtwidgets
     - name: tk-framework-shotgunutils
     - name: tk-shell

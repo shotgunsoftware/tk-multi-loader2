@@ -475,15 +475,6 @@ class Ui_Dialog(object):
 
         self.verticalLayout_3.addLayout(self.verticalLayout_6)
 
-        self.detail_playback_btn = QToolButton(self.details)
-        self.detail_playback_btn.setObjectName(u"detail_playback_btn")
-        self.detail_playback_btn.setMinimumSize(QSize(160, 24))
-        self.detail_playback_btn.setMaximumSize(QSize(16777215, 16777215))
-        self.detail_playback_btn.setToolButtonStyle(Qt.ToolButtonTextOnly)
-        self.detail_playback_btn.setAutoRaise(True)
-
-        self.verticalLayout_3.addWidget(self.detail_playback_btn, 0, Qt.AlignRight)
-
         self.horizontalLayout_3 = QHBoxLayout()
         self.horizontalLayout_3.setSpacing(2)
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
@@ -606,8 +597,4 @@ class Ui_Dialog(object):
 #endif // QT_CONFIG(accessibility)
         self.details_button.setText(QCoreApplication.translate("Dialog", u"Details", None))
         self.details_header.setText(QCoreApplication.translate("Dialog", u"TextLabel", None))
-#if QT_CONFIG(tooltip)
-        self.detail_playback_btn.setToolTip(QCoreApplication.translate("Dialog", u"The most recent published version has some playable media associated. Click this button to launch the Flow Production Tracking <b>Media Center</b> web player to see the review version and any notes and comments that have been submitted.", None))
-#endif // QT_CONFIG(tooltip)
-        self.detail_playback_btn.setText(QCoreApplication.translate("Dialog", u"Open", None))
     # retranslateUi

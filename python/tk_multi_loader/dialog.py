@@ -12,6 +12,8 @@
 from typing import Any
 
 import os
+from functools import partial
+
 import sgtk
 from sgtk import TankError
 from sgtk.platform.qt import QtCore, QtGui
@@ -1321,7 +1323,22 @@ class AppDialog(QtGui.QWidget):
             self._select_tab(found_hierarchy_preset, track_in_history=False)
             # Kick off an async load of an entity, which in the context of the loader
             # is always meant to switch select that item.
-            preset.model.async_item_from_entity(ctx.entity)
+            try:
+                preset.model.async_item_from_entity(ctx.entity)
+            except (AttributeError, KeyError) as e:
+                # Handle case where entity doesn't have a valid hierarchy path
+                # (e.g., when FPT site tracking settings have "don't show a navigation path for asset")
+                # Stay on the hierarchy tab but don't try to navigate to a specific entity
+                app = sgtk.platform.current_bundle()
+                entity_type = ctx.entity.get("type", "Unknown") if ctx.entity else "Unknown"
+                entity_id = ctx.entity.get("id", "N/A") if ctx.entity else "N/A"
+                entity_name = ctx.entity.get("name", "N/A") if ctx.entity else "N/A"
+                app.log_error(
+                    "Could not navigate to entity (type: %s, id: %s, name: %s) in hierarchy view: %s. "
+                    "This may occur if the entity does not have a valid hierarchy path defined in Flow Production Tracking. "
+                    "Please check your hierarchy settings for this entity type or verify that the entity exists in the project hierarchy. "
+                    "Staying on hierarchy tab without selection." % (entity_type, entity_id, entity_name, e)
+                )
             return
         else:
             if found_preset is None:
@@ -1834,66 +1851,9 @@ class AppDialog(QtGui.QWidget):
 
                 self._dynamic_widgets.extend([search])
 
-            # We need to handle tool tip display ourselves for action context menus.
-            def action_hovered(action):
-                tip = action.toolTip()
-                if tip == action.text():
-                    QtGui.QToolTip.hideText()
-                else:
-                    QtGui.QToolTip.showText(QtGui.QCursor.pos(), tip)
-
-            # Set up a view right click menu.
-            if type_hierarchy:
-
-                action_ca = QtGui.QAction("Collapse All Folders", view)
-                action_ca.hovered.connect(lambda: action_hovered(action_ca))
-                action_ca.triggered.connect(view.collapseAll)
-                view.addAction(action_ca)
-                self._dynamic_widgets.append(action_ca)
-
-                action_reset = QtGui.QAction("Reset", view)
-                action_reset.setToolTip(
-                    "<nobr>Reset the tree to its PTR hierarchy root collapsed state.</nobr><br><br>"
-                    "Any existing data contained in the tree will be cleared, "
-                    "affecting selection and other related states, and "
-                    "available cached data will be immediately reloaded.<br><br>"
-                    "The rest of the data will be lazy-loaded when navigating down the tree."
-                )
-                action_reset.hovered.connect(lambda: action_hovered(action_reset))
-                action_reset.triggered.connect(model.reload_data)
-                view.addAction(action_reset)
-                self._dynamic_widgets.append(action_reset)
-
-            else:
-
-                action_ea = QtGui.QAction("Expand All Folders", view)
-                action_ea.hovered.connect(lambda: action_hovered(action_ea))
-                action_ea.triggered.connect(view.expandAll)
-                view.addAction(action_ea)
-                self._dynamic_widgets.append(action_ea)
-
-                action_ca = QtGui.QAction("Collapse All Folders", view)
-                action_ca.hovered.connect(lambda: action_hovered(action_ca))
-                action_ca.triggered.connect(view.collapseAll)
-                view.addAction(action_ca)
-                self._dynamic_widgets.append(action_ca)
-
-                action_refresh = QtGui.QAction("Refresh", view)
-                action_refresh.setToolTip(
-                    "<nobr>Refresh the tree data to ensure it is up to date with Flow Production Tracking.</nobr><br><br>"
-                    "Since this action is done in the background, the tree update "
-                    "will be applied whenever the data is returned from Flow Production Tracking.<br><br>"
-                    "When data has been added, it will be added into the existing tree "
-                    "without affecting selection and other related states.<br><br>"
-                    "When data has been modified or deleted, a tree rebuild will be done, "
-                    "affecting selection and other related states."
-                )
-                action_refresh.hovered.connect(lambda: action_hovered(action_refresh))
-                action_refresh.triggered.connect(model.async_refresh)
-                view.addAction(action_refresh)
-                self._dynamic_widgets.append(action_refresh)
-
-            view.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
+            # Contextual menu moved to `_set_contextual_menu` method
+            self._set_contextual_menu(None, None, view, model)
+            # -------------------------------------
 
             # Set up an on-select callback.
             selection_model = view.selectionModel()
@@ -1919,6 +1879,118 @@ class AppDialog(QtGui.QWidget):
         # finalize initialization by clicking the home button, but only once the
         # data has properly arrived in the model.
         self._on_home_clicked()
+
+    def _popup_menu(self, position):
+        """
+        Slot triggered when the user right clicks in the tree view to pop up the context menu.
+
+        :param position: The position where the menu should be displayed.
+        """
+        view = self.sender()
+        menu = QtGui.QMenu(view)
+
+        for action in view.actions():
+            menu.addAction(action)
+
+        menu.exec_(view.viewport().mapToGlobal(position))
+
+    def _set_contextual_menu(self, sg_data, field_value, view, model):
+        """
+        Set up a view right click menu.
+
+        :param dict sg_data: A Shotgun data dict
+        :param dict field_value: A dictionary containing field-specific data
+        """
+
+        # Clean-up
+        for entity_action in view.actions():
+            view.removeAction(entity_action)
+        self._dynamic_widgets = []
+
+        # We need to handle tool tip display ourselves for action context menus.
+        def action_hovered(action):
+            tip = action.toolTip()
+            if tip == action.text():
+                QtGui.QToolTip.hideText()
+            else:
+                QtGui.QToolTip.showText(QtGui.QCursor.pos(), tip)
+
+        # Identify type_hierarchy based on the model's class
+        type_hierarchy = isinstance(model, SgHierarchyModel)
+
+        if type_hierarchy:
+
+            action_ca = QtGui.QAction("Collapse All Folders", view)
+            action_ca.hovered.connect(lambda: action_hovered(action_ca))
+            action_ca.triggered.connect(view.collapseAll)
+            view.addAction(action_ca)
+            self._dynamic_widgets.append(action_ca)
+
+            action_reset = QtGui.QAction("Reset", view)
+            action_reset.setToolTip(
+                "<nobr>Reset the tree to its PTR hierarchy root collapsed state.</nobr><br><br>"
+                "Any existing data contained in the tree will be cleared, "
+                "affecting selection and other related states, and "
+                "available cached data will be immediately reloaded.<br><br>"
+                "The rest of the data will be lazy-loaded when navigating down the tree."
+            )
+            action_reset.hovered.connect(lambda: action_hovered(action_reset))
+            action_reset.triggered.connect(model.reload_data)
+            view.addAction(action_reset)
+            self._dynamic_widgets.append(action_reset)
+
+        else:
+
+            action_ea = QtGui.QAction("Expand All Folders", view)
+            action_ea.hovered.connect(lambda: action_hovered(action_ea))
+            action_ea.triggered.connect(view.expandAll)
+            view.addAction(action_ea)
+            self._dynamic_widgets.append(action_ea)
+
+            action_ca = QtGui.QAction("Collapse All Folders", view)
+            action_ca.hovered.connect(lambda: action_hovered(action_ca))
+            action_ca.triggered.connect(view.collapseAll)
+            view.addAction(action_ca)
+            self._dynamic_widgets.append(action_ca)
+
+            action_refresh = QtGui.QAction("Refresh", view)
+            action_refresh.setToolTip(
+                "<nobr>Refresh the tree data to ensure it is up to date with Flow Production Tracking.</nobr><br><br>"
+                "Since this action is done in the background, the tree update "
+                "will be applied whenever the data is returned from Flow Production Tracking.<br><br>"
+                "When data has been added, it will be added into the existing tree "
+                "without affecting selection and other related states.<br><br>"
+                "When data has been modified or deleted, a tree rebuild will be done, "
+                "affecting selection and other related states."
+            )
+            action_refresh.hovered.connect(lambda: action_hovered(action_refresh))
+            action_refresh.triggered.connect(model.async_refresh)
+            view.addAction(action_refresh)
+            self._dynamic_widgets.append(action_refresh)
+
+        # ---------------------------------------------------------------
+        # Add custom actions to the context menu
+        actions = self._action_manager.get_actions_for_entity(sg_data)
+
+        for entity_action in actions:
+
+            def on_action_click(act):
+                self._action_manager._loader_manager._bundle.execute_hook_method(
+                    "actions_hook",
+                    "execute_action",
+                    name=act["name"],
+                    params=act["params"],
+                    sg_publish_data=sg_data,
+                )
+
+            action = QtGui.QAction(entity_action["caption"], view)
+            action.triggered.connect(partial(on_action_click, act=entity_action))
+            view.addAction(action)
+            self._dynamic_widgets.append(action)
+        # ---------------------------------------------------------------
+
+        view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        view.customContextMenuRequested.connect(self._popup_menu)
 
     def _get_entity_root(self, root):
         """
@@ -2166,6 +2238,7 @@ class AppDialog(QtGui.QWidget):
         # nodes are displayed in the main view, so make sure
         # they are loaded.
         model = self._entity_presets[self._current_entity_preset].model
+        view = self._entity_presets[self._current_entity_preset].view
         if selected_item and model.canFetchMore(selected_item.index()):
             model.fetchMore(selected_item.index())
 
@@ -2177,6 +2250,14 @@ class AppDialog(QtGui.QWidget):
 
         # tell publish UI to update itself
         self._load_publishes_for_entity_item(selected_item)
+
+        # [Flow AM] Regenerate contextual menu
+        if selected_item is not None:
+            (sg_data, field_value) = model_item_data.get_item_data(selected_item)
+            self._set_contextual_menu(sg_data, field_value, view, model)
+        else:
+            # No item selected, set contextual menu with None data
+            self._set_contextual_menu(None, None, view, model)
 
     def _load_publishes_for_entity_item(self, item):
         """

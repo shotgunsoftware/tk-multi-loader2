@@ -32,11 +32,6 @@ engines:
           Shot: [test_action2, test_action5]
 
 frameworks:
-  # TODO: Remove me on SG-43459
-  tk-framework-flowam_v1.x.x:
-    location:
-      type: path
-      path: $SHOTGUN_REPOS_ROOT/tk-framework-flowam
   tk-framework-qtwidgets_v2.x.x:
     location:
       type: path

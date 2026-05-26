@@ -1330,14 +1330,17 @@ class AppDialog(QtGui.QWidget):
                 # (e.g., when FPT site tracking settings have "don't show a navigation path for asset")
                 # Stay on the hierarchy tab but don't try to navigate to a specific entity
                 app = sgtk.platform.current_bundle()
-                entity_type = ctx.entity.get("type", "Unknown") if ctx.entity else "Unknown"
+                entity_type = (
+                    ctx.entity.get("type", "Unknown") if ctx.entity else "Unknown"
+                )
                 entity_id = ctx.entity.get("id", "N/A") if ctx.entity else "N/A"
                 entity_name = ctx.entity.get("name", "N/A") if ctx.entity else "N/A"
                 app.log_error(
                     "Could not navigate to entity (type: %s, id: %s, name: %s) in hierarchy view: %s. "
                     "This may occur if the entity does not have a valid hierarchy path defined in Flow Production Tracking. "
                     "Please check your hierarchy settings for this entity type or verify that the entity exists in the project hierarchy. "
-                    "Staying on hierarchy tab without selection." % (entity_type, entity_id, entity_name, e)
+                    "Staying on hierarchy tab without selection."
+                    % (entity_type, entity_id, entity_name, e)
                 )
             return
         else:
@@ -2253,7 +2256,7 @@ class AppDialog(QtGui.QWidget):
 
         # [Flow AM] Regenerate contextual menu
         if selected_item is not None:
-            (sg_data, field_value) = model_item_data.get_item_data(selected_item)
+            sg_data, field_value = model_item_data.get_item_data(selected_item)
             self._set_contextual_menu(sg_data, field_value, view, model)
         else:
             # No item selected, set contextual menu with None data

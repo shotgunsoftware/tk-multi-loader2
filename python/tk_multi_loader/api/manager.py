@@ -351,7 +351,7 @@ class LoaderManager(object):
             )
             sg_data["created_at"] = sg_timestamp
 
-    def get_am_base_obj(self):
+    def get_am_base_obj(self) -> "FlowAMActions | None":
         """ """
         if sgtk.platform.current_bundle().get_setting("use_medm_data", False):
             from ..medm import FlowAMActions

@@ -13,6 +13,7 @@ Hook that loads defines all the available actions, broken down by publish type.
 """
 
 import os
+from typing import Any
 
 import sgtk
 from sgtk import TankError
@@ -25,7 +26,13 @@ class DesktopActions(HookBaseClass):
     Stub implementation of the shell actions, used for testing.
     """
 
-    def generate_actions(self, sg_publish_data, actions, ui_area, am_base_obj=None):
+    def generate_actions(
+        self,
+        sg_publish_data: dict,
+        actions: list,
+        ui_area: str,
+        am_base_obj: Any = None,
+    ) -> list:
         """
         Return a list of action instances for a particular publish.
         This method is called each time a user clicks a publish somewhere in the UI.
@@ -113,7 +120,9 @@ class DesktopActions(HookBaseClass):
 
         if (
             "reference_copy_link" in actions
-            and sg_publish_data.get("version_number", am_base_obj.DRAFT_VERSION_IDENTIFIER)
+            and sg_publish_data.get(
+                "version_number", am_base_obj.DRAFT_VERSION_IDENTIFIER
+            )
             > am_base_obj.DRAFT_VERSION_IDENTIFIER
         ):
             action_instances.append(
@@ -128,7 +137,7 @@ class DesktopActions(HookBaseClass):
 
         return action_instances
 
-    def execute_multiple_actions(self, actions, am_base_obj=None):
+    def execute_multiple_actions(self, actions: list, am_base_obj: Any = None) -> None:
         """
         Executes the specified action on a list of items.
 
@@ -163,7 +172,13 @@ class DesktopActions(HookBaseClass):
             params = single_action["params"]
             self.execute_action(name, params, sg_publish_data, am_base_obj)
 
-    def execute_action(self, name, params, sg_publish_data, am_base_obj=None):
+    def execute_action(
+        self,
+        name: str,
+        params: Any,
+        sg_publish_data: dict,
+        am_base_obj: Any = None,
+    ) -> None:
         """
         Print out all actions. The data sent to this be method will
         represent one of the actions enumerated by the generate_actions method.
@@ -193,7 +208,7 @@ class DesktopActions(HookBaseClass):
         elif name == "download":
             am_base_obj._download_asset_revision(sg_publish_data)
 
-    def _launch_publisher(self, action_name, sg_publish_data):
+    def _launch_publisher(self, action_name: str, sg_publish_data: dict) -> None:
         """
         Launches the publisher app in the context of the specified entity (task or project).
         :param str action_name: Action name that triggered the publisher launch.

@@ -7,17 +7,18 @@
 # By accessing, using, copying or modifying this work you indicate your
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
-from __future__ import annotations  # needed for Houdini 19.5 support
+from __future__ import annotations
 
 import functools
 from types import ModuleType
+from typing import Any
 
 import sgtk
 from sgtk import TankError
 from sgtk.platform.qt import QtGui
 
 
-class FlowAMActions():
+class FlowAMActions:
     """
     Plugin for loading items published with Flow Asset Management.
 
@@ -29,7 +30,9 @@ class FlowAMActions():
     def __init__(self):
         self._app = sgtk.platform.current_bundle()
 
-    def load_framework(self, framework_instance_name, module_name) -> ModuleType:
+    def load_framework(
+        self, framework_instance_name: str, module_name: str
+    ) -> ModuleType:
         """
         Simple wrapper around the base class implementation to
         provide user feedback if the framework cannot be loaded.
@@ -38,15 +41,13 @@ class FlowAMActions():
         :returns: sgtk.platform.Framework instance
         """
         try:
-            return sgtk.platform.import_framework(
-                framework_instance_name, module_name
-            )
+            return sgtk.platform.import_framework(framework_instance_name, module_name)
         except Exception as e:
             message = f"Could not load the required framework '{framework_instance_name}'.\n\nError details: {e}"
             self._app.log_error(message)
             QtGui.QMessageBox.critical(None, "Error", message)
 
-    def _do_open(self, sg_publish_data) -> None:
+    def _do_open(self, sg_publish_data: dict) -> None:
         """
         Open the given PublishedFile.
 
@@ -76,7 +77,7 @@ class FlowAMActions():
                 "This draft is not local to your sandbox."
             )
 
-    def _create_reference_am(self, sg_publish_data) -> None:
+    def _create_reference_am(self, sg_publish_data: dict) -> None:
         """
         Create a reference to the given PublishedFile.
 
@@ -93,7 +94,7 @@ class FlowAMActions():
         flow_module = self.load_framework("tk-framework-flowam", "flow")
         flow_module.asset_management.reference_revision(flow_revision_id)
 
-    def _create_reference_copy_link(self, sg_publish_data) -> None:
+    def _create_reference_copy_link(self, sg_publish_data: dict) -> None:
         """
         Copy the link path to the given PublishedFile to the clipboard.
 
@@ -112,7 +113,7 @@ class FlowAMActions():
 
         self._app.log_info(f"Reference path copied: {path}")
 
-    def _build_new_scene(self, sg_publish_data) -> None:
+    def _build_new_scene(self, sg_publish_data: dict) -> None:
         """
         Open a dialog to build a new scene. If accepted, create a new draft
         for the given task using `_on_build_scene_dialog_accepted` callback.
@@ -139,7 +140,9 @@ class FlowAMActions():
         )
         build_scene_dialog.exec_()
 
-    def _on_build_scene_dialog_accepted(self, dialog, sg_publish_data) -> None:
+    def _on_build_scene_dialog_accepted(
+        self, dialog: Any, sg_publish_data: dict
+    ) -> None:
         if not dialog.build:
             message = "Not enough data from the build dialog."
             self._app.log_warning(message)
@@ -192,7 +195,7 @@ class FlowAMActions():
             )
             return
 
-    def _prep_scene(self, sg_publish_data) -> None:
+    def _prep_scene(self, sg_publish_data: dict) -> None:
         """
         Let clients run set-up scripts when building a new scene/asset.
 
@@ -205,7 +208,7 @@ class FlowAMActions():
         # TDs can override this method to add custom scene prep logic
         pass
 
-    def _is_local_draft(self, sg_publish_data) -> bool:
+    def _is_local_draft(self, sg_publish_data: dict) -> bool:
         """
         Check if the given PublishedFile is a local AM draft.
 
@@ -218,7 +221,7 @@ class FlowAMActions():
             sg_publish_data.get("sg_flow_revision_id")
         )
 
-    def _is_new_asset(self, draft_id) -> bool:
+    def _is_new_asset(self, draft_id: str | None) -> bool:
         """
         Check if the given draft ID corresponds to a new asset draft.
 
@@ -229,7 +232,7 @@ class FlowAMActions():
 
         return flow_module.sandbox.is_new_asset(draft_id)
 
-    def _discard_draft(self, sg_publish_data) -> None:
+    def _discard_draft(self, sg_publish_data: dict) -> None:
         """
         Discard the local draft for the given PublishedFile.
 
@@ -297,7 +300,7 @@ class FlowAMActions():
         )
         return list(set([step["code"] for step in pipeline_steps]))
 
-    def _get_task_pipeline_step(self, task_id) -> str | None:
+    def _get_task_pipeline_step(self, task_id: int) -> str | None:
         """
         Get the pipeline step name for the given task.
 
@@ -317,7 +320,7 @@ class FlowAMActions():
         self._app.log_warning(f"Pipeline step not found for task ID: {task_id}")
         return None
 
-    def _build_new_template(self, sg_publish_data) -> None:
+    def _build_new_template(self, sg_publish_data: dict) -> None:
         """
         Open a dialog to build a new template scene. If accepted, create a new draft
         for the given project using `_on_build_template_dialog_accepted` callback.
@@ -342,7 +345,9 @@ class FlowAMActions():
         )
         build_template_dialog.exec_()
 
-    def _on_build_template_dialog_accepted(self, dialog, sg_publish_data) -> None:
+    def _on_build_template_dialog_accepted(
+        self, dialog: Any, sg_publish_data: dict
+    ) -> None:
         if not dialog.mode:
             message = "Not enough data from the build dialog."
             self._app.log_warning(message)
@@ -424,7 +429,7 @@ class FlowAMActions():
         engine = sgtk.platform.current_engine()
         return engine._get_dialog_parent()
 
-    def _download_asset_revision(self, sg_publish_data) -> None:
+    def _download_asset_revision(self, sg_publish_data: dict) -> None:
         """
         Download the given PublishedFile revision to the location specified.
 

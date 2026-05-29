@@ -9,7 +9,7 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 
-from typing import Any
+from typing import Any, Optional
 
 import os
 from functools import partial
@@ -655,7 +655,7 @@ class AppDialog(QtGui.QWidget):
     ########################################################################################
     # info bar related
 
-    def _patch_history_view_sizing(self):
+    def _patch_history_view_sizing(self) -> None:
         """
         Override the history QListView's sizeHint so the layout allocates only
         enough vertical space for the actual version rows (up to a maximum).
@@ -683,11 +683,11 @@ class AppDialog(QtGui.QWidget):
             view.model().rowsRemoved.connect(self._update_history_view_height)
             view.model().modelReset.connect(self._update_history_view_height)
 
-    def _update_history_view_height(self):
+    def _update_history_view_height(self) -> None:
         """Notify the layout that the history view's ideal size has changed."""
         self.ui.history_view.updateGeometry()
 
-    def _on_details_button_toggled(self, checked):
+    def _on_details_button_toggled(self, checked: bool) -> None:
         """
         Triggers a show/hide of the details header with an animation.
         """
@@ -929,7 +929,7 @@ class AppDialog(QtGui.QWidget):
         field_value: Any,
         sg_data: dict,
         entity_type: str,
-    ):
+    ) -> str:
         """Formats field values for Shotgun entity folder items in the details panel.
 
         :param field_name: Shotgun field name (e.g., 'sg_status_list', 'description')
@@ -968,7 +968,7 @@ class AppDialog(QtGui.QWidget):
         field_value: Any,
         sg_item: dict,
         entity_type: str,
-    ):
+    ) -> Optional[str]:
         """Formats field values for published file items in the details panel.
 
         :param field_name: Shotgun field name (e.g., 'name', 'version_number', 'entity')
@@ -1209,7 +1209,7 @@ class AppDialog(QtGui.QWidget):
     ########################################################################################
     # history related
 
-    def _refresh_current_history_model(self):
+    def _refresh_current_history_model(self) -> None:
         """
         Refresh the currently active history model (either SG or MEDM).
         """
@@ -1892,7 +1892,7 @@ class AppDialog(QtGui.QWidget):
         # data has properly arrived in the model.
         self._on_home_clicked()
 
-    def _popup_menu(self, position):
+    def _popup_menu(self, position: QtCore.QPoint) -> None:
         """
         Slot triggered when the user right clicks in the tree view to pop up the context menu.
 
@@ -1906,7 +1906,9 @@ class AppDialog(QtGui.QWidget):
 
         menu.exec_(view.viewport().mapToGlobal(position))
 
-    def _set_contextual_menu(self, sg_data, field_value, view, model):
+    def _set_contextual_menu(
+        self, sg_data: dict, field_value: Any, view: Any, model: Any
+    ) -> None:
         """
         Set up a view right click menu.
 
@@ -2438,7 +2440,7 @@ class AppDialog(QtGui.QWidget):
 
         self.ui.entity_breadcrumbs.setText("<big>%s</big>" % breadcrumbs)
 
-    def _setup_medm_tree_panel(self):
+    def _setup_medm_tree_panel(self) -> None:
         """
         Set up the MEDM tree view panel as the left-most panel in the splitter.
         This panel shows the Flow Asset Management hierarchy.
@@ -2501,7 +2503,9 @@ class AppDialog(QtGui.QWidget):
 
         self._dynamic_widgets.extend([medm_panel, title_label])
 
-    def _on_medm_tree_selection_changed(self, selected, deselected):
+    def _on_medm_tree_selection_changed(
+        self, selected: QtCore.QItemSelection, deselected: QtCore.QItemSelection
+    ) -> None:
         """
         Called when selection changes in the MEDM tree view. Updates the
         publish view to show publishes for the selected MEDM entity.

@@ -352,7 +352,7 @@ def smart_truncate(text: str, max_chars: int) -> str:
         return truncated + "..."
 
 
-def get_field_display_name(entity_type, field_name):
+def get_field_display_name(entity_type: str, field_name: str) -> str:
     """
     Returns a human-readable display name for a Shotgun field, supporting both
     simple fields and multi-entity (link) fields.
@@ -404,7 +404,7 @@ def get_field_display_name(entity_type, field_name):
             return field_name.replace("_", " ").title()
 
 
-def is_datetime_field(entity_type, field_name) -> bool:
+def is_datetime_field(entity_type: str, field_name: str) -> bool:
     """Check if a Shotgun field is of type 'date_time'.
 
     :param entity_type: The Shotgun entity type (e.g. 'PublishedFile', 'Asset').
@@ -418,7 +418,7 @@ def is_datetime_field(entity_type, field_name) -> bool:
         return field_name in ("created_at", "updated_at")
 
 
-def get_human_readable_value(raw_value, field_name, entity_type) -> str:
+def get_human_readable_value(raw_value: Any, field_name: str, entity_type: str) -> str:
     """Convert a Shotgun field's raw value into a human-readable string for UI display.
 
     Handles None, entity dicts, lists, datetime objects, float timestamps, and

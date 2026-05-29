@@ -18,12 +18,14 @@ the dialog at construction time.
 """
 
 from .entity_model import MedmEntityModel
+from .flowam_actions import FlowAMActions
 from .latestpublish_model import MedmLatestPublishModel
 from .publishhistory_model import MedmPublishHistoryModel
 from .shared_cache import MedmSharedCache
 from .thumbnail_service import MedmThumbnailService
 
 __all__ = [
+    "FlowAMActions",
     "MedmEntityModel",
     "MedmLatestPublishModel",
     "MedmPublishHistoryModel",

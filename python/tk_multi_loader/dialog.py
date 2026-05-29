@@ -13,14 +13,19 @@ from typing import Any, Optional
 
 import os
 from functools import partial
+from typing import Any
 
 import sgtk
 from sgtk import TankError
 from sgtk.platform.qt import QtCore, QtGui
 
-from .model_hierarchy import SgHierarchyModel
-from .model_entity import SgEntityModel
-from .model_latestpublish import SgLatestPublishModel
+from . import constants, model_item_data
+from .banner import Banner
+from .delegate_publish_history import SgPublishHistoryDelegate
+from .delegate_publish_list import SgPublishListDelegate
+from .delegate_publish_thumb import SgPublishThumbDelegate
+from .framework_qtwidgets import ShotgunFilterMenu
+from .loader_action_manager import LoaderActionManager
 from .medm import (
     MedmEntityModel,
     MedmLatestPublishModel,
@@ -28,24 +33,17 @@ from .medm import (
     MedmSharedCache,
     MedmThumbnailService,
 )
+from .model_entity import SgEntityModel
+from .model_hierarchy import SgHierarchyModel
+from .model_latestpublish import SgLatestPublishModel
+from .model_publishhistory import SgPublishHistoryModel
 from .model_publishtype import SgPublishTypeModel
 from .model_status import SgStatusModel
-from .proxymodel_latestpublish import SgLatestPublishProxyModel
 from .proxymodel_entity import SgEntityProxyModel
-from .delegate_publish_thumb import SgPublishThumbDelegate
-from .delegate_publish_list import SgPublishListDelegate
-from .model_publishhistory import SgPublishHistoryModel
-from .delegate_publish_history import SgPublishHistoryDelegate
+from .proxymodel_latestpublish import SgLatestPublishProxyModel
 from .search_widget import SearchWidget
-from .banner import Banner
-from .loader_action_manager import LoaderActionManager
-from .utils import resolve_filters, get_field_display_name, get_human_readable_value
-from .framework_qtwidgets import ShotgunFilterMenu
-
-from . import constants
-from . import model_item_data
-
 from .ui.dialog import Ui_Dialog
+from .utils import get_field_display_name, get_human_readable_value, resolve_filters
 
 # import frameworks
 shotgun_model = sgtk.platform.import_framework(
@@ -1993,6 +1991,7 @@ class AppDialog(QtGui.QWidget):
                     name=act["name"],
                     params=act["params"],
                     sg_publish_data=sg_data,
+                    am_base_obj=self._action_manager.get_am_base_obj(),
                 )
 
             action = QtGui.QAction(entity_action["caption"], view)

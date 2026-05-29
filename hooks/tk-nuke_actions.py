@@ -12,9 +12,9 @@
 Hook that loads defines all the available actions, broken down by publish type.
 """
 
+import glob
 import os
 import re
-import glob
 import sys
 
 import sgtk
@@ -27,7 +27,7 @@ class NukeActions(HookBaseClass):
     ##############################################################################################################
     # public interface - to be overridden by deriving classes
 
-    def generate_actions(self, sg_publish_data, actions, ui_area):
+    def generate_actions(self, sg_publish_data, actions, ui_area, am_base_obj=None):
         """
         Returns a list of action instances for a particular publish.
         This method is called each time a user clicks a publish somewhere in the UI.
@@ -112,9 +112,91 @@ class NukeActions(HookBaseClass):
                 }
             )
 
+        # -----------------------
+        # FlowAM specific actions
+        # -----------------------
+        if "build_new_script" in actions:
+            action_instances.append(
+                {
+                    "name": "build_new_script",
+                    "params": None,
+                    "caption": "Build New Script",
+                    "description": "This will create a new script in the current project.",
+                }
+            )
+        if "build_new_template" in actions:
+            action_instances.append(
+                {
+                    "name": "build_new_template",
+                    "params": None,
+                    "caption": "Build New Template",
+                    "description": "This will create a new template script in the current project.",
+                }
+            )
+        if "open" in actions and sg_publish_data.get("type") == "PublishedFile":
+            # Show open action for:
+            # 1. Local drafts (version_number == -1 and is_local_draft)
+            # 2. Published revisions (version_number > -1)
+            if (
+                am_base_obj._is_local_draft(sg_publish_data)
+                or sg_publish_data.get(
+                    "version_number", am_base_obj.DRAFT_VERSION_IDENTIFIER
+                )
+                > am_base_obj.DRAFT_VERSION_IDENTIFIER
+            ):
+                action_instances.append(
+                    {
+                        "name": "open",
+                        "params": None,
+                        "caption": "Open",
+                        "description": "This will open the item into the current script.",
+                    }
+                )
+
+        if "discard_draft" in actions and am_base_obj._is_local_draft(sg_publish_data):
+            action_instances.append(
+                {
+                    "name": "discard_draft",
+                    "params": None,
+                    "caption": "Discard Draft",
+                    "description": "This will discard the local draft.",
+                }
+            )
+        if (
+            "reference_copy_link" in actions
+            and sg_publish_data.get(
+                "version_number", am_base_obj.DRAFT_VERSION_IDENTIFIER
+            )
+            != am_base_obj.DRAFT_VERSION_IDENTIFIER
+        ):
+            action_instances.append(
+                {
+                    "name": "reference_copy_link",
+                    "params": None,
+                    "caption": "Copy Reference Link",
+                    "description": "This will copy the reference link as a string to the clipboard.",
+                    "multi_select": False,
+                }
+            )
+        if (
+            "create_read_node" in actions
+            and sg_publish_data.get(
+                "version_number", am_base_obj.DRAFT_VERSION_IDENTIFIER
+            )
+            != am_base_obj.DRAFT_VERSION_IDENTIFIER
+        ):
+            action_instances.append(
+                {
+                    "name": "create_read_node",
+                    "params": None,
+                    "caption": "Create Read Node",
+                    "description": "This will load the item into the current script as a new Read node.",
+                }
+            )
+
         return action_instances
 
-    def execute_multiple_actions(self, actions):
+    def execute_multiple_actions(self, actions, am_base_obj=None):
         """
         Executes the specified action on a list of items.
 
@@ -143,9 +225,9 @@ class NukeActions(HookBaseClass):
             name = single_action["name"]
             sg_publish_data = single_action["sg_publish_data"]
             params = single_action["params"]
-            self.execute_action(name, params, sg_publish_data)
+            self.execute_action(name, params, sg_publish_data, am_base_obj)
 
-    def execute_action(self, name, params, sg_publish_data):
+    def execute_action(self, name, params, sg_publish_data, am_base_obj=None):
         """
         Execute a given action. The data sent to this be method will
         represent one of the actions enumerated by the generate_actions method.
@@ -161,6 +243,31 @@ class NukeActions(HookBaseClass):
             "Execute action called for action %s. "
             "Parameters: %s. Publish Data: %s" % (name, params, sg_publish_data)
         )
+
+        # -----------------------
+        # FlowAM specific actions
+        # -----------------------
+        use_medm_data = app.get_setting("use_medm_data", False)
+        if use_medm_data:
+            if name == "build_new_script":
+                am_base_obj._build_new_scene(sg_publish_data)
+
+            if name == "build_new_template":
+                am_base_obj._build_new_template(sg_publish_data)
+
+            if name == "open":
+                am_base_obj._do_open(sg_publish_data)
+
+            if name == "discard_draft":
+                am_base_obj._discard_draft(sg_publish_data)
+
+            if name == "reference_copy_link":
+                am_base_obj._create_reference_copy_link(sg_publish_data)
+
+            if name == "create_read_node":
+                am_base_obj._create_reference(sg_publish_data)
+
+            return
 
         # resolve path - forward slashes on all platforms in Nuke
         path = self.get_publish_path(sg_publish_data).replace(os.path.sep, "/")
@@ -197,11 +304,7 @@ class NukeActions(HookBaseClass):
             )
 
         import hiero
-        from hiero.core import (
-            BinItem,
-            MediaSource,
-            Clip,
-        )
+        from hiero.core import BinItem, Clip, MediaSource
 
         if not hiero.core.projects():
             raise Exception("An active project must exist to import clips into.")

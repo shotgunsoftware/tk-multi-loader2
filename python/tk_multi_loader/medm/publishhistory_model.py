@@ -117,7 +117,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
     # Public API - Called by dialog.py and other external code
     # -------------------------------------------------------------------------
 
-    def destroy(self):
+    def destroy(self) -> None:
         """Clean up model resources."""
         self._cache.drafts.clear()
         self._cache.versions.clear()
@@ -197,7 +197,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
             self._app.log_error(f"MEDM History: Error loading versions: {e}")
             self.data_refresh_fail.emit(str(e))
 
-    def async_refresh(self):
+    def async_refresh(self) -> None:
         """
         Refresh the current data set.
 
@@ -210,7 +210,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
             self.load_data(self._current_sg_data)
         self.data_refreshed.emit(True)
 
-    def hard_refresh(self):
+    def hard_refresh(self) -> None:
         """Force refresh of data (same as async_refresh for MEDM)."""
         self.async_refresh()
 
@@ -478,7 +478,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
 
     def _resolve_and_download_thumbnail(
         self, qt_item: QtGui.QStandardItem, revision_id: str
-    ):
+    ) -> None:
         """
         Delegate thumbnail resolution and download to the shared
         :class:`MedmThumbnailService`.  The service calls :meth:`_apply_thumbnail`

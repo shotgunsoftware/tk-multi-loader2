@@ -114,7 +114,7 @@ class MedmEntityModel(QtGui.QStandardItemModel):
     # Qt virtual overrides - lazy loading protocol
     # -------------------------------------------------------------------------
 
-    def hasChildren(self, parent=QtCore.QModelIndex()):
+    def hasChildren(self, parent: QtCore.QModelIndex = QtCore.QModelIndex()) -> bool:
         """
         Return ``True`` when *parent* might have children.
 
@@ -132,7 +132,7 @@ class MedmEntityModel(QtGui.QStandardItemModel):
         # Not yet loaded -> assume children exist (shows the expand arrow)
         return True
 
-    def canFetchMore(self, parent):
+    def canFetchMore(self, parent: QtCore.QModelIndex) -> bool:
         """Return ``True`` if *parent*'s children have not been loaded yet."""
         if not parent.isValid():
             return False
@@ -141,7 +141,7 @@ class MedmEntityModel(QtGui.QStandardItemModel):
             return False
         return not item.data(self.CHILDREN_LOADED_ROLE)
 
-    def fetchMore(self, parent):
+    def fetchMore(self, parent: QtCore.QModelIndex) -> None:
         """Load the immediate children of *parent* from the MEDM API (or cache)."""
         if not parent.isValid():
             return
@@ -154,22 +154,24 @@ class MedmEntityModel(QtGui.QStandardItemModel):
     # Public API - Called by dialog.py and other external code
     # -------------------------------------------------------------------------
 
-    def destroy(self):
+    def destroy(self) -> None:
         """Clean up model resources."""
         self._cache.children.clear()
 
-    def async_refresh(self):
+    def async_refresh(self) -> None:
         """Refresh the model data."""
         self.clear()
         self._cache.clear_on_hard_refresh()
         self.data_refreshing.emit()
         QtCore.QTimer.singleShot(100, self._load_medm_assets)
 
-    def hard_refresh(self):
+    def hard_refresh(self) -> None:
         """Hard refresh (same as async_refresh for this simple model)."""
         self.async_refresh()
 
-    def item_from_entity(self, entity_type: str, entity_id: int):
+    def item_from_entity(
+        self, entity_type: str, entity_id: int
+    ) -> Optional[QtGui.QStandardItem]:
         """
         Returns a QStandardItem based on entity type and entity id.
 
@@ -329,7 +331,7 @@ class MedmEntityModel(QtGui.QStandardItemModel):
             else self._binary_icon
         )
 
-    def _load_medm_assets(self):
+    def _load_medm_assets(self) -> None:
         """
         Load the first level of MEDM assets (project's immediate children).
         Called asynchronously after a short delay to show the loading spinner.

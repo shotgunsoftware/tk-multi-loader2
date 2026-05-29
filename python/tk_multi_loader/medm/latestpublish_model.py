@@ -129,13 +129,13 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
     # Public API - Called by dialog.py and other external code
     # -------------------------------------------------------------------------
 
-    def destroy(self):
+    def destroy(self) -> None:
         """Clean up model resources."""
         self._cache.drafts.clear()
         if self._owns_thumbnail_service:
             self._thumbnail_service.destroy()
 
-    def load_data(self, item):
+    def load_data(self, item: Optional[QtGui.QStandardItem]) -> None:
         """
         Clears the model and sets it up for the selected asset from left treeview panel.
         Loads data from MEDM instead of Shotgun.
@@ -158,7 +158,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         except Exception as e:
             self.loadingError.emit(str(e))
 
-    def async_refresh(self):
+    def async_refresh(self) -> None:
         """
         Refresh the current data set.
 
@@ -187,7 +187,9 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
                 "initialized or the project ID is invalid."
             )
 
-    def _populate_model_from_selected_item(self, selected_item):
+    def _populate_model_from_selected_item(
+        self, selected_item: Optional[QtGui.QStandardItem]
+    ) -> None:
         """
         Populate the model with latest versions of child assets from the selected tree item.
 
@@ -310,7 +312,9 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         sg_publish_type_counts = self._calculate_sg_publish_type_counts()
         self._publish_type_model.set_active_types(sg_publish_type_counts)
 
-    def _extract_asset_from_tree_item(self, item) -> Optional[Asset]:
+    def _extract_asset_from_tree_item(
+        self, item: QtGui.QStandardItem
+    ) -> Optional[Asset]:
         """
         Extract the MEDM Asset object from a tree view QStandardItem.
 
@@ -601,7 +605,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         self._cache.publish_types[medm_type_id_str] = result
         return result
 
-    def _add_sg_dict_as_qt_item(self, sg_item: Dict[str, Any]):
+    def _add_sg_dict_as_qt_item(self, sg_item: Dict[str, Any]) -> None:
         """
         Create a QStandardItem from a Shotgun-compatible dict and add it to the model.
 
@@ -652,7 +656,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
             f"MEDM: Added item '{qt_item.text()}' to model (row count: {self.rowCount()})"
         )
 
-    def _set_tooltip(self, item: QtGui.QStandardItem, sg_item: Dict[str, Any]):
+    def _set_tooltip(self, item: QtGui.QStandardItem, sg_item: Dict[str, Any]) -> None:
         """
         Sets a tooltip for a publish item.
 
@@ -682,7 +686,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
 
     def _resolve_and_download_thumbnail(
         self, qt_item: QtGui.QStandardItem, revision_id: str
-    ):
+    ) -> None:
         """
         Delegate thumbnail resolution and download to the shared
         :class:`MedmThumbnailService`.  The service calls :meth:`_apply_thumbnail`

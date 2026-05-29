@@ -24,12 +24,11 @@ from __future__ import annotations
 
 import socket
 import threading
-import urllib.error
 import urllib.request
 from typing import TYPE_CHECKING, Callable, Dict, Optional
 
 import sgtk
-from sgtk.platform.qt import QtCore
+from sgtk.platform.qt import QtCore, QtGui
 
 if TYPE_CHECKING:
     from .shared_cache import MedmSharedCache
@@ -90,7 +89,7 @@ class MedmThumbnailService(QtCore.QObject):
 
     def request(
         self,
-        qt_item,
+        qt_item: QtGui.QStandardItem,
         revision_id: str,
         callback: Callable,
     ) -> None:
@@ -144,7 +143,9 @@ class MedmThumbnailService(QtCore.QObject):
             self._timer.timeout.connect(self._process_pending)
             self._timer.start(100)
 
-    def _resolve_and_fetch(self, qt_item, revision_id: str, callback: Callable) -> None:
+    def _resolve_and_fetch(
+        self, qt_item: QtGui.QStandardItem, revision_id: str, callback: Callable
+    ) -> None:
         """Background-thread worker: resolve URL then download bytes."""
         # 1. Resolve the thumbnail URL (hits the API at most once per revision).
         url = self._url_cache.get(revision_id)

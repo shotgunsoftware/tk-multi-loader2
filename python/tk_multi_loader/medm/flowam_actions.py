@@ -17,6 +17,8 @@ import sgtk
 from sgtk import TankError
 from sgtk.platform.qt import QtGui
 
+from ..build_asset_dialog import BuildAssetDialog
+from ..build_template_dialog import BuildTemplateDialog
 from ..constants import DRAFT_VERSION_IDENTIFIER
 
 
@@ -127,7 +129,6 @@ class FlowAMActions:
 
         :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
         """
-        flow_ui_module = self.load_framework("tk-framework-flowam", "ui")
         parent_window = self._get_dialog_parent()
         sg_flow_am_id = self._app.context.project.get("sg_flow_am_id")
         # Get the pipeline step from the task
@@ -135,7 +136,7 @@ class FlowAMActions:
         task_id = task.get("id") if task else None
         task_pipeline_step = self._get_task_pipeline_step(task_id) if task_id else None
         # Open the build scene dialog
-        build_scene_dialog = flow_ui_module.BuildAssetDialog(
+        build_scene_dialog = BuildAssetDialog(
             project_id=sg_flow_am_id,
             parent=parent_window,
             pipeline_step=task_pipeline_step,
@@ -334,15 +335,12 @@ class FlowAMActions:
 
         :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
         """
-        flow_am_fw = self.load_framework("tk-framework-flowam")
-        flow_ui_module = flow_am_fw.import_module("ui")
-
         # Get the sg_flow_am_id from the Project
         sg_flow_am_id = self._get_flowam_id()
 
         parent_window = self._get_dialog_parent()
 
-        build_template_dialog = flow_ui_module.BuildTemplateDialog(
+        build_template_dialog = BuildTemplateDialog(
             sg_flow_am_id, self._get_pipeline_steps(), parent_window
         )
         build_template_dialog.accepted.connect(

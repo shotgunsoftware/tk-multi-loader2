@@ -2504,7 +2504,7 @@ class AppDialog(QtGui.QWidget):
         self._dynamic_widgets.extend([medm_panel, title_label])
 
     def _on_medm_tree_selection_changed(
-        self, selected: QtCore.QItemSelection, deselected: QtCore.QItemSelection
+        self, selected: QtGui.QItemSelection, deselected: QtGui.QItemSelection
     ) -> None:
         """
         Called when selection changes in the MEDM tree view. Updates the

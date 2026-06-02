@@ -24,6 +24,7 @@ from sgtk.platform.qt import QtCore, QtGui
 
 from .shared_cache import MedmSharedCache
 from .thumbnail_service import MedmThumbnailService
+from ..constants import DRAFT_VERSION_IDENTIFIER
 from .utils import build_draft_sg_dict, resolve_publish_type
 from .utils import is_structural_asset as _is_structural_asset_util
 
@@ -42,10 +43,6 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
 
     This is a drop-in replacement for SgLatestPublishModel that uses MEDM data.
     """
-
-    # Matches the V1 FlowActions hook constant.  Draft rows carry this as
-    # version_number so action hooks route them to asset_management.open_draft().
-    DRAFT_VERSION_IDENTIFIER = -1
 
     # Sentinel key used inside cache.drafts to store the list returned by
     # get_drafts(draft_type="new").  A real asset.id is always a UUID/storage
@@ -619,7 +616,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         # Version info - drafts use DRAFT_VERSION_IDENTIFIER (-1) internally;
         # show a human-readable label instead of the raw sentinel value.
         version = sg_item.get("version_number")
-        if version == self.DRAFT_VERSION_IDENTIFIER:
+        if version == DRAFT_VERSION_IDENTIFIER:
             draft_type = sg_item.get("_medm_draft_type", "")
             vers_str = f"Draft ({draft_type})" if draft_type else "Draft"
         elif version is not None and version >= 0:

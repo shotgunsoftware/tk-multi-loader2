@@ -984,7 +984,7 @@ class AppDialog(QtGui.QWidget):
             return field_value
 
         elif field_name == "version_number":
-            if field_value == MedmLatestPublishModel.DRAFT_VERSION_IDENTIFIER:
+            if field_value == constants.DRAFT_VERSION_IDENTIFIER:
                 return "DRAFT"
             return "%03d" % field_value if field_value is not None else "N/A"
 

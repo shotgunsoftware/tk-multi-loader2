@@ -77,7 +77,9 @@ class SgPublishHistoryModel(ShotgunModel):
 
         # fields to pull down
         fields = [publish_type_field] + list(
-            dict.fromkeys(constant_detail_panel_fields + detail_fields + flow_am_internal_fields)
+            dict.fromkeys(
+                constant_detail_panel_fields + detail_fields + flow_am_internal_fields
+            )
         )
 
         # when we filter out which other publishes are associated with this one,

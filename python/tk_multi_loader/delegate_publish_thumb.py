@@ -12,7 +12,7 @@ import sgtk
 from sgtk.platform.qt import QtCore
 
 from .model_latestpublish import SgLatestPublishModel
-from .medm import MedmLatestPublishModel
+from .constants import DRAFT_VERSION_IDENTIFIER
 from .utils import create_fields_display_html
 from .ui.widget_publish_thumb import Ui_PublishThumbWidget
 from .delegate_publish import PublishWidget, PublishDelegate
@@ -189,7 +189,7 @@ class SgPublishThumbDelegate(PublishDelegate):
             name_str = sg_data.get("name")
 
         version_number = sg_data.get("version_number")
-        if version_number == MedmLatestPublishModel.DRAFT_VERSION_IDENTIFIER:
+        if version_number == DRAFT_VERSION_IDENTIFIER:
             name_str += " [DRAFT]"
         elif version_number:
             name_str += " v%s" % version_number

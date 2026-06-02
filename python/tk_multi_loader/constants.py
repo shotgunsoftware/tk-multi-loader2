@@ -99,3 +99,7 @@ ENTITY_TYPE_MIDDLE_PANEL_FIELDS = {
 # left hand side tree view search only kicks in
 # after a certain number have been typed in.
 TREE_SEARCH_TRIGGER_LENGTH = 2
+
+# FlowAM versions starts with 0 and FlowPT versions starts with 1.
+# This is used to identify a FlowAM draft version in the UI.
+DRAFT_VERSION_IDENTIFIER = -1

@@ -19,6 +19,8 @@ from __future__ import annotations
 import os
 from typing import Any, Dict, Optional, Tuple
 
+from ..constants import DRAFT_VERSION_IDENTIFIER
+
 
 def is_structural_asset(asset: Any, flow_module: Any) -> bool:
     """Return ``True`` when *asset* is a structural container in the MEDM hierarchy.
@@ -53,12 +55,6 @@ def is_structural_asset(asset: Any, flow_module: Any) -> bool:
         )
     except Exception:
         return False
-
-
-# Sentinel version number that action hooks use to detect a local draft row
-# and route it to asset_management.open_draft() instead of checkout_revision().
-# Both MEDM model classes expose this as a class constant with the same value.
-DRAFT_VERSION_IDENTIFIER: int = -1
 
 
 def get_draft_created_at(draft_info: Any) -> Optional[float]:

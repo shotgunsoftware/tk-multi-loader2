@@ -14,7 +14,7 @@ import sgtk
 from sgtk.platform.qt import QtCore
 
 from .model_latestpublish import SgLatestPublishModel
-from .medm import MedmLatestPublishModel
+from .constants import DRAFT_VERSION_IDENTIFIER
 from .ui.widget_publish_list import Ui_PublishListWidget
 from .delegate_publish import PublishWidget, PublishDelegate
 from .utils import create_fields_display_html
@@ -222,12 +222,14 @@ class SgPublishListDelegate(PublishDelegate):
         default_small_text_fields = ["created_by", "created_at"]
 
         configured_fields = self._list_entity_fields.get(entity_type, [])
-        filter_fields = list(dict.fromkeys(main_text_fields + default_small_text_fields))
+        filter_fields = list(
+            dict.fromkeys(main_text_fields + default_small_text_fields)
+        )
 
         main_text = "<b>%s</b>" % (sg_data.get("name") or "Unnamed")
 
         version = sg_data.get("version_number")
-        if version == MedmLatestPublishModel.DRAFT_VERSION_IDENTIFIER:
+        if version == DRAFT_VERSION_IDENTIFIER:
             vers_str = "[DRAFT]"
         else:
             vers_str = "%03d" % version if version is not None else "N/A"

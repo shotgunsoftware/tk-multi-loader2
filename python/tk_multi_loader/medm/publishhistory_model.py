@@ -50,10 +50,6 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
     This is the MEDM equivalent of SgPublishHistoryModel.
     """
 
-    # Matches the V1 FlowActions hook constant so action hooks correctly identify
-    # draft rows (version_number == -1 -> local draft; version_number > -1 -> published).
-    DRAFT_VERSION_IDENTIFIER = -1
-
     # Custom roles - matching SgPublishHistoryModel interface
     USER_THUMB_ROLE = QtCore.Qt.UserRole + 101
     PUBLISH_THUMB_ROLE = QtCore.Qt.UserRole + 102

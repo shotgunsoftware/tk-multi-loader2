@@ -222,7 +222,7 @@ class SgPublishListDelegate(PublishDelegate):
         default_small_text_fields = ["created_by", "created_at"]
 
         configured_fields = self._list_entity_fields.get(entity_type, [])
-        filter_fields = list(set(main_text_fields + default_small_text_fields))
+        filter_fields = list(dict.fromkeys(main_text_fields + default_small_text_fields))
 
         main_text = "<b>%s</b>" % (sg_data.get("name") or "Unnamed")
 

@@ -86,6 +86,8 @@ class LoaderManager(object):
             # this publish does not have a type
             publish_type = "undefined"
         else:
+            # Preference the code field if it exists
+            # but fallback to name for publishes that don't have it.
             publish_type = (
                 publish_type_dict["code"]
                 if "code" in publish_type_dict

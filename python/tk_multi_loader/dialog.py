@@ -1193,8 +1193,6 @@ class AppDialog(QtGui.QWidget):
 
             self.ui.details_header.updateGeometry()
 
-            self.ui.details_header.updateGeometry()
-
     def _on_detail_version_playback(self):
         """
         Callback when someone clicks the version playback button

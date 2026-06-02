@@ -101,7 +101,7 @@ class SgEntityModel(ShotgunModel):
         )
 
         all_fields = list(
-            set(
+            dict.fromkeys(
                 default_fields
                 + constant_middle_panel_fields
                 + constant_detail_panel_fields

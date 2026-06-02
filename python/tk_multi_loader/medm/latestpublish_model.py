@@ -24,7 +24,7 @@ from sgtk.platform.qt import QtCore, QtGui
 
 from .shared_cache import MedmSharedCache
 from .thumbnail_service import MedmThumbnailService
-from .utils import build_draft_sg_dict
+from .utils import build_draft_sg_dict, resolve_publish_type
 from .utils import is_structural_asset as _is_structural_asset_util
 
 if TYPE_CHECKING:
@@ -552,58 +552,9 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         return result
 
     def _resolve_publish_type(self, medm_type_id_str: str) -> tuple:
-        """
-        Resolve a MEDM schema type ID to a ``(sg_publish_type_id, display_name)`` pair.
-
-        Resolution order:
-          1. In-process cache (avoids redundant SG round-trips within the same load).
-          2. ShotGrid ``PublishedFileType`` lookup by display name (real ID).
-          3. Hash-based integer fallback when no SG record exists.
-
-        :param medm_type_id_str: MEDM schema type ID string.
-        :returns: Tuple of (integer publish type id, human-readable display name).
-        """
-        if medm_type_id_str in self._cache.publish_types:
-            return self._cache.publish_types[medm_type_id_str]
-
-        display_name = medm_type_id_str
-        try:
-            schema_name = self._flow_module.schema.get_schema_display_name(
-                medm_type_id_str
-            )
-            if schema_name:
-                display_name = schema_name
-        except Exception as e:
-            self._app.log_debug(
-                f"MEDM: Could not get schema display name for '{medm_type_id_str}': {e}"
-            )
-
-        sg_publish_type_id = None
-        try:
-            pft = self._app.shotgun.find_one(
-                "PublishedFileType",
-                [["code", "is", display_name]],
-                ["id", "code"],
-            )
-            if pft:
-                sg_publish_type_id = pft["id"]
-                self._app.log_debug(
-                    f"MEDM: Resolved PublishedFileType '{display_name}' "
-                    f"-> SG id={sg_publish_type_id}"
-                )
-            else:
-                self._app.log_debug(
-                    f"MEDM: No SG PublishedFileType found for '{display_name}', "
-                    f"item will bypass type filter"
-                )
-        except Exception as e:
-            self._app.log_debug(
-                f"MEDM: Could not look up PublishedFileType for '{display_name}': {e}"
-            )
-
-        result = (sg_publish_type_id, display_name)
-        self._cache.publish_types[medm_type_id_str] = result
-        return result
+        return resolve_publish_type(
+            medm_type_id_str, self._cache, self._flow_module, self._app
+        )
 
     def _add_sg_dict_as_qt_item(self, sg_item: Dict[str, Any]) -> None:
         """

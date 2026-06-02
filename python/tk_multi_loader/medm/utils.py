@@ -199,3 +199,66 @@ def build_draft_sg_dict(
         "_medm_draft": draft_info,
         "_medm_draft_type": draft_type,
     }
+
+
+def resolve_publish_type(
+    medm_type_id_str: str,
+    cache: Any,
+    flow_module: Any,
+    app: Any,
+) -> Tuple[Optional[int], str]:
+    """Resolve a MEDM schema type ID to a ``(sg_publish_type_id, display_name)`` pair.
+
+    Resolution order:
+
+    1. In-process cache (avoids redundant SG round-trips within the same load).
+    2. ShotGrid ``PublishedFileType`` lookup by display name (real ID).
+    3. ``None`` fallback when no SG record exists (item will bypass type filter).
+
+    :param medm_type_id_str: MEDM schema type ID string.
+    :param cache: :class:`MedmSharedCache` instance whose ``publish_types``
+        dict is used for caching.
+    :param flow_module: The ``flow`` framework module imported via
+        ``sgtk.platform.import_framework("tk-framework-flowam", "flow")``.
+    :param app: The current Toolkit bundle (provides ``shotgun`` and ``log_debug``).
+    :returns: Tuple of ``(integer_publish_type_id_or_none, human_readable_display_name)``.
+    """
+    if medm_type_id_str in cache.publish_types:
+        return cache.publish_types[medm_type_id_str]
+
+    display_name = medm_type_id_str
+    try:
+        schema_name = flow_module.schema.get_schema_display_name(medm_type_id_str)
+        if schema_name:
+            display_name = schema_name
+    except Exception as e:
+        app.log_debug(
+            f"MEDM: Could not get schema display name for '{medm_type_id_str}': {e}"
+        )
+
+    sg_publish_type_id = None
+    try:
+        pft = app.shotgun.find_one(
+            "PublishedFileType",
+            [["code", "is", display_name]],
+            ["id", "code"],
+        )
+        if pft:
+            sg_publish_type_id = pft["id"]
+            app.log_debug(
+                f"MEDM: Resolved PublishedFileType '{display_name}' "
+                f"-> SG id={sg_publish_type_id}"
+            )
+        else:
+            app.log_debug(
+                f"MEDM: No SG PublishedFileType found for '{display_name}', "
+                f"item will bypass type filter"
+            )
+    except Exception as e:
+        app.log_debug(
+            f"MEDM: Could not look up PublishedFileType for '{display_name}': {e}"
+        )
+
+    result: Tuple[Optional[int], str] = (sg_publish_type_id, display_name)
+    cache.publish_types[medm_type_id_str] = result
+    return result

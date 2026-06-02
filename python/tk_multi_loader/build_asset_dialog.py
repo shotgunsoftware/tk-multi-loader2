@@ -13,6 +13,7 @@ from __future__ import annotations  # needed for Houdini support
 import sgtk
 from sgtk.platform.qt import QtGui
 
+from .medm.template_queries import get_template_pipeline_steps, get_templates
 from .ui.build_asset_dialog import Ui_BuildAssetDialog
 
 # Toolkit logger
@@ -56,10 +57,6 @@ class BuildAssetDialog(QtGui.QDialog):
         _FlowError = _flow.FlowError
         _Project = _flow.data.Project
         self._CreateMode = _flow.asset_management.CreateMode
-        self._get_template_pipeline_steps = (
-            _flow.asset_management.get_template_pipeline_steps
-        )
-        self._get_templates = _flow.asset_management.get_templates
         self._get_template_source_path = _flow.asset_management.get_template_source_path
 
         # Query the project entity
@@ -113,7 +110,7 @@ class BuildAssetDialog(QtGui.QDialog):
         Returns:
             list[str]: A list of pipeline step names.
         """
-        pipeline_steps = self._get_template_pipeline_steps(self.project)
+        pipeline_steps = get_template_pipeline_steps(self.project)
         pipeline_step_names = []
         for pipeline_step in pipeline_steps:
             self.pipeline_steps[pipeline_step.name] = pipeline_step
@@ -131,7 +128,7 @@ class BuildAssetDialog(QtGui.QDialog):
             list[str]: A list of template names for the specified pipeline step.
         """
         pipeline_step = self.pipeline_steps[step]
-        templates = self._get_templates(pipeline_step)
+        templates = get_templates(pipeline_step)
         template_names = []
         for template in templates:
             self.templates[template.name] = template

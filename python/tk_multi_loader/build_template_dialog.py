@@ -13,6 +13,7 @@ from __future__ import annotations  # needed for Houdini support
 import sgtk
 from sgtk.platform.qt import QtGui
 
+from .medm.template_queries import find_template_pipeline_step, get_templates
 from .ui.build_template_dialog import Ui_BuildTemplateDialog
 
 # Toolkit logger
@@ -36,10 +37,6 @@ class BuildTemplateDialog(QtGui.QDialog):
         _FlowError = _flow.FlowError
         _Project = _flow.data.Project
         self._CreateMode = _flow.asset_management.CreateMode
-        self._find_template_pipeline_step = (
-            _flow.asset_management.find_template_pipeline_step
-        )
-        self._get_templates = _flow.asset_management.get_templates
 
         # Query the project entity
         try:
@@ -102,9 +99,7 @@ class BuildTemplateDialog(QtGui.QDialog):
 
         self.accept()
 
-    def __validate_template_name(
-        self, template_name: str
-    ) -> dict[str, str] | None:
+    def __validate_template_name(self, template_name: str) -> dict[str, str] | None:
         """
         Validates the template name provided by the user.
         Ensures the name is not empty and does not already exist for the
@@ -123,11 +118,11 @@ class BuildTemplateDialog(QtGui.QDialog):
                 "message": "Template name cannot be empty.",
             }
 
-        pipeline_step = self._find_template_pipeline_step(self.project, self.step)
+        pipeline_step = find_template_pipeline_step(self.project, self.step)
         if not pipeline_step:
             return None
 
-        available_templates = self._get_templates(pipeline_step)
+        available_templates = get_templates(pipeline_step)
         available_template_names = [template.name for template in available_templates]
         if template_name in available_template_names:
             return {

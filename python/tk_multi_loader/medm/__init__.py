@@ -22,6 +22,11 @@ from .flowam_actions import FlowAMActions
 from .latestpublish_model import MedmLatestPublishModel
 from .publishhistory_model import MedmPublishHistoryModel
 from .shared_cache import MedmSharedCache
+from .template_queries import (
+    find_template_pipeline_step,
+    get_template_pipeline_steps,
+    get_templates,
+)
 from .thumbnail_service import MedmThumbnailService
 
 __all__ = [
@@ -31,4 +36,7 @@ __all__ = [
     "MedmPublishHistoryModel",
     "MedmSharedCache",
     "MedmThumbnailService",
+    "find_template_pipeline_step",
+    "get_template_pipeline_steps",
+    "get_templates",
 ]

@@ -2535,7 +2535,7 @@ class AppDialog(QtGui.QWidget):
             # Re-evaluate all proxy filter items
             self._publish_proxy_model.invalidateFilter()
         else:
-            app.log_warning("MEDM: Could not get item from index")
+            app.log_warning("FlowAM: Could not get item from index")
 
 
 ################################################################################################

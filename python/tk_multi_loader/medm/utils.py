@@ -229,7 +229,7 @@ def resolve_publish_type(
             display_name = schema_name
     except Exception as e:
         app.log_debug(
-            f"MEDM: Could not get schema display name for '{medm_type_id_str}': {e}"
+            f"FlowAM: Could not get schema display name for '{medm_type_id_str}': {e}"
         )
 
     sg_publish_type_id = None
@@ -242,17 +242,17 @@ def resolve_publish_type(
         if pft:
             sg_publish_type_id = pft["id"]
             app.log_debug(
-                f"MEDM: Resolved PublishedFileType '{display_name}' "
+                f"FlowAM: Resolved PublishedFileType '{display_name}' "
                 f"-> SG id={sg_publish_type_id}"
             )
         else:
             app.log_debug(
-                f"MEDM: No SG PublishedFileType found for '{display_name}', "
+                f"FlowAM: No SG PublishedFileType found for '{display_name}', "
                 f"item will bypass type filter"
             )
     except Exception as e:
         app.log_debug(
-            f"MEDM: Could not look up PublishedFileType for '{display_name}': {e}"
+            f"FlowAM: Could not look up PublishedFileType for '{display_name}': {e}"
         )
 
     result: Tuple[Optional[int], str] = (sg_publish_type_id, display_name)

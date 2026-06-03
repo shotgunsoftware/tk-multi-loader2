@@ -236,11 +236,11 @@ class MedmEntityModel(QtGui.QStandardItemModel):
             session_project = self._flow_module.data.get_session_project()
             self._project = self._flow_module.data.Project(session_project.id)
             self._app.log_debug(
-                f"MEDM Entity: Initialized project '{self._project.name}'"
+                f"FlowAM Entity: Initialized project '{self._project.name}'"
             )
         except Exception as e:
             self._app.log_error(
-                f"MEDM Entity: Failed to initialize project: {type(e).__name__}: {e}. "
+                f"FlowAM Entity: Failed to initialize project: {type(e).__name__}: {e}. "
                 "Entity tree will not be loaded."
             )
             self._project = None
@@ -273,11 +273,11 @@ class MedmEntityModel(QtGui.QStandardItemModel):
 
             self._structural_type_ids = {folder_id, pipeline_step_id}
             self._app.log_debug(
-                f"MEDM Entity: structural type IDs = {self._structural_type_ids}"
+                f"FlowAM Entity: structural type IDs = {self._structural_type_ids}"
             )
         except self._flow_module.FlowError as e:
             self._app.log_warning(
-                f"MEDM Entity: could not resolve structural type IDs ({e}); "
+                f"FlowAM Entity: could not resolve structural type IDs ({e}); "
                 "non-structural assets without structural descendants will be hidden."
             )
             self._structural_type_ids = set()
@@ -338,13 +338,13 @@ class MedmEntityModel(QtGui.QStandardItemModel):
         """
         if self._project is None:
             self._app.log_warning(
-                "MEDM Entity: Cannot load assets - project not initialized"
+                "FlowAM Entity: Cannot load assets - project not initialized"
             )
             self.data_refresh_fail.emit("Project not initialized")
             return
 
         try:
-            self._app.log_debug("MEDM: Loading entity tree (project children only)...")
+            self._app.log_debug("FlowAM: Loading entity tree (project children only)...")
 
             count = 0
             for asset in self._project.iterate_children():
@@ -353,13 +353,13 @@ class MedmEntityModel(QtGui.QStandardItemModel):
                     count += 1
 
             self._app.log_debug(
-                f"MEDM: Entity tree loaded successfully. Loaded {count} root assets"
+                f"FlowAM: Entity tree loaded successfully. Loaded {count} root assets"
             )
             self.cache_loaded.emit()
             self.data_refreshed.emit(True)
 
         except Exception as e:
-            self._app.log_error(f"Failed to load MEDM data: {e}")
+            self._app.log_error(f"Failed to load FlowAM data: {e}")
             import traceback
 
             self._app.log_debug(traceback.format_exc())
@@ -428,11 +428,11 @@ class MedmEntityModel(QtGui.QStandardItemModel):
             for child_asset in tree_children:
                 self._add_asset_item(child_asset, item)
             self._app.log_debug(
-                f"MEDM: Loaded {len(tree_children)}/{len(children)} children for '{asset.name}' "
+                f"FlowAM: Loaded {len(tree_children)}/{len(children)} children for '{asset.name}' "
                 f"(non-structural leaf children hidden from tree)"
             )
         except Exception as e:
-            self._app.log_debug(f"MEDM: Could not get children for '{asset.name}': {e}")
+            self._app.log_debug(f"FlowAM: Could not get children for '{asset.name}': {e}")
 
     def _fetch_and_cache_children(self, asset: Asset) -> List[Asset]:
         """

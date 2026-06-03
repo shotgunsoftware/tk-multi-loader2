@@ -106,7 +106,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         self._current_sg_data = None
 
         self._project_id = 0
-        self._project_name = "MEDM Project"
+        self._project_name = "FlowAM Project"
         self._initialize_project_info()
 
     # -------------------------------------------------------------------------
@@ -147,7 +147,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
                 self.data_refreshed.emit(True)
             else:
                 self._app.log_warning(
-                    "MEDM History: No asset found in selected publish asset sg_data dict"
+                    "FlowAM History: No asset found in selected publish asset sg_data dict"
                 )
                 self.data_refresh_fail.emit("No asset found in selection")
             return
@@ -164,7 +164,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
                 self._add_version_as_qt_item(asset_version, medm_asset)
 
             self._app.log_debug(
-                f"MEDM History: Loaded {len(versions)} published versions"
+                f"FlowAM History: Loaded {len(versions)} published versions"
             )
 
             try:
@@ -179,18 +179,18 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
                     self._add_draft_as_qt_item(draft_info, medm_asset)
                 if drafts:
                     self._app.log_debug(
-                        f"MEDM History: Added {len(drafts)} draft(s) for asset '{medm_asset.name}'"
+                        f"FlowAM History: Added {len(drafts)} draft(s) for asset '{medm_asset.name}'"
                     )
             except Exception as e:
                 # Drafts are optional - a failure here should not prevent published
                 # versions from being shown.
-                self._app.log_warning(f"MEDM History: Could not fetch drafts: {e}")
+                self._app.log_warning(f"FlowAM History: Could not fetch drafts: {e}")
 
             self.cache_loaded.emit()
             self.data_refreshed.emit(True)
 
         except Exception as e:
-            self._app.log_error(f"MEDM History: Error loading versions: {e}")
+            self._app.log_error(f"FlowAM History: Error loading versions: {e}")
             self.data_refresh_fail.emit(str(e))
 
     def async_refresh(self) -> None:
@@ -221,7 +221,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
             self._project_name = self._app.context.project["name"]
         except Exception as e:
             self._app.log_warning(
-                f"MEDM History: Failed to initialize project info: {type(e).__name__}: {e}. "
+                f"FlowAM History: Failed to initialize project info: {type(e).__name__}: {e}. "
                 "Using default project values. This may indicate the session project was not "
                 "initialized or the project ID is invalid."
             )
@@ -262,7 +262,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         qt_item.get_sg_data = get_sg_data
 
         self.appendRow(qt_item)
-        self._app.log_debug(f"MEDM History: Added version v{version_number}")
+        self._app.log_debug(f"FlowAM History: Added version v{version_number}")
 
     def _version_to_sg_dict(
         self, version: AssetVersion, asset: Asset
@@ -275,7 +275,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         :returns: sg_data dictionary compatible with Shotgun UI
         """
         sg_publish_type_id = None
-        sg_publish_type_code = "MEDM Asset"
+        sg_publish_type_code = "FlowAM Asset"
 
         medm_type_ids = asset.type_ids
         if medm_type_ids:
@@ -297,7 +297,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
             "created_by": {
                 "type": "HumanUser",
                 "id": None,
-                "name": version.created_by or "MEDM User",
+                "name": version.created_by or "FlowAM User",
             },
             "entity": {
                 "type": "Asset",
@@ -343,7 +343,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         :returns: sg_data dictionary compatible with action hooks and Shotgun UI
         """
         sg_publish_type_id = None
-        sg_publish_type_code = "MEDM Asset"
+        sg_publish_type_code = "FlowAM Asset"
 
         # Prefer the published asset's type_ids; fall back to the draft's own
         # type_ids for NewDraftInfo where no published asset exists yet.
@@ -414,7 +414,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         # Prepend so drafts always appear above all published versions.
         self.insertRow(0, qt_item)
         self._app.log_debug(
-            f"MEDM History: Added {draft_type} draft '{draft_info.name}' "
+            f"FlowAM History: Added {draft_type} draft '{draft_info.name}' "
             f"(draft_id={draft_info.draft_id})"
         )
 

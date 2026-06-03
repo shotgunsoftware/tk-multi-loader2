@@ -119,7 +119,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         self._current_entity = None
 
         self._project_id = 0
-        self._project_name = "MEDM Project"
+        self._project_name = "FlowAM Project"
         self._initialize_project_info()
 
     # -------------------------------------------------------------------------
@@ -179,7 +179,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
             self._project_name = self._app.context.project["name"]
         except Exception as e:
             self._app.log_warning(
-                f"MEDM LatestPublish: Failed to initialize project info: {type(e).__name__}: {e}. "
+                f"FlowAM LatestPublish: Failed to initialize project info: {type(e).__name__}: {e}. "
                 "Using default project values. This may indicate the session project was not "
                 "initialized or the project ID is invalid."
             )
@@ -200,10 +200,10 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
 
         asset = self._extract_asset_from_tree_item(selected_item)
         if asset is None:
-            self._app.log_warning("MEDM: Could not extract asset from selected item")
+            self._app.log_warning("FlowAM: Could not extract asset from selected item")
             return
 
-        self._app.log_debug(f"MEDM: Asset extracted: {asset.name}")
+        self._app.log_debug(f"FlowAM: Asset extracted: {asset.name}")
 
         children_asset_sg_dicts = self._fetch_asset_children(asset)
 
@@ -218,14 +218,14 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
                 children_asset_sg_dicts = [self._asset_to_sg_dict(asset)]
             except Exception as e:
                 self._app.log_warning(
-                    f"MEDM: Could not convert leaf asset '{asset.name}' to sg_dict: {e}"
+                    f"FlowAM: Could not convert leaf asset '{asset.name}' to sg_dict: {e}"
                 )
                 # Keep a reference to the raw asset so we can still fetch its
                 # drafts below.
                 leaf_asset_fallback = asset
 
         self._app.log_debug(
-            f"MEDM: Fetched {len(children_asset_sg_dicts)} latest version dicts from children"
+            f"FlowAM: Fetched {len(children_asset_sg_dicts)} latest version dicts from children"
         )
 
         assets_for_draft_lookup = [
@@ -248,7 +248,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
                     self._cache.drafts[child_asset.id] = raw_drafts
             except Exception as e:
                 self._app.log_debug(
-                    f"MEDM: Could not fetch drafts for '{child_asset.name}': {e}"
+                    f"FlowAM: Could not fetch drafts for '{child_asset.name}': {e}"
                 )
                 continue
 
@@ -257,12 +257,12 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
                 try:
                     draft_dicts.append(self._draft_to_sg_dict(draft_info, child_asset))
                     self._app.log_debug(
-                        f"MEDM: Found draft '{getattr(draft_info, 'name', '?')}' "
+                        f"FlowAM: Found draft '{getattr(draft_info, 'name', '?')}' "
                         f"for asset '{child_asset.name}'"
                     )
                 except Exception as e:
                     self._app.log_warning(
-                        f"MEDM: Could not convert draft '{getattr(draft_info, 'name', '?')}' "
+                        f"FlowAM: Could not convert draft '{getattr(draft_info, 'name', '?')}' "
                         f"for '{child_asset.name}': {e}"
                     )
 
@@ -302,7 +302,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
             draft_count += 1
 
         self._app.log_debug(
-            f"MEDM: center panel now has {self.rowCount()} items "
+            f"FlowAM: center panel now has {self.rowCount()} items "
             f"({draft_count} draft(s), {published_count} published)"
         )
 
@@ -353,27 +353,27 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
             for child_asset in child_assets:
                 if _is_structural_asset_util(child_asset, self._flow_module):
                     self._app.log_debug(
-                        f"MEDM: Skipping structural asset '{child_asset.name}' from center panel"
+                        f"FlowAM: Skipping structural asset '{child_asset.name}' from center panel"
                     )
                     continue
                 try:
                     asset_dict = self._asset_to_sg_dict(child_asset)
                     children_asset_sg_dicts.append(asset_dict)
                     self._app.log_debug(
-                        f"MEDM: Added asset '{child_asset.name}' with latest version "
+                        f"FlowAM: Added asset '{child_asset.name}' with latest version "
                         f"v{child_asset.version_number}"
                     )
                 except Exception as e:
                     self._app.log_warning(
-                        f"MEDM: Error processing child asset '{child_asset.name}': {e}"
+                        f"FlowAM: Error processing child asset '{child_asset.name}': {e}"
                     )
                     continue
 
         except Exception as e:
-            self._app.log_warning(f"MEDM: Error fetching asset children: {e}")
+            self._app.log_warning(f"FlowAM: Error fetching asset children: {e}")
 
         self._app.log_debug(
-            f"MEDM: Loaded {len(children_asset_sg_dicts)} children assets for asset '{asset.name}'"
+            f"FlowAM: Loaded {len(children_asset_sg_dicts)} children assets for asset '{asset.name}'"
         )
         return children_asset_sg_dicts
 
@@ -385,7 +385,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         :returns: Dictionary with Shotgun-compatible fields
         """
         sg_publish_type_id = None
-        sg_publish_type_code = "MEDM Asset"
+        sg_publish_type_code = "FlowAM Asset"
 
         medm_type_ids = asset.type_ids
         if len(medm_type_ids) > 0:
@@ -404,7 +404,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
             "created_by": {
                 "type": "HumanUser",
                 "id": 1,
-                "name": asset.created_by or "MEDM User",
+                "name": asset.created_by or "FlowAM User",
             },
             "entity": {"type": "Asset", "id": None, "name": asset.name},
             "project": {
@@ -453,7 +453,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         :returns: sg_data dictionary compatible with action hooks and center panel UI.
         """
         sg_publish_type_id = None
-        sg_publish_type_code = "MEDM Asset"
+        sg_publish_type_code = "FlowAM Asset"
 
         # Prefer the published asset's type_ids; fall back to the draft's own
         # type_ids for NewDraftInfo where no published asset exists yet.
@@ -524,7 +524,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
                     draft_type="new"
                 )
             except Exception as e:
-                self._app.log_warning(f"MEDM: Could not fetch new-asset drafts: {e}")
+                self._app.log_warning(f"FlowAM: Could not fetch new-asset drafts: {e}")
                 all_new_drafts = []
             self._cache.drafts[self._NEW_DRAFTS_CACHE_KEY] = all_new_drafts
         else:
@@ -537,13 +537,13 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
             try:
                 draft_sg_dict = self._draft_to_sg_dict(draft_info, asset=None)
                 self._app.log_debug(
-                    f"MEDM: Found new-asset draft '{getattr(draft_info, 'name', '?')}' "
+                    f"FlowAM: Found new-asset draft '{getattr(draft_info, 'name', '?')}' "
                     f"under parent '{parent_asset_id}'"
                 )
                 result.append(draft_sg_dict)
             except Exception as e:
                 self._app.log_warning(
-                    f"MEDM: Could not convert new-asset draft "
+                    f"FlowAM: Could not convert new-asset draft "
                     f"'{getattr(draft_info, 'name', '?')}': {e}"
                 )
         return result
@@ -601,7 +601,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         self.appendRow(qt_item)
 
         self._app.log_debug(
-            f"MEDM: Added item '{qt_item.text()}' to model (row count: {self.rowCount()})"
+            f"FlowAM: Added item '{qt_item.text()}' to model (row count: {self.rowCount()})"
         )
 
     def _set_tooltip(self, item: QtGui.QStandardItem, sg_item: Dict[str, Any]) -> None:

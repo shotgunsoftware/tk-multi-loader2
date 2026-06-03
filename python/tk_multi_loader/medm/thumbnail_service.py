@@ -154,7 +154,7 @@ class MedmThumbnailService(QtCore.QObject):
                 url = self._flow_module.asset_management.get_thumbnail_url(revision_id)
             except Exception as exc:
                 self._app.log_debug(
-                    f"MEDM ThumbnailService: URL resolve failed for {revision_id}: {exc}"
+                    f"FlowAM ThumbnailService: URL resolve failed for {revision_id}: {exc}"
                 )
             self._url_cache[revision_id] = url
 
@@ -178,7 +178,7 @@ class MedmThumbnailService(QtCore.QObject):
                 ) as response:
                     if response.status != 200:
                         self._app.log_debug(
-                            f"MEDM ThumbnailService: HTTP {response.status} for {revision_id}"
+                            f"FlowAM ThumbnailService: HTTP {response.status} for {revision_id}"
                         )
                         return
                     image_data = response.read(self._MAX_IMAGE_BYTES)
@@ -192,7 +192,7 @@ class MedmThumbnailService(QtCore.QObject):
 
         except Exception as exc:
             self._app.log_debug(
-                f"MEDM ThumbnailService: Download failed: {type(exc).__name__}: {exc}"
+                f"FlowAM ThumbnailService: Download failed: {type(exc).__name__}: {exc}"
             )
 
     def _process_pending(self) -> None:
@@ -205,5 +205,5 @@ class MedmThumbnailService(QtCore.QObject):
                 callback(qt_item, image_data)
             except Exception as exc:
                 self._app.log_debug(
-                    f"MEDM ThumbnailService: Callback error: {type(exc).__name__}: {exc}"
+                    f"FlowAM ThumbnailService: Callback error: {type(exc).__name__}: {exc}"
                 )

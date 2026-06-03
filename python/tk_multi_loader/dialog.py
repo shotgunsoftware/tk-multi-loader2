@@ -97,7 +97,7 @@ class AppDialog(QtGui.QWidget):
         # Hold a reference to the current animation to prevent GC mid-run
         self._current_animation = None
 
-        # MEDM tree view - only created when use_medm_data is enabled
+        # MEDM tree view - only created when enable_flowam is enabled
         self._medm_tree_view = None
 
         # The loader app can be invoked from other applications with a custom
@@ -166,14 +166,14 @@ class AppDialog(QtGui.QWidget):
 
         self._publish_history_model = SgPublishHistoryModel(self, self._task_manager)
 
-        # MEDM objects are only instantiated when use_medm_data is enabled.
+        # MEDM objects are only instantiated when enable_flowam is enabled.
         # tk-framework-flowam is required by these classes but is not available
         # in all environments (e.g. CI).  Keeping these as None when MEDM is
         # disabled prevents a hard startup failure in those environments.
         self._medm_cache = None
         self._medm_thumbnail_service = None
         self._medm_history_model = None
-        if sgtk.platform.current_bundle().get_setting("use_medm_data", False):
+        if sgtk.platform.current_bundle().get_setting("enable_flowam", False):
             self._medm_cache = MedmSharedCache()
             self._medm_thumbnail_service = MedmThumbnailService(self._medm_cache, self)
 
@@ -377,15 +377,15 @@ class AppDialog(QtGui.QWidget):
 
         # Set up filtering
         app = sgtk.platform.current_bundle()
-        use_medm = app.get_setting("use_medm_data", False)
+        enable_flowam = app.get_setting("enable_flowam", False)
         if app.get_setting("use_legacy_published_file_type_filter", False):
             # Hide the Filter menu button.
             # The legacy filter functionality is always set up, since the filter menu still
             # requires some of that functionality.
             self._filter_menu = None
             self.ui.filter_menu_btn.hide()
-        elif use_medm:
-            # Disable filter menu for MEDM mode - it expects ShotgunModel data
+        elif enable_flowam:
+            # Disable filter menu for Flow Asset Management mode - it expects ShotgunModel data
             self._filter_menu = None
             self.ui.filter_menu_btn.hide()
         else:
@@ -430,7 +430,7 @@ class AppDialog(QtGui.QWidget):
         self._load_entity_presets()
 
         # Set up the MEDM tree panel when Flow Asset Management is enabled
-        if use_medm:
+        if enable_flowam:
             self._setup_medm_tree_panel()
 
         #################################################

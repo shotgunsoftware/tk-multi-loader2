@@ -10,7 +10,7 @@
 
 """MEDM (Flow Asset Management) integration models for the Loader app.
 
-This package provides Qt models that back the loader when ``use_medm_data``
+This package provides Qt models that back the loader when ``enable_flowam``
 is enabled in the app configuration.  All models share a single
 :class:`~medm.shared_cache.MedmSharedCache` and
 :class:`~medm.thumbnail_service.MedmThumbnailService` instance injected by

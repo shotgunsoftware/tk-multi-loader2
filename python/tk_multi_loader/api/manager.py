@@ -353,7 +353,7 @@ class LoaderManager(object):
 
     def get_am_base_obj(self) -> "FlowAMActions | None":
         """ """
-        if sgtk.platform.current_bundle().get_setting("use_medm_data", False):
+        if sgtk.platform.current_bundle().get_setting("enable_flowam", False):
             from ..medm import FlowAMActions
 
             return FlowAMActions()

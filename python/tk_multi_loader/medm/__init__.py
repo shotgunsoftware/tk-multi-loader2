@@ -8,7 +8,7 @@
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
-"""MEDM (Flow Asset Management) integration models for the Loader app.
+"""FlowAM integration models for the Loader app.
 
 This package provides Qt models that back the loader when ``enable_flowam``
 is enabled in the app configuration.  All models share a single

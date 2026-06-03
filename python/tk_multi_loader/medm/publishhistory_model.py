@@ -9,10 +9,10 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 """
-MEDM Publish History Model - Shows all revisions for a selected MEDM entity.
+FlowAM Publish History Model - Shows all revisions for a selected FlowAM entity.
 
 This module provides a model that displays all revisions (version history) for
-a selected MEDM entity, similar to SgPublishHistoryModel for Shotgun data.
+a selected FlowAM entity, similar to SgPublishHistoryModel for Shotgun data.
 """
 
 from __future__ import annotations
@@ -45,9 +45,9 @@ else:
 
 class MedmPublishHistoryModel(QtGui.QStandardItemModel):
     """
-    Model that displays the version history (all revisions) for an MEDM entity.
+    Model that displays the version history (all revisions) for an FlowAM entity.
 
-    This is the MEDM equivalent of SgPublishHistoryModel.
+    This is the FlowAM equivalent of SgPublishHistoryModel.
     """
 
     # Custom roles - matching SgPublishHistoryModel interface
@@ -55,12 +55,12 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
     PUBLISH_THUMB_ROLE = QtCore.Qt.UserRole + 102
     FULL_IMAGE_PATH_ROLE = QtCore.Qt.UserRole + 103
 
-    # MEDM-specific roles
+    # FlowAM-specific roles
     SG_DATA_ROLE = QtCore.Qt.UserRole + 1  # To maintain compatibility with ShotgunModel
     ASSET_ROLE = (
         QtCore.Qt.UserRole + 200
-    )  # Stores MEDM Asset object (shared with all MEDM models)
-    VERSION_ROLE = QtCore.Qt.UserRole + 201  # Stores MEDM AssetVersion object
+    )  # Stores FlowAM Asset object (shared with all FlowAM models)
+    VERSION_ROLE = QtCore.Qt.UserRole + 201  # Stores FlowAM AssetVersion object
     DRAFT_ROLE = QtCore.Qt.UserRole + 202  # Stores DraftInfo for draft rows
 
     # Signals for compatibility with ShotgunModelOverlayWidget
@@ -83,7 +83,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         :param parent: Parent QObject
         :param bg_task_manager: Background task manager (kept for API compatibility)
         :param cache: Shared :class:`MedmSharedCache`.  When provided all data
-            caches (drafts, versions, publish types) are shared with other MEDM
+            caches (drafts, versions, publish types) are shared with other FlowAM
             models.  When *None* a private cache is created for standalone use.
         :param thumbnail_service: Shared :class:`MedmThumbnailService` instance.
             When provided thumbnail downloads are shared with other models.
@@ -128,7 +128,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         selected in the center panel, ordered by version number (newest first).
 
         :param sg_data: Shotgun-compatible data dict from center panel selection.
-                        Must contain "_medm_asset" field with the MEDM Asset.
+                        Must contain "_medm_asset" field with the FlowAM Asset.
         """
         self.clear()
         self._current_sg_data = sg_data
@@ -207,7 +207,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         self.data_refreshed.emit(True)
 
     def hard_refresh(self) -> None:
-        """Force refresh of data (same as async_refresh for MEDM)."""
+        """Force refresh of data (same as async_refresh for FlowAM)."""
         self.async_refresh()
 
     # -------------------------------------------------------------------------
@@ -232,8 +232,8 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         """
         Convert an AssetVersion to a QStandardItem and add it to the history model.
 
-        :param asset_version: The MEDM AssetVersion to add
-        :param asset: The parent MEDM Asset
+        :param asset_version: The FlowAM AssetVersion to add
+        :param asset: The parent FlowAM Asset
         """
         version_number = asset_version.version_number
 
@@ -268,10 +268,10 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         self, version: AssetVersion, asset: Asset
     ) -> Dict[str, Any]:
         """
-        Convert a MEDM AssetVersion to Shotgun-compatible dictionary.
+        Convert a FlowAM AssetVersion to Shotgun-compatible dictionary.
 
-        :param version: The MEDM AssetVersion
-        :param asset: The parent MEDM Asset
+        :param version: The FlowAM AssetVersion
+        :param asset: The parent FlowAM Asset
         :returns: sg_data dictionary compatible with Shotgun UI
         """
         sg_publish_type_id = None
@@ -339,7 +339,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
 
         :param draft_info: DraftInfo object returned by asset_management.get_asset_drafts()
                            or get_drafts().  May be CheckoutDraftInfo or NewDraftInfo.
-        :param asset: The parent MEDM Asset (may be None for NewDraftInfo)
+        :param asset: The parent FlowAM Asset (may be None for NewDraftInfo)
         :returns: sg_data dictionary compatible with action hooks and Shotgun UI
         """
         sg_publish_type_id = None
@@ -380,7 +380,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         NewDraftInfo (new asset not yet published).
 
         :param draft_info: DraftInfo object (CheckoutDraftInfo or NewDraftInfo)
-        :param asset: The parent MEDM Asset (may be None for NewDraftInfo)
+        :param asset: The parent FlowAM Asset (may be None for NewDraftInfo)
         """
         draft_type = getattr(draft_info, "draft_type", "unknown")
 
@@ -432,7 +432,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         on the main thread once the image bytes are available.
 
         :param qt_item: The QStandardItem to set the thumbnail on.
-        :param revision_id: MEDM AssetRevision ID whose thumbnail is needed.
+        :param revision_id: FlowAM AssetRevision ID whose thumbnail is needed.
         """
         self._thumbnail_service.request(qt_item, revision_id, self._apply_thumbnail)
 

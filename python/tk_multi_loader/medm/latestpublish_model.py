@@ -8,10 +8,10 @@
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
-"""MEDM Latest Publish Model - Replacement for SgLatestPublishModel
+"""FlowAM Latest Publish Model - Replacement for SgLatestPublishModel
 
 This module provides a drop-in replacement for SgLatestPublishModel that uses
-Flow Asset Management (MEDM) data instead of Shotgun data.
+Flow Asset Management (FlowAM) data instead of Shotgun data.
 """
 
 from __future__ import annotations
@@ -41,7 +41,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
     Model which handles the main spreadsheet view which displays the latest version of all
     publishes from Flow Asset Management.
 
-    This is a drop-in replacement for SgLatestPublishModel that uses MEDM data.
+    This is a drop-in replacement for SgLatestPublishModel that uses FlowAM data.
     """
 
     # Sentinel key used inside cache.drafts to store the list returned by
@@ -56,12 +56,12 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
     PUBLISH_TYPE_NAME_ROLE = QtCore.Qt.UserRole + 104
     SEARCHABLE_NAME = QtCore.Qt.UserRole + 105
 
-    # Additional MEDM-specific roles
+    # Additional FlowAM-specific roles
     SG_DATA_ROLE = QtCore.Qt.UserRole + 1  # To maintain compatibility with ShotgunModel
     SG_ASSOCIATED_FIELD_ROLE = QtCore.Qt.UserRole + 2
     ASSET_ROLE = (
         QtCore.Qt.UserRole + 200
-    )  # Stores MEDM Asset object (shared with all MEDM models)
+    )  # Stores FlowAM Asset object (shared with all FlowAM models)
     DRAFT_ROLE = (
         QtCore.Qt.UserRole + 202
     )  # Stores DraftInfo for draft rows (shared with history model)
@@ -85,13 +85,13 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         thumbnail_service: Optional[MedmThumbnailService] = None,
     ):
         """
-        Model which represents the latest publishes for an entity from MEDM.
+        Model which represents the latest publishes for an entity from FlowAM.
 
         :param parent: Parent QObject
         :param publish_type_model: Model for tracking publish types
         :param bg_task_manager: Background task manager (kept for API compatibility)
         :param cache: Shared :class:`MedmSharedCache`.  When provided all data
-            caches (children, drafts, publish types) are shared with other MEDM
+            caches (children, drafts, publish types) are shared with other FlowAM
             models so no duplicate API calls are made.  When *None* a private
             cache is created for standalone use.
         :param thumbnail_service: Shared :class:`MedmThumbnailService` instance.
@@ -135,7 +135,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
     def load_data(self, item: Optional[QtGui.QStandardItem]) -> None:
         """
         Clears the model and sets it up for the selected asset from left treeview panel.
-        Loads data from MEDM instead of Shotgun.
+        Loads data from FlowAM instead of Shotgun.
 
         :param item: Selected item in the treeview, None if nothing is selected.
         """
@@ -313,10 +313,10 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         self, item: QtGui.QStandardItem
     ) -> Optional[Asset]:
         """
-        Extract the MEDM Asset object from a tree view QStandardItem.
+        Extract the FlowAM Asset object from a tree view QStandardItem.
 
         :param item: The QStandardItem from the entity tree (left panel)
-        :returns: MEDM Asset object or None if not found
+        :returns: FlowAM Asset object or None if not found
         """
         # Both MedmEntityModel and MedmLatestPublishModel use ASSET_ROLE = Qt.UserRole + 200
         asset = item.data(self.ASSET_ROLE)
@@ -338,7 +338,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         a tree node never duplicates an API call that was already made when the
         node was expanded by :class:`MedmEntityModel` (or vice-versa).
 
-        :param asset: The selected MEDM Asset in MEDM treeview
+        :param asset: The selected FlowAM Asset in FlowAM treeview
         :returns: List of sg_data dictionaries representing each non-structural child asset
         """
         children_asset_sg_dicts = []
@@ -379,9 +379,9 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
 
     def _asset_to_sg_dict(self, asset: Asset) -> Dict[str, Any]:
         """
-        Convert an MEDM Asset to a Shotgun-compatible dictionary.
+        Convert an FlowAM Asset to a Shotgun-compatible dictionary.
 
-        :param asset: The MEDM Asset
+        :param asset: The FlowAM Asset
         :returns: Dictionary with Shotgun-compatible fields
         """
         sg_publish_type_id = None
@@ -448,7 +448,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
 
         :param draft_info: DraftInfo returned by asset_management.get_asset_drafts()
                            (CheckoutDraftInfo) or get_drafts() (NewDraftInfo).
-        :param asset: The MEDM Asset the draft belongs to.  May be ``None`` for
+        :param asset: The FlowAM Asset the draft belongs to.  May be ``None`` for
             ``NewDraftInfo`` entries whose parent asset has not been published yet.
         :returns: sg_data dictionary compatible with action hooks and center panel UI.
         """
@@ -506,7 +506,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         matches *parent_asset_id*.
 
         These represent brand-new assets that exist only on disk and have never
-        been published to MEDM.  Because they have no published asset record
+        been published to FlowAM.  Because they have no published asset record
         they are invisible to ``asset.iterate_children()`` and must be surfaced
         via :func:`~flow.asset_management.get_drafts`.
 
@@ -559,7 +559,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
 
         The QStandardItem stores multiple pieces of data in custom Qt roles:
         - SG_DATA_ROLE: Full Shotgun-compatible dict for backwards compatibility
-        - ASSET_ROLE: Original MEDM Asset object (from "_medm_asset" key)
+        - ASSET_ROLE: Original FlowAM Asset object (from "_medm_asset" key)
         - TYPE_ID_ROLE: Publish type ID for filtering
         - PUBLISH_TYPE_NAME_ROLE: Publish type name for display
         - SEARCHABLE_NAME: Name for search/filter operations
@@ -568,7 +568,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         center panel's publish view.
 
         :param sg_item: Shotgun-compatible dictionary created by _asset_to_sg_dict().
-                        Must contain "_medm_asset" key with the original MEDM Asset object.
+                        Must contain "_medm_asset" key with the original FlowAM Asset object.
         """
         qt_item = QtGui.QStandardItem(sg_item.get("code", "Unnamed"))
 
@@ -641,7 +641,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         on the main thread once the image bytes are available.
 
         :param qt_item: The QStandardItem to set the thumbnail on.
-        :param revision_id: MEDM AssetRevision ID whose thumbnail is needed.
+        :param revision_id: FlowAM AssetRevision ID whose thumbnail is needed.
         """
         self._thumbnail_service.request(qt_item, revision_id, self._apply_thumbnail)
 

@@ -8,9 +8,9 @@
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
-"""MEDM Asset Model - Tree model for MEDM asset hierarchy
+"""FlowAM Asset Model - Tree model for FlowAM asset hierarchy
 
-This module provides a tree model that displays MEDM assets
+This module provides a tree model that displays FlowAM assets
 in the left-hand tree view of the loader.
 
 Children are loaded lazily: only the immediate children of the current project
@@ -41,8 +41,8 @@ else:
 
 class MedmEntityModel(QtGui.QStandardItemModel):
     """
-    Tree model that displays MEDM assets in a hierarchical structure.
-    This replaces SgEntityModel for MEDM data sources.
+    Tree model that displays FlowAM assets in a hierarchical structure.
+    This replaces SgEntityModel for FlowAM data sources.
 
     Uses lazy loading: only the project's immediate children are fetched at
     startup.  Deeper levels are fetched when the user expands a node.
@@ -53,7 +53,7 @@ class MedmEntityModel(QtGui.QStandardItemModel):
     SG_ASSOCIATED_FIELD_ROLE = QtCore.Qt.UserRole + 2
     ASSET_ROLE = (
         QtCore.Qt.UserRole + 200
-    )  # Stores MEDM Asset object (shared with all MEDM models)
+    )  # Stores FlowAM Asset object (shared with all FlowAM models)
 
     # Lazy-loading bookkeeping role: True once children have been fetched for a node.
     CHILDREN_LOADED_ROLE = QtCore.Qt.UserRole + 201
@@ -142,7 +142,7 @@ class MedmEntityModel(QtGui.QStandardItemModel):
         return not item.data(self.CHILDREN_LOADED_ROLE)
 
     def fetchMore(self, parent: QtCore.QModelIndex) -> None:
-        """Load the immediate children of *parent* from the MEDM API (or cache)."""
+        """Load the immediate children of *parent* from the FlowAM API (or cache)."""
         if not parent.isValid():
             return
         item = self.itemFromIndex(parent)
@@ -176,21 +176,21 @@ class MedmEntityModel(QtGui.QStandardItemModel):
         Returns a QStandardItem based on entity type and entity id.
 
         **OVERRIDE:** This method overrides the ShotgunModel.item_from_entity() interface
-        to provide MEDM-compatible implementation. The original ShotgunModel version uses
-        an internal data handler (_data_handler.get_uid_from_entity_id), but MEDM models
+        to provide FlowAM-compatible implementation. The original ShotgunModel version uses
+        an internal data handler (_data_handler.get_uid_from_entity_id), but FlowAM models
         store data in a tree structure requiring recursive search.
 
         **Implementation Differences from ShotgunModel.item_from_entity:**
         - Original: Uses flat data handler lookup (uid-based)
         - This override: Performs recursive tree search through QStandardItem hierarchy
         - Original: Validates entity_type matches model's __entity_type
-        - This override: Ignores entity_type (MEDM uses unified Asset model)
+        - This override: Ignores entity_type (FlowAM uses unified Asset model)
 
         **Note:** Method name preserved for API compatibility with dialog.py which expects
         all entity models (SgEntityModel, SgHierarchyModel, MedmEntityModel) to implement
         this interface. Called by dialog._get_item_from_entity() for navigation/selection.
 
-        :param entity_type: Shotgun entity type (ignored in MEDM implementation)
+        :param entity_type: Shotgun entity type (ignored in FlowAM implementation)
         :param entity_id: Entity ID to search for (compared against SG_DATA_ROLE["id"])
         :returns: :class:`~PySide.QtGui.QStandardItem` or None if not found
         """
@@ -213,12 +213,12 @@ class MedmEntityModel(QtGui.QStandardItemModel):
         """
         Return child :class:`Asset` objects for *asset*.
 
-        Uses the internal cache when available; otherwise fetches from the MEDM
+        Uses the internal cache when available; otherwise fetches from the FlowAM
         API and stores the result.  This is the single entry-point that both
         the tree's ``fetchMore`` and :class:`MedmLatestPublishModel` use, so
         that a drill-down never fetches the same level twice.
 
-        :param asset: Parent MEDM Asset whose children are needed.
+        :param asset: Parent FlowAM Asset whose children are needed.
         :returns: List of child Asset objects (may be empty).
         """
         return self._fetch_and_cache_children(asset)
@@ -229,7 +229,7 @@ class MedmEntityModel(QtGui.QStandardItemModel):
 
     def _initialize_project(self) -> None:
         """
-        Initialize and cache the MEDM Project object.
+        Initialize and cache the FlowAM Project object.
         Called during __init__ to fail fast if project is unavailable.
         """
         try:
@@ -301,7 +301,7 @@ class MedmEntityModel(QtGui.QStandardItemModel):
         Assets that satisfy none of the above are pure leaf items that belong
         only in the centre-panel publish list, not in the tree.
 
-        :param asset: MEDM ``Asset`` to test.
+        :param asset: FlowAM ``Asset`` to test.
         :returns: ``True`` if the asset should appear in the tree.
         """
         if _is_structural_asset_util(asset, self._flow_module):
@@ -322,7 +322,7 @@ class MedmEntityModel(QtGui.QStandardItemModel):
         * **Everything else** (workfiles, generic assets, ...) -> binary/data
           icon, reflecting that the item holds or organises file data.
 
-        :param asset: MEDM ``Asset`` to pick an icon for.
+        :param asset: FlowAM ``Asset`` to pick an icon for.
         :returns: A :class:`QtGui.QIcon` instance.
         """
         return (
@@ -333,7 +333,7 @@ class MedmEntityModel(QtGui.QStandardItemModel):
 
     def _load_medm_assets(self) -> None:
         """
-        Load the first level of MEDM assets (project's immediate children).
+        Load the first level of FlowAM assets (project's immediate children).
         Called asynchronously after a short delay to show the loading spinner.
         """
         if self._project is None:
@@ -375,7 +375,7 @@ class MedmEntityModel(QtGui.QStandardItemModel):
         reports ``True`` and Qt draws an expand arrow until the user actually
         drills in.
 
-        :param asset: The MEDM Asset to add.
+        :param asset: The FlowAM Asset to add.
         :param parent_item: Parent item, or ``None`` for root level.
         :returns: The newly created item.
         """
@@ -438,7 +438,7 @@ class MedmEntityModel(QtGui.QStandardItemModel):
         """
         Return child assets for *asset*, fetching from the API only on the
         first call and caching the result in the shared cache for subsequent
-        lookups by any MEDM model.
+        lookups by any FlowAM model.
         """
         if asset.id in self._cache.children:
             return self._cache.children[asset.id]

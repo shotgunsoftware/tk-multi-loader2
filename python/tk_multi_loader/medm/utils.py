@@ -8,7 +8,7 @@
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
-"""Shared utility helpers for MEDM models.
+"""Shared utility helpers for FlowAM models.
 
 Functions here are intentionally free of Qt and SGTK framework imports so
 they stay lightweight and easy to unit-test.
@@ -23,7 +23,7 @@ from ..constants import DRAFT_VERSION_IDENTIFIER
 
 
 def is_structural_asset(asset: Any, flow_module: Any) -> bool:
-    """Return ``True`` when *asset* is a structural container in the MEDM hierarchy.
+    """Return ``True`` when *asset* is a structural container in the FlowAM hierarchy.
 
     An asset is considered structural — and therefore belongs only in the
     left-hand tree, never in the centre-panel publish list — when **any** of
@@ -37,7 +37,7 @@ def is_structural_asset(asset: Any, flow_module: Any) -> bool:
     schema error never surfaces as a visible crash; the safe default is
     ``False`` (treat the asset as publishable).
 
-    :param asset: MEDM ``Asset`` object to test.
+    :param asset: FlowAM ``Asset`` object to test.
     :param flow_module: The ``flow`` framework module imported via
         ``sgtk.platform.import_framework("tk-framework-flowam", "flow")``.
     :returns: ``True`` if the asset is a structural container.
@@ -149,7 +149,7 @@ def build_draft_sg_dict(
 
     :param draft_info: ``DraftInfo`` instance (``CheckoutDraftInfo`` or
         ``NewDraftInfo``).
-    :param asset: MEDM ``Asset`` the draft belongs to.  May be ``None`` for
+    :param asset: FlowAM ``Asset`` the draft belongs to.  May be ``None`` for
         ``NewDraftInfo`` entries surfaced by the history model.
     :param context: ``sgtk.Context`` used to resolve the current user.
     :param project_id: ShotGrid project ID.
@@ -203,7 +203,7 @@ def resolve_publish_type(
     flow_module: Any,
     app: Any,
 ) -> Tuple[Optional[int], str]:
-    """Resolve a MEDM schema type ID to a ``(sg_publish_type_id, display_name)`` pair.
+    """Resolve a FlowAM schema type ID to a ``(sg_publish_type_id, display_name)`` pair.
 
     Resolution order:
 
@@ -211,7 +211,7 @@ def resolve_publish_type(
     2. ShotGrid ``PublishedFileType`` lookup by display name (real ID).
     3. ``None`` fallback when no SG record exists (item will bypass type filter).
 
-    :param medm_type_id_str: MEDM schema type ID string.
+    :param medm_type_id_str: FlowAM schema type ID string.
     :param cache: :class:`MedmSharedCache` instance whose ``publish_types``
         dict is used for caching.
     :param flow_module: The ``flow`` framework module imported via

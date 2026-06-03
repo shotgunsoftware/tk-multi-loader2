@@ -50,6 +50,7 @@ class BuildTemplateDialog(QtGui.QDialog):
         self.step = None
         self.template = None
         self.description = None
+        self.mode = None
 
         self.ui = Ui_BuildTemplateDialog()
         self.ui.setupUi(self)

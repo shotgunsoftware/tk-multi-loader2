@@ -17,6 +17,8 @@ import sgtk
 from sgtk import TankError
 from sgtk.platform.qt import QtGui
 
+from ..constants import DRAFT_VERSION_IDENTIFIER
+
 
 class FlowAMActions:
     """
@@ -25,10 +27,15 @@ class FlowAMActions:
     This hook has been tested with Maya and Houdini.
     """
 
-    DRAFT_VERSION_IDENTIFIER = -1
-
     def __init__(self):
         self._app = sgtk.platform.current_bundle()
+
+    @property
+    def DRAFT_VERSION_IDENTIFIER(self):
+        """
+        Wraps the identifier for draft versions.
+        """
+        return DRAFT_VERSION_IDENTIFIER
 
     def load_framework(
         self, framework_instance_name: str, module_name: str
@@ -64,11 +71,11 @@ class FlowAMActions:
 
         flow_module = self.load_framework("tk-framework-flowam", "flow")
 
-        if version_number == self.DRAFT_VERSION_IDENTIFIER and self._is_local_draft(
+        if version_number == DRAFT_VERSION_IDENTIFIER and self._is_local_draft(
             sg_publish_data
         ):
             flow_module.asset_management.open_draft(flow_revision_id)
-        elif version_number > self.DRAFT_VERSION_IDENTIFIER:
+        elif version_number > DRAFT_VERSION_IDENTIFIER:
             # Checkout the revision to the local sandbox
             flow_module.asset_management.checkout_revision(flow_revision_id)
         else:

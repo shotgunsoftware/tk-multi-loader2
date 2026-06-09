@@ -712,6 +712,7 @@ class AppDialog(QtGui.QWidget):
             animation.setStartValue(content_height)
             animation.setEndValue(0)
 
+        animation.finished.connect(lambda: setattr(self, "_current_animation", None))
         self._current_animation = animation
         animation.start(QtCore.QAbstractAnimation.DeleteWhenStopped)
 

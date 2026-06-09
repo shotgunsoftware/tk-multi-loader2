@@ -344,7 +344,9 @@ class MedmEntityModel(QtGui.QStandardItemModel):
             return
 
         try:
-            self._app.log_debug("FlowAM: Loading entity tree (project children only)...")
+            self._app.log_debug(
+                "FlowAM: Loading entity tree (project children only)..."
+            )
 
             count = 0
             for asset in self._project.iterate_children():
@@ -432,7 +434,9 @@ class MedmEntityModel(QtGui.QStandardItemModel):
                 f"(non-structural leaf children hidden from tree)"
             )
         except Exception as e:
-            self._app.log_debug(f"FlowAM: Could not get children for '{asset.name}': {e}")
+            self._app.log_debug(
+                f"FlowAM: Could not get children for '{asset.name}': {e}"
+            )
 
     def _fetch_and_cache_children(self, asset: Asset) -> List[Asset]:
         """

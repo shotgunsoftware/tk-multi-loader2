@@ -52,9 +52,7 @@ def get_templates(pipeline_step: Any) -> list[Any]:
     return pipeline_step.find_children(type_id=template_type_id)
 
 
-def find_template_pipeline_step(
-    project: Any, pipeline_step_name: str
-) -> Optional[Any]:
+def find_template_pipeline_step(project: Any, pipeline_step_name: str) -> Optional[Any]:
     """Find a pipeline step by name under the Templates folder.
 
     :param project: Flow AM ``Project`` instance to query.

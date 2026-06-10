@@ -8,10 +8,10 @@
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
-"""MEDM Latest Publish Model - Replacement for SgLatestPublishModel
+"""FlowAM Latest Publish Model - Replacement for SgLatestPublishModel
 
 This module provides a drop-in replacement for SgLatestPublishModel that uses
-Flow Asset Management (MEDM) data instead of Shotgun data.
+Flow Asset Management (FlowAM) data instead of Shotgun data.
 """
 
 from __future__ import annotations
@@ -24,6 +24,7 @@ from sgtk.platform.qt import QtCore, QtGui
 
 from .shared_cache import MedmSharedCache
 from .thumbnail_service import MedmThumbnailService
+from ..constants import DRAFT_VERSION_IDENTIFIER
 from .utils import build_draft_sg_dict, resolve_publish_type
 from .utils import is_structural_asset as _is_structural_asset_util
 
@@ -40,12 +41,8 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
     Model which handles the main spreadsheet view which displays the latest version of all
     publishes from Flow Asset Management.
 
-    This is a drop-in replacement for SgLatestPublishModel that uses MEDM data.
+    This is a drop-in replacement for SgLatestPublishModel that uses FlowAM data.
     """
-
-    # Matches the V1 FlowActions hook constant.  Draft rows carry this as
-    # version_number so action hooks route them to asset_management.open_draft().
-    DRAFT_VERSION_IDENTIFIER = -1
 
     # Sentinel key used inside cache.drafts to store the list returned by
     # get_drafts(draft_type="new").  A real asset.id is always a UUID/storage
@@ -59,12 +56,12 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
     PUBLISH_TYPE_NAME_ROLE = QtCore.Qt.UserRole + 104
     SEARCHABLE_NAME = QtCore.Qt.UserRole + 105
 
-    # Additional MEDM-specific roles
+    # Additional FlowAM-specific roles
     SG_DATA_ROLE = QtCore.Qt.UserRole + 1  # To maintain compatibility with ShotgunModel
     SG_ASSOCIATED_FIELD_ROLE = QtCore.Qt.UserRole + 2
     ASSET_ROLE = (
         QtCore.Qt.UserRole + 200
-    )  # Stores MEDM Asset object (shared with all MEDM models)
+    )  # Stores FlowAM Asset object (shared with all FlowAM models)
     DRAFT_ROLE = (
         QtCore.Qt.UserRole + 202
     )  # Stores DraftInfo for draft rows (shared with history model)
@@ -88,13 +85,13 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         thumbnail_service: Optional[MedmThumbnailService] = None,
     ):
         """
-        Model which represents the latest publishes for an entity from MEDM.
+        Model which represents the latest publishes for an entity from FlowAM.
 
         :param parent: Parent QObject
         :param publish_type_model: Model for tracking publish types
         :param bg_task_manager: Background task manager (kept for API compatibility)
         :param cache: Shared :class:`MedmSharedCache`.  When provided all data
-            caches (children, drafts, publish types) are shared with other MEDM
+            caches (children, drafts, publish types) are shared with other FlowAM
             models so no duplicate API calls are made.  When *None* a private
             cache is created for standalone use.
         :param thumbnail_service: Shared :class:`MedmThumbnailService` instance.
@@ -122,7 +119,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         self._current_entity = None
 
         self._project_id = 0
-        self._project_name = "MEDM Project"
+        self._project_name = "FlowAM Project"
         self._initialize_project_info()
 
     # -------------------------------------------------------------------------
@@ -138,7 +135,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
     def load_data(self, item: Optional[QtGui.QStandardItem]) -> None:
         """
         Clears the model and sets it up for the selected asset from left treeview panel.
-        Loads data from MEDM instead of Shotgun.
+        Loads data from FlowAM instead of Shotgun.
 
         :param item: Selected item in the treeview, None if nothing is selected.
         """
@@ -182,7 +179,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
             self._project_name = self._app.context.project["name"]
         except Exception as e:
             self._app.log_warning(
-                f"MEDM LatestPublish: Failed to initialize project info: {type(e).__name__}: {e}. "
+                f"FlowAM LatestPublish: Failed to initialize project info: {type(e).__name__}: {e}. "
                 "Using default project values. This may indicate the session project was not "
                 "initialized or the project ID is invalid."
             )
@@ -203,10 +200,10 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
 
         asset = self._extract_asset_from_tree_item(selected_item)
         if asset is None:
-            self._app.log_warning("MEDM: Could not extract asset from selected item")
+            self._app.log_warning("FlowAM: Could not extract asset from selected item")
             return
 
-        self._app.log_debug(f"MEDM: Asset extracted: {asset.name}")
+        self._app.log_debug(f"FlowAM: Asset extracted: {asset.name}")
 
         children_asset_sg_dicts = self._fetch_asset_children(asset)
 
@@ -221,14 +218,14 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
                 children_asset_sg_dicts = [self._asset_to_sg_dict(asset)]
             except Exception as e:
                 self._app.log_warning(
-                    f"MEDM: Could not convert leaf asset '{asset.name}' to sg_dict: {e}"
+                    f"FlowAM: Could not convert leaf asset '{asset.name}' to sg_dict: {e}"
                 )
                 # Keep a reference to the raw asset so we can still fetch its
                 # drafts below.
                 leaf_asset_fallback = asset
 
         self._app.log_debug(
-            f"MEDM: Fetched {len(children_asset_sg_dicts)} latest version dicts from children"
+            f"FlowAM: Fetched {len(children_asset_sg_dicts)} latest version dicts from children"
         )
 
         assets_for_draft_lookup = [
@@ -251,7 +248,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
                     self._cache.drafts[child_asset.id] = raw_drafts
             except Exception as e:
                 self._app.log_debug(
-                    f"MEDM: Could not fetch drafts for '{child_asset.name}': {e}"
+                    f"FlowAM: Could not fetch drafts for '{child_asset.name}': {e}"
                 )
                 continue
 
@@ -260,12 +257,12 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
                 try:
                     draft_dicts.append(self._draft_to_sg_dict(draft_info, child_asset))
                     self._app.log_debug(
-                        f"MEDM: Found draft '{getattr(draft_info, 'name', '?')}' "
+                        f"FlowAM: Found draft '{getattr(draft_info, 'name', '?')}' "
                         f"for asset '{child_asset.name}'"
                     )
                 except Exception as e:
                     self._app.log_warning(
-                        f"MEDM: Could not convert draft '{getattr(draft_info, 'name', '?')}' "
+                        f"FlowAM: Could not convert draft '{getattr(draft_info, 'name', '?')}' "
                         f"for '{child_asset.name}': {e}"
                     )
 
@@ -305,7 +302,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
             draft_count += 1
 
         self._app.log_debug(
-            f"MEDM: center panel now has {self.rowCount()} items "
+            f"FlowAM: center panel now has {self.rowCount()} items "
             f"({draft_count} draft(s), {published_count} published)"
         )
 
@@ -316,10 +313,10 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         self, item: QtGui.QStandardItem
     ) -> Optional[Asset]:
         """
-        Extract the MEDM Asset object from a tree view QStandardItem.
+        Extract the FlowAM Asset object from a tree view QStandardItem.
 
         :param item: The QStandardItem from the entity tree (left panel)
-        :returns: MEDM Asset object or None if not found
+        :returns: FlowAM Asset object or None if not found
         """
         # Both MedmEntityModel and MedmLatestPublishModel use ASSET_ROLE = Qt.UserRole + 200
         asset = item.data(self.ASSET_ROLE)
@@ -341,7 +338,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         a tree node never duplicates an API call that was already made when the
         node was expanded by :class:`MedmEntityModel` (or vice-versa).
 
-        :param asset: The selected MEDM Asset in MEDM treeview
+        :param asset: The selected FlowAM Asset in FlowAM treeview
         :returns: List of sg_data dictionaries representing each non-structural child asset
         """
         children_asset_sg_dicts = []
@@ -356,39 +353,39 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
             for child_asset in child_assets:
                 if _is_structural_asset_util(child_asset, self._flow_module):
                     self._app.log_debug(
-                        f"MEDM: Skipping structural asset '{child_asset.name}' from center panel"
+                        f"FlowAM: Skipping structural asset '{child_asset.name}' from center panel"
                     )
                     continue
                 try:
                     asset_dict = self._asset_to_sg_dict(child_asset)
                     children_asset_sg_dicts.append(asset_dict)
                     self._app.log_debug(
-                        f"MEDM: Added asset '{child_asset.name}' with latest version "
+                        f"FlowAM: Added asset '{child_asset.name}' with latest version "
                         f"v{child_asset.version_number}"
                     )
                 except Exception as e:
                     self._app.log_warning(
-                        f"MEDM: Error processing child asset '{child_asset.name}': {e}"
+                        f"FlowAM: Error processing child asset '{child_asset.name}': {e}"
                     )
                     continue
 
         except Exception as e:
-            self._app.log_warning(f"MEDM: Error fetching asset children: {e}")
+            self._app.log_warning(f"FlowAM: Error fetching asset children: {e}")
 
         self._app.log_debug(
-            f"MEDM: Loaded {len(children_asset_sg_dicts)} children assets for asset '{asset.name}'"
+            f"FlowAM: Loaded {len(children_asset_sg_dicts)} children assets for asset '{asset.name}'"
         )
         return children_asset_sg_dicts
 
     def _asset_to_sg_dict(self, asset: Asset) -> Dict[str, Any]:
         """
-        Convert an MEDM Asset to a Shotgun-compatible dictionary.
+        Convert an FlowAM Asset to a Shotgun-compatible dictionary.
 
-        :param asset: The MEDM Asset
+        :param asset: The FlowAM Asset
         :returns: Dictionary with Shotgun-compatible fields
         """
         sg_publish_type_id = None
-        sg_publish_type_code = "MEDM Asset"
+        sg_publish_type_code = "FlowAM Asset"
 
         medm_type_ids = asset.type_ids
         if len(medm_type_ids) > 0:
@@ -407,7 +404,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
             "created_by": {
                 "type": "HumanUser",
                 "id": 1,
-                "name": asset.created_by or "MEDM User",
+                "name": asset.created_by or "FlowAM User",
             },
             "entity": {"type": "Asset", "id": None, "name": asset.name},
             "project": {
@@ -451,12 +448,12 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
 
         :param draft_info: DraftInfo returned by asset_management.get_asset_drafts()
                            (CheckoutDraftInfo) or get_drafts() (NewDraftInfo).
-        :param asset: The MEDM Asset the draft belongs to.  May be ``None`` for
+        :param asset: The FlowAM Asset the draft belongs to.  May be ``None`` for
             ``NewDraftInfo`` entries whose parent asset has not been published yet.
         :returns: sg_data dictionary compatible with action hooks and center panel UI.
         """
         sg_publish_type_id = None
-        sg_publish_type_code = "MEDM Asset"
+        sg_publish_type_code = "FlowAM Asset"
 
         # Prefer the published asset's type_ids; fall back to the draft's own
         # type_ids for NewDraftInfo where no published asset exists yet.
@@ -509,7 +506,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         matches *parent_asset_id*.
 
         These represent brand-new assets that exist only on disk and have never
-        been published to MEDM.  Because they have no published asset record
+        been published to FlowAM.  Because they have no published asset record
         they are invisible to ``asset.iterate_children()`` and must be surfaced
         via :func:`~flow.asset_management.get_drafts`.
 
@@ -527,7 +524,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
                     draft_type="new"
                 )
             except Exception as e:
-                self._app.log_warning(f"MEDM: Could not fetch new-asset drafts: {e}")
+                self._app.log_warning(f"FlowAM: Could not fetch new-asset drafts: {e}")
                 all_new_drafts = []
             self._cache.drafts[self._NEW_DRAFTS_CACHE_KEY] = all_new_drafts
         else:
@@ -540,13 +537,13 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
             try:
                 draft_sg_dict = self._draft_to_sg_dict(draft_info, asset=None)
                 self._app.log_debug(
-                    f"MEDM: Found new-asset draft '{getattr(draft_info, 'name', '?')}' "
+                    f"FlowAM: Found new-asset draft '{getattr(draft_info, 'name', '?')}' "
                     f"under parent '{parent_asset_id}'"
                 )
                 result.append(draft_sg_dict)
             except Exception as e:
                 self._app.log_warning(
-                    f"MEDM: Could not convert new-asset draft "
+                    f"FlowAM: Could not convert new-asset draft "
                     f"'{getattr(draft_info, 'name', '?')}': {e}"
                 )
         return result
@@ -562,7 +559,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
 
         The QStandardItem stores multiple pieces of data in custom Qt roles:
         - SG_DATA_ROLE: Full Shotgun-compatible dict for backwards compatibility
-        - ASSET_ROLE: Original MEDM Asset object (from "_medm_asset" key)
+        - ASSET_ROLE: Original FlowAM Asset object (from "_medm_asset" key)
         - TYPE_ID_ROLE: Publish type ID for filtering
         - PUBLISH_TYPE_NAME_ROLE: Publish type name for display
         - SEARCHABLE_NAME: Name for search/filter operations
@@ -571,7 +568,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         center panel's publish view.
 
         :param sg_item: Shotgun-compatible dictionary created by _asset_to_sg_dict().
-                        Must contain "_medm_asset" key with the original MEDM Asset object.
+                        Must contain "_medm_asset" key with the original FlowAM Asset object.
         """
         qt_item = QtGui.QStandardItem(sg_item.get("code", "Unnamed"))
 
@@ -604,7 +601,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         self.appendRow(qt_item)
 
         self._app.log_debug(
-            f"MEDM: Added item '{qt_item.text()}' to model (row count: {self.rowCount()})"
+            f"FlowAM: Added item '{qt_item.text()}' to model (row count: {self.rowCount()})"
         )
 
     def _set_tooltip(self, item: QtGui.QStandardItem, sg_item: Dict[str, Any]) -> None:
@@ -619,7 +616,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         # Version info - drafts use DRAFT_VERSION_IDENTIFIER (-1) internally;
         # show a human-readable label instead of the raw sentinel value.
         version = sg_item.get("version_number")
-        if version == self.DRAFT_VERSION_IDENTIFIER:
+        if version == DRAFT_VERSION_IDENTIFIER:
             draft_type = sg_item.get("_medm_draft_type", "")
             vers_str = f"Draft ({draft_type})" if draft_type else "Draft"
         elif version is not None and version >= 0:
@@ -644,7 +641,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         on the main thread once the image bytes are available.
 
         :param qt_item: The QStandardItem to set the thumbnail on.
-        :param revision_id: MEDM AssetRevision ID whose thumbnail is needed.
+        :param revision_id: FlowAM AssetRevision ID whose thumbnail is needed.
         """
         self._thumbnail_service.request(qt_item, revision_id, self._apply_thumbnail)
 

@@ -15,6 +15,7 @@ Hook that loads defines all the available actions, broken down by publish type.
 import glob
 import os
 import re
+
 import maya.cmds as cmds
 import maya.mel as mel
 import sgtk
@@ -27,7 +28,7 @@ class MayaActions(HookBaseClass):
     ##############################################################################################################
     # public interface - to be overridden by deriving classes
 
-    def generate_actions(self, sg_publish_data, actions, ui_area):
+    def generate_actions(self, sg_publish_data, actions, ui_area, am_base_obj=None):
         """
         Returns a list of action instances for a particular publish.
         This method is called each time a user clicks a publish somewhere in the UI.
@@ -125,9 +126,119 @@ class MayaActions(HookBaseClass):
                 }
             )
 
+        # -----------------------
+        # FlowAM specific actions
+        # -----------------------
+        if (
+            "open" in actions
+            and sg_publish_data.get("type") == "PublishedFile"
+            and (
+                am_base_obj._is_local_draft(sg_publish_data)
+                or sg_publish_data.get(
+                    "version_number", am_base_obj.DRAFT_VERSION_IDENTIFIER
+                )
+                > am_base_obj.DRAFT_VERSION_IDENTIFIER
+            )
+        ):
+            action_instances.append(
+                {
+                    "name": "open",
+                    "params": None,
+                    "caption": "Open",
+                    "description": "This will open the item into the current scene.",
+                    "multi_select": False,
+                }
+            )
+
+        if (
+            "download" in actions
+            and sg_publish_data.get("type") == "PublishedFile"
+            and (
+                sg_publish_data.get("version_number") is not None
+                and sg_publish_data.get("version_number")
+                != am_base_obj.DRAFT_VERSION_IDENTIFIER
+            )
+        ):
+            action_instances.append(
+                {
+                    "name": "download",
+                    "params": "Download 'params'",
+                    "caption": "Download",
+                    "description": "Downloads the published file to a user specified location.",
+                }
+            )
+
+        if "discard_draft" in actions:
+            draft_id = sg_publish_data.get("sg_flow_revision_id")
+
+            if am_base_obj._is_local_draft(
+                sg_publish_data
+            ) and am_base_obj._is_new_asset(draft_id):
+                action_instances.append(
+                    {
+                        "name": "discard_draft",
+                        "params": None,
+                        "caption": "Discard Draft",
+                        "description": "This will discard the local draft for this publish.",
+                    }
+                )
+
+        if (
+            "reference_am" in actions
+            and sg_publish_data.get(
+                "version_number", am_base_obj.DRAFT_VERSION_IDENTIFIER
+            )
+            != am_base_obj.DRAFT_VERSION_IDENTIFIER
+        ):
+            action_instances.append(
+                {
+                    "name": "reference_am",
+                    "params": None,
+                    "caption": "Reference",
+                    "description": "This will load the item into the current scene as a reference",
+                }
+            )
+
+        if (
+            "reference_copy_link" in actions
+            and sg_publish_data.get(
+                "version_number", am_base_obj.DRAFT_VERSION_IDENTIFIER
+            )
+            != am_base_obj.DRAFT_VERSION_IDENTIFIER
+        ):
+            action_instances.append(
+                {
+                    "name": "reference_copy_link",
+                    "params": None,
+                    "caption": "Copy Reference Link",
+                    "description": "This will copy the reference as a string to the clipboard",
+                    "multi_select": False,
+                }
+            )
+
+        if "build_new_scene" in actions:
+            action_instances.append(
+                {
+                    "name": "build_new_scene",
+                    "params": None,
+                    "caption": "Build New Scene",
+                    "description": "This will create a new scene in the current project.",
+                }
+            )
+
+        if "build_new_template" in actions:
+            action_instances.append(
+                {
+                    "name": "build_new_template",
+                    "params": None,
+                    "caption": "Build New Template",
+                    "description": "This will create a new template scene in the current project.",
+                }
+            )
+
         return action_instances
 
-    def execute_multiple_actions(self, actions):
+    def execute_multiple_actions(self, actions, am_base_obj=None):
         """
         Executes the specified action on a list of items.
 
@@ -156,9 +267,9 @@ class MayaActions(HookBaseClass):
             name = single_action["name"]
             sg_publish_data = single_action["sg_publish_data"]
             params = single_action["params"]
-            self.execute_action(name, params, sg_publish_data)
+            self.execute_action(name, params, sg_publish_data, am_base_obj)
 
-    def execute_action(self, name, params, sg_publish_data):
+    def execute_action(self, name, params, sg_publish_data, am_base_obj=None):
         """
         Execute a given action. The data sent to this be method will
         represent one of the actions enumerated by the generate_actions method.
@@ -173,6 +284,34 @@ class MayaActions(HookBaseClass):
             "Execute action called for action %s. "
             "Parameters: %s. Publish Data: %s" % (name, params, sg_publish_data)
         )
+
+        # -----------------------
+        # FlowAM specific actions
+        # -----------------------
+        enable_flowam = app.get_setting("enable_flowam", False)
+        if enable_flowam:
+            if name == "reference_am":
+                am_base_obj._create_reference_am(sg_publish_data)
+
+            if name == "reference_copy_link":
+                am_base_obj._create_reference_copy_link(sg_publish_data)
+
+            if name == "open":
+                am_base_obj._do_open(sg_publish_data)
+
+            if name == "discard_draft":
+                am_base_obj._discard_draft(sg_publish_data)
+
+            if name == "build_new_scene":
+                am_base_obj._build_new_scene(sg_publish_data)
+
+            if name == "build_new_template":
+                am_base_obj._build_new_template(sg_publish_data)
+
+            if name == "download":
+                am_base_obj._download_asset_revision(sg_publish_data)
+
+            return
 
         path = self.get_publish_path(sg_publish_data)
 

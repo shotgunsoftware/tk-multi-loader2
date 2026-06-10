@@ -10,6 +10,8 @@
 
 import sgtk
 
+from .constants import ENTITY_TYPE_DETAIL_PANEL_FIELDS, ENTITY_TYPE_MIDDLE_PANEL_FIELDS
+
 shotgun_model = sgtk.platform.import_framework(
     "tk-framework-shotgunutils", "shotgun_model"
 )
@@ -59,9 +61,54 @@ class SgHierarchyModel(SimpleShotgunHierarchyModel):
             self, parent, bg_task_manager=bg_task_manager, include_root=include_root
         )
 
-        entity_fields = {"__all__": ["code", "description", "image", "sg_status_list"]}
+        app = sgtk.platform.current_bundle()
 
-        # Load a hierarchy that leads to entities that are linked via the "PublishedFile.entity" field.
+        default_fields = ["code", "description", "image", "sg_status_list", "task"]
+
+        list_fields_config = app.get_setting("entity_fields_middle_panel_list", {})
+        thumb_fields_config = app.get_setting(
+            "entity_fields_middle_panel_thumbnail", {}
+        )
+        detail_fields_config = app.get_setting("entity_fields_detail_panel", {})
+        flow_am_internal_fields_config = app.get_setting("flow_am_internal_fields", {})
+
+        # Collect all entity types mentioned across all configurations
+        all_entity_types = set()
+        all_entity_types.update(list_fields_config.keys())
+        all_entity_types.update(thumb_fields_config.keys())
+        all_entity_types.update(detail_fields_config.keys())
+        all_entity_types.update(flow_am_internal_fields_config.keys())
+        all_entity_types.update(ENTITY_TYPE_MIDDLE_PANEL_FIELDS.keys())
+        all_entity_types.update(ENTITY_TYPE_DETAIL_PANEL_FIELDS.keys())
+
+        entity_fields = {}
+        for entity_type in all_entity_types:
+            list_fields = list_fields_config.get(entity_type, [])
+            thumb_fields = thumb_fields_config.get(entity_type, [])
+            detail_fields = detail_fields_config.get(entity_type, [])
+            flow_am_internal_fields = flow_am_internal_fields_config.get(
+                entity_type, []
+            )
+            constant_middle = ENTITY_TYPE_MIDDLE_PANEL_FIELDS.get(entity_type, [])
+            constant_detail = ENTITY_TYPE_DETAIL_PANEL_FIELDS.get(entity_type, [])
+
+            all_fields = list(
+                dict.fromkeys(
+                    default_fields
+                    + constant_middle
+                    + constant_detail
+                    + list_fields
+                    + thumb_fields
+                    + detail_fields
+                    + flow_am_internal_fields
+                )
+            )
+            entity_fields[entity_type] = all_fields
+
+        if not entity_fields:
+            entity_fields = {"__all__": default_fields}
+
+        # Load a hierarchy that leads to entities linked via "PublishedFile.entity".
         self.load_data(
             "PublishedFile.entity", root=root_entity, entity_fields=entity_fields
         )

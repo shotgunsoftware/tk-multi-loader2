@@ -9,7 +9,9 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import sgtk
-from sgtk.platform.qt import QtCore, QtGui
+from sgtk.platform.qt import QtGui
+
+from .constants import ENTITY_TYPE_DETAIL_PANEL_FIELDS, ENTITY_TYPE_MIDDLE_PANEL_FIELDS
 
 # import the shotgun_model module from the shotgun utils framework
 shotgun_model = sgtk.platform.import_framework(
@@ -75,8 +77,42 @@ class SgEntityModel(ShotgunModel):
             bg_load_thumbs=True,
             bg_task_manager=bg_task_manager,
         )
-        fields = ["image", "sg_status_list", "description"]
-        self._load_data(entity_type, filters, hierarchy, fields)
+        default_fields = ["image", "sg_status_list", "description"]
+
+        # Get configured fields from app settings
+        app = sgtk.platform.current_bundle()
+        list_fields = app.get_setting("entity_fields_middle_panel_list", {}).get(
+            entity_type, []
+        )
+        thumb_fields = app.get_setting("entity_fields_middle_panel_thumbnail", {}).get(
+            entity_type, []
+        )
+        detail_fields = app.get_setting("entity_fields_detail_panel", {}).get(
+            entity_type, []
+        )
+        flow_am_internal_fields = app.get_setting("flow_am_internal_fields", {}).get(
+            entity_type, []
+        )
+        constant_middle_panel_fields = ENTITY_TYPE_MIDDLE_PANEL_FIELDS.get(
+            entity_type, []
+        )
+        constant_detail_panel_fields = ENTITY_TYPE_DETAIL_PANEL_FIELDS.get(
+            entity_type, []
+        )
+
+        all_fields = list(
+            dict.fromkeys(
+                default_fields
+                + constant_middle_panel_fields
+                + constant_detail_panel_fields
+                + list_fields
+                + thumb_fields
+                + detail_fields
+                + flow_am_internal_fields
+            )
+        )
+
+        self._load_data(entity_type, filters, hierarchy, all_fields)
 
     ############################################################################################
     # public methods

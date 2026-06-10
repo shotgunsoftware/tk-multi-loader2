@@ -86,7 +86,13 @@ class LoaderManager(object):
             # this publish does not have a type
             publish_type = "undefined"
         else:
-            publish_type = publish_type_dict["name"]
+            # Preference the code field if it exists
+            # but fallback to name for publishes that don't have it.
+            publish_type = (
+                publish_type_dict["code"]
+                if "code" in publish_type_dict
+                else publish_type_dict["name"]
+            )
 
         # check if we have logic configured to handle this publish type.
         mappings = self._bundle.get_setting("action_mappings")
@@ -94,8 +100,10 @@ class LoaderManager(object):
             return []
         # returns a structure on the form
         # { "Maya Scene": ["reference", "import"] }
-        actions = mappings.get(publish_type, [])
-        actions.extend(mappings.get("All", []))
+        # IMPORTANT: Make a copy to avoid modifying the cached config dict
+        actions = list(mappings.get(publish_type, []))
+        if len(actions) == 0:
+            actions.extend(list(mappings.get("All", [])))
         if len(actions) == 0:
             return []
 
@@ -122,6 +130,7 @@ class LoaderManager(object):
                 sg_publish_data=sg_data,
                 actions=actions,
                 ui_area=ui_area_str,
+                am_base_obj=self.get_am_base_obj(),
             )
         except Exception:
             self._logger.exception("Could not execute generate_actions hook.")
@@ -203,6 +212,22 @@ class LoaderManager(object):
                 )
             intersection_actions[action_name] = actions_list
 
+        # Filter out actions not allowed for multi-select.
+        # When multiple publishes are selected, only show actions that are allowed for
+        # multi-select. If any action dict for a given name has 'multi_select' set to False,
+        # that action is excluded from the available actions.
+        if len(sg_data_list) > 1:
+            filtered_actions = {}
+            for action_name, action_list in intersection_actions.items():
+                allow_multiselect = True
+                for action_dict in action_list:
+                    if not action_dict["action"].get("multi_select", True):
+                        allow_multiselect = False
+                        break
+                if allow_multiselect:
+                    filtered_actions[action_name] = action_list
+            intersection_actions = filtered_actions
+
         return intersection_actions
 
     def execute_action(self, sg_data, action):
@@ -219,6 +244,7 @@ class LoaderManager(object):
                 name=action["name"],
                 params=action["params"],
                 sg_publish_data=sg_data,
+                am_base_obj=self.get_am_base_obj(),
             )
         except Exception as e:
             self._logger.exception(
@@ -239,7 +265,10 @@ class LoaderManager(object):
 
         try:
             self._bundle.execute_hook_method(
-                "actions_hook", "execute_multiple_actions", actions=actions
+                "actions_hook",
+                "execute_multiple_actions",
+                actions=actions,
+                am_base_obj=self.get_am_base_obj(),
             )
         except Exception as e:
             self._logger.exception(
@@ -255,7 +284,7 @@ class LoaderManager(object):
         :param sg_data:  Shotgun data dictionary representing the entity we want to get actions for.
         :return: List of dictionaries, each with keys name, params, caption and description
         """
-        entity_type = sg_data.get("type", None)
+        entity_type = sg_data.get("type", None) if sg_data else None
 
         # check if we have logic configured to handle this publish type.
         mappings = self._bundle.get_setting("entity_mappings")
@@ -264,7 +293,7 @@ class LoaderManager(object):
 
         # returns a structure on the form
         # { "Shot": ["reference", "import"] }
-        actions = mappings.get(entity_type, [])
+        actions = list(mappings.get(entity_type, []))
 
         if len(actions) == 0:
             return []
@@ -281,6 +310,7 @@ class LoaderManager(object):
                 sg_publish_data=sg_data,
                 actions=actions,
                 ui_area="main",
+                am_base_obj=self.get_am_base_obj(),
             )  # folder options only found in main ui area
         except Exception:
             self._logger.exception("Could not execute generate_actions hook.")
@@ -300,8 +330,9 @@ class LoaderManager(object):
 
         # returns a structure on the form
         # { "Maya Scene": ["reference", "import"] }
-        my_mappings = mappings.get(publish_type, [])
-        my_mappings.extend(mappings.get("All", []))
+        # IMPORTANT: Make a copy to avoid modifying the cached config dict
+        my_mappings = list(mappings.get(publish_type, []))
+        my_mappings.extend(list(mappings.get("All", [])))
 
         return len(my_mappings) > 0
 
@@ -319,3 +350,10 @@ class LoaderManager(object):
                 unix_timestamp, shotgun_api3.sg_timezone.LocalTimezone()
             )
             sg_data["created_at"] = sg_timestamp
+
+    def get_am_base_obj(self) -> "FlowAMActions | None":
+        """ """
+        if sgtk.platform.current_bundle().get_setting("enable_flowam", False):
+            from ..medm import FlowAMActions
+
+            return FlowAMActions()

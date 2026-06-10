@@ -27,6 +27,7 @@ class SgPublishHistoryModel(ShotgunModel):
 
     USER_THUMB_ROLE = QtCore.Qt.UserRole + 101
     PUBLISH_THUMB_ROLE = QtCore.Qt.UserRole + 102
+    FULL_IMAGE_PATH_ROLE = QtCore.Qt.UserRole + 103
 
     def __init__(self, parent, bg_task_manager):
         """
@@ -58,13 +59,28 @@ class SgPublishHistoryModel(ShotgunModel):
         app = sgtk.platform.current_bundle()
         publish_entity_type = sgtk.util.get_published_file_entity_type(app.sgtk)
 
+        # Get configured fields from app settings
+        detail_fields = app.get_setting("entity_fields_detail_panel", {}).get(
+            publish_entity_type, []
+        )
+        flow_am_internal_fields = app.get_setting("flow_am_internal_fields", {}).get(
+            publish_entity_type, []
+        )
+        constant_detail_panel_fields = constants.ENTITY_TYPE_DETAIL_PANEL_FIELDS.get(
+            publish_entity_type, []
+        )
+
         if publish_entity_type == "PublishedFile":
             publish_type_field = "published_file_type"
         else:
             publish_type_field = "tank_type"
 
         # fields to pull down
-        fields = [publish_type_field] + constants.PUBLISHED_FILES_FIELDS
+        fields = [publish_type_field] + list(
+            dict.fromkeys(
+                constant_detail_panel_fields + detail_fields + flow_am_internal_fields
+            )
+        )
 
         # when we filter out which other publishes are associated with this one,
         # to effectively get the "version history", we look for items
@@ -191,6 +207,8 @@ class SgPublishHistoryModel(ShotgunModel):
         if field == "image":
             thumb = QtGui.QPixmap.fromImage(image)
             item.setData(thumb, SgPublishHistoryModel.PUBLISH_THUMB_ROLE)
+
+            item.setData(path, SgPublishHistoryModel.FULL_IMAGE_PATH_ROLE)
         else:
             thumb = QtGui.QPixmap.fromImage(image)
             item.setData(thumb, SgPublishHistoryModel.USER_THUMB_ROLE)

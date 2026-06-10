@@ -210,6 +210,20 @@ class LoaderActionManager(ActionManager):
 
         return qt_actions
 
+    def get_actions_for_entity(self, sg_data):
+        return self._loader_manager.get_actions_for_entity(sg_data)
+
+    def get_am_base_obj(self) -> "FlowAMActions | None":
+        """
+        Returns the base object for asset management actions, if available.
+
+        This is used to provide context for actions related to asset management,
+        such as showing details in Shotgun or Media Center.
+
+        :returns: The base object for asset management actions, or None if not available.
+        """
+        return self._loader_manager.get_am_base_obj()
+
     ########################################################################################
     # callbacks
 

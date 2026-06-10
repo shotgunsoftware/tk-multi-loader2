@@ -33,6 +33,14 @@ configuration:
                      Published File Types). The legacy Published File Type filter widget
                      cannot be used in combination with the Filter menu.
 
+    enable_flowam:
+        type: bool
+        default_value: false
+        description: Set to True to use Flow Asset Management data instead of Shotgun
+                     data. When enabled, the loader fetches publish data from the Flow Asset
+                     Management system. Requires tk-framework-flowam to be configured in the
+                     environment.
+
     # hooks
     actions_hook:
         type: hook
@@ -97,6 +105,39 @@ configuration:
         default_value: {}
         default_value_tk-flame:
             Shot: [load_batch, create_batch]
+
+    entity_fields_middle_panel_list:
+        type: dict
+        description: "Additional fields to display for each entity type in the middle panel
+                     list view, beyond the default fields that are already shown. Keys are
+                     entity types (e.g. 'PublishedFile', 'Shot', 'Asset') and values are
+                     lists of field names to display."
+        default_value: {}
+        allows_empty: true
+
+    entity_fields_middle_panel_thumbnail:
+        type: dict
+        description: "Additional fields to display for each entity type in the middle panel
+                     thumbnail view, beyond the default fields that are already shown. Keys
+                     are entity types and values are lists of field names to display."
+        default_value: {}
+        allows_empty: true
+
+    entity_fields_detail_panel:
+        type: dict
+        description: "Fields to display for each entity type in detail panel view. Keys are
+                     entity types (e.g. 'PublishedFile', 'Shot', 'Asset') and values are
+                     lists of field names to display."
+        default_value: {}
+        allows_empty: true
+
+    flow_am_internal_fields:
+        type: dict
+        description: "Extra Flow AM fields loaded for internal logic or workflow purposes
+                     (not for display). Available during model initialisation and accessible
+                     throughout the app, but not shown in the UI."
+        default_value: {}
+        allows_empty: true
 
     entities:
         default_value:
@@ -166,3 +207,5 @@ documentation_url: "https://help.autodesk.com/view/SGDEV/ENU/?guid=SG_Supervisor
 frameworks:
     - {"name": "tk-framework-shotgunutils", "version": "v5.x.x", "minimum_version": "v5.8.6"}
     - {"name": "tk-framework-qtwidgets", "version": "v2.x.x", "minimum_version": "v2.10.6"}
+    # TODO: Remove the following line after SG-43459.
+    - {"name": "tk-framework-flowam", "version": "v1.x.x"}

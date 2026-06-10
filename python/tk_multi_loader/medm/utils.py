@@ -8,7 +8,7 @@
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
-"""Shared utility helpers for MEDM models.
+"""Shared utility helpers for FlowAM models.
 
 Functions here are intentionally free of Qt and SGTK framework imports so
 they stay lightweight and easy to unit-test.
@@ -19,9 +19,11 @@ from __future__ import annotations
 import os
 from typing import Any, Dict, Optional, Tuple
 
+from ..constants import DRAFT_VERSION_IDENTIFIER
+
 
 def is_structural_asset(asset: Any, flow_module: Any) -> bool:
-    """Return ``True`` when *asset* is a structural container in the MEDM hierarchy.
+    """Return ``True`` when *asset* is a structural container in the FlowAM hierarchy.
 
     An asset is considered structural — and therefore belongs only in the
     left-hand tree, never in the centre-panel publish list — when **any** of
@@ -35,7 +37,7 @@ def is_structural_asset(asset: Any, flow_module: Any) -> bool:
     schema error never surfaces as a visible crash; the safe default is
     ``False`` (treat the asset as publishable).
 
-    :param asset: MEDM ``Asset`` object to test.
+    :param asset: FlowAM ``Asset`` object to test.
     :param flow_module: The ``flow`` framework module imported via
         ``sgtk.platform.import_framework("tk-framework-flowam", "flow")``.
     :returns: ``True`` if the asset is a structural container.
@@ -53,12 +55,6 @@ def is_structural_asset(asset: Any, flow_module: Any) -> bool:
         )
     except Exception:
         return False
-
-
-# Sentinel version number that action hooks use to detect a local draft row
-# and route it to asset_management.open_draft() instead of checkout_revision().
-# Both MEDM model classes expose this as a class constant with the same value.
-DRAFT_VERSION_IDENTIFIER: int = -1
 
 
 def get_draft_created_at(draft_info: Any) -> Optional[float]:
@@ -153,7 +149,7 @@ def build_draft_sg_dict(
 
     :param draft_info: ``DraftInfo`` instance (``CheckoutDraftInfo`` or
         ``NewDraftInfo``).
-    :param asset: MEDM ``Asset`` the draft belongs to.  May be ``None`` for
+    :param asset: FlowAM ``Asset`` the draft belongs to.  May be ``None`` for
         ``NewDraftInfo`` entries surfaced by the history model.
     :param context: ``sgtk.Context`` used to resolve the current user.
     :param project_id: ShotGrid project ID.
@@ -207,7 +203,7 @@ def resolve_publish_type(
     flow_module: Any,
     app: Any,
 ) -> Tuple[Optional[int], str]:
-    """Resolve a MEDM schema type ID to a ``(sg_publish_type_id, display_name)`` pair.
+    """Resolve a FlowAM schema type ID to a ``(sg_publish_type_id, display_name)`` pair.
 
     Resolution order:
 
@@ -215,7 +211,7 @@ def resolve_publish_type(
     2. ShotGrid ``PublishedFileType`` lookup by display name (real ID).
     3. ``None`` fallback when no SG record exists (item will bypass type filter).
 
-    :param medm_type_id_str: MEDM schema type ID string.
+    :param medm_type_id_str: FlowAM schema type ID string.
     :param cache: :class:`MedmSharedCache` instance whose ``publish_types``
         dict is used for caching.
     :param flow_module: The ``flow`` framework module imported via
@@ -233,7 +229,7 @@ def resolve_publish_type(
             display_name = schema_name
     except Exception as e:
         app.log_debug(
-            f"MEDM: Could not get schema display name for '{medm_type_id_str}': {e}"
+            f"FlowAM: Could not get schema display name for '{medm_type_id_str}': {e}"
         )
 
     sg_publish_type_id = None
@@ -246,17 +242,17 @@ def resolve_publish_type(
         if pft:
             sg_publish_type_id = pft["id"]
             app.log_debug(
-                f"MEDM: Resolved PublishedFileType '{display_name}' "
+                f"FlowAM: Resolved PublishedFileType '{display_name}' "
                 f"-> SG id={sg_publish_type_id}"
             )
         else:
             app.log_debug(
-                f"MEDM: No SG PublishedFileType found for '{display_name}', "
+                f"FlowAM: No SG PublishedFileType found for '{display_name}', "
                 f"item will bypass type filter"
             )
     except Exception as e:
         app.log_debug(
-            f"MEDM: Could not look up PublishedFileType for '{display_name}': {e}"
+            f"FlowAM: Could not look up PublishedFileType for '{display_name}': {e}"
         )
 
     result: Tuple[Optional[int], str] = (sg_publish_type_id, display_name)

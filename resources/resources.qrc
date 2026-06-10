@@ -1,5 +1,9 @@
 <RCC>
   <qresource prefix="res">
+    <file>icon_branch.png</file>
+    <file>icon_filter.png</file>
+    <file>icon_minus.png</file>
+    <file>icon_plus.png</file>
     <file>search_active.png</file>
     <file>mode_switch_card_active.png</file>
     <file>mode_switch_card.png</file>

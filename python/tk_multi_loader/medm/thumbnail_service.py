@@ -9,15 +9,15 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 """
-MEDM Thumbnail Service - shared thumbnail URL resolver and image downloader.
+FlowAM Thumbnail Service - shared thumbnail URL resolver and image downloader.
 
-A single instance is created per dialog session and injected into every MEDM
-model that needs thumbnails.  Because MEDM revision IDs are immutable (a given
+A single instance is created per dialog session and injected into every FlowAM
+model that needs thumbnails.  Because FlowAM revision IDs are immutable (a given
 ID always resolves to the same URL and pixel data), both caches are kept for
 the entire session and are never evicted on refresh.
 
 The URL and data caches are owned by the :class:`~medm.shared_cache.MedmSharedCache`
-passed at construction time, so all MEDM state lives in one place.
+passed at construction time, so all FlowAM state lives in one place.
 """
 
 from __future__ import annotations
@@ -37,10 +37,10 @@ if TYPE_CHECKING:
 class MedmThumbnailService(QtCore.QObject):
     """
     Session-scoped thumbnail URL resolver and image downloader shared across
-    all MEDM model instances (MedmLatestPublishModel, MedmPublishHistoryModel).
+    all FlowAM model instances (MedmLatestPublishModel, MedmPublishHistoryModel).
 
     The URL and image-data caches are provided externally via
-    :class:`~medm.shared_cache.MedmSharedCache` so all MEDM caches live in a
+    :class:`~medm.shared_cache.MedmSharedCache` so all FlowAM caches live in a
     single, inspectable location.  The service itself owns only the operational
     state: a timer, a pending-work queue, and the background threads.
 
@@ -101,7 +101,7 @@ class MedmThumbnailService(QtCore.QObject):
         Otherwise a daemon thread resolves the URL and downloads the image.
 
         :param qt_item: ``QStandardItem`` whose icon should be updated.
-        :param revision_id: MEDM ``AssetRevision`` ID to look up.
+        :param revision_id: FlowAM ``AssetRevision`` ID to look up.
         :param callback: ``callable(qt_item, image_data: bytes)`` that will be
             invoked on the **main thread** once the image bytes are available.
             The callback is responsible for converting bytes to a ``QPixmap``
@@ -154,7 +154,7 @@ class MedmThumbnailService(QtCore.QObject):
                 url = self._flow_module.asset_management.get_thumbnail_url(revision_id)
             except Exception as exc:
                 self._app.log_debug(
-                    f"MEDM ThumbnailService: URL resolve failed for {revision_id}: {exc}"
+                    f"FlowAM ThumbnailService: URL resolve failed for {revision_id}: {exc}"
                 )
             self._url_cache[revision_id] = url
 
@@ -178,7 +178,7 @@ class MedmThumbnailService(QtCore.QObject):
                 ) as response:
                     if response.status != 200:
                         self._app.log_debug(
-                            f"MEDM ThumbnailService: HTTP {response.status} for {revision_id}"
+                            f"FlowAM ThumbnailService: HTTP {response.status} for {revision_id}"
                         )
                         return
                     image_data = response.read(self._MAX_IMAGE_BYTES)
@@ -192,7 +192,7 @@ class MedmThumbnailService(QtCore.QObject):
 
         except Exception as exc:
             self._app.log_debug(
-                f"MEDM ThumbnailService: Download failed: {type(exc).__name__}: {exc}"
+                f"FlowAM ThumbnailService: Download failed: {type(exc).__name__}: {exc}"
             )
 
     def _process_pending(self) -> None:
@@ -205,5 +205,5 @@ class MedmThumbnailService(QtCore.QObject):
                 callback(qt_item, image_data)
             except Exception as exc:
                 self._app.log_debug(
-                    f"MEDM ThumbnailService: Callback error: {type(exc).__name__}: {exc}"
+                    f"FlowAM ThumbnailService: Callback error: {type(exc).__name__}: {exc}"
                 )

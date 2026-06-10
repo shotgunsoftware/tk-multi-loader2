@@ -44,7 +44,7 @@ class FlameActionError(Exception):
 class FlameActions(HookBaseClass):
     ##############################################################################################################
     # public interface - to be overridden by deriving classes
-    def generate_actions(self, sg_publish_data, actions, ui_area):
+    def generate_actions(self, sg_publish_data, actions, ui_area, **kwargs):
         """
         Returns a list of action instances for a particular publish.
         This method is called each time a user clicks a publish somewhere in the UI.
@@ -136,7 +136,7 @@ class FlameActions(HookBaseClass):
 
         return action_instances
 
-    def execute_multiple_actions(self, actions):
+    def execute_multiple_actions(self, actions, **kwargs):
         """
         Executes the specified action on a list of items.
 
@@ -167,7 +167,7 @@ class FlameActions(HookBaseClass):
             params = single_action["params"]
             self.execute_action(name, params, sg_publish_data)
 
-    def execute_action(self, name, params, sg_publish_data):
+    def execute_action(self, name, params, sg_publish_data, **kwargs):
         """
         Execute a given action. The data sent to this be method will
         represent one of the actions enumerated by the generate_actions method.

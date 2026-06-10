@@ -25,7 +25,7 @@ class HoudiniActions(HookBaseClass):
     ##############################################################################################################
     # public interface - to be overridden by deriving classes
 
-    def generate_actions(self, sg_publish_data, actions, ui_area, am_base_obj=None):
+    def generate_actions(self, sg_publish_data, actions, ui_area, **kwargs):
         """
         Returns a list of action instances for a particular publish.
         This method is called each time a user clicks a publish somewhere in the UI.
@@ -102,95 +102,104 @@ class HoudiniActions(HookBaseClass):
         # -----------------------
         # FlowAM specific actions
         # -----------------------
-        if "open" in actions and sg_publish_data.get("type") == "PublishedFile":
+        enable_flowam = app.get_setting("enable_flowam", False)
+        if enable_flowam:
+            am_base_obj = kwargs.get("am_base_obj")
+            if not am_base_obj:
+                raise Exception(
+                    "FlowAM is enabled but no Asset Management base object was passed to the action hook. "
+                    "FlowAM specific actions will not be generated."
+                )
+
+            if "open" in actions and sg_publish_data.get("type") == "PublishedFile":
+                if (
+                    am_base_obj._is_local_draft(sg_publish_data)
+                    or sg_publish_data.get(
+                        "version_number", am_base_obj.DRAFT_VERSION_IDENTIFIER
+                    )
+                    > am_base_obj.DRAFT_VERSION_IDENTIFIER
+                ):
+                    action_instances.append(
+                        {
+                            "name": "open",
+                            "params": None,
+                            "caption": "Open",
+                            "description": "This will open the item into the current scene.",
+                            "multi_select": False,
+                        }
+                    )
+
+            if "download" in actions and sg_publish_data.get("type") == "PublishedFile":
+                version_number = sg_publish_data.get("version_number")
+
+                if (
+                    version_number is not None
+                    and version_number != am_base_obj.DRAFT_VERSION_IDENTIFIER
+                ):
+                    action_instances.append(
+                        {
+                            "name": "download",
+                            "params": "Download 'params'",
+                            "caption": "Download",
+                            "description": "Downloads the published file to a user specified location.",
+                        }
+                    )
+
+            if "discard_draft" in actions:
+                draft_id = sg_publish_data.get("sg_flow_revision_id")
+
+                if am_base_obj._is_local_draft(
+                    sg_publish_data
+                ) and am_base_obj._is_new_asset(draft_id):
+                    action_instances.append(
+                        {
+                            "name": "discard_draft",
+                            "params": None,
+                            "caption": "Discard Draft",
+                            "description": "This will discard the local draft for this publish.",
+                        }
+                    )
+
             if (
-                am_base_obj._is_local_draft(sg_publish_data)
-                or sg_publish_data.get(
+                "reference_copy_link" in actions
+                and sg_publish_data.get(
                     "version_number", am_base_obj.DRAFT_VERSION_IDENTIFIER
                 )
-                > am_base_obj.DRAFT_VERSION_IDENTIFIER
+                != am_base_obj.DRAFT_VERSION_IDENTIFIER
             ):
                 action_instances.append(
                     {
-                        "name": "open",
+                        "name": "reference_copy_link",
                         "params": None,
-                        "caption": "Open",
-                        "description": "This will open the item into the current scene.",
+                        "caption": "Copy Reference Link",
+                        "description": "This will copy the reference as a string to the clipboard",
                         "multi_select": False,
                     }
                 )
 
-        if "download" in actions and sg_publish_data.get("type") == "PublishedFile":
-            version_number = sg_publish_data.get("version_number")
-
-            if (
-                version_number is not None
-                and version_number != am_base_obj.DRAFT_VERSION_IDENTIFIER
-            ):
+            if "build_new_scene" in actions:
                 action_instances.append(
                     {
-                        "name": "download",
-                        "params": "Download 'params'",
-                        "caption": "Download",
-                        "description": "Downloads the published file to a user specified location.",
-                    }
-                )
-
-        if "discard_draft" in actions:
-            draft_id = sg_publish_data.get("sg_flow_revision_id")
-
-            if am_base_obj._is_local_draft(
-                sg_publish_data
-            ) and am_base_obj._is_new_asset(draft_id):
-                action_instances.append(
-                    {
-                        "name": "discard_draft",
+                        "name": "build_new_scene",
                         "params": None,
-                        "caption": "Discard Draft",
-                        "description": "This will discard the local draft for this publish.",
+                        "caption": "Build New Scene",
+                        "description": "This will create a new scene in the current project.",
                     }
                 )
 
-        if (
-            "reference_copy_link" in actions
-            and sg_publish_data.get(
-                "version_number", am_base_obj.DRAFT_VERSION_IDENTIFIER
-            )
-            != am_base_obj.DRAFT_VERSION_IDENTIFIER
-        ):
-            action_instances.append(
-                {
-                    "name": "reference_copy_link",
-                    "params": None,
-                    "caption": "Copy Reference Link",
-                    "description": "This will copy the reference as a string to the clipboard",
-                    "multi_select": False,
-                }
-            )
-
-        if "build_new_scene" in actions:
-            action_instances.append(
-                {
-                    "name": "build_new_scene",
-                    "params": None,
-                    "caption": "Build New Scene",
-                    "description": "This will create a new scene in the current project.",
-                }
-            )
-
-        if "build_new_template" in actions:
-            action_instances.append(
-                {
-                    "name": "build_new_template",
-                    "params": None,
-                    "caption": "Build New Template",
-                    "description": "This will create a new template scene in the current project.",
-                }
-            )
+            if "build_new_template" in actions:
+                action_instances.append(
+                    {
+                        "name": "build_new_template",
+                        "params": None,
+                        "caption": "Build New Template",
+                        "description": "This will create a new template scene in the current project.",
+                    }
+                )
 
         return action_instances
 
-    def execute_multiple_actions(self, actions, am_base_obj=None):
+    def execute_multiple_actions(self, actions, **kwargs):
         """
         Executes the specified action on a list of items.
 
@@ -219,9 +228,9 @@ class HoudiniActions(HookBaseClass):
             name = single_action["name"]
             sg_publish_data = single_action["sg_publish_data"]
             params = single_action["params"]
-            self.execute_action(name, params, sg_publish_data, am_base_obj)
+            self.execute_action(name, params, sg_publish_data, **kwargs)
 
-    def execute_action(self, name, params, sg_publish_data, am_base_obj=None):
+    def execute_action(self, name, params, sg_publish_data, **kwargs):
         """
         Execute a given action. The data sent to this be method will
         represent one of the actions enumerated by the generate_actions method.
@@ -242,6 +251,8 @@ class HoudiniActions(HookBaseClass):
         # -----------------------
         enable_flowam = app.get_setting("enable_flowam", False)
         if enable_flowam:
+            am_base_obj = kwargs.get("am_base_obj")
+
             if name == "open":
                 am_base_obj._do_open(sg_publish_data)
 

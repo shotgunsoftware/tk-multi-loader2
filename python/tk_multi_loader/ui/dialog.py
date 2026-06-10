@@ -420,12 +420,11 @@ class Ui_Dialog(object):
         self.verticalLayout_6.setObjectName(u"verticalLayout_6")
         self.history_view = QListView(self.details)
         self.history_view.setObjectName(u"history_view")
-        sizePolicy8 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
+        sizePolicy8 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         sizePolicy8.setHorizontalStretch(0)
         sizePolicy8.setVerticalStretch(0)
         sizePolicy8.setHeightForWidth(self.history_view.sizePolicy().hasHeightForWidth())
         self.history_view.setSizePolicy(sizePolicy8)
-        self.history_view.setMinimumSize(QSize(0, 350))
         self.history_view.setAutoFillBackground(False)
         self.history_view.setProperty("showDropIndicator", True)
         self.history_view.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
@@ -439,10 +438,6 @@ class Ui_Dialog(object):
         self.details_widget.setObjectName(u"details_widget")
         self.verticalLayout_4 = QVBoxLayout(self.details_widget)
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
-        self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
-
-        self.verticalLayout_4.addItem(self.verticalSpacer)
-
         self.details_button = QToolButton(self.details_widget)
         self.details_button.setObjectName(u"details_button")
         sizePolicy9 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -461,7 +456,7 @@ class Ui_Dialog(object):
 
         self.details_header = QLabel(self.details_widget)
         self.details_header.setObjectName(u"details_header")
-        sizePolicy10 = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        sizePolicy10 = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         sizePolicy10.setHorizontalStretch(0)
         sizePolicy10.setVerticalStretch(0)
         sizePolicy10.setHeightForWidth(self.details_header.sizePolicy().hasHeightForWidth())
@@ -472,6 +467,10 @@ class Ui_Dialog(object):
         self.verticalLayout_4.addWidget(self.details_header)
 
         self.verticalLayout_6.addWidget(self.details_widget)
+
+        self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+
+        self.verticalLayout_6.addItem(self.verticalSpacer)
 
         self.verticalLayout_3.addLayout(self.verticalLayout_6)
 

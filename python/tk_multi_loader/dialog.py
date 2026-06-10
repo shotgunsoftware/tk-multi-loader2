@@ -682,19 +682,21 @@ class AppDialog(QtGui.QWidget):
             view.model().modelReset.connect(self._update_history_view_height)
 
     def _update_history_view_height(self) -> None:
-        """Notify the layout that the history view's ideal size has changed."""
-        self.ui.history_view.updateGeometry()
+        """Resize history_view to exactly fit its content (capped at max)."""
+        view = self.ui.history_view
+        model = view.model()
+        if model and model.rowCount() > 0:
+            row_h = view.sizeHintForRow(0)
+            content_h = row_h * model.rowCount() + 4
+            view.setMaximumHeight(min(content_h, self._history_view_max_height))
+        else:
+            view.setMaximumHeight(0)
+        view.updateGeometry()
 
     def _on_details_button_toggled(self, checked: bool) -> None:
         """
         Triggers a show/hide of the details header with an animation.
         """
-        content_height = 0
-        try:
-            content_height = self.ui.details_header.sizeHint().height()
-        except Exception:
-            pass
-
         if (
             self._current_animation
             and self._current_animation.state() == QtCore.QAbstractAnimation.Running
@@ -706,12 +708,16 @@ class AppDialog(QtGui.QWidget):
         animation.setEasingCurve(QtCore.QEasingCurve.InOutQuad)
 
         if checked:
+            # Release the maximumHeight constraint so the label sizes itself
+            # to its content via the Preferred size policy.
             animation.setStartValue(0)
-            animation.setEndValue(content_height)
+            animation.setEndValue(16777215)
         else:
-            animation.setStartValue(content_height)
+            # Collapse from the actual rendered height, not a stale sizeHint.
+            animation.setStartValue(self.ui.details_header.height())
             animation.setEndValue(0)
 
+        animation.finished.connect(lambda: setattr(self, "_current_animation", None))
         self._current_animation = animation
         animation.start(QtCore.QAbstractAnimation.DeleteWhenStopped)
 

@@ -5,6 +5,8 @@
 
 - ui_src: resources
   ui_files:
+    - build_asset_dialog
+    - build_template_dialog
     - dialog
     - open_publish_form
     - widget_publish_history

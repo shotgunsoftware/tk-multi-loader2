@@ -247,8 +247,8 @@ class NukeActions(HookBaseClass):
         # -----------------------
         # FlowAM specific actions
         # -----------------------
-        use_medm_data = app.get_setting("use_medm_data", False)
-        if use_medm_data:
+        enable_flowam = app.get_setting("enable_flowam", False)
+        if enable_flowam:
             if name == "build_new_script":
                 am_base_obj._build_new_scene(sg_publish_data)
 

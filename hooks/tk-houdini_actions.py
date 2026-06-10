@@ -240,8 +240,8 @@ class HoudiniActions(HookBaseClass):
         # -----------------------
         # FlowAM specific actions
         # -----------------------
-        use_medm_data = app.get_setting("use_medm_data", False)
-        if use_medm_data:
+        enable_flowam = app.get_setting("enable_flowam", False)
+        if enable_flowam:
             if name == "open":
                 am_base_obj._do_open(sg_publish_data)
 

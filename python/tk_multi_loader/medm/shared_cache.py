@@ -9,14 +9,14 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 """
-Shared cache container for all MEDM model data.
+Shared cache container for all FlowAM model data.
 
 A single :class:`MedmSharedCache` instance is created by the dialog and
-injected into every MEDM model.  Centralising the dictionaries here means:
+injected into every FlowAM model.  Centralising the dictionaries here means:
 
 * No duplicate API calls when the same data is needed by more than one model
   (e.g. drafts used by both the latest-publish and history panels).
-* A single place to inspect or clear all MEDM state.
+* A single place to inspect or clear all FlowAM state.
 * Refresh semantics are explicit: :meth:`clear_on_refresh` drops only the
   data that can change between user-triggered refreshes; immutable data
   (thumbnail images, publish-type mappings) is preserved.
@@ -31,7 +31,7 @@ from typing import Any, Dict, List, Optional
 @dataclasses.dataclass
 class MedmSharedCache:
     """
-    Central store for all dictionaries shared across MEDM models.
+    Central store for all dictionaries shared across FlowAM models.
 
     All values default to empty dicts so the object can be created with
     ``MedmSharedCache()`` and immediately passed to model constructors.

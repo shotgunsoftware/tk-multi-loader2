@@ -97,7 +97,7 @@ class AppDialog(QtGui.QWidget):
         # Hold a reference to the current animation to prevent GC mid-run
         self._current_animation = None
 
-        # MEDM tree view - only created when use_medm_data is enabled
+        # FlowAM tree view - only created when enable_flowam is enabled
         self._medm_tree_view = None
 
         # The loader app can be invoked from other applications with a custom
@@ -166,18 +166,18 @@ class AppDialog(QtGui.QWidget):
 
         self._publish_history_model = SgPublishHistoryModel(self, self._task_manager)
 
-        # MEDM objects are only instantiated when use_medm_data is enabled.
+        # FlowAM objects are only instantiated when enable_flowam is enabled.
         # tk-framework-flowam is required by these classes but is not available
-        # in all environments (e.g. CI).  Keeping these as None when MEDM is
+        # in all environments (e.g. CI).  Keeping these as None when FlowAM is
         # disabled prevents a hard startup failure in those environments.
         self._medm_cache = None
         self._medm_thumbnail_service = None
         self._medm_history_model = None
-        if sgtk.platform.current_bundle().get_setting("use_medm_data", False):
+        if sgtk.platform.current_bundle().get_setting("enable_flowam", False):
             self._medm_cache = MedmSharedCache()
             self._medm_thumbnail_service = MedmThumbnailService(self._medm_cache, self)
 
-            # MEDM history model for MEDM publish items
+            # FlowAM history model for FlowAM publish items
             self._medm_history_model = MedmPublishHistoryModel(
                 self, self._task_manager, self._medm_cache, self._medm_thumbnail_service
             )
@@ -377,15 +377,15 @@ class AppDialog(QtGui.QWidget):
 
         # Set up filtering
         app = sgtk.platform.current_bundle()
-        use_medm = app.get_setting("use_medm_data", False)
+        enable_flowam = app.get_setting("enable_flowam", False)
         if app.get_setting("use_legacy_published_file_type_filter", False):
             # Hide the Filter menu button.
             # The legacy filter functionality is always set up, since the filter menu still
             # requires some of that functionality.
             self._filter_menu = None
             self.ui.filter_menu_btn.hide()
-        elif use_medm:
-            # Disable filter menu for MEDM mode - it expects ShotgunModel data
+        elif enable_flowam:
+            # Disable filter menu for Flow Asset Management mode - it expects ShotgunModel data
             self._filter_menu = None
             self.ui.filter_menu_btn.hide()
         else:
@@ -429,8 +429,8 @@ class AppDialog(QtGui.QWidget):
 
         self._load_entity_presets()
 
-        # Set up the MEDM tree panel when Flow Asset Management is enabled
-        if use_medm:
+        # Set up the FlowAM tree panel when Flow Asset Management is enabled
+        if enable_flowam:
             self._setup_medm_tree_panel()
 
         #################################################
@@ -585,7 +585,7 @@ class AppDialog(QtGui.QWidget):
             shotgun_globals.unregister_bg_task_manager(self._task_manager)
             self._task_manager.shut_down()
 
-            # Shut down the MEDM thumbnail service if it is running
+            # Shut down the FlowAM thumbnail service if it is running
             if self._medm_thumbnail_service is not None:
                 self._medm_thumbnail_service.destroy()
 
@@ -682,19 +682,21 @@ class AppDialog(QtGui.QWidget):
             view.model().modelReset.connect(self._update_history_view_height)
 
     def _update_history_view_height(self) -> None:
-        """Notify the layout that the history view's ideal size has changed."""
-        self.ui.history_view.updateGeometry()
+        """Resize history_view to exactly fit its content (capped at max)."""
+        view = self.ui.history_view
+        model = view.model()
+        if model and model.rowCount() > 0:
+            row_h = view.sizeHintForRow(0)
+            content_h = row_h * model.rowCount() + 4
+            view.setMaximumHeight(min(content_h, self._history_view_max_height))
+        else:
+            view.setMaximumHeight(0)
+        view.updateGeometry()
 
     def _on_details_button_toggled(self, checked: bool) -> None:
         """
         Triggers a show/hide of the details header with an animation.
         """
-        content_height = 0
-        try:
-            content_height = self.ui.details_header.sizeHint().height()
-        except Exception:
-            pass
-
         if (
             self._current_animation
             and self._current_animation.state() == QtCore.QAbstractAnimation.Running
@@ -706,12 +708,16 @@ class AppDialog(QtGui.QWidget):
         animation.setEasingCurve(QtCore.QEasingCurve.InOutQuad)
 
         if checked:
+            # Release the maximumHeight constraint so the label sizes itself
+            # to its content via the Preferred size policy.
             animation.setStartValue(0)
-            animation.setEndValue(content_height)
+            animation.setEndValue(16777215)
         else:
-            animation.setStartValue(content_height)
+            # Collapse from the actual rendered height, not a stale sizeHint.
+            animation.setStartValue(self.ui.details_header.height())
             animation.setEndValue(0)
 
+        animation.finished.connect(lambda: setattr(self, "_current_animation", None))
         self._current_animation = animation
         animation.start(QtCore.QAbstractAnimation.DeleteWhenStopped)
 
@@ -760,7 +766,7 @@ class AppDialog(QtGui.QWidget):
             if pixmap.isNull():
                 pixmap = None
 
-        # For MEDM data, fall back to the publish thumbnail role
+        # For FlowAM data, fall back to the publish thumbnail role
         if not pixmap:
             publish_thumb = item.data(SgPublishHistoryModel.PUBLISH_THUMB_ROLE)
             if (
@@ -1175,7 +1181,7 @@ class AppDialog(QtGui.QWidget):
                 sg_data = item.get_sg_data()
 
                 # Route to the correct history model.
-                # MEDM data is identified by _medm_asset or _medm_draft keys.
+                # FlowAM data is identified by _medm_asset or _medm_draft keys.
                 if self._medm_history_model is not None and (
                     sg_data.get("_medm_asset") is not None
                     or sg_data.get("_medm_draft") is not None
@@ -1207,7 +1213,7 @@ class AppDialog(QtGui.QWidget):
 
     def _refresh_current_history_model(self) -> None:
         """
-        Refresh the currently active history model (either SG or MEDM).
+        Refresh the currently active history model (either SG or FlowAM).
         """
         current_source = self._publish_history_proxy.sourceModel()
         if current_source == self._medm_history_model:
@@ -2236,7 +2242,7 @@ class AppDialog(QtGui.QWidget):
 
         selected_item = self._get_selected_entity()
 
-        # Clear MEDM tree selection when a classic entity tree item is selected,
+        # Clear FlowAM tree selection when a classic entity tree item is selected,
         # and restore the Shotgun publish model as the source
         if self._medm_tree_view is not None:
             self._medm_tree_view.selectionModel().clearSelection()
@@ -2439,7 +2445,7 @@ class AppDialog(QtGui.QWidget):
 
     def _setup_medm_tree_panel(self) -> None:
         """
-        Set up the MEDM tree view panel as the left-most panel in the splitter.
+        Set up the FlowAM tree view panel as the left-most panel in the splitter.
         This panel shows the Flow Asset Management hierarchy.
         """
         medm_panel = QtGui.QWidget()
@@ -2488,10 +2494,10 @@ class AppDialog(QtGui.QWidget):
             self._on_medm_tree_selection_changed
         )
 
-        # Insert the MEDM panel as the first (left-most) widget in the splitter
+        # Insert the FlowAM panel as the first (left-most) widget in the splitter
         self.ui.splitter.insertWidget(0, medm_panel)
 
-        # Adjust stretch factors: [MEDM, classic-left, middle, right]
+        # Adjust stretch factors: [FlowAM, classic-left, middle, right]
         self.ui.splitter.setStretchFactor(0, 2)
         self.ui.splitter.setStretchFactor(1, 3)
         self.ui.splitter.setStretchFactor(2, 7)
@@ -2504,8 +2510,8 @@ class AppDialog(QtGui.QWidget):
         self, selected: QtGui.QItemSelection, deselected: QtGui.QItemSelection
     ) -> None:
         """
-        Called when selection changes in the MEDM tree view. Updates the
-        publish view to show publishes for the selected MEDM entity.
+        Called when selection changes in the FlowAM tree view. Updates the
+        publish view to show publishes for the selected FlowAM entity.
         """
         app = sgtk.platform.current_bundle()
 
@@ -2523,19 +2529,19 @@ class AppDialog(QtGui.QWidget):
         item = self._medm_entity_model.itemFromIndex(index)
 
         if item:
-            # Switch to MEDM publish model
+            # Switch to FlowAM publish model
             self._publish_proxy_model.setSourceModel(self._medm_publish_model)
 
-            # Clear type filters - MEDM items don't use SG publish types
+            # Clear type filters - FlowAM items don't use SG publish types
             self._publish_proxy_model.set_filter_by_type_ids(None, True)
 
-            # Load publishes for the selected MEDM asset
+            # Load publishes for the selected FlowAM asset
             self._medm_publish_model.load_data(item)
 
             # Re-evaluate all proxy filter items
             self._publish_proxy_model.invalidateFilter()
         else:
-            app.log_warning("MEDM: Could not get item from index")
+            app.log_warning("FlowAM: Could not get item from index")
 
 
 ################################################################################################

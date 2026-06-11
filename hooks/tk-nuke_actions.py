@@ -27,7 +27,7 @@ class NukeActions(HookBaseClass):
     ##############################################################################################################
     # public interface - to be overridden by deriving classes
 
-    def generate_actions(self, sg_publish_data, actions, ui_area, am_base_obj=None):
+    def generate_actions(self, sg_publish_data, actions, ui_area, **kwargs):
         """
         Returns a list of action instances for a particular publish.
         This method is called each time a user clicks a publish somewhere in the UI.
@@ -115,88 +115,99 @@ class NukeActions(HookBaseClass):
         # -----------------------
         # FlowAM specific actions
         # -----------------------
-        if "build_new_script" in actions:
-            action_instances.append(
-                {
-                    "name": "build_new_script",
-                    "params": None,
-                    "caption": "Build New Script",
-                    "description": "This will create a new script in the current project.",
-                }
-            )
-        if "build_new_template" in actions:
-            action_instances.append(
-                {
-                    "name": "build_new_template",
-                    "params": None,
-                    "caption": "Build New Template",
-                    "description": "This will create a new template script in the current project.",
-                }
-            )
-        if "open" in actions and sg_publish_data.get("type") == "PublishedFile":
-            # Show open action for:
-            # 1. Local drafts (version_number == -1 and is_local_draft)
-            # 2. Published revisions (version_number > -1)
-            if (
-                am_base_obj._is_local_draft(sg_publish_data)
-                or sg_publish_data.get(
-                    "version_number", am_base_obj.DRAFT_VERSION_IDENTIFIER
+        enable_flowam = app.get_setting("enable_flowam", False)
+        if enable_flowam:
+            am_base_obj = kwargs.get("am_base_obj")
+            if not am_base_obj:
+                raise Exception(
+                    "FlowAM is enabled but no Asset Management base object was passed to the action hook. "
+                    "FlowAM specific actions will not be generated."
                 )
-                > am_base_obj.DRAFT_VERSION_IDENTIFIER
+
+            if "build_new_script" in actions:
+                action_instances.append(
+                    {
+                        "name": "build_new_script",
+                        "params": None,
+                        "caption": "Build New Script",
+                        "description": "This will create a new script in the current project.",
+                    }
+                )
+            if "build_new_template" in actions:
+                action_instances.append(
+                    {
+                        "name": "build_new_template",
+                        "params": None,
+                        "caption": "Build New Template",
+                        "description": "This will create a new template script in the current project.",
+                    }
+                )
+            if "open" in actions and sg_publish_data.get("type") == "PublishedFile":
+                # Show open action for:
+                # 1. Local drafts (version_number == -1 and is_local_draft)
+                # 2. Published revisions (version_number > -1)
+                if (
+                    am_base_obj._is_local_draft(sg_publish_data)
+                    or sg_publish_data.get(
+                        "version_number", am_base_obj.DRAFT_VERSION_IDENTIFIER
+                    )
+                    > am_base_obj.DRAFT_VERSION_IDENTIFIER
+                ):
+                    action_instances.append(
+                        {
+                            "name": "open",
+                            "params": None,
+                            "caption": "Open",
+                            "description": "This will open the item into the current script.",
+                        }
+                    )
+
+            if "discard_draft" in actions and am_base_obj._is_local_draft(
+                sg_publish_data
             ):
                 action_instances.append(
                     {
-                        "name": "open",
+                        "name": "discard_draft",
                         "params": None,
-                        "caption": "Open",
-                        "description": "This will open the item into the current script.",
+                        "caption": "Discard Draft",
+                        "description": "This will discard the local draft.",
+                    }
+                )
+            if (
+                "reference_copy_link" in actions
+                and sg_publish_data.get(
+                    "version_number", am_base_obj.DRAFT_VERSION_IDENTIFIER
+                )
+                != am_base_obj.DRAFT_VERSION_IDENTIFIER
+            ):
+                action_instances.append(
+                    {
+                        "name": "reference_copy_link",
+                        "params": None,
+                        "caption": "Copy Reference Link",
+                        "description": "This will copy the reference link as a string to the clipboard.",
+                        "multi_select": False,
+                    }
+                )
+            if (
+                "create_read_node" in actions
+                and sg_publish_data.get(
+                    "version_number", am_base_obj.DRAFT_VERSION_IDENTIFIER
+                )
+                != am_base_obj.DRAFT_VERSION_IDENTIFIER
+            ):
+                action_instances.append(
+                    {
+                        "name": "create_read_node",
+                        "params": None,
+                        "caption": "Create Read Node",
+                        "description": "This will load the item into the current script as a new Read node.",
                     }
                 )
 
-        if "discard_draft" in actions and am_base_obj._is_local_draft(sg_publish_data):
-            action_instances.append(
-                {
-                    "name": "discard_draft",
-                    "params": None,
-                    "caption": "Discard Draft",
-                    "description": "This will discard the local draft.",
-                }
-            )
-        if (
-            "reference_copy_link" in actions
-            and sg_publish_data.get(
-                "version_number", am_base_obj.DRAFT_VERSION_IDENTIFIER
-            )
-            != am_base_obj.DRAFT_VERSION_IDENTIFIER
-        ):
-            action_instances.append(
-                {
-                    "name": "reference_copy_link",
-                    "params": None,
-                    "caption": "Copy Reference Link",
-                    "description": "This will copy the reference link as a string to the clipboard.",
-                    "multi_select": False,
-                }
-            )
-        if (
-            "create_read_node" in actions
-            and sg_publish_data.get(
-                "version_number", am_base_obj.DRAFT_VERSION_IDENTIFIER
-            )
-            != am_base_obj.DRAFT_VERSION_IDENTIFIER
-        ):
-            action_instances.append(
-                {
-                    "name": "create_read_node",
-                    "params": None,
-                    "caption": "Create Read Node",
-                    "description": "This will load the item into the current script as a new Read node.",
-                }
-            )
-
         return action_instances
 
-    def execute_multiple_actions(self, actions, am_base_obj=None):
+    def execute_multiple_actions(self, actions, **kwargs):
         """
         Executes the specified action on a list of items.
 
@@ -225,9 +236,9 @@ class NukeActions(HookBaseClass):
             name = single_action["name"]
             sg_publish_data = single_action["sg_publish_data"]
             params = single_action["params"]
-            self.execute_action(name, params, sg_publish_data, am_base_obj)
+            self.execute_action(name, params, sg_publish_data, **kwargs)
 
-    def execute_action(self, name, params, sg_publish_data, am_base_obj=None):
+    def execute_action(self, name, params, sg_publish_data, **kwargs):
         """
         Execute a given action. The data sent to this be method will
         represent one of the actions enumerated by the generate_actions method.
@@ -247,8 +258,10 @@ class NukeActions(HookBaseClass):
         # -----------------------
         # FlowAM specific actions
         # -----------------------
-        enable_flowam = app.get_setting("enable_flowam", False)
-        if enable_flowam:
+        use_medm_data = app.get_setting("use_medm_data", False)
+        if use_medm_data:
+            am_base_obj = kwargs.get("am_base_obj")
+
             if name == "build_new_script":
                 am_base_obj._build_new_scene(sg_publish_data)
 

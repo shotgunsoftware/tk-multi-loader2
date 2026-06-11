@@ -31,7 +31,7 @@ class DesktopActions(HookBaseClass):
         sg_publish_data: dict,
         actions: list,
         ui_area: str,
-        am_base_obj: Any = None,
+        **kwargs,
     ) -> list:
         """
         Return a list of action instances for a particular publish.
@@ -77,67 +77,76 @@ class DesktopActions(HookBaseClass):
 
         action_instances = []
 
-        if "download" in actions and sg_publish_data.get("type") == "PublishedFile":
-            version_number = sg_publish_data.get("version_number")
+        enable_flowam = app.get_setting("enable_flowam", False)
+        if enable_flowam:
+            am_base_obj = kwargs.get("am_base_obj")
+            if not am_base_obj:
+                raise Exception(
+                    "FlowAM is enabled but no Asset Management base object was passed to the action hook. "
+                    "FlowAM specific actions will not be generated."
+                )
+
+            if "download" in actions and sg_publish_data.get("type") == "PublishedFile":
+                version_number = sg_publish_data.get("version_number")
+
+                if (
+                    version_number is not None
+                    and version_number != am_base_obj.DRAFT_VERSION_IDENTIFIER
+                ):
+                    action_instances.append(
+                        {
+                            "name": "download",
+                            "params": "Download 'params'",
+                            "caption": "Download",
+                            "description": "Downloads the published file to a user specified location.",
+                        }
+                    )
+
+            if "publish" in actions:
+                # Show publish action only for published files (not drafts)
+                # Drafts (version == -1) are not supported in generic workflow
+                version_number = sg_publish_data.get("version_number")
+
+                if version_number is not None and version_number >= 0:
+                    action_instances.append(
+                        {
+                            "name": "publish",
+                            "params": "Publish 'params'",
+                            "caption": "Publish",
+                            "description": "Publish a new revision of this generic asset.",
+                        }
+                    )
+
+            if "create_generic_asset" in actions:
+                action_instances.append(
+                    {
+                        "name": "create_generic_asset",
+                        "params": "Create Generic Asset 'params'",
+                        "caption": "Create Generic Asset",
+                        "description": "Executes Create Generic Asset.",
+                    }
+                )
 
             if (
-                version_number is not None
-                and version_number != am_base_obj.DRAFT_VERSION_IDENTIFIER
+                "reference_copy_link" in actions
+                and sg_publish_data.get(
+                    "version_number", am_base_obj.DRAFT_VERSION_IDENTIFIER
+                )
+                > am_base_obj.DRAFT_VERSION_IDENTIFIER
             ):
                 action_instances.append(
                     {
-                        "name": "download",
-                        "params": "Download 'params'",
-                        "caption": "Download",
-                        "description": "Downloads the published file to a user specified location.",
+                        "name": "reference_copy_link",
+                        "params": None,
+                        "caption": "Copy Reference Link",
+                        "description": "This will copy the reference as a string to the clipboard",
+                        "multi_select": False,
                     }
                 )
-
-        if "publish" in actions:
-            # Show publish action only for published files (not drafts)
-            # Drafts (version == -1) are not supported in generic workflow
-            version_number = sg_publish_data.get("version_number")
-
-            if version_number is not None and version_number >= 0:
-                action_instances.append(
-                    {
-                        "name": "publish",
-                        "params": "Publish 'params'",
-                        "caption": "Publish",
-                        "description": "Publish a new revision of this generic asset.",
-                    }
-                )
-
-        if "create_generic_asset" in actions:
-            action_instances.append(
-                {
-                    "name": "create_generic_asset",
-                    "params": "Create Generic Asset 'params'",
-                    "caption": "Create Generic Asset",
-                    "description": "Executes Create Generic Asset.",
-                }
-            )
-
-        if (
-            "reference_copy_link" in actions
-            and sg_publish_data.get(
-                "version_number", am_base_obj.DRAFT_VERSION_IDENTIFIER
-            )
-            > am_base_obj.DRAFT_VERSION_IDENTIFIER
-        ):
-            action_instances.append(
-                {
-                    "name": "reference_copy_link",
-                    "params": None,
-                    "caption": "Copy Reference Link",
-                    "description": "This will copy the reference as a string to the clipboard",
-                    "multi_select": False,
-                }
-            )
 
         return action_instances
 
-    def execute_multiple_actions(self, actions: list, am_base_obj: Any = None) -> None:
+    def execute_multiple_actions(self, actions: list, **kwargs) -> None:
         """
         Executes the specified action on a list of items.
 
@@ -170,14 +179,14 @@ class DesktopActions(HookBaseClass):
             name = single_action["name"]
             sg_publish_data = single_action["sg_publish_data"]
             params = single_action["params"]
-            self.execute_action(name, params, sg_publish_data, am_base_obj)
+            self.execute_action(name, params, sg_publish_data, **kwargs)
 
     def execute_action(
         self,
         name: str,
         params: Any,
         sg_publish_data: dict,
-        am_base_obj: Any = None,
+        **kwargs,
     ) -> None:
         """
         Print out all actions. The data sent to this be method will
@@ -193,6 +202,7 @@ class DesktopActions(HookBaseClass):
             "Execute action called for action %s. "
             "Parameters: %s. Publish Data: %s" % (name, params, sg_publish_data)
         )
+        am_base_obj = kwargs.get("am_base_obj")
 
         if name == "create_generic_asset":
             # Right click a task the left panel

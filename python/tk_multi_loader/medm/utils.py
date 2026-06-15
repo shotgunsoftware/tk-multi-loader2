@@ -17,9 +17,21 @@ they stay lightweight and easy to unit-test.
 from __future__ import annotations
 
 import os
+from enum import Enum
 from typing import Any, Dict, Optional, Tuple
 
+from tank_vendor.flow_integration_sdk.objects import FlowAsset
+
 from ..constants import DRAFT_VERSION_IDENTIFIER
+
+
+class CreateMode(Enum):
+    """Enum of modes for creating a new asset."""
+
+    NEW = "new"  #: Create a DCC asset from a new scene as the source.
+    CURRENT = "current"  #: Create a DCC asset from the current scene as the source.
+    TEMPLATE = "template"  #: Create a DCC asset from template scene as the source.
+    GENERIC = "generic"  #: Create a generic asset from a specified source file.
 
 
 def is_structural_asset(asset: Any, flow_module: Any) -> bool:
@@ -258,3 +270,18 @@ def resolve_publish_type(
     result: Tuple[Optional[int], str] = (sg_publish_type_id, display_name)
     cache.publish_types[medm_type_id_str] = result
     return result
+
+
+def get_template_source_path(template: FlowAsset) -> str:
+    """Return the published source path of the given template.
+    Fetch binary if necessary.
+
+    Args:
+        template: Template asset.
+
+    Returns:
+        Full path to template file in blob storage.
+    """
+    revision = template.get_latest_revision()
+    revision.fetch()
+    return revision.get_storage_source_path()

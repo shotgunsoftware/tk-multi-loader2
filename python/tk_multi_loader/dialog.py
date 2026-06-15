@@ -167,9 +167,6 @@ class AppDialog(QtGui.QWidget):
         self._publish_history_model = SgPublishHistoryModel(self, self._task_manager)
 
         # FlowAM objects are only instantiated when enable_flowam is enabled.
-        # tk-framework-flowam is required by these classes but is not available
-        # in all environments (e.g. CI).  Keeping these as None when FlowAM is
-        # disabled prevents a hard startup failure in those environments.
         self._medm_cache = None
         self._medm_thumbnail_service = None
         self._medm_history_model = None

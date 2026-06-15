@@ -130,7 +130,7 @@ class FlowAMActions:
         :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
         """
         parent_window = self._get_dialog_parent()
-        sg_flow_am_id = self._app.context.project.get("sg_flow_am_id")
+        sg_flow_am_id = self._get_flowam_id()
         # Get the pipeline step from the task
         task = sg_publish_data.get("task")
         task_id = task.get("id") if task else None

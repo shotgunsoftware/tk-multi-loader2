@@ -17,21 +17,9 @@ they stay lightweight and easy to unit-test.
 from __future__ import annotations
 
 import os
-from enum import Enum
 from typing import Any, Dict, Optional, Tuple
 
-from tank_vendor.flow_integration_sdk.objects import FlowAsset
-
 from ..constants import DRAFT_VERSION_IDENTIFIER
-
-
-class CreateMode(Enum):
-    """Enum of modes for creating a new asset."""
-
-    NEW = "new"  #: Create a DCC asset from a new scene as the source.
-    CURRENT = "current"  #: Create a DCC asset from the current scene as the source.
-    TEMPLATE = "template"  #: Create a DCC asset from template scene as the source.
-    GENERIC = "generic"  #: Create a generic asset from a specified source file.
 
 
 def is_structural_asset(asset: Any, flow_module: Any) -> bool:
@@ -272,16 +260,68 @@ def resolve_publish_type(
     return result
 
 
-def get_template_source_path(template: FlowAsset) -> str:
-    """Return the published source path of the given template.
-    Fetch binary if necessary.
+def cleanpath(path: str, *extra: str) -> str:
+    """Return the same path, normalized and using only front slashes.
 
     Args:
-        template: Template asset.
+        path: String absolute or relative path.
+        *extra: Zero or more string arguments representing extra bits to
+                add to input path in given order.
 
     Returns:
-        Full path to template file in blob storage.
+        str: Path that is the product of all input parameters joined.
+
+    Examples:
+        >>> cleanpath('c:\\dev\\my_root', 'my_dir', 'my_file.ma')
+        'c:/dev/my_root/my_dir/my_file.ma'
+        >>> cleanpath('/Users//smith/folder1/file1.txt')
+        '/Users/smith/folder1/file1.txt'
+        >>> cleanpath('C:/temp/some_dir/', '/some_folder/')
+        'C:/temp/some_dir/some_folder'
+        >>> cleanpath('/Applications', '/\\some_app')
+        '/Applications/some_app'
+        >>> cleanpath('D:', 'MIM_Files')
+        'D:/MIM_Files'
+        >>> cleanpath('D:\\\\', 'MIM_Files')
+        'D:/MIM_Files'
+        >>> cleanpath('')
+        ''
+        >>> cleanpath('', 'blah', 'blah')
+        'blah/blah'
+        >>> cleanpath('/path/to/dir/')
+        '/path/to/dir'
+        >>> cleanpath('/path/./to/../file.txt')
+        '/path/file.txt'
     """
-    revision = template.get_latest_revision()
-    revision.fetch()
-    return revision.get_storage_source_path()
+    # Add slash if first argument is a drive
+    # (os.path.join will not add one in this case)
+    if path.endswith(":"):
+        path += "/"
+    # Must strip any leading slashes from extra bits
+    extras = []
+    for ext in extra:
+        extras.append(ext.lstrip("/\\"))
+    result = os.path.join(path, *extras)
+    if not result:
+        return ""
+    return os.path.normpath(result).replace("\\", "/")
+
+
+def fileext(filepath: str):
+    """Return extension of given file path without the dot and in lower case.
+    Examples:
+        >>> fileext('c:/temp/file.txt')
+        'txt'
+        >>> fileext('dir/another_dir/file.PNG')
+        'png'
+        >>> fileext('dir/another_dir')
+        ''
+        >>> fileext('dir/another.dir/folder')
+        ''
+        >>> fileext('file.backup.tar.gz')
+        'gz'
+    """
+    filename = os.path.basename(filepath)
+    if "." not in filename:
+        return ""
+    return os.path.splitext(filename)[-1].strip(".").lower()

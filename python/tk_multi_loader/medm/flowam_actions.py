@@ -20,6 +20,14 @@ from sgtk.platform.qt import QtGui
 from ..build_asset_dialog import BuildAssetDialog
 from ..build_template_dialog import BuildTemplateDialog
 from ..constants import DRAFT_VERSION_IDENTIFIER
+from .create import (
+    CreateAssetError,
+    CreateInputs,
+    CreateMode,
+    CreateTemplateInputs,
+    create_dcc_workfile,
+    create_template_workfile,
+)
 
 
 class FlowAMActions:
@@ -156,12 +164,11 @@ class FlowAMActions:
             self._app.log_warning(message)
             return
 
-        flow_module = self.load_framework("tk-framework-flowam", "flow")
         parent_window = self._get_dialog_parent()
 
         sg_flow_am_id = self._get_flowam_id()
 
-        if dialog.build == flow_module.asset_management.CreateMode.TEMPLATE:
+        if dialog.build == CreateMode.TEMPLATE:
             template_path = dialog.template_source_path
         else:
             template_path = ""
@@ -175,7 +182,7 @@ class FlowAMActions:
             or {}
         )
 
-        create_inputs = flow_module.asset_management.CreateInputs(
+        create_inputs = CreateInputs(
             sg_entity_type=sg_publish_data["entity"]["type"],  # Asset, Shot, etc.
             sg_entity_name=sg_publish_data["entity"]["name"],
             sg_pipeline_step=(task.get("step") or {}).get(
@@ -189,11 +196,11 @@ class FlowAMActions:
         )
 
         try:
-            draft_info = flow_module.asset_management.create_dcc_workfile(create_inputs)
+            draft_info = create_dcc_workfile(create_inputs)
             self._app.log_debug(
                 f"Created a DCC workfile on Flow AM framework with the draft_id: {draft_info.draft_id}"
             )
-        except flow_module.CreateAssetError as exc:
+        except CreateAssetError as exc:
             self._app.log_error(f"Create asset failed: {exc}\nInput data: {exc.data}")
 
             QtGui.QMessageBox.critical(
@@ -366,19 +373,15 @@ class FlowAMActions:
             QtGui.QMessageBox.critical(parent_window, "Error", message)
             return
 
-        flow_module = self.load_framework("tk-framework-flowam", "flow")
-
         sg_flow_am_id = self._get_flowam_id()
 
-        create_inputs = flow_module.asset_management.CreateTemplateInputs(
+        create_inputs = CreateTemplateInputs(
             sg_pipeline_step=dialog.step,
             am_project_id=sg_flow_am_id,
             template_name=dialog.template,
             create_mode=dialog.mode,
         )
-        draft_info = flow_module.asset_management.create_template_workfile(
-            create_inputs
-        )
+        draft_info = create_template_workfile(create_inputs)
         self._app.log_debug(
             f"Created a Template workfile on Flow AM framework with the draft_id: {draft_info.draft_id}"
         )

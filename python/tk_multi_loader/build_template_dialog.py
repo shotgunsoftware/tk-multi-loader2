@@ -16,7 +16,7 @@ from tank_vendor.flow_integration_sdk.exceptions import FlowError
 from tank_vendor.flow_integration_sdk.objects import FlowProject
 
 from .medm.template_queries import find_template_pipeline_step, get_templates
-from .medm.utils import CreateMode
+from .medm.create import CreateMode
 from .ui.build_template_dialog import Ui_BuildTemplateDialog
 
 # Toolkit logger

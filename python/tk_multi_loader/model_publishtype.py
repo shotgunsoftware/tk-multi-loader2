@@ -220,7 +220,7 @@ class SgPublishTypeModel(ShotgunModel):
         """
         Clears any caches on disk, then refreshes the data.
         """
-        super(SgPublishTypeModel, self).hard_refresh()
+        super().hard_refresh()
         self._load_external_data()
 
     ############################################################################################

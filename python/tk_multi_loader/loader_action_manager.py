@@ -213,7 +213,7 @@ class LoaderActionManager(ActionManager):
     def get_actions_for_entity(self, sg_data):
         return self._loader_manager.get_actions_for_entity(sg_data)
 
-    def get_am_base_obj(self) -> "FlowAMActions | None":
+    def get_flowam_actions_instance(self) -> "FlowAMActions | None":
         """
         Returns the base object for asset management actions, if available.
 
@@ -222,7 +222,7 @@ class LoaderActionManager(ActionManager):
 
         :returns: The base object for asset management actions, or None if not available.
         """
-        return self._loader_manager.get_am_base_obj()
+        return self._loader_manager.get_flowam_actions_instance()
 
     ########################################################################################
     # callbacks

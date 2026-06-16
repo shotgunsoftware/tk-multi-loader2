@@ -21,26 +21,14 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 
 import sgtk
 from sgtk.platform.qt import QtCore, QtGui
+from tank_vendor.flow_data_sdk.base.model import AssetVersion
+from tank_vendor.flow_integration_sdk.objects import FlowAsset
+from tank_vendor.flow_integration_sdk.sandbox import DraftInfo, get_asset_drafts
 
 from .. import utils
 from .shared_cache import MedmSharedCache
 from .thumbnail_service import MedmThumbnailService
 from .utils import build_draft_sg_dict, resolve_publish_type
-
-if TYPE_CHECKING:
-    from adsk.flow.am import (
-        Asset,
-        AssetRevision,
-        AssetVersion,
-    )
-    from flow.sandbox import CheckoutDraftInfo, DraftInfo, NewDraftInfo
-else:
-    Asset = Any
-    AssetRevision = Any
-    AssetVersion = Any
-    CheckoutDraftInfo = Any
-    DraftInfo = Any
-    NewDraftInfo = Any
 
 
 class MedmPublishHistoryModel(QtGui.QStandardItemModel):
@@ -92,9 +80,6 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         super().__init__(parent)
 
         self._app = sgtk.platform.current_bundle()
-        self._flow_module = sgtk.platform.import_framework(
-            "tk-framework-flowam", "flow"
-        )
 
         self._bg_task_manager = bg_task_manager
         self._cache = cache if cache is not None else MedmSharedCache()
@@ -171,9 +156,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
                 if asset_id in self._cache.drafts:
                     drafts = self._cache.drafts[asset_id]
                 else:
-                    drafts = self._flow_module.asset_management.get_asset_drafts(
-                        asset_id
-                    )
+                    drafts = get_asset_drafts(asset_id)
                     self._cache.drafts[asset_id] = drafts
                 for draft_info in drafts:
                     self._add_draft_as_qt_item(draft_info, medm_asset)
@@ -227,7 +210,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
             )
 
     def _add_version_as_qt_item(
-        self, asset_version: AssetVersion, asset: Asset
+        self, asset_version: AssetVersion, asset: FlowAsset
     ) -> None:
         """
         Convert an AssetVersion to a QStandardItem and add it to the history model.
@@ -265,7 +248,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         self._app.log_debug(f"FlowAM History: Added version v{version_number}")
 
     def _version_to_sg_dict(
-        self, version: AssetVersion, asset: Asset
+        self, version: AssetVersion, asset: FlowAsset
     ) -> Dict[str, Any]:
         """
         Convert a FlowAM AssetVersion to Shotgun-compatible dictionary.
@@ -326,7 +309,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         return sg_dict
 
     def _draft_to_sg_dict(
-        self, draft_info: DraftInfo, asset: Optional[Asset]
+        self, draft_info: DraftInfo, asset: Optional[FlowAsset]
     ) -> Dict[str, Any]:
         """
         Convert a DraftInfo (CheckoutDraftInfo or NewDraftInfo) to a Shotgun-compatible
@@ -337,7 +320,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
           - ``sg_flow_revision_id``  ->  the draft's unique sandbox ID (draft_info.draft_id),
             used by asset_management.open_draft() and sandbox.is_local_draft()
 
-        :param draft_info: DraftInfo object returned by asset_management.get_asset_drafts()
+        :param draft_info: DraftInfo object returned by get_asset_drafts()
                            or get_drafts().  May be CheckoutDraftInfo or NewDraftInfo.
         :param asset: The parent FlowAM Asset (may be None for NewDraftInfo)
         :returns: sg_data dictionary compatible with action hooks and Shotgun UI
@@ -370,7 +353,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         return sg_dict
 
     def _add_draft_as_qt_item(
-        self, draft_info: DraftInfo, asset: Optional[Asset]
+        self, draft_info: DraftInfo, asset: Optional[FlowAsset]
     ) -> None:
         """
         Convert a DraftInfo to a QStandardItem and insert it at the top of

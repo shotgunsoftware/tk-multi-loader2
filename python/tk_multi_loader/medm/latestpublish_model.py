@@ -17,23 +17,23 @@ Flow Asset Management (FlowAM) data instead of Shotgun data.
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import sgtk
 from sgtk.platform.qt import QtCore, QtGui
+from tank_vendor.flow_integration_sdk.objects import FlowAsset
+from tank_vendor.flow_integration_sdk.sandbox import (
+    DraftInfo,
+    get_asset_drafts,
+    get_drafts,
+)
 
+from ..constants import DRAFT_VERSION_IDENTIFIER
 from .shared_cache import MedmSharedCache
 from .thumbnail_service import MedmThumbnailService
-from ..constants import DRAFT_VERSION_IDENTIFIER
-from .utils import build_draft_sg_dict, resolve_publish_type
+from .utils import build_draft_sg_dict
 from .utils import is_structural_asset as _is_structural_asset_util
-
-if TYPE_CHECKING:
-    from flow.data import Asset
-    from flow.sandbox import DraftInfo
-else:
-    Asset = Any
-    DraftInfo = Any
+from .utils import resolve_publish_type
 
 
 class MedmLatestPublishModel(QtGui.QStandardItemModel):
@@ -101,9 +101,6 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         super().__init__(parent)
 
         self._app = sgtk.platform.current_bundle()
-        self._flow_module = sgtk.platform.import_framework(
-            "tk-framework-flowam", "flow"
-        )
 
         self._publish_type_model = publish_type_model
         self._bg_task_manager = bg_task_manager
@@ -240,9 +237,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
                 if child_asset.id in self._cache.drafts:
                     raw_drafts = self._cache.drafts[child_asset.id]
                 else:
-                    raw_drafts = self._flow_module.asset_management.get_asset_drafts(
-                        child_asset.id
-                    )
+                    raw_drafts = get_asset_drafts(child_asset.id)
                     self._cache.drafts[child_asset.id] = raw_drafts
             except Exception as e:
                 self._app.log_debug(
@@ -309,7 +304,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
 
     def _extract_asset_from_tree_item(
         self, item: QtGui.QStandardItem
-    ) -> Optional[Asset]:
+    ) -> Optional[FlowAsset]:
         """
         Extract the FlowAM Asset object from a tree view QStandardItem.
 
@@ -324,7 +319,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         asset_data = item.data(QtCore.Qt.UserRole + 1)
         return asset_data
 
-    def _fetch_asset_children(self, asset: Asset) -> List[Dict[str, Any]]:
+    def _fetch_asset_children(self, asset: FlowAsset) -> List[Dict[str, Any]]:
         """
         Fetch all non-structural child assets and convert to sg_data dicts.
 
@@ -375,7 +370,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         )
         return children_asset_sg_dicts
 
-    def _asset_to_sg_dict(self, asset: Asset) -> Dict[str, Any]:
+    def _asset_to_sg_dict(self, asset: FlowAsset) -> Dict[str, Any]:
         """
         Convert an FlowAM Asset to a Shotgun-compatible dictionary.
 
@@ -433,7 +428,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         return sg_dict
 
     def _draft_to_sg_dict(
-        self, draft_info: DraftInfo, asset: Optional[Asset] = None
+        self, draft_info: DraftInfo, asset: Optional[FlowAsset] = None
     ) -> Dict[str, Any]:
         """
         Convert a local DraftInfo into a Shotgun-compatible dictionary suitable
@@ -442,9 +437,9 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         Key conventions that V1 action hooks rely on:
           - ``version_number == DRAFT_VERSION_IDENTIFIER (-1)`` - identifies a local draft
           - ``sg_flow_revision_id`` - the draft's sandbox ID (draft_info.draft_id), used
-            by asset_management.open_draft() and sandbox.is_local_draft()
+            by open_draft() and is_local_draft()
 
-        :param draft_info: DraftInfo returned by asset_management.get_asset_drafts()
+        :param draft_info: DraftInfo returned by get_asset_drafts()
                            (CheckoutDraftInfo) or get_drafts() (NewDraftInfo).
         :param asset: The FlowAM Asset the draft belongs to.  May be ``None`` for
             ``NewDraftInfo`` entries whose parent asset has not been published yet.
@@ -518,9 +513,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         """
         if self._NEW_DRAFTS_CACHE_KEY not in self._cache.drafts:
             try:
-                all_new_drafts = self._flow_module.asset_management.get_drafts(
-                    draft_type="new"
-                )
+                all_new_drafts = get_drafts(draft_type="new")
             except Exception as e:
                 self._app.log_warning(f"FlowAM: Could not fetch new-asset drafts: {e}")
                 all_new_drafts = []

@@ -21,6 +21,8 @@ from tank_vendor.flow_integration_sdk.sandbox import (
     is_local_draft,
     is_new_asset,
     read_draft_info,
+    checkout_revision,
+    discard_draft,
 )
 
 from ..build_asset_dialog import BuildAssetDialog
@@ -93,7 +95,7 @@ class FlowAMActions:
             flow_module.asset_management.open_draft(flow_revision_id)
         elif version_number > DRAFT_VERSION_IDENTIFIER:
             # Checkout the revision to the local sandbox
-            flow_module.asset_management.checkout_revision(flow_revision_id)
+            checkout_revision(flow_revision_id)
         else:
             raise TankError(
                 f"Cannot open item {sg_publish_data['name']} with version number {version_number}. "
@@ -235,7 +237,6 @@ class FlowAMActions:
 
         :param sg_publish_data: FPTR data dictionary with all the standard entity fields.
         """
-        flow_module = self.load_framework("tk-framework-flowam", "flow")
         parent_window = self._get_dialog_parent()
 
         draft_folder = get_draft_folder(sg_publish_data.get("sg_flow_revision_id"))
@@ -268,7 +269,7 @@ class FlowAMActions:
         )
 
         if message_response == QtGui.QMessageBox.StandardButton.Yes:
-            flow_module.asset_management.discard_draft(
+            discard_draft(
                 sg_publish_data.get("sg_flow_revision_id")
             )
 

@@ -16,6 +16,12 @@ from typing import Any
 import sgtk
 from sgtk import TankError
 from sgtk.platform.qt import QtGui
+from tank_vendor.flow_integration_sdk.sandbox import (
+    get_draft_folder,
+    is_local_draft,
+    is_new_asset,
+    read_draft_info,
+)
 
 from ..build_asset_dialog import BuildAssetDialog
 from ..build_template_dialog import BuildTemplateDialog
@@ -81,8 +87,8 @@ class FlowAMActions:
 
         flow_module = self.load_framework("tk-framework-flowam", "flow")
 
-        if version_number == DRAFT_VERSION_IDENTIFIER and self._is_local_draft(
-            sg_publish_data
+        if version_number == DRAFT_VERSION_IDENTIFIER and is_local_draft(
+            sg_publish_data.get("sg_flow_revision_id")
         ):
             flow_module.asset_management.open_draft(flow_revision_id)
         elif version_number > DRAFT_VERSION_IDENTIFIER:
@@ -223,30 +229,6 @@ class FlowAMActions:
         # TDs can override this method to add custom scene prep logic
         pass
 
-    def _is_local_draft(self, sg_publish_data: dict) -> bool:
-        """
-        Check if the given PublishedFile is a local AM draft.
-
-        :param sg_publish_data: FPTR data dictionary with all the standard entity fields.
-        :returns: True if it's a local draft, False otherwise.
-        """
-        flow_module = self.load_framework("tk-framework-flowam", "flow")
-
-        return flow_module.sandbox.is_local_draft(
-            sg_publish_data.get("sg_flow_revision_id")
-        )
-
-    def _is_new_asset(self, draft_id: str | None) -> bool:
-        """
-        Check if the given draft ID corresponds to a new asset draft.
-
-        :param draft_id: The draft ID to check.
-        :returns: True if it's a new asset draft, False otherwise.
-        """
-        flow_module = self.load_framework("tk-framework-flowam", "flow")
-
-        return flow_module.sandbox.is_new_asset(draft_id)
-
     def _discard_draft(self, sg_publish_data: dict) -> None:
         """
         Discard the local draft for the given PublishedFile.
@@ -256,11 +238,9 @@ class FlowAMActions:
         flow_module = self.load_framework("tk-framework-flowam", "flow")
         parent_window = self._get_dialog_parent()
 
-        draft_folder = flow_module.sandbox.get_draft_folder(
-            sg_publish_data.get("sg_flow_revision_id")
-        )
+        draft_folder = get_draft_folder(sg_publish_data.get("sg_flow_revision_id"))
 
-        if flow_module.sandbox.is_new_asset(sg_publish_data.get("sg_flow_revision_id")):
+        if is_new_asset(sg_publish_data.get("sg_flow_revision_id")):
             # Case 1:  new asset
             message = (
                 f"Discard the new unpublished asset {sg_publish_data.get('name')}?"
@@ -269,9 +249,7 @@ class FlowAMActions:
             )
         else:
             # Case 2:  draft of existing asset
-            draft_info = flow_module.sandbox.read_draft_info(
-                sg_publish_data.get("sg_flow_revision_id")
-            )
+            draft_info = read_draft_info(sg_publish_data.get("sg_flow_revision_id"))
             version = draft_info.version
             message = (
                 f"Discard the draft of asset {sg_publish_data.get('name')} checked out from version {version}?"

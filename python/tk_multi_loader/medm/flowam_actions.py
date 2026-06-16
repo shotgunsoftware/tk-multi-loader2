@@ -10,8 +10,6 @@
 from __future__ import annotations
 
 import functools
-from types import ModuleType
-from typing import Any
 
 import sgtk
 from sgtk import TankError
@@ -146,7 +144,7 @@ class FlowAMActions:
         build_scene_dialog.exec_()
 
     def _on_build_scene_dialog_accepted(
-        self, dialog: Any, sg_publish_data: dict
+        self, dialog: BuildAssetDialog, sg_publish_data: dict
     ) -> None:
         if not dialog.build:
             message = "Not enough data from the build dialog."
@@ -250,9 +248,7 @@ class FlowAMActions:
         )
 
         if message_response == QtGui.QMessageBox.StandardButton.Yes:
-            discard_draft(
-                sg_publish_data.get("sg_flow_revision_id")
-            )
+            discard_draft(sg_publish_data.get("sg_flow_revision_id"))
 
             QtGui.QMessageBox.information(
                 parent_window,
@@ -318,7 +314,7 @@ class FlowAMActions:
         build_template_dialog.exec_()
 
     def _on_build_template_dialog_accepted(
-        self, dialog: Any, sg_publish_data: dict
+        self, dialog: BuildTemplateDialog, sg_publish_data: dict
     ) -> None:
         if not dialog.mode:
             message = "Not enough data from the build dialog."

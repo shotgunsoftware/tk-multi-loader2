@@ -17,8 +17,9 @@ from typing import Any, Optional
 import sgtk
 from tank_vendor.flow_integration_sdk.objects import FlowAsset, FlowProject
 from tank_vendor.flow_integration_sdk.schema import get_schema_id
+from sgtk.flowam.create import PIPELINE_STEP_TYPE
 
-from .create import PIPELINE_STEP_TYPE, TEMPLATE_FOLDER, TEMPLATE_TYPE
+from ..constants import TEMPLATE_TYPE, TEMPLATE_FOLDER
 
 logger = sgtk.platform.get_logger(__name__)
 

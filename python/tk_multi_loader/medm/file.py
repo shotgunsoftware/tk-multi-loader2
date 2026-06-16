@@ -15,7 +15,7 @@ import os
 import sgtk
 from tank_vendor.flow_integration_sdk.exceptions import FlowError
 from tank_vendor.flow_integration_sdk.globals import FILE_SEQ_TYPE, SOURCE_PURPOSE
-from tank_vendor.flow_integration_sdk.objects import FlowAssetRevision
+from tank_vendor.flow_integration_sdk.objects import FlowRevision
 from tank_vendor.flow_integration_sdk.sandbox import is_local_draft, read_draft_info
 from tank_vendor.flow_integration_sdk.schema import get_schema_id
 
@@ -57,7 +57,7 @@ def download_revision(
     a file dialog will be launched to allow the user to choose a location.
 
     Args:
-        revision_id: Id of AssetRevision to be downloaded.
+        revision_id: Id of FlowRevision to be downloaded.
         component_purpose: Purpose of binary component on revision to be
                            downloaded. By default, the source component
                            will be used.
@@ -76,7 +76,7 @@ def download_revision(
 
     # Ensure revision id is valid
     try:
-        revision = FlowAssetRevision.get_revision(revision_id)
+        revision = FlowRevision.get_revision(revision_id)
     except FlowError as exc:
         msg = f"Invalid revision id provided: {revision_id}"
         raise DownloadRevisionError(

@@ -45,16 +45,7 @@ from tank_vendor.flow_integration_sdk.sandbox import (
 from tank_vendor.flow_integration_sdk.schema import get_schema_id
 
 from .utils import cleanpath, fileext
-
-# -------------------------------------------
-# CONSTANTS not defined in sgtk.flowam.create
-# -------------------------------------------
-# Folder names
-TEMPLATE_FOLDER = "Templates"
-
-# Schema types
-CONTAINER_TYPE = "type.container"
-TEMPLATE_TYPE = "type.template"
+from ..constants import TEMPLATE_TYPE, TEMPLATE_FOLDER
 
 
 # ---------------------------------

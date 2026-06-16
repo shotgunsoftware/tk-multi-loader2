@@ -99,7 +99,7 @@ class MedmThumbnailService(QtCore.QObject):
         Otherwise a daemon thread resolves the URL and downloads the image.
 
         :param qt_item: ``QStandardItem`` whose icon should be updated.
-        :param revision_id: FlowAM ``AssetRevision`` ID to look up.
+        :param revision_id: FlowAM ``FlowRevision`` ID to look up.
         :param callback: ``callable(qt_item, image_data: bytes)`` that will be
             invoked on the **main thread** once the image bytes are available.
             The callback is responsible for converting bytes to a ``QPixmap``

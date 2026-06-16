@@ -49,7 +49,7 @@ class MedmSharedCache:
         so local-draft state is always up-to-date.
 
     ``versions``
-        ``asset.id → list[AssetVersion]``.  Cleared on refresh; a publish
+        ``asset.id → list[FlowVersion]``.  Cleared on refresh; a publish
         action could add a new version.
 
     ``publish_types``
@@ -68,7 +68,7 @@ class MedmSharedCache:
     children: Dict[str, List[Any]] = dataclasses.field(default_factory=dict)
     # asset.id → list[DraftInfo]
     drafts: Dict[str, List[Any]] = dataclasses.field(default_factory=dict)
-    # asset.id → list[AssetVersion]
+    # asset.id → list[FlowVersion]
     versions: Dict[str, List[Any]] = dataclasses.field(default_factory=dict)
     # medm_type_id_str → (sg_publish_type_id, display_name)
     publish_types: Dict[str, tuple] = dataclasses.field(default_factory=dict)

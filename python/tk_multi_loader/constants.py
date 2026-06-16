@@ -103,3 +103,10 @@ TREE_SEARCH_TRIGGER_LENGTH = 2
 # FlowAM versions starts with 0 and FlowPT versions starts with 1.
 # This is used to identify a FlowAM draft version in the UI.
 DRAFT_VERSION_IDENTIFIER = -1
+
+# Folder names
+TEMPLATE_FOLDER = "Templates"
+
+# Schema types
+CONTAINER_TYPE = "type.container"
+TEMPLATE_TYPE = "type.template"

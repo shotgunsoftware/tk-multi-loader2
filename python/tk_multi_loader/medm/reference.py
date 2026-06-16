@@ -14,7 +14,7 @@ import os
 
 import sgtk
 from tank_vendor.flow_integration_sdk.exceptions import FlowError
-from tank_vendor.flow_integration_sdk.objects import FlowAssetRevision, FlowAssetVersion
+from tank_vendor.flow_integration_sdk.objects import FlowVersion, FlowRevision
 
 
 class CreateReferenceError(FlowError):
@@ -60,12 +60,12 @@ def reference_revision(revision_id: str) -> str:
         raise CreateReferenceError(input_id=revision_id, details=msg)
 
     try:
-        if FlowAssetVersion.is_version_id(revision_id):
+        if FlowVersion.is_version_id(revision_id):
             input_type = "version"
-            revision = FlowAssetVersion(revision_id).revision
+            revision = FlowVersion(revision_id).revision
         else:
             input_type = "revision"
-            revision = FlowAssetRevision.get_revision(revision_id)
+            revision = FlowRevision.get_revision(revision_id)
     except FlowError as exc:
         msg = f"Could not retrieve {input_type} object."
         raise CreateReferenceError(input_id=revision_id, details=msg) from exc
@@ -93,7 +93,7 @@ def copy_reference_link(revision_id: str) -> str:
     the of given revision to application clipboard.
 
     Args:
-        revision_id: The id of the AssetRevision to be referenced.
+        revision_id: The id of the FlowRevision to be referenced.
                      This can also be a version id.
 
     Returns:
@@ -109,12 +109,12 @@ def copy_reference_link(revision_id: str) -> str:
         raise FlowError("Not running in a supported host FlowContext.")
 
     try:
-        if FlowAssetVersion.is_version_id(revision_id):
+        if FlowVersion.is_version_id(revision_id):
             input_type = "version"
-            revision = FlowAssetVersion(revision_id).revision
+            revision = FlowVersion(revision_id).revision
         else:
             input_type = "revision"
-            revision = FlowAssetRevision.get_revision(revision_id)
+            revision = FlowRevision.get_revision(revision_id)
     except FlowError as exc:
         msg = f"Could not retrieve {input_type} object."
         raise CreateReferenceError(input_id=revision_id, details=msg) from exc

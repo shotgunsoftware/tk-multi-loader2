@@ -23,7 +23,7 @@ requested by both the tree and the center-panel publish model.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import Optional
 
 import sgtk
 from sgtk.platform.qt import QtCore, QtGui
@@ -31,8 +31,8 @@ from tank_vendor.flow_integration_sdk.exceptions import FlowError
 from tank_vendor.flow_integration_sdk.globals import FOLDER_TYPE_ID
 from tank_vendor.flow_integration_sdk.objects import FlowAsset, FlowProject
 from tank_vendor.flow_integration_sdk.schema import get_schema_id
+from sgtk.flowam.create import PIPELINE_STEP_TYPE
 
-from .create import PIPELINE_STEP_TYPE
 from .shared_cache import MedmSharedCache
 from .utils import is_structural_asset as _is_structural_asset_util
 
@@ -204,7 +204,7 @@ class MedmEntityModel(QtGui.QStandardItemModel):
 
         return search_item(None)
 
-    def get_cached_children(self, asset: FlowAsset) -> List[FlowAsset]:
+    def get_cached_children(self, asset: FlowAsset) -> list[FlowAsset]:
         """
         Return child :class:`FlowAsset` objects for *asset*.
 
@@ -429,7 +429,7 @@ class MedmEntityModel(QtGui.QStandardItemModel):
                 f"FlowAM: Could not get children for '{asset.name}': {e}"
             )
 
-    def _fetch_and_cache_children(self, asset: FlowAsset) -> List[FlowAsset]:
+    def _fetch_and_cache_children(self, asset: FlowAsset) -> list[FlowAsset]:
         """
         Return child assets for *asset*, fetching from the API only on the
         first call and caching the result in the shared cache for subsequent

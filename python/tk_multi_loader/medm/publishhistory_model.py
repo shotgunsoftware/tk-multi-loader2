@@ -17,12 +17,11 @@ a selected FlowAM entity, similar to SgPublishHistoryModel for Shotgun data.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import Any, Optional
 
 import sgtk
 from sgtk.platform.qt import QtCore, QtGui
-from tank_vendor.flow_data_sdk.base.model import AssetVersion
-from tank_vendor.flow_integration_sdk.objects import FlowAsset
+from tank_vendor.flow_integration_sdk.objects import FlowAsset, FlowVersion
 from tank_vendor.flow_integration_sdk.sandbox import DraftInfo, get_asset_drafts
 
 from .. import utils
@@ -48,7 +47,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
     ASSET_ROLE = (
         QtCore.Qt.UserRole + 200
     )  # Stores FlowAM Asset object (shared with all FlowAM models)
-    VERSION_ROLE = QtCore.Qt.UserRole + 201  # Stores FlowAM AssetVersion object
+    VERSION_ROLE = QtCore.Qt.UserRole + 201  # Stores FlowAM FlowVersion object
     DRAFT_ROLE = QtCore.Qt.UserRole + 202  # Stores DraftInfo for draft rows
 
     # Signals for compatibility with ShotgunModelOverlayWidget
@@ -105,7 +104,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         if self._owns_thumbnail_service:
             self._thumbnail_service.destroy()
 
-    def load_data(self, sg_data: Dict[str, Any]) -> None:
+    def load_data(self, sg_data: dict[str, Any]) -> None:
         """
         Load and display all versions (version history) for the selected asset.
 
@@ -210,12 +209,12 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
             )
 
     def _add_version_as_qt_item(
-        self, asset_version: AssetVersion, asset: FlowAsset
+        self, asset_version: FlowVersion, asset: FlowAsset
     ) -> None:
         """
-        Convert an AssetVersion to a QStandardItem and add it to the history model.
+        Convert an FlowVersion to a QStandardItem and add it to the history model.
 
-        :param asset_version: The FlowAM AssetVersion to add
+        :param asset_version: The FlowAM FlowVersion to add
         :param asset: The parent FlowAM Asset
         """
         version_number = asset_version.version_number
@@ -248,12 +247,12 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         self._app.log_debug(f"FlowAM History: Added version v{version_number}")
 
     def _version_to_sg_dict(
-        self, version: AssetVersion, asset: FlowAsset
-    ) -> Dict[str, Any]:
+        self, version: FlowVersion, asset: FlowAsset
+    ) -> dict[str, Any]:
         """
-        Convert a FlowAM AssetVersion to Shotgun-compatible dictionary.
+        Convert a FlowAM FlowVersion to Shotgun-compatible dictionary.
 
-        :param version: The FlowAM AssetVersion
+        :param version: The FlowAM FlowVersion
         :param asset: The parent FlowAM Asset
         :returns: sg_data dictionary compatible with Shotgun UI
         """
@@ -310,7 +309,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
 
     def _draft_to_sg_dict(
         self, draft_info: DraftInfo, asset: Optional[FlowAsset]
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Convert a DraftInfo (CheckoutDraftInfo or NewDraftInfo) to a Shotgun-compatible
         dictionary for display in the version history list as a local draft entry.
@@ -413,7 +412,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         on the main thread once the image bytes are available.
 
         :param qt_item: The QStandardItem to set the thumbnail on.
-        :param revision_id: FlowAM AssetRevision ID whose thumbnail is needed.
+        :param revision_id: FlowAM FlowRevision ID whose thumbnail is needed.
         """
         self._thumbnail_service.request(qt_item, revision_id, self._apply_thumbnail)
 

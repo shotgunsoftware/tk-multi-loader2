@@ -24,9 +24,9 @@ from tank_vendor.flow_integration_sdk.schema import (
     get_schema_display_name,
     get_schema_id,
 )
+from sgtk.flowam.create import PIPELINE_STEP_TYPE
 
-from ..constants import DRAFT_VERSION_IDENTIFIER
-from .create import CONTAINER_TYPE, PIPELINE_STEP_TYPE
+from ..constants import DRAFT_VERSION_IDENTIFIER, CONTAINER_TYPE
 
 
 def is_structural_asset(asset: Any) -> bool:

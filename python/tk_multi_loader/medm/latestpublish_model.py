@@ -17,7 +17,7 @@ Flow Asset Management (FlowAM) data instead of Shotgun data.
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import sgtk
 from sgtk.platform.qt import QtCore, QtGui
@@ -231,7 +231,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
             assets_for_draft_lookup = [leaf_asset_fallback]
 
         # --- Pass 1: collect draft cards per asset ----------------------------
-        drafts_by_asset_id: Dict[str, list] = {}
+        drafts_by_asset_id: dict[str, list] = {}
         for child_asset in assets_for_draft_lookup:
             try:
                 if child_asset.id in self._cache.drafts:
@@ -319,7 +319,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         asset_data = item.data(QtCore.Qt.UserRole + 1)
         return asset_data
 
-    def _fetch_asset_children(self, asset: FlowAsset) -> List[Dict[str, Any]]:
+    def _fetch_asset_children(self, asset: FlowAsset) -> list[dict[str, Any]]:
         """
         Fetch all non-structural child assets and convert to sg_data dicts.
 
@@ -370,7 +370,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         )
         return children_asset_sg_dicts
 
-    def _asset_to_sg_dict(self, asset: FlowAsset) -> Dict[str, Any]:
+    def _asset_to_sg_dict(self, asset: FlowAsset) -> dict[str, Any]:
         """
         Convert an FlowAM Asset to a Shotgun-compatible dictionary.
 
@@ -429,7 +429,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
 
     def _draft_to_sg_dict(
         self, draft_info: DraftInfo, asset: Optional[FlowAsset] = None
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Convert a local DraftInfo into a Shotgun-compatible dictionary suitable
         for display as a center-panel card.
@@ -493,7 +493,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
 
     def _fetch_new_draft_items_for_parent(
         self, parent_asset_id: str
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Return sg_dict items for ``NewDraftInfo`` entries whose ``parent_id``
         matches *parent_asset_id*.
@@ -542,7 +542,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
     def _resolve_publish_type(self, medm_type_id_str: str) -> tuple:
         return resolve_publish_type(medm_type_id_str, self._cache, self._app)
 
-    def _add_sg_dict_as_qt_item(self, sg_item: Dict[str, Any]) -> None:
+    def _add_sg_dict_as_qt_item(self, sg_item: dict[str, Any]) -> None:
         """
         Create a QStandardItem from a Shotgun-compatible dict and add it to the model.
 
@@ -593,7 +593,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
             f"FlowAM: Added item '{qt_item.text()}' to model (row count: {self.rowCount()})"
         )
 
-    def _set_tooltip(self, item: QtGui.QStandardItem, sg_item: Dict[str, Any]) -> None:
+    def _set_tooltip(self, item: QtGui.QStandardItem, sg_item: dict[str, Any]) -> None:
         """
         Sets a tooltip for a publish item.
 
@@ -630,7 +630,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         on the main thread once the image bytes are available.
 
         :param qt_item: The QStandardItem to set the thumbnail on.
-        :param revision_id: FlowAM AssetRevision ID whose thumbnail is needed.
+        :param revision_id: FlowAM FlowRevision ID whose thumbnail is needed.
         """
         self._thumbnail_service.request(qt_item, revision_id, self._apply_thumbnail)
 
@@ -649,7 +649,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
             )
             qt_item.setIcon(QtGui.QIcon(scaled))
 
-    def _calculate_sg_publish_type_counts(self) -> Dict[int, int]:
+    def _calculate_sg_publish_type_counts(self) -> dict[int, int]:
         """
         Count how many items in the model have each Shotgun PublishedFileType.
 

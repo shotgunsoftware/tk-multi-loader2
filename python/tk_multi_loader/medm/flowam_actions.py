@@ -57,23 +57,6 @@ class FlowAMActions:
         """
         return DRAFT_VERSION_IDENTIFIER
 
-    def load_framework(
-        self, framework_instance_name: str, module_name: str
-    ) -> ModuleType:
-        """
-        Simple wrapper around the base class implementation to
-        provide user feedback if the framework cannot be loaded.
-
-        :param framework_instance_name: Name of the framework instance to load
-        :returns: sgtk.platform.Framework instance
-        """
-        try:
-            return sgtk.platform.import_framework(framework_instance_name, module_name)
-        except Exception as e:
-            message = f"Could not load the required framework '{framework_instance_name}'.\n\nError details: {e}"
-            self._app.log_error(message)
-            QtGui.QMessageBox.critical(None, "Error", message)
-
     def _do_open(self, sg_publish_data: dict) -> None:
         """
         Open the given PublishedFile.
@@ -204,7 +187,7 @@ class FlowAMActions:
         try:
             draft_info = create_dcc_workfile(create_inputs)
             self._app.log_debug(
-                f"Created a DCC workfile on Flow AM framework with the draft_id: {draft_info.draft_id}"
+                f"Created a DCC workfile with the draft_id: {draft_info.draft_id}"
             )
         except CreateAssetError as exc:
             self._app.log_error(f"Create asset failed: {exc}\nInput data: {exc.data}")
@@ -360,7 +343,7 @@ class FlowAMActions:
         )
         draft_info = create_template_workfile(create_inputs)
         self._app.log_debug(
-            f"Created a Template workfile on Flow AM framework with the draft_id: {draft_info.draft_id}"
+            f"Created a Template workfile with the draft_id: {draft_info.draft_id}"
         )
 
     def _get_flowam_id(self) -> str:

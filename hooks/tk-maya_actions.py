@@ -131,8 +131,8 @@ class MayaActions(HookBaseClass):
         # -----------------------
         enable_flowam = app.get_setting("enable_flowam", False)
         if enable_flowam:
-            am_base_obj = kwargs.get("am_base_obj")
-            if not am_base_obj:
+            flowam_actions = kwargs.get("flowam_actions")
+            if not flowam_actions:
                 raise Exception(
                     "FlowAM is enabled but no Asset Management base object was passed to the action hook. "
                     "FlowAM specific actions will not be generated."
@@ -142,11 +142,11 @@ class MayaActions(HookBaseClass):
                 "open" in actions
                 and sg_publish_data.get("type") == "PublishedFile"
                 and (
-                    am_base_obj._is_local_draft(sg_publish_data)
+                    flowam_actions._is_local_draft(sg_publish_data)
                     or sg_publish_data.get(
-                        "version_number", am_base_obj.DRAFT_VERSION_IDENTIFIER
+                        "version_number", flowam_actions.DRAFT_VERSION_IDENTIFIER
                     )
-                    > am_base_obj.DRAFT_VERSION_IDENTIFIER
+                    > flowam_actions.DRAFT_VERSION_IDENTIFIER
                 )
             ):
                 action_instances.append(
@@ -165,7 +165,7 @@ class MayaActions(HookBaseClass):
                 and (
                     sg_publish_data.get("version_number") is not None
                     and sg_publish_data.get("version_number")
-                    != am_base_obj.DRAFT_VERSION_IDENTIFIER
+                    != flowam_actions.DRAFT_VERSION_IDENTIFIER
                 )
             ):
                 action_instances.append(
@@ -180,9 +180,9 @@ class MayaActions(HookBaseClass):
             if "discard_draft" in actions:
                 draft_id = sg_publish_data.get("sg_flow_revision_id")
 
-                if am_base_obj._is_local_draft(
+                if flowam_actions._is_local_draft(
                     sg_publish_data
-                ) and am_base_obj._is_new_asset(draft_id):
+                ) and flowam_actions._is_new_asset(draft_id):
                     action_instances.append(
                         {
                             "name": "discard_draft",
@@ -195,9 +195,9 @@ class MayaActions(HookBaseClass):
             if (
                 "reference_am" in actions
                 and sg_publish_data.get(
-                    "version_number", am_base_obj.DRAFT_VERSION_IDENTIFIER
+                    "version_number", flowam_actions.DRAFT_VERSION_IDENTIFIER
                 )
-                != am_base_obj.DRAFT_VERSION_IDENTIFIER
+                != flowam_actions.DRAFT_VERSION_IDENTIFIER
             ):
                 action_instances.append(
                     {
@@ -211,9 +211,9 @@ class MayaActions(HookBaseClass):
             if (
                 "reference_copy_link" in actions
                 and sg_publish_data.get(
-                    "version_number", am_base_obj.DRAFT_VERSION_IDENTIFIER
+                    "version_number", flowam_actions.DRAFT_VERSION_IDENTIFIER
                 )
-                != am_base_obj.DRAFT_VERSION_IDENTIFIER
+                != flowam_actions.DRAFT_VERSION_IDENTIFIER
             ):
                 action_instances.append(
                     {
@@ -299,28 +299,28 @@ class MayaActions(HookBaseClass):
         # -----------------------
         enable_flowam = app.get_setting("enable_flowam", False)
         if enable_flowam:
-            am_base_obj = kwargs.get("am_base_obj")
+            flowam_actions = kwargs.get("flowam_actions")
 
             if name == "reference_am":
-                am_base_obj._create_reference_am(sg_publish_data)
+                flowam_actions._create_reference_am(sg_publish_data)
 
             if name == "reference_copy_link":
-                am_base_obj._create_reference_copy_link(sg_publish_data)
+                flowam_actions._create_reference_copy_link(sg_publish_data)
 
             if name == "open":
-                am_base_obj._do_open(sg_publish_data)
+                flowam_actions._do_open(sg_publish_data)
 
             if name == "discard_draft":
-                am_base_obj._discard_draft(sg_publish_data)
+                flowam_actions._discard_draft(sg_publish_data)
 
             if name == "build_new_scene":
-                am_base_obj._build_new_scene(sg_publish_data)
+                flowam_actions._build_new_scene(sg_publish_data)
 
             if name == "build_new_template":
-                am_base_obj._build_new_template(sg_publish_data)
+                flowam_actions._build_new_template(sg_publish_data)
 
             if name == "download":
-                am_base_obj._download_asset_revision(sg_publish_data)
+                flowam_actions._download_asset_revision(sg_publish_data)
 
             return
 

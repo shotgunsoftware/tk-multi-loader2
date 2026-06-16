@@ -79,8 +79,8 @@ class DesktopActions(HookBaseClass):
 
         enable_flowam = app.get_setting("enable_flowam", False)
         if enable_flowam:
-            am_base_obj = kwargs.get("am_base_obj")
-            if not am_base_obj:
+            flowam_actions = kwargs.get("flowam_actions")
+            if not flowam_actions:
                 raise Exception(
                     "FlowAM is enabled but no Asset Management base object was passed to the action hook. "
                     "FlowAM specific actions will not be generated."
@@ -91,7 +91,7 @@ class DesktopActions(HookBaseClass):
 
                 if (
                     version_number is not None
-                    and version_number != am_base_obj.DRAFT_VERSION_IDENTIFIER
+                    and version_number != flowam_actions.DRAFT_VERSION_IDENTIFIER
                 ):
                     action_instances.append(
                         {
@@ -130,9 +130,9 @@ class DesktopActions(HookBaseClass):
             if (
                 "reference_copy_link" in actions
                 and sg_publish_data.get(
-                    "version_number", am_base_obj.DRAFT_VERSION_IDENTIFIER
+                    "version_number", flowam_actions.DRAFT_VERSION_IDENTIFIER
                 )
-                > am_base_obj.DRAFT_VERSION_IDENTIFIER
+                > flowam_actions.DRAFT_VERSION_IDENTIFIER
             ):
                 action_instances.append(
                     {
@@ -202,7 +202,7 @@ class DesktopActions(HookBaseClass):
             "Execute action called for action %s. "
             "Parameters: %s. Publish Data: %s" % (name, params, sg_publish_data)
         )
-        am_base_obj = kwargs.get("am_base_obj")
+        flowam_actions = kwargs.get("flowam_actions")
 
         if name == "create_generic_asset":
             # Right click a task the left panel
@@ -213,10 +213,10 @@ class DesktopActions(HookBaseClass):
             self._launch_publisher(name, sg_publish_data)
 
         elif name == "reference_copy_link":
-            am_base_obj._create_reference_copy_link(sg_publish_data)
+            flowam_actions._create_reference_copy_link(sg_publish_data)
 
         elif name == "download":
-            am_base_obj._download_asset_revision(sg_publish_data)
+            flowam_actions._download_asset_revision(sg_publish_data)
 
     def _launch_publisher(self, action_name: str, sg_publish_data: dict) -> None:
         """

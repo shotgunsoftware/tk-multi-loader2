@@ -130,7 +130,7 @@ class LoaderManager(object):
                 sg_publish_data=sg_data,
                 actions=actions,
                 ui_area=ui_area_str,
-                am_base_obj=self.get_flowam_actions_instance(),
+                flowam_actions=self.get_flowam_actions_instance(),
             )
         except Exception:
             self._logger.exception("Could not execute generate_actions hook.")
@@ -244,7 +244,7 @@ class LoaderManager(object):
                 name=action["name"],
                 params=action["params"],
                 sg_publish_data=sg_data,
-                am_base_obj=self.get_flowam_actions_instance(),
+                flowam_actions=self.get_flowam_actions_instance(),
             )
         except Exception as e:
             self._logger.exception(
@@ -268,7 +268,7 @@ class LoaderManager(object):
                 "actions_hook",
                 "execute_multiple_actions",
                 actions=actions,
-                am_base_obj=self.get_flowam_actions_instance(),
+                flowam_actions=self.get_flowam_actions_instance(),
             )
         except Exception as e:
             self._logger.exception(
@@ -310,7 +310,7 @@ class LoaderManager(object):
                 sg_publish_data=sg_data,
                 actions=actions,
                 ui_area="main",
-                am_base_obj=self.get_flowam_actions_instance(),
+                flowam_actions=self.get_flowam_actions_instance(),
             )  # folder options only found in main ui area
         except Exception:
             self._logger.exception("Could not execute generate_actions hook.")

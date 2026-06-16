@@ -117,8 +117,8 @@ class NukeActions(HookBaseClass):
         # -----------------------
         enable_flowam = app.get_setting("enable_flowam", False)
         if enable_flowam:
-            am_base_obj = kwargs.get("am_base_obj")
-            if not am_base_obj:
+            flowam_actions = kwargs.get("flowam_actions")
+            if not flowam_actions:
                 raise Exception(
                     "FlowAM is enabled but no Asset Management base object was passed to the action hook. "
                     "FlowAM specific actions will not be generated."
@@ -147,11 +147,11 @@ class NukeActions(HookBaseClass):
                 # 1. Local drafts (version_number == -1 and is_local_draft)
                 # 2. Published revisions (version_number > -1)
                 if (
-                    am_base_obj._is_local_draft(sg_publish_data)
+                    flowam_actions._is_local_draft(sg_publish_data)
                     or sg_publish_data.get(
-                        "version_number", am_base_obj.DRAFT_VERSION_IDENTIFIER
+                        "version_number", flowam_actions.DRAFT_VERSION_IDENTIFIER
                     )
-                    > am_base_obj.DRAFT_VERSION_IDENTIFIER
+                    > flowam_actions.DRAFT_VERSION_IDENTIFIER
                 ):
                     action_instances.append(
                         {
@@ -162,7 +162,7 @@ class NukeActions(HookBaseClass):
                         }
                     )
 
-            if "discard_draft" in actions and am_base_obj._is_local_draft(
+            if "discard_draft" in actions and flowam_actions._is_local_draft(
                 sg_publish_data
             ):
                 action_instances.append(
@@ -176,9 +176,9 @@ class NukeActions(HookBaseClass):
             if (
                 "reference_copy_link" in actions
                 and sg_publish_data.get(
-                    "version_number", am_base_obj.DRAFT_VERSION_IDENTIFIER
+                    "version_number", flowam_actions.DRAFT_VERSION_IDENTIFIER
                 )
-                != am_base_obj.DRAFT_VERSION_IDENTIFIER
+                != flowam_actions.DRAFT_VERSION_IDENTIFIER
             ):
                 action_instances.append(
                     {
@@ -192,9 +192,9 @@ class NukeActions(HookBaseClass):
             if (
                 "create_read_node" in actions
                 and sg_publish_data.get(
-                    "version_number", am_base_obj.DRAFT_VERSION_IDENTIFIER
+                    "version_number", flowam_actions.DRAFT_VERSION_IDENTIFIER
                 )
-                != am_base_obj.DRAFT_VERSION_IDENTIFIER
+                != flowam_actions.DRAFT_VERSION_IDENTIFIER
             ):
                 action_instances.append(
                     {
@@ -260,25 +260,25 @@ class NukeActions(HookBaseClass):
         # -----------------------
         use_medm_data = app.get_setting("use_medm_data", False)
         if use_medm_data:
-            am_base_obj = kwargs.get("am_base_obj")
+            flowam_actions = kwargs.get("flowam_actions")
 
             if name == "build_new_script":
-                am_base_obj._build_new_scene(sg_publish_data)
+                flowam_actions._build_new_scene(sg_publish_data)
 
             if name == "build_new_template":
-                am_base_obj._build_new_template(sg_publish_data)
+                flowam_actions._build_new_template(sg_publish_data)
 
             if name == "open":
-                am_base_obj._do_open(sg_publish_data)
+                flowam_actions._do_open(sg_publish_data)
 
             if name == "discard_draft":
-                am_base_obj._discard_draft(sg_publish_data)
+                flowam_actions._discard_draft(sg_publish_data)
 
             if name == "reference_copy_link":
-                am_base_obj._create_reference_copy_link(sg_publish_data)
+                flowam_actions._create_reference_copy_link(sg_publish_data)
 
             if name == "create_read_node":
-                am_base_obj._create_reference(sg_publish_data)
+                flowam_actions._create_reference(sg_publish_data)
 
             return
 

@@ -19,10 +19,17 @@ from __future__ import annotations
 import os
 from typing import Any, Dict, Optional, Tuple
 
+from tank_vendor.flow_integration_sdk.globals import FOLDER_TYPE_ID
+from tank_vendor.flow_integration_sdk.schema import (
+    get_schema_display_name,
+    get_schema_id,
+)
+
 from ..constants import DRAFT_VERSION_IDENTIFIER
+from .create import CONTAINER_TYPE, PIPELINE_STEP_TYPE
 
 
-def is_structural_asset(asset: Any, flow_module: Any) -> bool:
+def is_structural_asset(asset: Any) -> bool:
     """Return ``True`` when *asset* is a structural container in the FlowAM hierarchy.
 
     An asset is considered structural — and therefore belongs only in the
@@ -38,20 +45,16 @@ def is_structural_asset(asset: Any, flow_module: Any) -> bool:
     ``False`` (treat the asset as publishable).
 
     :param asset: FlowAM ``Asset`` object to test.
-    :param flow_module: The ``flow`` framework module imported via
-        ``sgtk.platform.import_framework("tk-framework-flowam", "flow")``.
     :returns: ``True`` if the asset is a structural container.
     """
     try:
         type_ids = set(getattr(asset, "type_ids", None) or [])
-        if flow_module.data.FOLDER_TYPE_ID in type_ids:
+        if FOLDER_TYPE_ID in type_ids:
             return True
 
-        _am = flow_module.asset_management
-        structural_types = (_am.CONTAINER_TYPE, _am.PIPELINE_STEP_TYPE)
+        structural_types = (CONTAINER_TYPE, PIPELINE_STEP_TYPE)
         return any(
-            asset.find_component(type_id=flow_module.schema.get_schema_id(ct))
-            for ct in structural_types
+            asset.find_component(type_id=get_schema_id(ct)) for ct in structural_types
         )
     except Exception:
         return False
@@ -200,7 +203,6 @@ def build_draft_sg_dict(
 def resolve_publish_type(
     medm_type_id_str: str,
     cache: Any,
-    flow_module: Any,
     app: Any,
 ) -> Tuple[Optional[int], str]:
     """Resolve a FlowAM schema type ID to a ``(sg_publish_type_id, display_name)`` pair.
@@ -214,8 +216,6 @@ def resolve_publish_type(
     :param medm_type_id_str: FlowAM schema type ID string.
     :param cache: :class:`MedmSharedCache` instance whose ``publish_types``
         dict is used for caching.
-    :param flow_module: The ``flow`` framework module imported via
-        ``sgtk.platform.import_framework("tk-framework-flowam", "flow")``.
     :param app: The current Toolkit bundle (provides ``shotgun`` and ``log_debug``).
     :returns: Tuple of ``(integer_publish_type_id_or_none, human_readable_display_name)``.
     """
@@ -224,7 +224,7 @@ def resolve_publish_type(
 
     display_name = medm_type_id_str
     try:
-        schema_name = flow_module.schema.get_schema_display_name(medm_type_id_str)
+        schema_name = get_schema_display_name(medm_type_id_str)
         if schema_name:
             display_name = schema_name
     except Exception as e:

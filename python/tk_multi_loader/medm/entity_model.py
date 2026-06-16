@@ -304,7 +304,7 @@ class MedmEntityModel(QtGui.QStandardItemModel):
         :param asset: FlowAM ``Asset`` to test.
         :returns: ``True`` if the asset should appear in the tree.
         """
-        if _is_structural_asset_util(asset, self._flow_module):
+        if _is_structural_asset_util(asset):
             return True
 
         # Non-structural: show in the tree only when the asset has direct
@@ -326,9 +326,7 @@ class MedmEntityModel(QtGui.QStandardItemModel):
         :returns: A :class:`QtGui.QIcon` instance.
         """
         return (
-            self._folder_icon
-            if _is_structural_asset_util(asset, self._flow_module)
-            else self._binary_icon
+            self._folder_icon if _is_structural_asset_util(asset) else self._binary_icon
         )
 
     def _load_medm_assets(self) -> None:

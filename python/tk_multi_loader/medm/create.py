@@ -51,6 +51,7 @@ SHOT_TYPE = "Shot"
 ASSET_TYPE = "Asset"
 
 # Schema types
+CONTAINER_TYPE = "type.container"
 PIPELINE_STEP_TYPE = "type.pipelineStep"
 TEMPLATE_TYPE = "type.template"
 

@@ -419,9 +419,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         )
 
     def _resolve_publish_type(self, medm_type_id_str: str) -> tuple:
-        return resolve_publish_type(
-            medm_type_id_str, self._cache, self._flow_module, self._app
-        )
+        return resolve_publish_type(medm_type_id_str, self._cache, self._app)
 
     def _resolve_and_download_thumbnail(
         self, qt_item: QtGui.QStandardItem, revision_id: str

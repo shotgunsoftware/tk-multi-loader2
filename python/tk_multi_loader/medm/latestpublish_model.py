@@ -211,9 +211,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         # be the publishable leaf.  Only fall back to showing it directly when
         # the asset is NOT a structural container.
         leaf_asset_fallback = None
-        if not children_asset_sg_dicts and not _is_structural_asset_util(
-            asset, self._flow_module
-        ):
+        if not children_asset_sg_dicts and not _is_structural_asset_util(asset):
             try:
                 children_asset_sg_dicts = [self._asset_to_sg_dict(asset)]
             except Exception as e:
@@ -351,7 +349,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
                 self._cache.children[asset.id] = child_assets
 
             for child_asset in child_assets:
-                if _is_structural_asset_util(child_asset, self._flow_module):
+                if _is_structural_asset_util(child_asset):
                     self._app.log_debug(
                         f"FlowAM: Skipping structural asset '{child_asset.name}' from center panel"
                     )
@@ -549,9 +547,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         return result
 
     def _resolve_publish_type(self, medm_type_id_str: str) -> tuple:
-        return resolve_publish_type(
-            medm_type_id_str, self._cache, self._flow_module, self._app
-        )
+        return resolve_publish_type(medm_type_id_str, self._cache, self._app)
 
     def _add_sg_dict_as_qt_item(self, sg_item: Dict[str, Any]) -> None:
         """

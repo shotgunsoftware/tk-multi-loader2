@@ -36,6 +36,8 @@ from .create import (
     create_dcc_workfile,
     create_template_workfile,
 )
+from .file import open_draft, download_revision
+from .reference import reference_revision, copy_reference_link
 
 
 class FlowAMActions:
@@ -87,12 +89,10 @@ class FlowAMActions:
             )
             raise TankError("No Revision ID found for this item {}.".format(item_id))
 
-        flow_module = self.load_framework("tk-framework-flowam", "flow")
-
         if version_number == DRAFT_VERSION_IDENTIFIER and is_local_draft(
             sg_publish_data.get("sg_flow_revision_id")
         ):
-            flow_module.asset_management.open_draft(flow_revision_id)
+            open_draft(flow_revision_id)
         elif version_number > DRAFT_VERSION_IDENTIFIER:
             # Checkout the revision to the local sandbox
             checkout_revision(flow_revision_id)
@@ -116,8 +116,7 @@ class FlowAMActions:
             )
             raise TankError("No Revision ID found for this item {}.".format(item_id))
 
-        flow_module = self.load_framework("tk-framework-flowam", "flow")
-        flow_module.asset_management.reference_revision(flow_revision_id)
+        reference_revision(flow_revision_id)
 
     def _create_reference_copy_link(self, sg_publish_data: dict) -> None:
         """
@@ -133,8 +132,7 @@ class FlowAMActions:
             )
             raise TankError("No Revision ID found for this item {}.".format(item_id))
 
-        flow_module = self.load_framework("tk-framework-flowam", "flow")
-        path = flow_module.asset_management.copy_reference_link(flow_revision_id)
+        path = copy_reference_link(flow_revision_id)
 
         self._app.log_info(f"Reference path copied: {path}")
 
@@ -430,8 +428,7 @@ class FlowAMActions:
             )
             raise TankError("No Revision ID found for this item {}.".format(item_id))
 
-        flow_module = self.load_framework("tk-framework-flowam", "flow")
-        result = flow_module.asset_management.download_revision(flow_revision_id)
+        result = download_revision(flow_revision_id)
 
         # Notify the user about the download result
         if result:

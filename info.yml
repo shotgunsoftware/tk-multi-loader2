@@ -38,8 +38,7 @@ configuration:
         default_value: false
         description: Set to True to use Flow Asset Management data instead of Shotgun
                      data. When enabled, the loader fetches publish data from the Flow Asset
-                     Management system. Requires tk-framework-flowam to be configured in the
-                     environment.
+                     Management system.
 
     # hooks
     actions_hook:
@@ -207,5 +206,3 @@ documentation_url: "https://help.autodesk.com/view/SGDEV/ENU/?guid=SG_Supervisor
 frameworks:
     - {"name": "tk-framework-shotgunutils", "version": "v5.x.x", "minimum_version": "v5.8.6"}
     - {"name": "tk-framework-qtwidgets", "version": "v2.x.x", "minimum_version": "v2.10.6"}
-    # TODO: Remove the following line after SG-43459.
-    - {"name": "tk-framework-flowam", "version": "v1.x.x"}

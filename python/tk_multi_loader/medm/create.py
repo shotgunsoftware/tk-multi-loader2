@@ -23,8 +23,17 @@ from enum import Enum
 from typing import Callable
 
 import sgtk
+from sgtk.flowam.create import (
+    ASSET_FOLDER,
+    ASSET_TYPE,
+    GENERIC_FOLDER,
+    PIPELINE_STEP_TYPE,
+    SHOT_FOLDER,
+    SHOT_TYPE,
+    create_asset_hierarchy,
+)
 from sgtk.flowam.utils import BaseInputs, create_components_for_publish
-from tank_vendor.flow_integration_sdk.exceptions import FlowError
+from tank_vendor.flow_integration_sdk.exceptions import CreateAssetError, FlowError
 from tank_vendor.flow_integration_sdk.globals import FOLDER_TYPE_ID
 from tank_vendor.flow_integration_sdk.objects import FlowAsset, FlowProject
 from tank_vendor.flow_integration_sdk.publish import publish_new_asset
@@ -37,22 +46,14 @@ from tank_vendor.flow_integration_sdk.schema import get_schema_id
 
 from .utils import cleanpath, fileext
 
-# ---------------------------------
-# CONSTANTS
-# ---------------------------------
+# -------------------------------------------
+# CONSTANTS not defined in sgtk.flowam.create
+# -------------------------------------------
 # Folder names
-ASSET_FOLDER = "Assets"
-SHOT_FOLDER = "Shots"
-GENERIC_FOLDER = "Generic"
 TEMPLATE_FOLDER = "Templates"
-
-# SG entity types
-SHOT_TYPE = "Shot"
-ASSET_TYPE = "Asset"
 
 # Schema types
 CONTAINER_TYPE = "type.container"
-PIPELINE_STEP_TYPE = "type.pipelineStep"
 TEMPLATE_TYPE = "type.template"
 
 
@@ -66,12 +67,6 @@ class CreateMode(Enum):
     CURRENT = "current"  #: Create a DCC asset from the current scene as the source.
     TEMPLATE = "template"  #: Create a DCC asset from template scene as the source.
     GENERIC = "generic"  #: Create a generic asset from a specified source file.
-
-
-class CreateAssetError(FlowError):
-    def __init__(self, *args, **kwargs):
-        message = "Could not create asset."
-        super().__init__(message, *args, **kwargs)
 
 
 @dataclass
@@ -246,7 +241,7 @@ def create_dcc_workfile(inputs: CreateInputs) -> NewDraftInfo:
         raise CreateAssetError(data=inputs.asdict(), details=msg)
 
     # Create any necessary hierarchy above current asset
-    parent = _create_asset_hierarchy(inputs)
+    parent = create_asset_hierarchy(inputs)
 
     # Create the workfile asset in sandbox
     draft_id = _create_dcc_workfile_asset(parent, inputs)
@@ -330,72 +325,6 @@ def _has_workfile_type(parent: FlowAsset, type_id: str) -> bool:
     return False
 
 
-def _create_asset_hierarchy(inputs: CreateInputs) -> FlowAsset:
-    """Called when creating an asset for an sg entity for the first time.
-    This function will ensure that any hierarchical structuring above the workfile asset
-    is created if necessary. (These will be committed directly to remote immediately.)
-
-    High-level structure of SG-mirrored project in AM
-    -------------------------------------------------
-
-    - PROJECT
-        - SHOTS FOLDER
-            - sg shot 1
-                - pipeline step 1
-                    - task 1 folder
-                        - sg shot 1 (workfile)
-                    - task 2 folder
-                        - sg shot 1 (workfile)
-                - pipeline step 2
-                    - task 1 folder
-                        - sg shot 1 (workfile)
-                    - task 2 folder
-                        - sg shot 1 (workfile)
-                ...
-            - sg shot 2
-                ...
-            ...
-        - ASSETS FOLDER
-            - sg asset 1
-                - pipeline step 1
-                    - task 1 folder
-                        - sg asset 1 (workfile)
-                    - task 2 folder
-                        - sg asset 1 (workfile)
-                - pipeline step 2
-                    - task 1 folder
-                        - sg asset 1 (workfile)
-                    - task 2 folder
-                        - sg asset 1 (workfile)
-                ...
-            - sg asset 2
-                ...
-            ...
-        - GENERIC FOLDER
-            - generic asset 1 (workfile)
-            - generic asset 2 (workfile)
-            ...
-
-    Args:
-        See CreateInputs documentation.
-
-    Returns:
-        The parent asset of the workfile asset to be created.
-    """
-
-    root_folder = _get_or_create_root_folder(inputs)
-
-    # Create or retrieve parent asset
-    if inputs.sg_entity_name:
-        parent = _get_or_create_workfile_parent(root_folder, inputs)
-    else:
-        # If no sg entity context was provided, folder will be parent
-        # (applicable to generic assets)
-        parent = root_folder
-
-    return parent
-
-
 def _get_or_create_root_folder(inputs: CreateInputs) -> FlowAsset:
     """Retrieve top-level folder pertinent to new asset. If it doesn't exist, create it.
 
@@ -465,76 +394,6 @@ def _get_or_create_root_folder(inputs: CreateInputs) -> FlowAsset:
         raise CreateAssetError(data=inputs.asdict(), details=msg)
 
     return folder
-
-
-def _get_or_create_workfile_parent(
-    root_folder: FlowAsset, inputs: CreateInputs
-) -> FlowAsset:
-    """Determine the appropriate parent asset of the workfile to be created.
-    This should be a pipeline step asset since we will only call this function
-    if a sg context was provided.
-
-    Any necessary hierarchical assets that don't exist will be created
-    (i.e. containers and pipeline steps).
-
-    Returns:
-        The parent asset object.
-    """
-    app = sgtk.platform.current_bundle()
-
-    sg_entity_type = inputs.sg_entity_type
-    sg_entity_name = inputs.sg_entity_name
-    sg_pipeline_step = inputs.sg_pipeline_step
-    sg_task_name = inputs.sg_task_name
-
-    # If a container asset associated with sg entity doesn't exist, create it
-    container = root_folder.find_child(sg_entity_name)
-    if not container:
-        app.log_info(
-            f'Creating container asset for "{sg_entity_name}" under folder "{root_folder.name}"...'
-        )
-        container_type = (
-            "type.container.asset"
-            if sg_entity_type == ASSET_TYPE
-            else "type.container.shot"
-        )
-        container_type_id = get_schema_id(container_type)
-        container = publish_new_asset(
-            name=sg_entity_name,
-            parent=root_folder,
-            components=create_components_for_publish(
-                type_ids=[container_type_id],
-            ),
-        )
-
-    # If a pipeline step asset associated with sg pipeline step doesn't exist, create it
-    pipeline_step = container.find_child(sg_pipeline_step)
-    if not pipeline_step:
-        app.log_info(f'Creating pipeline step asset for "{sg_pipeline_step}"...')
-        pipeline_step_type_id = get_schema_id(PIPELINE_STEP_TYPE)
-        pipeline_step = publish_new_asset(
-            name=sg_pipeline_step,
-            parent=container,
-            components=create_components_for_publish(
-                type_ids=[pipeline_step_type_id],
-            ),
-        )
-
-    # If a task folder associated with sg task doesn't exist, create it
-    task_folder = pipeline_step.find_child(sg_task_name)
-    if not task_folder:
-        app.log_info(f'Creating task folder asset for "{sg_task_name}"...')
-        desc = f'Folder for task "{sg_task_name}".'
-        task_folder = publish_new_asset(
-            name=sg_task_name,
-            parent=pipeline_step,
-            components=create_components_for_publish(
-                type_ids=[FOLDER_TYPE_ID],
-            ),
-            description=desc,
-        )
-
-    return task_folder
 
 
 def _create_dcc_workfile_asset(parent: FlowAsset, inputs: CreateInputs) -> str:

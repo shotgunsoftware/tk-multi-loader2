@@ -228,7 +228,7 @@ def create_dcc_workfile(inputs: CreateInputs) -> NewDraftInfo:
     inputs.validate()
 
     if not in_dcc_context():
-        msg = "Cannot create DCC workfile without being in DCC FlowContext."
+        msg = "Cannot create DCC workfile without being in DCC."
         raise CreateAssetError(data=inputs.asdict(), details=msg)
 
     # Create any necessary hierarchy above current asset
@@ -271,7 +271,7 @@ def create_template_workfile(inputs: CreateTemplateInputs) -> NewDraftInfo:
     inputs.validate()
 
     if not in_dcc_context():
-        msg = "Cannot create template workfile without being in DCC FlowContext."
+        msg = "Cannot create template workfile without being in DCC."
         raise CreateAssetError(data=inputs.asdict(), details=msg)
 
     # Create any necessary hierarchy above current asset

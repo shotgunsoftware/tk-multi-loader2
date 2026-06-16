@@ -163,7 +163,7 @@ def open_draft(draft_id: str):
     engine = sgtk.platform.current_engine()
 
     if not engine.flow_host:
-        raise FlowError("Opening a draft must be done in a host FlowContext.")
+        raise FlowError("Opening a draft must be done in a host.")
 
     if not is_local_draft(draft_id):
         msg = f'The draft "{draft_id}" is not in local sandbox.'

@@ -51,7 +51,7 @@ def reference_revision(revision_id: str) -> str:
     engine = sgtk.platform.current_engine()
 
     if not hasattr(engine.flow_host, "create_reference"):
-        msg = "Referencing is not supported in current execution FlowContext."
+        msg = "Referencing is not supported in current execution."
         raise CreateReferenceError(input_id=revision_id, details=msg)
 
     # We will disallow referencing into a non-asset scene
@@ -106,7 +106,7 @@ def copy_reference_link(revision_id: str) -> str:
     engine = sgtk.platform.current_engine()
 
     if engine.flow_host is None:
-        raise FlowError("Not running in a supported host FlowContext.")
+        raise FlowError("Not running in a supported host.")
 
     try:
         if FlowVersion.is_version_id(revision_id):
@@ -120,7 +120,7 @@ def copy_reference_link(revision_id: str) -> str:
         raise CreateReferenceError(input_id=revision_id, details=msg) from exc
 
     # Fetch source component of revision
-    revision.fetch()
+    revision.fetch(component_purpose="")  # TODO: component_purpose required
 
     # Get path to source path of revision in local storage
     file_path = revision.get_storage_source_path()

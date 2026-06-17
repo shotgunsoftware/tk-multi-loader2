@@ -15,8 +15,8 @@ from sgtk.platform.qt import QtGui
 from tank_vendor.flow_integration_sdk.exceptions import FlowError
 from tank_vendor.flow_integration_sdk.objects import FlowProject
 
-from .medm.template_queries import find_template_pipeline_step, get_templates
-from .medm.create import CreateMode
+from .flowam.template_queries import find_template_pipeline_step, get_templates
+from .flowam.create import CreateMode
 from .ui.build_template_dialog import Ui_BuildTemplateDialog
 
 # Toolkit logger

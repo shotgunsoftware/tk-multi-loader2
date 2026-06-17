@@ -26,7 +26,7 @@ from .delegate_publish_list import SgPublishListDelegate
 from .delegate_publish_thumb import SgPublishThumbDelegate
 from .framework_qtwidgets import ShotgunFilterMenu
 from .loader_action_manager import LoaderActionManager
-from .medm import (
+from .flowam import (
     MedmEntityModel,
     MedmLatestPublishModel,
     MedmPublishHistoryModel,

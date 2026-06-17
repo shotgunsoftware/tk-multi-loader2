@@ -23,7 +23,8 @@ from enum import Enum
 from typing import Callable
 
 import sgtk
-from sgtk.flowam import create, utils
+from sgtk.flowam import create
+from sgtk.flowam import utils as flowam_utils
 from tank_vendor.flow_integration_sdk import (
     exceptions,
     globals,
@@ -50,7 +51,7 @@ class CreateMode(Enum):
 
 
 @dataclass
-class CreateInputs(utils.BaseInputs):
+class CreateInputs(flowam_utils.BaseInputs):
     """Convenience structure to hold create inputs and allow them to be
     passed easily between helper functions.
     """
@@ -132,7 +133,7 @@ class CreateInputs(utils.BaseInputs):
 
 
 @dataclass
-class CreateTemplateInputs(utils.BaseInputs):
+class CreateTemplateInputs(flowam_utils.BaseInputs):
     """Convenience structure to hold create inputs and allow them to be
     passed easily between helper functions.
     """
@@ -427,7 +428,7 @@ def _create_template_hierarchy(inputs: CreateTemplateInputs) -> objects.FlowAsse
         folder = publish.publish_new_asset(
             name=TEMPLATE_FOLDER,
             parent_id=project.id,
-            components=utils.create_components_for_publish(
+            components=flowam_utils.create_components_for_publish(
                 type_ids=[globals.FOLDER_TYPE_ID],
             ),
             description=desc,
@@ -442,7 +443,7 @@ def _create_template_hierarchy(inputs: CreateTemplateInputs) -> objects.FlowAsse
         pipeline_step = publish.publish_new_asset(
             name=sg_pipeline_step,
             parent_id=folder.id,
-            components=utils.create_components_for_publish(
+            components=flowam_utils.create_components_for_publish(
                 type_ids=[pipeline_step_type_id],
             ),
         )

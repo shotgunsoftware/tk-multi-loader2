@@ -13,7 +13,7 @@ from __future__ import annotations  # needed for Houdini support
 import os
 
 import sgtk
-from tank_vendor.flow_integration_sdk import globals, exceptions, objects, storage
+from tank_vendor.flow_integration_sdk import globals, exceptions, objects
 
 
 class CreateReferenceError(exceptions.FlowError):
@@ -70,7 +70,7 @@ def reference_revision(revision_id: str) -> str:
         raise CreateReferenceError(input_id=revision_id, details=msg) from exc
 
     # Fetch source component of revision
-    revision.fetch()
+    revision.fetch(component_purpose=globals.SOURCE_PURPOSE)
 
     # Get path to source path of revision in local storage
     file_path = revision.get_storage_component_path(

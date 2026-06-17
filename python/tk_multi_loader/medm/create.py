@@ -23,16 +23,7 @@ from enum import Enum
 from typing import Callable
 
 import sgtk
-from sgtk.flowam.create import (
-    ASSET_FOLDER,
-    ASSET_TYPE,
-    GENERIC_FOLDER,
-    PIPELINE_STEP_TYPE,
-    SHOT_FOLDER,
-    SHOT_TYPE,
-    create_asset_hierarchy,
-)
-from sgtk.flowam.utils import BaseInputs, create_components_for_publish
+from sgtk.flowam import create, utils
 from tank_vendor.flow_integration_sdk import (
     exceptions,
     globals,
@@ -59,7 +50,7 @@ class CreateMode(Enum):
 
 
 @dataclass
-class CreateInputs(BaseInputs):
+class CreateInputs(utils.BaseInputs):
     """Convenience structure to hold create inputs and allow them to be
     passed easily between helper functions.
     """
@@ -141,7 +132,7 @@ class CreateInputs(BaseInputs):
 
 
 @dataclass
-class CreateTemplateInputs(BaseInputs):
+class CreateTemplateInputs(utils.BaseInputs):
     """Convenience structure to hold create inputs and allow them to be
     passed easily between helper functions.
     """
@@ -200,8 +191,10 @@ def get_template_source_path(template: objects.FlowAsset) -> str:
         Full path to template file in blob storage.
     """
     revision = template.get_latest_revision()
-    revision.fetch()
-    return revision.get_storage_source_path()
+    revision.fetch(component_purpose=globals.SOURCE_PURPOSE)
+    return revision.get_storage_component_path(
+        component_purpose=globals.SOURCE_PURPOSE
+    )
 
 
 # ---------------------------------
@@ -230,21 +223,19 @@ def create_dcc_workfile(inputs: CreateInputs) -> sandbox.NewDraftInfo:
         raise exceptions.CreateAssetError(data=inputs.asdict(), details=msg)
 
     # Create any necessary hierarchy above current asset
-    parent = create_asset_hierarchy(inputs)
+    parent = create.create_asset_hierarchy(inputs)
 
     # Create the workfile asset in sandbox
-    draft_id = _create_dcc_workfile_asset(parent, inputs)
+    draft_info = _create_dcc_workfile_asset(parent, inputs)
 
     app.log_info("Creating DCC asset complete!")
 
     # Open the draft file
-    draft_info = sandbox.read_draft_info(draft_id)
     draft_path = draft_info.source_path
     app.log_info(f"Opening draft path: {draft_path}")
     flow_host().open_file(draft_path)
 
-    # Set asset context (before it was only FlowContext.draft_id)
-    app.context.set_flow_context(flow_host().current_file)
+    app.context.set_flow_context(flow_host().current_file())
 
     return draft_info
 
@@ -286,8 +277,7 @@ def create_template_workfile(inputs: CreateTemplateInputs) -> sandbox.NewDraftIn
     app.log_info(f"Opening draft path: {draft_path}")
     flow_host().open_file(draft_path)
 
-    # Set asset context (before it was only FlowContext.draft_id)
-    app.context.set_flow_context(flow_host().current_file)
+    app.context.set_flow_context(flow_host().current_file())
 
     return draft_info
 
@@ -336,44 +326,44 @@ def _get_or_create_root_folder(inputs: CreateInputs) -> objects.FlowAsset:
 
     # Create top-level folders if they don't already exist in project
 
-    if sg_entity_type == SHOT_TYPE:
+    if sg_entity_type == create.SHOT_TYPE:
         # Create shot folder or grab existing one if sg entity is a shot type
-        folder = project.find_child(SHOT_FOLDER)
+        folder = project.find_child(create.SHOT_FOLDER)
         if not folder:
-            app.log_info(f'Creating "{SHOT_FOLDER}" folder...')
+            app.log_info(f'Creating "{create.SHOT_FOLDER}" folder...')
             desc = "Folder for Shot assets."
             folder = publish.publish_new_asset(
-                name=SHOT_FOLDER,
+                name=create.SHOT_FOLDER,
                 parent=project,
-                components=create_components_for_publish(
+                components=utils.create_components_for_publish(
                     type_ids=[globals.FOLDER_TYPE_ID],
                 ),
                 description=desc,
             )
-    elif sg_entity_type == ASSET_TYPE:
+    elif sg_entity_type == create.ASSET_TYPE:
         # Create asset folder or grab existing one if sg entity is an asset type
-        folder = project.find_child(ASSET_FOLDER)
+        folder = project.find_child(create.ASSET_FOLDER)
         if not folder:
-            app.log_info(f'Creating "{ASSET_FOLDER}" folder...')
+            app.log_info(f'Creating "{create.ASSET_FOLDER}" folder...')
             desc = "Folder for Asset Build assets."
             folder = publish.publish_new_asset(
-                name=ASSET_FOLDER,
+                name=create.ASSET_FOLDER,
                 parent=project,
-                components=create_components_for_publish(
+                components=utils.create_components_for_publish(
                     type_ids=[globals.FOLDER_TYPE_ID],
                 ),
                 description=desc,
             )
     elif inputs.create_mode == CreateMode.GENERIC:
         # Create generic folder or grab existing one
-        folder = project.find_child(GENERIC_FOLDER)
+        folder = project.find_child(create.GENERIC_FOLDER)
         if not folder:
-            app.log_info(f'Creating "{GENERIC_FOLDER}" folder...')
+            app.log_info(f'Creating "{create.GENERIC_FOLDER}" folder...')
             desc = "Folder for Generic assets."
             folder = publish.publish_new_asset(
-                name=GENERIC_FOLDER,
+                name=create.GENERIC_FOLDER,
                 parent=project,
-                components=create_components_for_publish(
+                components=utils.create_components_for_publish(
                     type_ids=[globals.FOLDER_TYPE_ID],
                 ),
                 description=desc,
@@ -452,17 +442,13 @@ def _create_dcc_workfile_asset(parent: objects.FlowAsset, inputs: CreateInputs) 
             f'Creating a workfile asset of type "{workfile_type}" for sg entity "{inputs.sg_entity_name}" in sandbox...'
         )
         desc = inputs.description
-        draft_id = publish.publish_new_asset(
+        return sandbox.create_asset_in_sandbox(
             name=name,
             description=desc,
             parent_id=parent.id,
-            components=create_components_for_publish(
-                type_ids=[type_id],
-            ),
+            type_ids=[type_id],
             source_path=temp_file,
         )
-
-    return draft_id
 
 
 def _create_template_hierarchy(inputs: CreateTemplateInputs) -> objects.FlowAsset:
@@ -513,7 +499,7 @@ def _create_template_hierarchy(inputs: CreateTemplateInputs) -> objects.FlowAsse
         folder = publish.publish_new_asset(
             name=TEMPLATE_FOLDER,
             parent=project,
-            components=create_components_for_publish(
+            components=utils.create_components_for_publish(
                 type_ids=[globals.FOLDER_TYPE_ID],
             ),
             description=desc,
@@ -524,11 +510,11 @@ def _create_template_hierarchy(inputs: CreateTemplateInputs) -> objects.FlowAsse
     pipeline_step = folder.find_child(sg_pipeline_step)
     if not pipeline_step:
         app.log_info(f'Creating pipeline step asset for "{sg_pipeline_step}"...')
-        pipeline_step_type_id = schema.get_schema_id(PIPELINE_STEP_TYPE)
+        pipeline_step_type_id = schema.get_schema_id(create.PIPELINE_STEP_TYPE)
         pipeline_step = publish.publish_new_asset(
             name=sg_pipeline_step,
             parent=folder,
-            components=create_components_for_publish(
+            components=utils.create_components_for_publish(
                 type_ids=[pipeline_step_type_id],
             ),
         )

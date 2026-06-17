@@ -175,9 +175,9 @@ class FlowAMActions:
         )
 
         try:
-            draft_info = create_dcc_workfile(create_inputs)
+            asset = create_dcc_workfile(create_inputs)
             self._app.log_debug(
-                f"Created a DCC workfile with the draft_id: {draft_info.draft_id}"
+                f"Created a DCC workfile asset: {asset}"
             )
         except exceptions.CreateAssetError as exc:
             self._app.log_error(f"Create asset failed: {exc}\nInput data: {exc.data}")

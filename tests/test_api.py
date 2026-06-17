@@ -26,7 +26,7 @@ class AppTestBase(TankTestBase):
         os.environ["LOADER2_API_TEST"] = "api_test"
 
         # First call the parent TankTestBase constructor to set up the tests base
-        super(AppTestBase, self).setUp()
+        super().setUp()
         self.setup_fixtures()
 
         # get useful tank setting
@@ -96,7 +96,7 @@ class AppTestBase(TankTestBase):
             cur_engine.destroy()
 
         # important to call base class so it can clean up memory
-        super(AppTestBase, self).tearDown()
+        super().tearDown()
 
 
 class TestApi(AppTestBase):
@@ -111,7 +111,7 @@ class TestApi(AppTestBase):
         Set up before any tests are executed.
         """
 
-        super(TestApi, self).setUp()
+        super().setUp()
 
         # setup published file types
         self.published_file_type1 = {

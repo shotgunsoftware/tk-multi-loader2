@@ -26,7 +26,7 @@ class SgLatestPublishProxyModel(FilterItemProxyModel):
     filter_changed = QtCore.Signal()
 
     def __init__(self, parent):
-        super(SgLatestPublishProxyModel, self).__init__(parent)
+        super().__init__(parent)
         self._valid_type_ids = None
         self._show_folders = True
         self._search_filter = ""
@@ -73,9 +73,7 @@ class SgLatestPublishProxyModel(FilterItemProxyModel):
         model and see if we should let it pass or not.
         """
 
-        base_model_accepts = super(SgLatestPublishProxyModel, self).filterAcceptsRow(
-            source_row, source_parent_idx
-        )
+        base_model_accepts = super().filterAcceptsRow(source_row, source_parent_idx)
         if not base_model_accepts:
             return False
 

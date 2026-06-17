@@ -28,7 +28,7 @@ class Banner(QtGui.QLabel):
         """
         :param parent: Parent widget.
         """
-        super(Banner, self).__init__(parent)
+        super().__init__(parent)
 
         # Sets the style sheet for the widget.
         self.setStyleSheet(

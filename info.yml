@@ -158,6 +158,7 @@ description: "Locate published files and reference them into your scene."
 requires_shotgun_version:
 requires_core_version: "v0.19.1"
 requires_engine_version:
+minimum_python_version: "3.9"
 
 # The documentation url for this item
 documentation_url: "https://help.autodesk.com/view/SGDEV/ENU/?guid=SG_Supervisor_Artist_sa_integrations_sa_integrations_user_guide_html#the-loader"

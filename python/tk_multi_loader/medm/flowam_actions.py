@@ -14,13 +14,12 @@ import functools
 import sgtk
 from sgtk import TankError
 from sgtk.platform.qt import QtGui
-from tank_vendor.flow_integration_sdk import sandbox
+from tank_vendor.flow_integration_sdk import sandbox, exceptions
 
 from ..build_asset_dialog import BuildAssetDialog
 from ..build_template_dialog import BuildTemplateDialog
 from ..constants import DRAFT_VERSION_IDENTIFIER
 from .create import (
-    CreateAssetError,
     CreateInputs,
     CreateMode,
     CreateTemplateInputs,
@@ -180,7 +179,7 @@ class FlowAMActions:
             self._app.log_debug(
                 f"Created a DCC workfile with the draft_id: {draft_info.draft_id}"
             )
-        except CreateAssetError as exc:
+        except exceptions.CreateAssetError as exc:
             self._app.log_error(f"Create asset failed: {exc}\nInput data: {exc.data}")
 
             QtGui.QMessageBox.critical(

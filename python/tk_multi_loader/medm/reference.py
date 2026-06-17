@@ -73,9 +73,8 @@ def reference_revision(revision_id: str) -> str:
     revision.fetch()
 
     # Get path to source path of revision in local storage
-    # file_path = revision.get_storage_source_path()
-    file_path = storage.get_storage_component_path(
-        revision, component_purpose=globals.SOURCE_PURPOSE
+    file_path = revision.get_storage_component_path(
+        component_purpose=globals.SOURCE_PURPOSE
     )
     if file_path is None:
         msg = "Revision does not have a source component to be referenced."
@@ -122,12 +121,11 @@ def copy_reference_link(revision_id: str) -> str:
         raise CreateReferenceError(input_id=revision_id, details=msg) from exc
 
     # Fetch source component of revision
-    revision.fetch(component_purpose="")  # TODO: component_purpose required
+    revision.fetch(component_purpose=globals.SOURCE_PURPOSE)
 
     # Get path to source path of revision in local storage
-    # file_path = revision.get_storage_source_path()
-    file_path = storage.get_storage_component_path(
-        revision, component_purpose=globals.SOURCE_PURPOSE
+    file_path = revision.get_storage_component_path(
+        component_purpose=globals.SOURCE_PURPOSE
     )
     if file_path is None:
         msg = "Revision does not have a source component to be referenced."

@@ -21,12 +21,7 @@ from typing import Any, Optional
 
 import sgtk
 from sgtk.platform.qt import QtCore, QtGui
-from tank_vendor.flow_integration_sdk.objects import FlowAsset
-from tank_vendor.flow_integration_sdk.sandbox import (
-    DraftInfo,
-    get_asset_drafts,
-    get_drafts,
-)
+from tank_vendor.flow_integration_sdk import objects, sandbox
 
 from ..constants import DRAFT_VERSION_IDENTIFIER
 from .shared_cache import MedmSharedCache
@@ -237,7 +232,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
                 if child_asset.id in self._cache.drafts:
                     raw_drafts = self._cache.drafts[child_asset.id]
                 else:
-                    raw_drafts = get_asset_drafts(child_asset.id)
+                    raw_drafts = sandbox.get_asset_drafts(child_asset.id)
                     self._cache.drafts[child_asset.id] = raw_drafts
             except Exception as e:
                 self._app.log_debug(
@@ -304,7 +299,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
 
     def _extract_asset_from_tree_item(
         self, item: QtGui.QStandardItem
-    ) -> Optional[FlowAsset]:
+    ) -> Optional[objects.FlowAsset]:
         """
         Extract the FlowAM Asset object from a tree view QStandardItem.
 
@@ -319,7 +314,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         asset_data = item.data(QtCore.Qt.UserRole + 1)
         return asset_data
 
-    def _fetch_asset_children(self, asset: FlowAsset) -> list[dict[str, Any]]:
+    def _fetch_asset_children(self, asset: objects.FlowAsset) -> list[dict[str, Any]]:
         """
         Fetch all non-structural child assets and convert to sg_data dicts.
 
@@ -370,7 +365,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         )
         return children_asset_sg_dicts
 
-    def _asset_to_sg_dict(self, asset: FlowAsset) -> dict[str, Any]:
+    def _asset_to_sg_dict(self, asset: objects.FlowAsset) -> dict[str, Any]:
         """
         Convert an FlowAM Asset to a Shotgun-compatible dictionary.
 
@@ -428,7 +423,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         return sg_dict
 
     def _draft_to_sg_dict(
-        self, draft_info: DraftInfo, asset: Optional[FlowAsset] = None
+        self, draft_info: sandbox.DraftInfo, asset: Optional[objects.FlowAsset] = None
     ) -> dict[str, Any]:
         """
         Convert a local DraftInfo into a Shotgun-compatible dictionary suitable
@@ -513,7 +508,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         """
         if self._NEW_DRAFTS_CACHE_KEY not in self._cache.drafts:
             try:
-                all_new_drafts = get_drafts(draft_type="new")
+                all_new_drafts = sandbox.get_drafts(draft_type="new")
             except Exception as e:
                 self._app.log_warning(f"FlowAM: Could not fetch new-asset drafts: {e}")
                 all_new_drafts = []

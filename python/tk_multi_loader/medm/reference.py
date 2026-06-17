@@ -13,11 +13,10 @@ from __future__ import annotations  # needed for Houdini support
 import os
 
 import sgtk
-from tank_vendor.flow_integration_sdk.exceptions import FlowError
-from tank_vendor.flow_integration_sdk.objects import FlowVersion, FlowRevision
+from tank_vendor.flow_integration_sdk import globals, exceptions, objects, storage
 
 
-class CreateReferenceError(FlowError):
+class CreateReferenceError(exceptions.FlowError):
     def __init__(self, *args, input_id: str = "", file_path: str = "", **kwargs):
         """
         Args:
@@ -60,13 +59,13 @@ def reference_revision(revision_id: str) -> str:
         raise CreateReferenceError(input_id=revision_id, details=msg)
 
     try:
-        if FlowVersion.is_version_id(revision_id):
+        if objects.FlowVersion.is_version_id(revision_id):
             input_type = "version"
-            revision = FlowVersion(revision_id).revision
+            revision = objects.FlowVersion(revision_id).revision
         else:
             input_type = "revision"
-            revision = FlowRevision.get_revision(revision_id)
-    except FlowError as exc:
+            revision = objects.FlowRevision.get_revision(revision_id)
+    except exceptions.FlowError as exc:
         msg = f"Could not retrieve {input_type} object."
         raise CreateReferenceError(input_id=revision_id, details=msg) from exc
 
@@ -74,7 +73,10 @@ def reference_revision(revision_id: str) -> str:
     revision.fetch()
 
     # Get path to source path of revision in local storage
-    file_path = revision.get_storage_source_path()
+    # file_path = revision.get_storage_source_path()
+    file_path = storage.get_storage_component_path(
+        revision, component_purpose=globals.SOURCE_PURPOSE
+    )
     if file_path is None:
         msg = "Revision does not have a source component to be referenced."
         raise CreateReferenceError(input_id=revision_id, details=msg)
@@ -106,16 +108,16 @@ def copy_reference_link(revision_id: str) -> str:
     engine = sgtk.platform.current_engine()
 
     if engine.flow_host is None:
-        raise FlowError("Not running in a supported host.")
+        raise exceptions.FlowError("Not running in a supported host.")
 
     try:
-        if FlowVersion.is_version_id(revision_id):
+        if objects.FlowVersion.is_version_id(revision_id):
             input_type = "version"
-            revision = FlowVersion(revision_id).revision
+            revision = objects.FlowVersion(revision_id).revision
         else:
             input_type = "revision"
-            revision = FlowRevision.get_revision(revision_id)
-    except FlowError as exc:
+            revision = objects.FlowRevision.get_revision(revision_id)
+    except exceptions.FlowError as exc:
         msg = f"Could not retrieve {input_type} object."
         raise CreateReferenceError(input_id=revision_id, details=msg) from exc
 
@@ -123,7 +125,10 @@ def copy_reference_link(revision_id: str) -> str:
     revision.fetch(component_purpose="")  # TODO: component_purpose required
 
     # Get path to source path of revision in local storage
-    file_path = revision.get_storage_source_path()
+    # file_path = revision.get_storage_source_path()
+    file_path = storage.get_storage_component_path(
+        revision, component_purpose=globals.SOURCE_PURPOSE
+    )
     if file_path is None:
         msg = "Revision does not have a source component to be referenced."
         raise CreateReferenceError(input_id=revision_id, details=msg)

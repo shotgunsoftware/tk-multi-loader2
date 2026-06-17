@@ -16,6 +16,7 @@ import os
 import re
 
 import sgtk
+from tank_vendor.flow_integration_sdk.sandbox import is_local_draft, is_new_asset
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
@@ -113,7 +114,7 @@ class HoudiniActions(HookBaseClass):
 
             if "open" in actions and sg_publish_data.get("type") == "PublishedFile":
                 if (
-                    flowam_actions._is_local_draft(sg_publish_data)
+                    is_local_draft(sg_publish_data.get("sg_flow_revision_id"))
                     or sg_publish_data.get(
                         "version_number", flowam_actions.DRAFT_VERSION_IDENTIFIER
                     )
@@ -148,9 +149,9 @@ class HoudiniActions(HookBaseClass):
             if "discard_draft" in actions:
                 draft_id = sg_publish_data.get("sg_flow_revision_id")
 
-                if flowam_actions._is_local_draft(
-                    sg_publish_data
-                ) and flowam_actions._is_new_asset(draft_id):
+                if is_local_draft(
+                    sg_publish_data.get("sg_flow_revision_id")
+                ) and is_new_asset(draft_id):
                     action_instances.append(
                         {
                             "name": "discard_draft",

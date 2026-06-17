@@ -27,10 +27,7 @@ from typing import Optional
 
 import sgtk
 from sgtk.platform.qt import QtCore, QtGui
-from tank_vendor.flow_integration_sdk.exceptions import FlowError
-from tank_vendor.flow_integration_sdk.globals import FOLDER_TYPE_ID
-from tank_vendor.flow_integration_sdk.objects import FlowAsset, FlowProject
-from tank_vendor.flow_integration_sdk.schema import get_schema_id
+from tank_vendor.flow_integration_sdk import globals, objects, exceptions, schema
 from sgtk.flowam.create import PIPELINE_STEP_TYPE
 
 from .shared_cache import MedmSharedCache
@@ -204,7 +201,7 @@ class MedmEntityModel(QtGui.QStandardItemModel):
 
         return search_item(None)
 
-    def get_cached_children(self, asset: FlowAsset) -> list[FlowAsset]:
+    def get_cached_children(self, asset: objects.FlowAsset) -> list[objects.FlowAsset]:
         """
         Return child :class:`FlowAsset` objects for *asset*.
 
@@ -229,7 +226,7 @@ class MedmEntityModel(QtGui.QStandardItemModel):
         """
         try:
             current_engine = sgtk.platform.current_engine()
-            self._project = FlowProject(current_engine.context.flow_project_id)
+            self._project = objects.FlowProject(current_engine.context.flow_project_id)
             self._app.log_debug(
                 f"FlowAM Entity: Initialized project '{self._project.name}'"
             )
@@ -261,14 +258,14 @@ class MedmEntityModel(QtGui.QStandardItemModel):
             return self._structural_type_ids
 
         try:
-            folder_id = FOLDER_TYPE_ID
-            pipeline_step_id = get_schema_id(PIPELINE_STEP_TYPE)
+            folder_id = globals.FOLDER_TYPE_ID
+            pipeline_step_id = schema.get_schema_id(PIPELINE_STEP_TYPE)
 
             self._structural_type_ids = {folder_id, pipeline_step_id}
             self._app.log_debug(
                 f"FlowAM Entity: structural type IDs = {self._structural_type_ids}"
             )
-        except FlowError as e:
+        except exceptions.FlowError as e:
             self._app.log_warning(
                 f"FlowAM Entity: could not resolve structural type IDs ({e}); "
                 "non-structural assets without structural descendants will be hidden."
@@ -277,7 +274,7 @@ class MedmEntityModel(QtGui.QStandardItemModel):
 
         return self._structural_type_ids
 
-    def _is_tree_node(self, asset: FlowAsset) -> bool:
+    def _is_tree_node(self, asset: objects.FlowAsset) -> bool:
         """
         Return ``True`` when *asset* should appear as a node in the left-hand
         tree view.
@@ -306,7 +303,7 @@ class MedmEntityModel(QtGui.QStandardItemModel):
         children = self._fetch_and_cache_children(asset)
         return len(children) > 0
 
-    def _icon_for_asset(self, asset: FlowAsset) -> QtGui.QIcon:
+    def _icon_for_asset(self, asset: objects.FlowAsset) -> QtGui.QIcon:
         """
         Return the appropriate tree icon for *asset* based on its type.
 
@@ -359,7 +356,7 @@ class MedmEntityModel(QtGui.QStandardItemModel):
             self.data_refresh_fail.emit(str(e))
 
     def _add_asset_item(
-        self, asset: FlowAsset, parent_item: Optional[QtGui.QStandardItem]
+        self, asset: objects.FlowAsset, parent_item: Optional[QtGui.QStandardItem]
     ) -> QtGui.QStandardItem:
         """
         Create a single ``QStandardItem`` for *asset* and append it to the tree.
@@ -429,7 +426,9 @@ class MedmEntityModel(QtGui.QStandardItemModel):
                 f"FlowAM: Could not get children for '{asset.name}': {e}"
             )
 
-    def _fetch_and_cache_children(self, asset: FlowAsset) -> list[FlowAsset]:
+    def _fetch_and_cache_children(
+        self, asset: objects.FlowAsset
+    ) -> list[objects.FlowAsset]:
         """
         Return child assets for *asset*, fetching from the API only on the
         first call and caching the result in the shared cache for subsequent

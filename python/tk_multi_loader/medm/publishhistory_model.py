@@ -21,8 +21,7 @@ from typing import Any, Optional
 
 import sgtk
 from sgtk.platform.qt import QtCore, QtGui
-from tank_vendor.flow_integration_sdk.objects import FlowAsset, FlowVersion
-from tank_vendor.flow_integration_sdk.sandbox import DraftInfo, get_asset_drafts
+from tank_vendor.flow_integration_sdk import objects, sandbox
 
 from .. import utils
 from .shared_cache import MedmSharedCache
@@ -155,7 +154,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
                 if asset_id in self._cache.drafts:
                     drafts = self._cache.drafts[asset_id]
                 else:
-                    drafts = get_asset_drafts(asset_id)
+                    drafts = sandbox.get_asset_drafts(asset_id)
                     self._cache.drafts[asset_id] = drafts
                 for draft_info in drafts:
                     self._add_draft_as_qt_item(draft_info, medm_asset)
@@ -209,7 +208,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
             )
 
     def _add_version_as_qt_item(
-        self, asset_version: FlowVersion, asset: FlowAsset
+        self, asset_version: objects.FlowVersion, asset: objects.FlowAsset
     ) -> None:
         """
         Convert an FlowVersion to a QStandardItem and add it to the history model.
@@ -247,7 +246,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         self._app.log_debug(f"FlowAM History: Added version v{version_number}")
 
     def _version_to_sg_dict(
-        self, version: FlowVersion, asset: FlowAsset
+        self, version: objects.FlowVersion, asset: objects.FlowAsset
     ) -> dict[str, Any]:
         """
         Convert a FlowAM FlowVersion to Shotgun-compatible dictionary.
@@ -308,7 +307,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         return sg_dict
 
     def _draft_to_sg_dict(
-        self, draft_info: DraftInfo, asset: Optional[FlowAsset]
+        self, draft_info: sandbox.DraftInfo, asset: Optional[objects.FlowAsset]
     ) -> dict[str, Any]:
         """
         Convert a DraftInfo (CheckoutDraftInfo or NewDraftInfo) to a Shotgun-compatible
@@ -352,7 +351,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         return sg_dict
 
     def _add_draft_as_qt_item(
-        self, draft_info: DraftInfo, asset: Optional[FlowAsset]
+        self, draft_info: sandbox.DraftInfo, asset: Optional[objects.FlowAsset]
     ) -> None:
         """
         Convert a DraftInfo to a QStandardItem and insert it at the top of

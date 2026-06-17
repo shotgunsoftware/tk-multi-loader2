@@ -19,11 +19,7 @@ from __future__ import annotations
 import os
 from typing import Any, Dict, Optional, Tuple
 
-from tank_vendor.flow_integration_sdk.globals import FOLDER_TYPE_ID
-from tank_vendor.flow_integration_sdk.schema import (
-    get_schema_display_name,
-    get_schema_id,
-)
+from tank_vendor.flow_integration_sdk import globals, schema
 from sgtk.flowam.create import PIPELINE_STEP_TYPE
 
 from ..constants import DRAFT_VERSION_IDENTIFIER, CONTAINER_TYPE
@@ -49,12 +45,13 @@ def is_structural_asset(asset: Any) -> bool:
     """
     try:
         type_ids = set(getattr(asset, "type_ids", None) or [])
-        if FOLDER_TYPE_ID in type_ids:
+        if globals.FOLDER_TYPE_ID in type_ids:
             return True
 
         structural_types = (CONTAINER_TYPE, PIPELINE_STEP_TYPE)
         return any(
-            asset.find_component(type_id=get_schema_id(ct)) for ct in structural_types
+            asset.find_component(type_id=schema.get_schema_id(ct))
+            for ct in structural_types
         )
     except Exception:
         return False
@@ -224,7 +221,7 @@ def resolve_publish_type(
 
     display_name = medm_type_id_str
     try:
-        schema_name = get_schema_display_name(medm_type_id_str)
+        schema_name = schema.get_schema_display_name(medm_type_id_str)
         if schema_name:
             display_name = schema_name
     except Exception as e:

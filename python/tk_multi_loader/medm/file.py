@@ -13,16 +13,18 @@ from __future__ import annotations  # needed for Houdini support
 import os
 
 import sgtk
-from tank_vendor.flow_integration_sdk.exceptions import FlowError
-from tank_vendor.flow_integration_sdk.globals import FILE_SEQ_TYPE, SOURCE_PURPOSE
-from tank_vendor.flow_integration_sdk.objects import FlowRevision
-from tank_vendor.flow_integration_sdk.sandbox import is_local_draft, read_draft_info
-from tank_vendor.flow_integration_sdk.schema import get_schema_id
+from tank_vendor.flow_integration_sdk import (
+    globals,
+    objects,
+    sandbox,
+    exceptions,
+    schema,
+)
 
 from .utils import cleanpath
 
 
-class DownloadRevisionError(FlowError):
+class DownloadRevisionError(exceptions.FlowError):
     def __init__(
         self,
         *args,
@@ -36,7 +38,7 @@ class DownloadRevisionError(FlowError):
         self.directory = directory
 
 
-class InvalidDraftError(FlowError):
+class InvalidDraftError(exceptions.FlowError):
     def __init__(self, *args, draft_id: str, **kwargs):
         """
         Args:
@@ -49,7 +51,7 @@ class InvalidDraftError(FlowError):
 
 def download_revision(
     revision_id: str,
-    component_purpose: str = SOURCE_PURPOSE,
+    component_purpose: str = globals.SOURCE_PURPOSE,
     directory: str = "",
 ) -> dict[int, str]:
     """Download the requested component of the given revision
@@ -76,8 +78,8 @@ def download_revision(
 
     # Ensure revision id is valid
     try:
-        revision = FlowRevision.get_revision(revision_id)
-    except FlowError as exc:
+        revision = objects.FlowRevision.get_revision(revision_id)
+    except exceptions.FlowError as exc:
         msg = f"Invalid revision id provided: {revision_id}"
         raise DownloadRevisionError(
             revision_id=revision_id,
@@ -138,7 +140,9 @@ def download_revision(
         )
 
     # Determine if revision contains a file sequence
-    file_seq_comp = revision.find_component(type_id=get_schema_id(FILE_SEQ_TYPE))
+    file_seq_comp = revision.find_component(
+        type_id=schema.get_schema_id(globals.FILE_SEQ_TYPE)
+    )
     result = component.download(directory, file_sequence=file_seq_comp is not None)
 
     msg = f'Download complete for "{revision.name}" - "{component.name}"!\n'
@@ -163,13 +167,13 @@ def open_draft(draft_id: str):
     engine = sgtk.platform.current_engine()
 
     if not engine.flow_host:
-        raise FlowError("Opening a draft must be done in a host.")
+        raise exceptions.FlowError("Opening a draft must be done in a host.")
 
-    if not is_local_draft(draft_id):
+    if not sandbox.is_local_draft(draft_id):
         msg = f'The draft "{draft_id}" is not in local sandbox.'
         raise InvalidDraftError(draft_id=draft_id, details=msg)
 
-    draft_info = read_draft_info(draft_id)
+    draft_info = sandbox.read_draft_info(draft_id)
     draft_path = draft_info.source_path
     if not os.path.exists(draft_path):
         msg = f'Corrupted draft folder. The file "{draft_path}" does not exist.'

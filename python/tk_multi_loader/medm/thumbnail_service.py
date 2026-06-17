@@ -29,7 +29,7 @@ from typing import TYPE_CHECKING, Callable, Dict, Optional
 
 import sgtk
 from sgtk.platform.qt import QtCore, QtGui
-from tank_vendor.flow_integration_sdk.objects import FlowRevision
+from tank_vendor.flow_integration_sdk import objects
 
 if TYPE_CHECKING:
     from .shared_cache import MedmSharedCache
@@ -149,7 +149,7 @@ class MedmThumbnailService(QtCore.QObject):
         url = self._url_cache.get(revision_id)
         if url is None and revision_id not in self._url_cache:
             try:
-                rev = FlowRevision.get_revision(revision_id)
+                rev = objects.FlowRevision.get_revision(revision_id)
                 url = rev.get_thumbnail_url()
             except Exception as exc:
                 self._app.log_debug(

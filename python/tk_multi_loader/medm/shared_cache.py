@@ -25,7 +25,7 @@ injected into every FlowAM model.  Centralising the dictionaries here means:
 from __future__ import annotations
 
 import dataclasses
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 
 @dataclasses.dataclass
@@ -65,17 +65,17 @@ class MedmSharedCache:
     """
 
     # asset.id → list[Asset]
-    children: Dict[str, List[Any]] = dataclasses.field(default_factory=dict)
+    children: dict[str, list[Any]] = dataclasses.field(default_factory=dict)
     # asset.id → list[DraftInfo]
-    drafts: Dict[str, List[Any]] = dataclasses.field(default_factory=dict)
+    drafts: dict[str, list[Any]] = dataclasses.field(default_factory=dict)
     # asset.id → list[FlowVersion]
-    versions: Dict[str, List[Any]] = dataclasses.field(default_factory=dict)
+    versions: dict[str, list[Any]] = dataclasses.field(default_factory=dict)
     # medm_type_id_str → (sg_publish_type_id, display_name)
-    publish_types: Dict[str, tuple] = dataclasses.field(default_factory=dict)
+    publish_types: dict[str, tuple] = dataclasses.field(default_factory=dict)
     # revision_id → thumbnail URL (or None when the API returned nothing)
-    thumbnail_urls: Dict[str, Optional[str]] = dataclasses.field(default_factory=dict)
+    thumbnail_urls: dict[str, Optional[str]] = dataclasses.field(default_factory=dict)
     # URL → raw image bytes
-    thumbnail_data: Dict[str, bytes] = dataclasses.field(default_factory=dict)
+    thumbnail_data: dict[str, bytes] = dataclasses.field(default_factory=dict)
 
     # -------------------------------------------------------------------------
     # Convenience clear helpers

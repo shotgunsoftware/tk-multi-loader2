@@ -14,14 +14,7 @@ import functools
 import sgtk
 from sgtk import TankError
 from sgtk.platform.qt import QtGui
-from tank_vendor.flow_integration_sdk.sandbox import (
-    get_draft_folder,
-    is_local_draft,
-    is_new_asset,
-    read_draft_info,
-    checkout_revision,
-    discard_draft,
-)
+from tank_vendor.flow_integration_sdk import sandbox
 
 from ..build_asset_dialog import BuildAssetDialog
 from ..build_template_dialog import BuildTemplateDialog
@@ -70,13 +63,13 @@ class FlowAMActions:
             )
             raise TankError("No Revision ID found for this item {}.".format(item_id))
 
-        if version_number == DRAFT_VERSION_IDENTIFIER and is_local_draft(
+        if version_number == DRAFT_VERSION_IDENTIFIER and sandbox.is_local_draft(
             sg_publish_data.get("sg_flow_revision_id")
         ):
             open_draft(flow_revision_id)
         elif version_number > DRAFT_VERSION_IDENTIFIER:
             # Checkout the revision to the local sandbox
-            checkout_revision(flow_revision_id)
+            sandbox.checkout_revision(flow_revision_id)
         else:
             raise TankError(
                 f"Cannot open item {sg_publish_data['name']} with version number {version_number}. "
@@ -218,9 +211,11 @@ class FlowAMActions:
         """
         parent_window = self._get_dialog_parent()
 
-        draft_folder = get_draft_folder(sg_publish_data.get("sg_flow_revision_id"))
+        draft_folder = sandbox.get_draft_folder(
+            sg_publish_data.get("sg_flow_revision_id")
+        )
 
-        if is_new_asset(sg_publish_data.get("sg_flow_revision_id")):
+        if sandbox.is_new_asset(sg_publish_data.get("sg_flow_revision_id")):
             # Case 1:  new asset
             message = (
                 f"Discard the new unpublished asset {sg_publish_data.get('name')}?"
@@ -229,7 +224,9 @@ class FlowAMActions:
             )
         else:
             # Case 2:  draft of existing asset
-            draft_info = read_draft_info(sg_publish_data.get("sg_flow_revision_id"))
+            draft_info = sandbox.read_draft_info(
+                sg_publish_data.get("sg_flow_revision_id")
+            )
             version = draft_info.version
             message = (
                 f"Discard the draft of asset {sg_publish_data.get('name')} checked out from version {version}?"
@@ -248,7 +245,7 @@ class FlowAMActions:
         )
 
         if message_response == QtGui.QMessageBox.StandardButton.Yes:
-            discard_draft(sg_publish_data.get("sg_flow_revision_id"))
+            sandbox.discard_draft(sg_publish_data.get("sg_flow_revision_id"))
 
             QtGui.QMessageBox.information(
                 parent_window,

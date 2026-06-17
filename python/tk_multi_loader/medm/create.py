@@ -31,10 +31,10 @@ from tank_vendor.flow_integration_sdk import (
     publish,
     sandbox,
     schema,
+    utils,
 )
 
 from ..constants import TEMPLATE_FOLDER, TEMPLATE_TYPE
-from .utils import cleanpath, fileext
 
 
 # ---------------------------------
@@ -336,8 +336,8 @@ def _create_dcc_workfile_asset(
     # Prepare the source file and save to temporary location
     # By convention the source file will be named after the asset
     with tempfile.TemporaryDirectory() as temp_dir:
-        ext = fileext(inputs.source_path) or flow_host().FILE_TYPES[0]
-        temp_file = cleanpath(temp_dir, f"{name}.{ext}")
+        ext = utils.fileext(inputs.source_path) or flow_host().FILE_TYPES[0]
+        temp_file = utils.cleanpath(temp_dir, f"{name}.{ext}")
         if inputs.create_mode == CreateMode.NEW:
             # Clear scene
             flow_host().new_scene()
@@ -478,7 +478,7 @@ def _create_template_workfile_asset(
     # By convention the source file will be named after the asset
     with tempfile.TemporaryDirectory() as temp_dir:
         ext = flow_host().FILE_TYPES[0]
-        temp_file = cleanpath(temp_dir, f"{name}.{ext}")
+        temp_file = utils.cleanpath(temp_dir, f"{name}.{ext}")
         if inputs.create_mode == CreateMode.NEW:
             # Clear scene
             flow_host().new_scene()

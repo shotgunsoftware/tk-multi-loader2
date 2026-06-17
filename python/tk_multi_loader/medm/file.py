@@ -19,9 +19,8 @@ from tank_vendor.flow_integration_sdk import (
     sandbox,
     exceptions,
     schema,
+    utils,
 )
-
-from .utils import cleanpath
 
 
 class DownloadRevisionError(exceptions.FlowError):
@@ -99,7 +98,7 @@ def download_revision(
 
     # Ensure directory exists
     if directory:
-        directory = cleanpath(directory)
+        directory = utils.cleanpath(directory)
         if os.path.isfile(directory):
             # Name collision between directory and existing file
             # NOTE: OS will not allow a directory to be created with same name
@@ -130,7 +129,7 @@ def download_revision(
         if not result:
             engine.log_warning("Download operation cancelled.")
             return {}
-        directory = cleanpath(result[0])
+        directory = utils.cleanpath(result[0])
     else:
         msg = "No download location provided."
         raise DownloadRevisionError(

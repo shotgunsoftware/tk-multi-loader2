@@ -20,9 +20,9 @@ import os
 from typing import Any, Dict, Optional, Tuple
 
 from tank_vendor.flow_integration_sdk import globals, schema
-from sgtk.flowam.create import PIPELINE_STEP_TYPE
+from sgtk.flowam.create import CONTAINER_TYPE, PIPELINE_STEP_TYPE
 
-from ..constants import DRAFT_VERSION_IDENTIFIER, CONTAINER_TYPE
+from ..constants import DRAFT_VERSION_IDENTIFIER
 
 
 def is_structural_asset(asset: Any) -> bool:

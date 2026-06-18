@@ -15,10 +15,9 @@ from __future__ import annotations
 from typing import Any, Optional
 
 import sgtk
-from sgtk.flowam.create import PIPELINE_STEP_TYPE
+from sgtk.flowam.create import PIPELINE_STEP_TYPE, TEMPLATE_FOLDER, TEMPLATE_TYPE
 from tank_vendor.flow_integration_sdk import objects, schema
 
-from ..constants import TEMPLATE_FOLDER, TEMPLATE_TYPE
 
 logger = sgtk.platform.get_logger(__name__)
 

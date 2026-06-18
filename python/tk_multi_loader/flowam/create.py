@@ -35,21 +35,10 @@ from tank_vendor.flow_integration_sdk import (
     utils,
 )
 
-from ..constants import TEMPLATE_FOLDER, TEMPLATE_TYPE
-
 
 # ---------------------------------
 # Classes
 # ---------------------------------
-class CreateMode(Enum):
-    """Enum of modes for creating a new asset."""
-
-    NEW = "new"  #: Create a DCC asset from a new scene as the source.
-    CURRENT = "current"  #: Create a DCC asset from the current scene as the source.
-    TEMPLATE = "template"  #: Create a DCC asset from template scene as the source.
-    GENERIC = "generic"  #: Create a generic asset from a specified source file.
-
-
 @dataclass
 class CreateInputs(flowam_utils.BaseInputs):
     """Convenience structure to hold create inputs and allow them to be
@@ -71,7 +60,7 @@ class CreateInputs(flowam_utils.BaseInputs):
     description: str = ""
     #: Determines which initial source file to use to create the asset.
     #: See `CreateMode` enum for valid values.
-    create_mode: CreateMode = CreateMode.CURRENT
+    create_mode: create.CreateMode = create.CreateMode.CURRENT
     #: Relevant only in some modes.
     #:      * TEMPLATE -> path to the template file to be used to build the new asset
     #:      * GENERIC -> path to the source file to copy directly to asset
@@ -107,10 +96,10 @@ class CreateInputs(flowam_utils.BaseInputs):
             msg = "Incomplete sg context provided. Must provide sg_pipeline_step."
             raise exceptions.CreateAssetError(data=self.asdict(), details=msg)
         # If create mode is TEMPLATE or GENERIC, we need a source path
-        if self.create_mode == CreateMode.TEMPLATE and not self.source_path:
+        if self.create_mode == create.CreateMode.TEMPLATE and not self.source_path:
             msg = "No template source path provided."
             raise exceptions.CreateAssetError(data=self.asdict(), details=msg)
-        if self.create_mode == CreateMode.GENERIC and not self.source_path:
+        if self.create_mode == create.CreateMode.GENERIC and not self.source_path:
             msg = "No source path provided for generic asset."
             raise exceptions.CreateAssetError(data=self.asdict(), details=msg)
         # If pipeline step is provided, we expect task_name to be provided as well
@@ -119,7 +108,7 @@ class CreateInputs(flowam_utils.BaseInputs):
             raise exceptions.CreateAssetError(data=self.asdict(), details=msg)
         # prep_scene_callback is only applicable when create_mode is NEW or TEMPLATE
         if (
-            self.create_mode == CreateMode.GENERIC
+            self.create_mode == create.CreateMode.GENERIC
             and self.prep_scene_callback is not None
         ):
             msg = "prep_scene_callback is not applicable when create_mode is GENERIC."
@@ -149,7 +138,7 @@ class CreateTemplateInputs(flowam_utils.BaseInputs):
     #: Determines which initial source file to use to create the asset.
     #: See `CreateMode` enum for valid values.
     #: In the case of template creation, only NEW and CURRENT are applicable.
-    create_mode: CreateMode = CreateMode.CURRENT
+    create_mode: create.CreateMode = create.CreateMode.CURRENT
 
     def validate(self):
         """Check that input combinations are valid.
@@ -174,8 +163,8 @@ class CreateTemplateInputs(flowam_utils.BaseInputs):
             )
         # Create mode TEMPLATE and GENERIC are not applicable for templates.
         if (
-            self.create_mode == CreateMode.TEMPLATE
-            or self.create_mode == CreateMode.GENERIC
+            self.create_mode == create.CreateMode.TEMPLATE
+            or self.create_mode == create.CreateMode.GENERIC
         ):
             msg = f"Invalid CreateMode provided for template creation: {self.create_mode}."
             raise exceptions.CreateAssetError(data=self.asdict(), details=msg)
@@ -339,10 +328,10 @@ def _create_dcc_workfile_asset(
     with tempfile.TemporaryDirectory() as temp_dir:
         ext = utils.fileext(inputs.source_path) or flow_host().FILE_TYPES[0]
         temp_file = utils.cleanpath(temp_dir, f"{name}.{ext}")
-        if inputs.create_mode == CreateMode.NEW:
+        if inputs.create_mode == create.CreateMode.NEW:
             # Clear scene
             flow_host().new_scene()
-        elif inputs.create_mode == CreateMode.TEMPLATE:
+        elif inputs.create_mode == create.CreateMode.TEMPLATE:
             # Open the template file
             if not os.path.exists(inputs.source_path):
                 msg = f"Template path does not exist: {inputs.source_path}"
@@ -421,12 +410,12 @@ def _create_template_hierarchy(inputs: CreateTemplateInputs) -> objects.FlowAsse
         raise exceptions.CreateAssetError(data=inputs.asdict(), details=msg) from exc
 
     # Create top-level folder if it doesn't already exist in project
-    folder = project.find_child(TEMPLATE_FOLDER)
+    folder = project.find_child(create.TEMPLATE_FOLDER)
     if not folder:
-        app.log_info(f'Creating "{TEMPLATE_FOLDER}" folder...')
+        app.log_info(f'Creating "{create.TEMPLATE_FOLDER}" folder...')
         desc = "Folder for template assets."
         folder = publish.publish_new_asset(
-            name=TEMPLATE_FOLDER,
+            name=create.TEMPLATE_FOLDER,
             parent_id=project.id,
             components=flowam_utils.create_components_for_publish(
                 type_ids=[globals.FOLDER_TYPE_ID],
@@ -471,7 +460,7 @@ def _create_template_workfile_asset(
     #       and template designation
     workfile_type = flow_host().WORKFILE_TYPE
     workfile_type_id = schema.get_schema_id(workfile_type)
-    template_type_id = schema.get_schema_id(TEMPLATE_TYPE)
+    template_type_id = schema.get_schema_id(create.TEMPLATE_TYPE)
 
     name = inputs.template_name
 
@@ -480,7 +469,7 @@ def _create_template_workfile_asset(
     with tempfile.TemporaryDirectory() as temp_dir:
         ext = flow_host().FILE_TYPES[0]
         temp_file = utils.cleanpath(temp_dir, f"{name}.{ext}")
-        if inputs.create_mode == CreateMode.NEW:
+        if inputs.create_mode == create.CreateMode.NEW:
             # Clear scene
             flow_host().new_scene()
         app.log_info(f"Saving temp file to: {temp_file}")

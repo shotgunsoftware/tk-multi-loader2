@@ -14,6 +14,7 @@ import functools
 import sgtk
 from sgtk import TankError
 from sgtk.platform.qt import QtGui
+from sgtk.flowam.create import CreateMode
 from tank_vendor.flow_integration_sdk import sandbox, exceptions
 
 from ..build_asset_dialog import BuildAssetDialog
@@ -21,7 +22,6 @@ from ..build_template_dialog import BuildTemplateDialog
 from ..constants import DRAFT_VERSION_IDENTIFIER
 from .create import (
     CreateInputs,
-    CreateMode,
     CreateTemplateInputs,
     create_dcc_workfile,
     create_template_workfile,

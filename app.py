@@ -12,6 +12,8 @@
 A loader application that lets you add new items to the scene.
 """
 
+from types import ModuleType
+
 import sgtk
 import os
 
@@ -28,6 +30,7 @@ class MultiLoader(sgtk.platform.Application):
             return
 
         tk_multi_loader = self.import_module("tk_multi_loader")
+        self._flowam = tk_multi_loader.flowam
 
         # the manager class provides the interface for loading. We store a
         # reference to it to enable the create_loader_action_manager method exposed on
@@ -95,3 +98,15 @@ class MultiLoader(sgtk.platform.Application):
         :returns: A :class:`tk_multi_loader.LoaderManager` instance
         """
         return self._manager_class(bundle or self)
+
+    @property
+    def flowam(self) -> ModuleType:
+        """
+        Access to the FlowAM integration module for this app. This module provides
+        drop-in replacements for the standard Shotgun-based Loader models and actions,
+        backed by Flow Asset Management (FlowAM) instead of the ShotGrid REST API.
+
+        :returns: The FlowAM integration module for this app
+        :rtype: :mod:`tk_multi_loader.flowam`
+        """
+        return self._flowam

@@ -29,7 +29,7 @@ class MayaActions(HookBaseClass):
     ##############################################################################################################
     # public interface - to be overridden by deriving classes
 
-    def generate_actions(self, sg_publish_data, actions, ui_area, **kwargs):
+    def generate_actions(self, sg_publish_data, actions, ui_area):
         """
         Returns a list of action instances for a particular publish.
         This method is called each time a user clicks a publish somewhere in the UI.
@@ -131,12 +131,7 @@ class MayaActions(HookBaseClass):
         # FlowAM specific actions
         # -----------------------
         if self.parent.context.flow_project_id:
-            flowam_actions = kwargs.get("flowam_actions")
-            if not flowam_actions:
-                raise Exception(
-                    "FlowAM is enabled but no Asset Management base object was passed to the action hook. "
-                    "FlowAM specific actions will not be generated."
-                )
+            flowam_actions = app.flowam.FlowAMActions()
 
             if (
                 "open" in actions
@@ -247,7 +242,7 @@ class MayaActions(HookBaseClass):
 
         return action_instances
 
-    def execute_multiple_actions(self, actions, **kwargs):
+    def execute_multiple_actions(self, actions):
         """
         Executes the specified action on a list of items.
 
@@ -276,9 +271,9 @@ class MayaActions(HookBaseClass):
             name = single_action["name"]
             sg_publish_data = single_action["sg_publish_data"]
             params = single_action["params"]
-            self.execute_action(name, params, sg_publish_data, **kwargs)
+            self.execute_action(name, params, sg_publish_data)
 
-    def execute_action(self, name, params, sg_publish_data, **kwargs):
+    def execute_action(self, name, params, sg_publish_data):
         """
         Execute a given action. The data sent to this be method will
         represent one of the actions enumerated by the generate_actions method.
@@ -298,7 +293,7 @@ class MayaActions(HookBaseClass):
         # FlowAM specific actions
         # -----------------------
         if self.parent.context.flow_project_id:
-            flowam_actions = kwargs.get("flowam_actions")
+            flowam_actions = app.flowam.FlowAMActions()
 
             if name == "reference_am":
                 flowam_actions._create_reference_am(sg_publish_data)

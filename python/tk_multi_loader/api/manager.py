@@ -130,7 +130,6 @@ class LoaderManager(object):
                 sg_publish_data=sg_data,
                 actions=actions,
                 ui_area=ui_area_str,
-                flowam_actions=self.get_flowam_actions_instance(),
             )
         except Exception:
             self._logger.exception("Could not execute generate_actions hook.")
@@ -244,7 +243,6 @@ class LoaderManager(object):
                 name=action["name"],
                 params=action["params"],
                 sg_publish_data=sg_data,
-                flowam_actions=self.get_flowam_actions_instance(),
             )
         except Exception as e:
             self._logger.exception(
@@ -268,7 +266,6 @@ class LoaderManager(object):
                 "actions_hook",
                 "execute_multiple_actions",
                 actions=actions,
-                flowam_actions=self.get_flowam_actions_instance(),
             )
         except Exception as e:
             self._logger.exception(
@@ -310,7 +307,6 @@ class LoaderManager(object):
                 sg_publish_data=sg_data,
                 actions=actions,
                 ui_area="main",
-                flowam_actions=self.get_flowam_actions_instance(),
             )  # folder options only found in main ui area
         except Exception:
             self._logger.exception("Could not execute generate_actions hook.")
@@ -350,10 +346,3 @@ class LoaderManager(object):
                 unix_timestamp, shotgun_api3.sg_timezone.LocalTimezone()
             )
             sg_data["created_at"] = sg_timestamp
-
-    def get_flowam_actions_instance(self) -> "FlowAMActions | None":
-        """ """
-        if sgtk.platform.current_bundle().context.flow_project_id:
-            from ..flowam import FlowAMActions
-
-            return FlowAMActions()

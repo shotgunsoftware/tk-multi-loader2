@@ -31,7 +31,6 @@ class DesktopActions(HookBaseClass):
         sg_publish_data: dict,
         actions: list,
         ui_area: str,
-        **kwargs,
     ) -> list:
         """
         Return a list of action instances for a particular publish.
@@ -77,13 +76,8 @@ class DesktopActions(HookBaseClass):
 
         action_instances = []
 
-        if self.parent.context.flow_project_id:
-            flowam_actions = kwargs.get("flowam_actions")
-            if not flowam_actions:
-                raise Exception(
-                    "FlowAM is enabled but no Asset Management base object was passed to the action hook. "
-                    "FlowAM specific actions will not be generated."
-                )
+        if app.context.flow_project_id:
+            flowam_actions = app.flowam.FlowAMActions()
 
             if "download" in actions and sg_publish_data.get("type") == "PublishedFile":
                 version_number = sg_publish_data.get("version_number")
@@ -145,7 +139,7 @@ class DesktopActions(HookBaseClass):
 
         return action_instances
 
-    def execute_multiple_actions(self, actions: list, **kwargs) -> None:
+    def execute_multiple_actions(self, actions: list) -> None:
         """
         Executes the specified action on a list of items.
 
@@ -178,14 +172,13 @@ class DesktopActions(HookBaseClass):
             name = single_action["name"]
             sg_publish_data = single_action["sg_publish_data"]
             params = single_action["params"]
-            self.execute_action(name, params, sg_publish_data, **kwargs)
+            self.execute_action(name, params, sg_publish_data)
 
     def execute_action(
         self,
         name: str,
         params: Any,
         sg_publish_data: dict,
-        **kwargs,
     ) -> None:
         """
         Print out all actions. The data sent to this be method will
@@ -201,7 +194,7 @@ class DesktopActions(HookBaseClass):
             "Execute action called for action %s. "
             "Parameters: %s. Publish Data: %s" % (name, params, sg_publish_data)
         )
-        flowam_actions = kwargs.get("flowam_actions")
+        flowam_actions = app.flowam.FlowAMActions()
 
         if name == "create_generic_asset":
             # Right click a task the left panel

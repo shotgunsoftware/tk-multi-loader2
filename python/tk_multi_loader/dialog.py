@@ -1993,7 +1993,6 @@ class AppDialog(QtGui.QWidget):
                     name=act["name"],
                     params=act["params"],
                     sg_publish_data=sg_data,
-                    flowam_actions=self._action_manager.get_flowam_actions_instance(),
                 )
 
             action = QtGui.QAction(entity_action["caption"], view)

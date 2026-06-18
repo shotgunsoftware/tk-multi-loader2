@@ -18,7 +18,6 @@ import sgtk
 from sgtk.flowam.create import PIPELINE_STEP_TYPE, TEMPLATE_FOLDER, TEMPLATE_TYPE
 from tank_vendor.flow_integration_sdk import objects, schema
 
-
 logger = sgtk.platform.get_logger(__name__)
 
 

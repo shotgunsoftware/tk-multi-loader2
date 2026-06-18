@@ -353,7 +353,7 @@ class LoaderManager(object):
 
     def get_flowam_actions_instance(self) -> "FlowAMActions | None":
         """ """
-        if sgtk.platform.current_bundle().get_setting("enable_flowam", False):
+        if sgtk.platform.current_bundle().context.flow_project_id:
             from ..flowam import FlowAMActions
 
             return FlowAMActions()

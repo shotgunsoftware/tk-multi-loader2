@@ -77,8 +77,7 @@ class DesktopActions(HookBaseClass):
 
         action_instances = []
 
-        enable_flowam = app.get_setting("enable_flowam", False)
-        if enable_flowam:
+        if self.parent.context.flow_project_id:
             flowam_actions = kwargs.get("flowam_actions")
             if not flowam_actions:
                 raise Exception(

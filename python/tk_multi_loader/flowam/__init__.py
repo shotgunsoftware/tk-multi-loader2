@@ -8,13 +8,11 @@
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
-"""FlowAM integration models for the Loader app.
+"""FlowAM integration for the Loader app.
 
-This package provides Qt models that back the loader when ``enable_flowam``
-is enabled in the app configuration.  All models share a single
-:class:`~medm.shared_cache.MedmSharedCache` and
-:class:`~medm.thumbnail_service.MedmThumbnailService` instance injected by
-the dialog at construction time.
+This package provides drop-in replacements for the standard Shotgun-based
+Loader models and actions, backed by Flow Asset Management (FlowAM) instead
+of the ShotGrid REST API.
 """
 
 from .entity_model import MedmEntityModel

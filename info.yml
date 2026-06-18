@@ -33,13 +33,6 @@ configuration:
                      Published File Types). The legacy Published File Type filter widget
                      cannot be used in combination with the Filter menu.
 
-    enable_flowam:
-        type: bool
-        default_value: false
-        description: Set to True to use Flow Asset Management data instead of Shotgun
-                     data. When enabled, the loader fetches publish data from the Flow Asset
-                     Management system.
-
     # hooks
     actions_hook:
         type: hook

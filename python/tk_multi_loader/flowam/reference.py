@@ -22,12 +22,8 @@ class CreateReferenceError(exceptions.FlowError):
         Args:
             input_id: Id of revision or version being referenced.
         """
-        if input_id:
-            message = f"Could not create reference to {input_id}."
-        else:
-            message = "Could not create reference."
-        super().__init__(message, *args, **kwargs)
         self.input_id = input_id
+        super().__init__(f"Could not create reference to {input_id}.", *args, **kwargs)
 
 
 def reference_revision(revision_id: str) -> str:
@@ -78,7 +74,7 @@ def reference_revision(revision_id: str) -> str:
     file_seq_comp = revision.find_component(
         type_id=schema.get_schema_id(globals.FILE_SEQ_TYPE)
     )
-    if not os.path.exists(file_path):
+    if not file_seq_comp and not os.path.exists(file_path):
         msg = f"Source file does not exist in storage: {file_path}. "
         msg += "Fetching the revision was not successful!"
         raise CreateReferenceError(input_id=revision_id, details=msg)

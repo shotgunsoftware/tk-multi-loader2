@@ -241,7 +241,14 @@ class FlowAMActions:
         )
 
         if message_response == QtGui.QMessageBox.StandardButton.Yes:
-            sandbox.discard_draft(sg_publish_data.get("sg_flow_revision_id"))
+            draft_id = sg_publish_data.get("sg_flow_revision_id")
+            current_engine = sgtk.platform.current_engine()
+            clear_scene = current_engine.context.flow_draft_id == draft_id
+
+            sandbox.discard_draft(draft_id)
+
+            if clear_scene:
+                current_engine.flow_host.new_scene(force=True)
 
             QtGui.QMessageBox.information(
                 parent_window,

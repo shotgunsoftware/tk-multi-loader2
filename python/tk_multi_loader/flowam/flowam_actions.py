@@ -337,7 +337,7 @@ class FlowAMActions:
             template_name=dialog.template,
             create_mode=dialog.mode,
         )
-        
+
         try:
             draft_info = create_template_workfile(create_inputs)
             self._app.log_debug(

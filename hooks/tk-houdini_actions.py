@@ -108,7 +108,9 @@ class HoudiniActions(HookBaseClass):
 
             if "open" in actions and sg_publish_data.get("type") == "PublishedFile":
                 if (
-                    flowam_actions.is_local_draft_by_revision(sg_publish_data.get("sg_flow_revision_id"))
+                    flowam_actions.is_local_draft_by_revision(
+                        sg_publish_data.get("sg_flow_revision_id")
+                    )
                     or sg_publish_data.get(
                         "version_number", flowam_actions.DRAFT_VERSION_IDENTIFIER
                     )

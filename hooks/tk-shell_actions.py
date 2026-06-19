@@ -136,8 +136,6 @@ class ShellActions(HookBaseClass):
 
         :param list actions: Action dictionaries.
         """
-        app = self.parent
-        app.log_info("Executing action '%s' on the selection")
         # Helps to visually scope selections
         # Execute each action.
         for single_action in actions:

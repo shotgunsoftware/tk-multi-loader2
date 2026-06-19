@@ -17,21 +17,17 @@ from tank_vendor.flow_integration_sdk import exceptions, globals, objects, schem
 
 
 class CreateReferenceError(exceptions.FlowError):
-    def __init__(self, *args, input_id: str = "", file_path: str = "", **kwargs):
+    def __init__(self, *args, input_id: str, **kwargs):
         """
         Args:
             input_id: Id of revision or version being referenced.
-            file_path: File being referenced.
         """
         if input_id:
             message = f"Could not create reference to {input_id}."
-        elif file_path:
-            message = f"Could not create reference of file: {file_path}."
         else:
             message = "Could not create reference."
         super().__init__(message, *args, **kwargs)
         self.input_id = input_id
-        self.file_path = file_path
 
 
 def reference_revision(revision_id: str) -> str:

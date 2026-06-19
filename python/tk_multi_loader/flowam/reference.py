@@ -13,7 +13,7 @@ from __future__ import annotations  # needed for Houdini support
 import os
 
 import sgtk
-from tank_vendor.flow_integration_sdk import globals, exceptions, objects
+from tank_vendor.flow_integration_sdk import exceptions, globals, objects, schema, utils
 
 
 class CreateReferenceError(exceptions.FlowError):
@@ -79,10 +79,18 @@ def reference_revision(revision_id: str) -> str:
     if file_path is None:
         msg = "Revision does not have a source component to be referenced."
         raise CreateReferenceError(input_id=revision_id, details=msg)
+    file_seq_comp = revision.find_component(
+        type_id=schema.get_schema_id(globals.FILE_SEQ_TYPE)
+    )
     if not os.path.exists(file_path):
         msg = f"Source file does not exist in storage: {file_path}. "
         msg += "Fetching the revision was not successful!"
         raise CreateReferenceError(input_id=revision_id, details=msg)
+    elif file_seq_comp:
+        # Return a file path with embedded frame padding
+        file_path = utils.cleanpath(
+            revision.get_storage_dir(), file_seq_comp.properties["fileFormat"]
+        )
 
     # Create reference
     depdata = engine.flow_host.create_reference(file_path, namespace=revision.name)
@@ -130,9 +138,18 @@ def copy_reference_link(revision_id: str) -> str:
     if file_path is None:
         msg = "Revision does not have a source component to be referenced."
         raise CreateReferenceError(input_id=revision_id, details=msg)
-    if not os.path.exists(file_path):
+
+    file_seq_comp = revision.find_component(
+        type_id=schema.get_schema_id(globals.FILE_SEQ_TYPE)
+    )
+    if not file_seq_comp and not os.path.exists(file_path):
         msg = f"Source file does not exist in storage: {file_path}"
         raise CreateReferenceError(input_id=revision_id, details=msg)
+    elif file_seq_comp:
+        # Return a file path with embedded frame padding
+        file_path = utils.cleanpath(
+            revision.get_storage_dir(), file_seq_comp.properties["fileFormat"]
+        )
 
     # Copy to clipboard
     engine.flow_host.copy_to_clipboard(file_path)

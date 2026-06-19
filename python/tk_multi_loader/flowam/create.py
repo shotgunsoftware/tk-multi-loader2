@@ -9,7 +9,7 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 """
-This module contains utilities for creating medm assets. Some of these functions
+This module contains utilities for creating Flow AM assets. Some of these functions
 create assets only in sandbox, while others create and publish them straight to
 medm.
 """

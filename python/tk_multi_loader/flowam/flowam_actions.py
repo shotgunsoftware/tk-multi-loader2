@@ -185,7 +185,6 @@ class FlowAMActions:
                 "Error",
                 str(exc),
             )
-            return
 
     def _prep_scene(self, sg_publish_data: dict) -> None:
         """
@@ -331,10 +330,20 @@ class FlowAMActions:
             template_name=dialog.template,
             create_mode=dialog.mode,
         )
-        draft_info = create_template_workfile(create_inputs)
-        self._app.log_debug(
-            f"Created a Template workfile with the draft_id: {draft_info.draft_id}"
-        )
+        
+        try:
+            draft_info = create_template_workfile(create_inputs)
+            self._app.log_debug(
+                f"Created a Template workfile with the draft_id: {draft_info.draft_id}"
+            )
+        except exceptions.CreateAssetError as exc:
+            self._app.log_error(f"Create asset failed: {exc}\nInput data: {exc.data}")
+
+            QtGui.QMessageBox.critical(
+                parent_window,
+                "Error",
+                str(exc),
+            )
 
     def _get_flowam_id(self) -> str:
         """

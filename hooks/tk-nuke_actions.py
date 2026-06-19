@@ -15,10 +15,8 @@ Hook that loads defines all the available actions, broken down by publish type.
 import glob
 import os
 import re
-import sys
 
 import sgtk
-from tank_vendor.flow_integration_sdk.sandbox import is_local_draft
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
@@ -142,7 +140,7 @@ class NukeActions(HookBaseClass):
                 # 1. Local drafts (version_number == -1 and is_local_draft)
                 # 2. Published revisions (version_number > -1)
                 if (
-                    is_local_draft(sg_publish_data.get("sg_flow_revision_id"))
+                    flowam_actions.is_local_draft_by_revision(sg_publish_data.get("sg_flow_revision_id"))
                     or sg_publish_data.get(
                         "version_number", flowam_actions.DRAFT_VERSION_IDENTIFIER
                     )
@@ -157,7 +155,7 @@ class NukeActions(HookBaseClass):
                         }
                     )
 
-            if "discard_draft" in actions and is_local_draft(
+            if "discard_draft" in actions and flowam_actions.is_local_draft_by_revision(
                 sg_publish_data.get("sg_flow_revision_id")
             ):
                 action_instances.append(

@@ -117,14 +117,14 @@ class FlowAMActions:
         :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
         """
         parent_window = self._get_dialog_parent()
-        sg_flow_am_id = self._get_flowam_id()
+        flow_am_id = self._get_flowam_id()
         # Get the pipeline step from the task
         task = sg_publish_data.get("task")
         task_id = task.get("id") if task else None
         task_pipeline_step = self._get_task_pipeline_step(task_id) if task_id else None
         # Open the build scene dialog
         build_scene_dialog = BuildAssetDialog(
-            project_id=sg_flow_am_id,
+            project_id=flow_am_id,
             parent=parent_window,
             pipeline_step=task_pipeline_step,
         )
@@ -145,7 +145,7 @@ class FlowAMActions:
 
         parent_window = self._get_dialog_parent()
 
-        sg_flow_am_id = self._get_flowam_id()
+        flow_am_id = self._get_flowam_id()
 
         if dialog.build == CreateMode.TEMPLATE:
             template_path = dialog.template_source_path
@@ -168,7 +168,7 @@ class FlowAMActions:
                 "name", ""
             ),  # Layout, Animation, etc.
             sg_task_name=sg_publish_data["content"],
-            am_project_id=sg_flow_am_id,
+            am_project_id=flow_am_id,
             create_mode=dialog.build,
             source_path=template_path,
             prep_scene_callback=functools.partial(self._prep_scene, sg_publish_data),
@@ -292,12 +292,12 @@ class FlowAMActions:
         :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
         """
         # Get the sg_flow_am_id from the Project
-        sg_flow_am_id = self._get_flowam_id()
+        flow_am_id = self._get_flowam_id()
 
         parent_window = self._get_dialog_parent()
 
         build_template_dialog = BuildTemplateDialog(
-            sg_flow_am_id, self._get_pipeline_steps(), parent_window
+            flow_am_id, self._get_pipeline_steps(), parent_window
         )
         build_template_dialog.accepted.connect(
             lambda: self._on_build_template_dialog_accepted(
@@ -322,11 +322,11 @@ class FlowAMActions:
             QtGui.QMessageBox.critical(parent_window, "Error", message)
             return
 
-        sg_flow_am_id = self._get_flowam_id()
+        flow_am_id = self._get_flowam_id()
 
         create_inputs = CreateTemplateInputs(
             sg_pipeline_step=dialog.step,
-            am_project_id=sg_flow_am_id,
+            am_project_id=flow_am_id,
             template_name=dialog.template,
             create_mode=dialog.mode,
         )
@@ -352,16 +352,16 @@ class FlowAMActions:
         :returns: The Flow AM project ID or None if not found.
         """
         parent_window = self._get_dialog_parent()
-        sg_flow_am_id = self._app.context.project.get("sg_flow_am_id")
-        if not sg_flow_am_id:
+        flow_am_id = self._app.context.project.get("sg_flow_am_id")
+        if not flow_am_id:
             project = self._app.shotgun.find_one(
                 "Project",
                 [["id", "is", self._app.context.project["id"]]],
                 ["sg_flow_am_id"],
             )
-            sg_flow_am_id = project.get("sg_flow_am_id")
+            flow_am_id = project.get("sg_flow_am_id")
 
-        if not sg_flow_am_id:
+        if not flow_am_id:
             err_details = {
                 "Context project": self._app.context.project,
                 "Project ID": (
@@ -369,7 +369,7 @@ class FlowAMActions:
                     if self._app.context.project
                     else "None"
                 ),
-                "sg_flow_am_id value": sg_flow_am_id,
+                "sg_flow_am_id value": flow_am_id,
             }
             details_str = "\n".join([f"  {k}: {v}" for k, v in err_details.items()])
             message = (
@@ -385,7 +385,7 @@ class FlowAMActions:
             )
             raise TankError(message)
 
-        return sg_flow_am_id
+        return flow_am_id
 
     def _get_dialog_parent(self) -> QtGui.QWidget | None:
         """
@@ -420,3 +420,13 @@ class FlowAMActions:
                 msg_lines.append(f"  • Blob {i}: {file_path}")
             msg = "\n".join(msg_lines)
             QtGui.QMessageBox.information(None, "Download Result", msg)
+
+    def is_local_draft_by_revision(revision_id: str) -> bool:
+        """
+        Helper method to determine if a given draft id represents a local draft.
+
+        :param draft_id: Id that uniquely identifies a draft within local sandbox.
+        :returns: True if the given draft id represents a local draft, False otherwise.
+        """
+        draft_id = sandbox.get_draft_id(revision_id)
+        return sandbox.is_local_draft(draft_id)

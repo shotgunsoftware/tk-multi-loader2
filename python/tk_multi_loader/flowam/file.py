@@ -37,17 +37,6 @@ class DownloadRevisionError(exceptions.FlowError):
         self.directory = directory
 
 
-class InvalidDraftError(exceptions.FlowError):
-    def __init__(self, *args, draft_id: str, **kwargs):
-        """
-        Args:
-            draft_id: Id that uniquely identifies a draft in local sandbox.
-        """
-        message = f'Draft id "{draft_id}" is invalid.'
-        super().__init__(message, *args, **kwargs)
-        self.draft_id = draft_id
-
-
 def download_revision(
     revision_id: str,
     component_purpose: str = globals.SOURCE_PURPOSE,
@@ -170,13 +159,13 @@ def open_draft(draft_id: str):
 
     if not sandbox.is_local_draft(draft_id):
         msg = f'The draft "{draft_id}" is not in local sandbox.'
-        raise InvalidDraftError(draft_id=draft_id, details=msg)
+        raise exceptions.InvalidDraftError(draft_id=draft_id, details=msg)
 
     draft_info = sandbox.read_draft_info(draft_id)
     draft_path = draft_info.source_path
     if not os.path.exists(draft_path):
         msg = f'Corrupted draft folder. The file "{draft_path}" does not exist.'
-        raise InvalidDraftError(draft_id=draft_id, details=msg)
+        raise exceptions.InvalidDraftError(draft_id=draft_id, details=msg)
 
     # Open file
     engine.log_info(f"Opening file: {draft_path}")

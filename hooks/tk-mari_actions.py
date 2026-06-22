@@ -25,7 +25,7 @@ class MariActions(HookBaseClass):
     ##############################################################################################################
     # public interface - to be overridden by deriving classes
 
-    def generate_actions(self, sg_publish_data, actions, ui_area, **kwargs):
+    def generate_actions(self, sg_publish_data, actions, ui_area):
         """
         Returns a list of action instances for a particular publish.
         This method is called each time a user clicks a publish somewhere in the UI.
@@ -108,7 +108,7 @@ class MariActions(HookBaseClass):
 
         return action_instances
 
-    def execute_multiple_actions(self, actions, **kwargs):
+    def execute_multiple_actions(self, actions):
         """
         Executes the specified action on a list of items.
 
@@ -139,7 +139,7 @@ class MariActions(HookBaseClass):
             params = single_action["params"]
             self.execute_action(name, params, sg_publish_data)
 
-    def execute_action(self, name, params, sg_publish_data, **kwargs):
+    def execute_action(self, name, params, sg_publish_data):
         """
         Execute a given action. The data sent to this be method will
         represent one of the actions enumerated by the generate_actions method.

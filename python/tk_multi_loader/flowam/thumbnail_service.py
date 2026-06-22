@@ -29,6 +29,7 @@ from typing import TYPE_CHECKING, Callable, Dict, Optional
 
 import sgtk
 from sgtk.platform.qt import QtCore, QtGui
+from tank_vendor.flow_integration_sdk import objects
 
 if TYPE_CHECKING:
     from .shared_cache import MedmSharedCache
@@ -71,9 +72,6 @@ class MedmThumbnailService(QtCore.QObject):
         super().__init__(parent)
 
         self._app = sgtk.platform.current_bundle()
-        self._flow_module = sgtk.platform.import_framework(
-            "tk-framework-flowam", "flow"
-        )
 
         # Both dicts are references into the shared cache - not owned here.
         self._url_cache: Dict[str, Optional[str]] = cache.thumbnail_urls
@@ -101,7 +99,7 @@ class MedmThumbnailService(QtCore.QObject):
         Otherwise a daemon thread resolves the URL and downloads the image.
 
         :param qt_item: ``QStandardItem`` whose icon should be updated.
-        :param revision_id: FlowAM ``AssetRevision`` ID to look up.
+        :param revision_id: FlowAM ``FlowRevision`` ID to look up.
         :param callback: ``callable(qt_item, image_data: bytes)`` that will be
             invoked on the **main thread** once the image bytes are available.
             The callback is responsible for converting bytes to a ``QPixmap``
@@ -151,7 +149,8 @@ class MedmThumbnailService(QtCore.QObject):
         url = self._url_cache.get(revision_id)
         if url is None and revision_id not in self._url_cache:
             try:
-                url = self._flow_module.asset_management.get_thumbnail_url(revision_id)
+                rev = objects.FlowRevision.get_revision(revision_id)
+                url = rev.get_thumbnail_url()
             except Exception as exc:
                 self._app.log_debug(
                     f"FlowAM ThumbnailService: URL resolve failed for {revision_id}: {exc}"

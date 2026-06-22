@@ -23,20 +23,15 @@ requested by both the tree and the center-panel publish model.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import Optional
 
 import sgtk
 from sgtk.platform.qt import QtCore, QtGui
+from tank_vendor.flow_integration_sdk import globals, objects, exceptions, schema
+from sgtk.flowam.create import PIPELINE_STEP_TYPE
 
 from .shared_cache import MedmSharedCache
 from .utils import is_structural_asset as _is_structural_asset_util
-
-# Import types for type hints only - actual objects come from framework at runtime
-# Framework is loaded dynamically via sgtk.platform.import_framework()
-if TYPE_CHECKING:
-    from adsk.flow.data import Asset
-else:
-    Asset = Any
 
 
 class MedmEntityModel(QtGui.QStandardItemModel):
@@ -90,9 +85,6 @@ class MedmEntityModel(QtGui.QStandardItemModel):
         super().__init__(parent)
 
         self._app = sgtk.platform.current_bundle()
-        self._flow_module = sgtk.platform.import_framework(
-            "tk-framework-flowam", "flow"
-        )
 
         self._cache = cache if cache is not None else MedmSharedCache()
         self._folder_icon = QtGui.QIcon(QtGui.QPixmap(":/res/icon_Folder.png"))
@@ -209,9 +201,9 @@ class MedmEntityModel(QtGui.QStandardItemModel):
 
         return search_item(None)
 
-    def get_cached_children(self, asset: Asset) -> List[Asset]:
+    def get_cached_children(self, asset: objects.FlowAsset) -> list[objects.FlowAsset]:
         """
-        Return child :class:`Asset` objects for *asset*.
+        Return child :class:`FlowAsset` objects for *asset*.
 
         Uses the internal cache when available; otherwise fetches from the FlowAM
         API and stores the result.  This is the single entry-point that both
@@ -219,7 +211,7 @@ class MedmEntityModel(QtGui.QStandardItemModel):
         that a drill-down never fetches the same level twice.
 
         :param asset: Parent FlowAM Asset whose children are needed.
-        :returns: List of child Asset objects (may be empty).
+        :returns: List of child FlowAsset objects (may be empty).
         """
         return self._fetch_and_cache_children(asset)
 
@@ -233,8 +225,8 @@ class MedmEntityModel(QtGui.QStandardItemModel):
         Called during __init__ to fail fast if project is unavailable.
         """
         try:
-            session_project = self._flow_module.data.get_session_project()
-            self._project = self._flow_module.data.Project(session_project.id)
+            current_engine = sgtk.platform.current_engine()
+            self._project = objects.FlowProject(current_engine.context.flow_project_id)
             self._app.log_debug(
                 f"FlowAM Entity: Initialized project '{self._project.name}'"
             )
@@ -266,16 +258,14 @@ class MedmEntityModel(QtGui.QStandardItemModel):
             return self._structural_type_ids
 
         try:
-            folder_id = self._flow_module.data.FOLDER_TYPE_ID
-            pipeline_step_id = self._flow_module.schema.get_schema_id(
-                self._flow_module.asset_management.PIPELINE_STEP_TYPE
-            )
+            folder_id = globals.FOLDER_TYPE_ID
+            pipeline_step_id = schema.get_schema_id(PIPELINE_STEP_TYPE)
 
             self._structural_type_ids = {folder_id, pipeline_step_id}
             self._app.log_debug(
                 f"FlowAM Entity: structural type IDs = {self._structural_type_ids}"
             )
-        except self._flow_module.FlowError as e:
+        except exceptions.FlowError as e:
             self._app.log_warning(
                 f"FlowAM Entity: could not resolve structural type IDs ({e}); "
                 "non-structural assets without structural descendants will be hidden."
@@ -284,7 +274,7 @@ class MedmEntityModel(QtGui.QStandardItemModel):
 
         return self._structural_type_ids
 
-    def _is_tree_node(self, asset: Asset) -> bool:
+    def _is_tree_node(self, asset: objects.FlowAsset) -> bool:
         """
         Return ``True`` when *asset* should appear as a node in the left-hand
         tree view.
@@ -304,7 +294,7 @@ class MedmEntityModel(QtGui.QStandardItemModel):
         :param asset: FlowAM ``Asset`` to test.
         :returns: ``True`` if the asset should appear in the tree.
         """
-        if _is_structural_asset_util(asset, self._flow_module):
+        if _is_structural_asset_util(asset):
             return True
 
         # Non-structural: show in the tree only when the asset has direct
@@ -313,7 +303,7 @@ class MedmEntityModel(QtGui.QStandardItemModel):
         children = self._fetch_and_cache_children(asset)
         return len(children) > 0
 
-    def _icon_for_asset(self, asset: Asset) -> QtGui.QIcon:
+    def _icon_for_asset(self, asset: objects.FlowAsset) -> QtGui.QIcon:
         """
         Return the appropriate tree icon for *asset* based on its type.
 
@@ -326,9 +316,7 @@ class MedmEntityModel(QtGui.QStandardItemModel):
         :returns: A :class:`QtGui.QIcon` instance.
         """
         return (
-            self._folder_icon
-            if _is_structural_asset_util(asset, self._flow_module)
-            else self._binary_icon
+            self._folder_icon if _is_structural_asset_util(asset) else self._binary_icon
         )
 
     def _load_medm_assets(self) -> None:
@@ -368,7 +356,7 @@ class MedmEntityModel(QtGui.QStandardItemModel):
             self.data_refresh_fail.emit(str(e))
 
     def _add_asset_item(
-        self, asset: Asset, parent_item: Optional[QtGui.QStandardItem]
+        self, asset: objects.FlowAsset, parent_item: Optional[QtGui.QStandardItem]
     ) -> QtGui.QStandardItem:
         """
         Create a single ``QStandardItem`` for *asset* and append it to the tree.
@@ -438,7 +426,9 @@ class MedmEntityModel(QtGui.QStandardItemModel):
                 f"FlowAM: Could not get children for '{asset.name}': {e}"
             )
 
-    def _fetch_and_cache_children(self, asset: Asset) -> List[Asset]:
+    def _fetch_and_cache_children(
+        self, asset: objects.FlowAsset
+    ) -> list[objects.FlowAsset]:
         """
         Return child assets for *asset*, fetching from the API only on the
         first call and caching the result in the shared cache for subsequent

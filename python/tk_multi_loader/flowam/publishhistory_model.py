@@ -17,30 +17,16 @@ a selected FlowAM entity, similar to SgPublishHistoryModel for Shotgun data.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import Any, Optional
 
 import sgtk
 from sgtk.platform.qt import QtCore, QtGui
+from tank_vendor.flow_integration_sdk import objects, sandbox
 
 from .. import utils
 from .shared_cache import MedmSharedCache
 from .thumbnail_service import MedmThumbnailService
 from .utils import build_draft_sg_dict, resolve_publish_type
-
-if TYPE_CHECKING:
-    from adsk.flow.am import (
-        Asset,
-        AssetRevision,
-        AssetVersion,
-    )
-    from flow.sandbox import CheckoutDraftInfo, DraftInfo, NewDraftInfo
-else:
-    Asset = Any
-    AssetRevision = Any
-    AssetVersion = Any
-    CheckoutDraftInfo = Any
-    DraftInfo = Any
-    NewDraftInfo = Any
 
 
 class MedmPublishHistoryModel(QtGui.QStandardItemModel):
@@ -60,7 +46,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
     ASSET_ROLE = (
         QtCore.Qt.UserRole + 200
     )  # Stores FlowAM Asset object (shared with all FlowAM models)
-    VERSION_ROLE = QtCore.Qt.UserRole + 201  # Stores FlowAM AssetVersion object
+    VERSION_ROLE = QtCore.Qt.UserRole + 201  # Stores FlowAM FlowVersion object
     DRAFT_ROLE = QtCore.Qt.UserRole + 202  # Stores DraftInfo for draft rows
 
     # Signals for compatibility with ShotgunModelOverlayWidget
@@ -92,9 +78,6 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         super().__init__(parent)
 
         self._app = sgtk.platform.current_bundle()
-        self._flow_module = sgtk.platform.import_framework(
-            "tk-framework-flowam", "flow"
-        )
 
         self._bg_task_manager = bg_task_manager
         self._cache = cache if cache is not None else MedmSharedCache()
@@ -120,7 +103,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         if self._owns_thumbnail_service:
             self._thumbnail_service.destroy()
 
-    def load_data(self, sg_data: Dict[str, Any]) -> None:
+    def load_data(self, sg_data: dict[str, Any]) -> None:
         """
         Load and display all versions (version history) for the selected asset.
 
@@ -171,9 +154,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
                 if asset_id in self._cache.drafts:
                     drafts = self._cache.drafts[asset_id]
                 else:
-                    drafts = self._flow_module.asset_management.get_asset_drafts(
-                        asset_id
-                    )
+                    drafts = sandbox.get_asset_drafts(asset_id)
                     self._cache.drafts[asset_id] = drafts
                 for draft_info in drafts:
                     self._add_draft_as_qt_item(draft_info, medm_asset)
@@ -227,12 +208,12 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
             )
 
     def _add_version_as_qt_item(
-        self, asset_version: AssetVersion, asset: Asset
+        self, asset_version: objects.FlowVersion, asset: objects.FlowAsset
     ) -> None:
         """
-        Convert an AssetVersion to a QStandardItem and add it to the history model.
+        Convert an FlowVersion to a QStandardItem and add it to the history model.
 
-        :param asset_version: The FlowAM AssetVersion to add
+        :param asset_version: The FlowAM FlowVersion to add
         :param asset: The parent FlowAM Asset
         """
         version_number = asset_version.version_number
@@ -265,12 +246,12 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         self._app.log_debug(f"FlowAM History: Added version v{version_number}")
 
     def _version_to_sg_dict(
-        self, version: AssetVersion, asset: Asset
-    ) -> Dict[str, Any]:
+        self, version: objects.FlowVersion, asset: objects.FlowAsset
+    ) -> dict[str, Any]:
         """
-        Convert a FlowAM AssetVersion to Shotgun-compatible dictionary.
+        Convert a FlowAM FlowVersion to Shotgun-compatible dictionary.
 
-        :param version: The FlowAM AssetVersion
+        :param version: The FlowAM FlowVersion
         :param asset: The parent FlowAM Asset
         :returns: sg_data dictionary compatible with Shotgun UI
         """
@@ -326,8 +307,8 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         return sg_dict
 
     def _draft_to_sg_dict(
-        self, draft_info: DraftInfo, asset: Optional[Asset]
-    ) -> Dict[str, Any]:
+        self, draft_info: sandbox.DraftInfo, asset: Optional[objects.FlowAsset]
+    ) -> dict[str, Any]:
         """
         Convert a DraftInfo (CheckoutDraftInfo or NewDraftInfo) to a Shotgun-compatible
         dictionary for display in the version history list as a local draft entry.
@@ -337,7 +318,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
           - ``sg_flow_revision_id``  ->  the draft's unique sandbox ID (draft_info.draft_id),
             used by asset_management.open_draft() and sandbox.is_local_draft()
 
-        :param draft_info: DraftInfo object returned by asset_management.get_asset_drafts()
+        :param draft_info: DraftInfo object returned by get_asset_drafts()
                            or get_drafts().  May be CheckoutDraftInfo or NewDraftInfo.
         :param asset: The parent FlowAM Asset (may be None for NewDraftInfo)
         :returns: sg_data dictionary compatible with action hooks and Shotgun UI
@@ -370,7 +351,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         return sg_dict
 
     def _add_draft_as_qt_item(
-        self, draft_info: DraftInfo, asset: Optional[Asset]
+        self, draft_info: sandbox.DraftInfo, asset: Optional[objects.FlowAsset]
     ) -> None:
         """
         Convert a DraftInfo to a QStandardItem and insert it at the top of
@@ -419,9 +400,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         )
 
     def _resolve_publish_type(self, medm_type_id_str: str) -> tuple:
-        return resolve_publish_type(
-            medm_type_id_str, self._cache, self._flow_module, self._app
-        )
+        return resolve_publish_type(medm_type_id_str, self._cache, self._app)
 
     def _resolve_and_download_thumbnail(
         self, qt_item: QtGui.QStandardItem, revision_id: str
@@ -432,7 +411,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         on the main thread once the image bytes are available.
 
         :param qt_item: The QStandardItem to set the thumbnail on.
-        :param revision_id: FlowAM AssetRevision ID whose thumbnail is needed.
+        :param revision_id: FlowAM FlowRevision ID whose thumbnail is needed.
         """
         self._thumbnail_service.request(qt_item, revision_id, self._apply_thumbnail)
 

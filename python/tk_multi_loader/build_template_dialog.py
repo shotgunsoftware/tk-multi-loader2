@@ -12,8 +12,11 @@ from __future__ import annotations  # needed for Houdini support
 
 import sgtk
 from sgtk.platform.qt import QtGui
+from sgtk.flowam.create import CreateMode
+from tank_vendor.flow_integration_sdk.exceptions import FlowError
+from tank_vendor.flow_integration_sdk.objects import FlowProject
 
-from .medm.template_queries import find_template_pipeline_step, get_templates
+from .flowam.template_queries import find_template_pipeline_step, get_templates
 from .ui.build_template_dialog import Ui_BuildTemplateDialog
 
 # Toolkit logger
@@ -33,15 +36,10 @@ class BuildTemplateDialog(QtGui.QDialog):
     ) -> None:
         super().__init__(parent)
 
-        _flow = sgtk.platform.import_framework("tk-framework-flowam", "flow")
-        _FlowError = _flow.FlowError
-        _Project = _flow.data.Project
-        self._CreateMode = _flow.asset_management.CreateMode
-
         # Query the project entity
         try:
-            self.project = _Project(project_id)
-        except _FlowError as exc:
+            self.project = FlowProject(project_id)
+        except FlowError as exc:
             raise ValueError(f"Project not found: {project_id}") from exc
 
         if not pipeline_steps:
@@ -56,7 +54,7 @@ class BuildTemplateDialog(QtGui.QDialog):
         self.ui.setupUi(self)
 
         self.ui.build_mode_combo_box.addItems(
-            [self._CreateMode.NEW.value, self._CreateMode.CURRENT.value]
+            [CreateMode.NEW.value, CreateMode.CURRENT.value]
         )
 
         self.ui.pipeline_step_combo_box.addItems(pipeline_steps)
@@ -84,7 +82,7 @@ class BuildTemplateDialog(QtGui.QDialog):
         Handler for when the build template button is clicked.
         Gathers input data.
         """
-        self.mode = self._CreateMode(self.ui.build_mode_combo_box.currentText())
+        self.mode = CreateMode(self.ui.build_mode_combo_box.currentText())
         self.step = self.ui.pipeline_step_combo_box.currentText()
         self.template = self.ui.template_name_line_edit.text().strip()
         self.description = self.ui.description_text_edit.toPlainText()

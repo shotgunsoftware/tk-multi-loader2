@@ -10,16 +10,24 @@
 from __future__ import annotations
 
 import functools
-from types import ModuleType
-from typing import Any
 
 import sgtk
 from sgtk import TankError
 from sgtk.platform.qt import QtGui
+from sgtk.flowam.create import CreateMode
+from tank_vendor.flow_integration_sdk import sandbox, exceptions
 
 from ..build_asset_dialog import BuildAssetDialog
 from ..build_template_dialog import BuildTemplateDialog
 from ..constants import DRAFT_VERSION_IDENTIFIER
+from .create import (
+    CreateInputs,
+    CreateTemplateInputs,
+    create_dcc_workfile,
+    create_template_workfile,
+)
+from .file import open_draft, download_revision
+from .reference import reference_revision, copy_reference_link
 
 
 class FlowAMActions:
@@ -39,23 +47,6 @@ class FlowAMActions:
         """
         return DRAFT_VERSION_IDENTIFIER
 
-    def load_framework(
-        self, framework_instance_name: str, module_name: str
-    ) -> ModuleType:
-        """
-        Simple wrapper around the base class implementation to
-        provide user feedback if the framework cannot be loaded.
-
-        :param framework_instance_name: Name of the framework instance to load
-        :returns: sgtk.platform.Framework instance
-        """
-        try:
-            return sgtk.platform.import_framework(framework_instance_name, module_name)
-        except Exception as e:
-            message = f"Could not load the required framework '{framework_instance_name}'.\n\nError details: {e}"
-            self._app.log_error(message)
-            QtGui.QMessageBox.critical(None, "Error", message)
-
     def _do_open(self, sg_publish_data: dict) -> None:
         """
         Open the given PublishedFile.
@@ -71,15 +62,13 @@ class FlowAMActions:
             )
             raise TankError("No Revision ID found for this item {}.".format(item_id))
 
-        flow_module = self.load_framework("tk-framework-flowam", "flow")
-
-        if version_number == DRAFT_VERSION_IDENTIFIER and self._is_local_draft(
-            sg_publish_data
+        if version_number == DRAFT_VERSION_IDENTIFIER and sandbox.is_local_draft(
+            sg_publish_data.get("sg_flow_revision_id")
         ):
-            flow_module.asset_management.open_draft(flow_revision_id)
+            open_draft(flow_revision_id)
         elif version_number > DRAFT_VERSION_IDENTIFIER:
             # Checkout the revision to the local sandbox
-            flow_module.asset_management.checkout_revision(flow_revision_id)
+            sandbox.checkout_revision(flow_revision_id)
         else:
             raise TankError(
                 f"Cannot open item {sg_publish_data['name']} with version number {version_number}. "
@@ -100,8 +89,7 @@ class FlowAMActions:
             )
             raise TankError("No Revision ID found for this item {}.".format(item_id))
 
-        flow_module = self.load_framework("tk-framework-flowam", "flow")
-        flow_module.asset_management.reference_revision(flow_revision_id)
+        reference_revision(flow_revision_id)
 
     def _create_reference_copy_link(self, sg_publish_data: dict) -> None:
         """
@@ -117,8 +105,7 @@ class FlowAMActions:
             )
             raise TankError("No Revision ID found for this item {}.".format(item_id))
 
-        flow_module = self.load_framework("tk-framework-flowam", "flow")
-        path = flow_module.asset_management.copy_reference_link(flow_revision_id)
+        path = copy_reference_link(flow_revision_id)
 
         self._app.log_info(f"Reference path copied: {path}")
 
@@ -130,14 +117,14 @@ class FlowAMActions:
         :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
         """
         parent_window = self._get_dialog_parent()
-        sg_flow_am_id = self._app.context.project.get("sg_flow_am_id")
+        flow_am_id = self._get_flowam_id()
         # Get the pipeline step from the task
         task = sg_publish_data.get("task")
         task_id = task.get("id") if task else None
         task_pipeline_step = self._get_task_pipeline_step(task_id) if task_id else None
         # Open the build scene dialog
         build_scene_dialog = BuildAssetDialog(
-            project_id=sg_flow_am_id,
+            project_id=flow_am_id,
             parent=parent_window,
             pipeline_step=task_pipeline_step,
         )
@@ -149,19 +136,18 @@ class FlowAMActions:
         build_scene_dialog.exec_()
 
     def _on_build_scene_dialog_accepted(
-        self, dialog: Any, sg_publish_data: dict
+        self, dialog: BuildAssetDialog, sg_publish_data: dict
     ) -> None:
         if not dialog.build:
             message = "Not enough data from the build dialog."
             self._app.log_warning(message)
             return
 
-        flow_module = self.load_framework("tk-framework-flowam", "flow")
         parent_window = self._get_dialog_parent()
 
-        sg_flow_am_id = self._get_flowam_id()
+        flow_am_id = self._get_flowam_id()
 
-        if dialog.build == flow_module.asset_management.CreateMode.TEMPLATE:
+        if dialog.build == CreateMode.TEMPLATE:
             template_path = dialog.template_source_path
         else:
             template_path = ""
@@ -175,25 +161,23 @@ class FlowAMActions:
             or {}
         )
 
-        create_inputs = flow_module.asset_management.CreateInputs(
+        create_inputs = CreateInputs(
             sg_entity_type=sg_publish_data["entity"]["type"],  # Asset, Shot, etc.
             sg_entity_name=sg_publish_data["entity"]["name"],
             sg_pipeline_step=(task.get("step") or {}).get(
                 "name", ""
             ),  # Layout, Animation, etc.
             sg_task_name=sg_publish_data["content"],
-            am_project_id=sg_flow_am_id,
+            am_project_id=flow_am_id,
             create_mode=dialog.build,
             source_path=template_path,
             prep_scene_callback=functools.partial(self._prep_scene, sg_publish_data),
         )
 
         try:
-            draft_info = flow_module.asset_management.create_dcc_workfile(create_inputs)
-            self._app.log_debug(
-                f"Created a DCC workfile on Flow AM framework with the draft_id: {draft_info.draft_id}"
-            )
-        except flow_module.CreateAssetError as exc:
+            asset = create_dcc_workfile(create_inputs)
+            self._app.log_debug(f"Created a DCC workfile asset: {asset}")
+        except exceptions.CreateAssetError as exc:
             self._app.log_error(f"Create asset failed: {exc}\nInput data: {exc.data}")
 
             QtGui.QMessageBox.critical(
@@ -201,7 +185,6 @@ class FlowAMActions:
                 "Error",
                 str(exc),
             )
-            return
 
     def _prep_scene(self, sg_publish_data: dict) -> None:
         """
@@ -216,44 +199,19 @@ class FlowAMActions:
         # TDs can override this method to add custom scene prep logic
         pass
 
-    def _is_local_draft(self, sg_publish_data: dict) -> bool:
-        """
-        Check if the given PublishedFile is a local AM draft.
-
-        :param sg_publish_data: FPTR data dictionary with all the standard entity fields.
-        :returns: True if it's a local draft, False otherwise.
-        """
-        flow_module = self.load_framework("tk-framework-flowam", "flow")
-
-        return flow_module.sandbox.is_local_draft(
-            sg_publish_data.get("sg_flow_revision_id")
-        )
-
-    def _is_new_asset(self, draft_id: str | None) -> bool:
-        """
-        Check if the given draft ID corresponds to a new asset draft.
-
-        :param draft_id: The draft ID to check.
-        :returns: True if it's a new asset draft, False otherwise.
-        """
-        flow_module = self.load_framework("tk-framework-flowam", "flow")
-
-        return flow_module.sandbox.is_new_asset(draft_id)
-
     def _discard_draft(self, sg_publish_data: dict) -> None:
         """
         Discard the local draft for the given PublishedFile.
 
         :param sg_publish_data: FPTR data dictionary with all the standard entity fields.
         """
-        flow_module = self.load_framework("tk-framework-flowam", "flow")
         parent_window = self._get_dialog_parent()
 
-        draft_folder = flow_module.sandbox.get_draft_folder(
+        draft_folder = sandbox.get_draft_folder(
             sg_publish_data.get("sg_flow_revision_id")
         )
 
-        if flow_module.sandbox.is_new_asset(sg_publish_data.get("sg_flow_revision_id")):
+        if sandbox.is_new_asset(sg_publish_data.get("sg_flow_revision_id")):
             # Case 1:  new asset
             message = (
                 f"Discard the new unpublished asset {sg_publish_data.get('name')}?"
@@ -262,7 +220,7 @@ class FlowAMActions:
             )
         else:
             # Case 2:  draft of existing asset
-            draft_info = flow_module.sandbox.read_draft_info(
+            draft_info = sandbox.read_draft_info(
                 sg_publish_data.get("sg_flow_revision_id")
             )
             version = draft_info.version
@@ -283,9 +241,14 @@ class FlowAMActions:
         )
 
         if message_response == QtGui.QMessageBox.StandardButton.Yes:
-            flow_module.asset_management.discard_draft(
-                sg_publish_data.get("sg_flow_revision_id")
-            )
+            draft_id = sg_publish_data.get("sg_flow_revision_id")
+            current_engine = sgtk.platform.current_engine()
+            clear_scene = current_engine.context.flow_draft_id == draft_id
+
+            sandbox.discard_draft(draft_id)
+
+            if clear_scene:
+                current_engine.flow_host.new_scene(force=True)
 
             QtGui.QMessageBox.information(
                 parent_window,
@@ -336,12 +299,12 @@ class FlowAMActions:
         :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
         """
         # Get the sg_flow_am_id from the Project
-        sg_flow_am_id = self._get_flowam_id()
+        flow_am_id = self._get_flowam_id()
 
         parent_window = self._get_dialog_parent()
 
         build_template_dialog = BuildTemplateDialog(
-            sg_flow_am_id, self._get_pipeline_steps(), parent_window
+            flow_am_id, self._get_pipeline_steps(), parent_window
         )
         build_template_dialog.accepted.connect(
             lambda: self._on_build_template_dialog_accepted(
@@ -351,7 +314,7 @@ class FlowAMActions:
         build_template_dialog.exec_()
 
     def _on_build_template_dialog_accepted(
-        self, dialog: Any, sg_publish_data: dict
+        self, dialog: BuildTemplateDialog, sg_publish_data: dict
     ) -> None:
         if not dialog.mode:
             message = "Not enough data from the build dialog."
@@ -366,22 +329,28 @@ class FlowAMActions:
             QtGui.QMessageBox.critical(parent_window, "Error", message)
             return
 
-        flow_module = self.load_framework("tk-framework-flowam", "flow")
+        flow_am_id = self._get_flowam_id()
 
-        sg_flow_am_id = self._get_flowam_id()
-
-        create_inputs = flow_module.asset_management.CreateTemplateInputs(
+        create_inputs = CreateTemplateInputs(
             sg_pipeline_step=dialog.step,
-            am_project_id=sg_flow_am_id,
+            am_project_id=flow_am_id,
             template_name=dialog.template,
             create_mode=dialog.mode,
         )
-        draft_info = flow_module.asset_management.create_template_workfile(
-            create_inputs
-        )
-        self._app.log_debug(
-            f"Created a Template workfile on Flow AM framework with the draft_id: {draft_info.draft_id}"
-        )
+
+        try:
+            draft_info = create_template_workfile(create_inputs)
+            self._app.log_debug(
+                f"Created a Template workfile with the draft_id: {draft_info.draft_id}"
+            )
+        except exceptions.CreateAssetError as exc:
+            self._app.log_error(f"Create asset failed: {exc}\nInput data: {exc.data}")
+
+            QtGui.QMessageBox.critical(
+                parent_window,
+                "Error",
+                str(exc),
+            )
 
     def _get_flowam_id(self) -> str:
         """
@@ -390,16 +359,16 @@ class FlowAMActions:
         :returns: The Flow AM project ID or None if not found.
         """
         parent_window = self._get_dialog_parent()
-        sg_flow_am_id = self._app.context.project.get("sg_flow_am_id")
-        if not sg_flow_am_id:
+        flow_am_id = self._app.context.project.get("sg_flow_am_id")
+        if not flow_am_id:
             project = self._app.shotgun.find_one(
                 "Project",
                 [["id", "is", self._app.context.project["id"]]],
                 ["sg_flow_am_id"],
             )
-            sg_flow_am_id = project.get("sg_flow_am_id")
+            flow_am_id = project.get("sg_flow_am_id")
 
-        if not sg_flow_am_id:
+        if not flow_am_id:
             err_details = {
                 "Context project": self._app.context.project,
                 "Project ID": (
@@ -407,7 +376,7 @@ class FlowAMActions:
                     if self._app.context.project
                     else "None"
                 ),
-                "sg_flow_am_id value": sg_flow_am_id,
+                "sg_flow_am_id value": flow_am_id,
             }
             details_str = "\n".join([f"  {k}: {v}" for k, v in err_details.items()])
             message = (
@@ -423,7 +392,7 @@ class FlowAMActions:
             )
             raise TankError(message)
 
-        return sg_flow_am_id
+        return flow_am_id
 
     def _get_dialog_parent(self) -> QtGui.QWidget | None:
         """
@@ -448,8 +417,7 @@ class FlowAMActions:
             )
             raise TankError("No Revision ID found for this item {}.".format(item_id))
 
-        flow_module = self.load_framework("tk-framework-flowam", "flow")
-        result = flow_module.asset_management.download_revision(flow_revision_id)
+        result = download_revision(flow_revision_id)
 
         # Notify the user about the download result
         if result:
@@ -459,3 +427,13 @@ class FlowAMActions:
                 msg_lines.append(f"  • Blob {i}: {file_path}")
             msg = "\n".join(msg_lines)
             QtGui.QMessageBox.information(None, "Download Result", msg)
+
+    def is_local_draft_by_revision(self, revision_id: str) -> bool:
+        """
+        Helper method to determine if a given draft id represents a local draft.
+
+        :param revision_id: Id that uniquely identifies a revision within local sandbox.
+        :returns: True if the given revision id represents a local draft, False otherwise.
+        """
+        draft_id = sandbox.get_draft_id(revision_id)
+        return sandbox.is_local_draft(draft_id)

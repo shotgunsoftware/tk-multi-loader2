@@ -23,7 +23,7 @@ class ShellActions(HookBaseClass):
     Stub implementation of the shell actions, used for testing.
     """
 
-    def generate_actions(self, sg_publish_data, actions, ui_area, **kwargs):
+    def generate_actions(self, sg_publish_data, actions, ui_area):
         """
         Return a list of action instances for a particular publish.
         This method is called each time a user clicks a publish somewhere in the UI.
@@ -111,7 +111,7 @@ class ShellActions(HookBaseClass):
             )
         return action_instances
 
-    def execute_multiple_actions(self, actions, **kwargs):
+    def execute_multiple_actions(self, actions):
         """
         Executes the specified action on a list of items.
 
@@ -136,8 +136,6 @@ class ShellActions(HookBaseClass):
 
         :param list actions: Action dictionaries.
         """
-        app = self.parent
-        app.log_info("Executing action '%s' on the selection")
         # Helps to visually scope selections
         # Execute each action.
         for single_action in actions:
@@ -146,7 +144,7 @@ class ShellActions(HookBaseClass):
             params = single_action["params"]
             self.execute_action(name, params, sg_publish_data)
 
-    def execute_action(self, name, params, sg_publish_data, **kwargs):
+    def execute_action(self, name, params, sg_publish_data):
         """
         Print out all actions. The data sent to this be method will
         represent one of the actions enumerated by the generate_actions method.

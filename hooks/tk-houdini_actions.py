@@ -16,6 +16,7 @@ import os
 import re
 
 import sgtk
+from tank_vendor.flow_integration_sdk.sandbox import is_new_asset
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
@@ -25,7 +26,7 @@ class HoudiniActions(HookBaseClass):
     ##############################################################################################################
     # public interface - to be overridden by deriving classes
 
-    def generate_actions(self, sg_publish_data, actions, ui_area, **kwargs):
+    def generate_actions(self, sg_publish_data, actions, ui_area):
         """
         Returns a list of action instances for a particular publish.
         This method is called each time a user clicks a publish somewhere in the UI.
@@ -102,22 +103,18 @@ class HoudiniActions(HookBaseClass):
         # -----------------------
         # FlowAM specific actions
         # -----------------------
-        enable_flowam = app.get_setting("enable_flowam", False)
-        if enable_flowam:
-            am_base_obj = kwargs.get("am_base_obj")
-            if not am_base_obj:
-                raise Exception(
-                    "FlowAM is enabled but no Asset Management base object was passed to the action hook. "
-                    "FlowAM specific actions will not be generated."
-                )
+        if self.parent.context.flow_project_id:
+            flowam_actions = app.flowam.FlowAMActions()
 
             if "open" in actions and sg_publish_data.get("type") == "PublishedFile":
                 if (
-                    am_base_obj._is_local_draft(sg_publish_data)
-                    or sg_publish_data.get(
-                        "version_number", am_base_obj.DRAFT_VERSION_IDENTIFIER
+                    flowam_actions.is_local_draft_by_revision(
+                        sg_publish_data.get("sg_flow_revision_id")
                     )
-                    > am_base_obj.DRAFT_VERSION_IDENTIFIER
+                    or sg_publish_data.get(
+                        "version_number", flowam_actions.DRAFT_VERSION_IDENTIFIER
+                    )
+                    > flowam_actions.DRAFT_VERSION_IDENTIFIER
                 ):
                     action_instances.append(
                         {
@@ -134,7 +131,7 @@ class HoudiniActions(HookBaseClass):
 
                 if (
                     version_number is not None
-                    and version_number != am_base_obj.DRAFT_VERSION_IDENTIFIER
+                    and version_number != flowam_actions.DRAFT_VERSION_IDENTIFIER
                 ):
                     action_instances.append(
                         {
@@ -148,9 +145,9 @@ class HoudiniActions(HookBaseClass):
             if "discard_draft" in actions:
                 draft_id = sg_publish_data.get("sg_flow_revision_id")
 
-                if am_base_obj._is_local_draft(
-                    sg_publish_data
-                ) and am_base_obj._is_new_asset(draft_id):
+                if flowam_actions.is_local_draft_by_revision(
+                    sg_publish_data.get("sg_flow_revision_id")
+                ) and is_new_asset(draft_id):
                     action_instances.append(
                         {
                             "name": "discard_draft",
@@ -163,9 +160,9 @@ class HoudiniActions(HookBaseClass):
             if (
                 "reference_copy_link" in actions
                 and sg_publish_data.get(
-                    "version_number", am_base_obj.DRAFT_VERSION_IDENTIFIER
+                    "version_number", flowam_actions.DRAFT_VERSION_IDENTIFIER
                 )
-                != am_base_obj.DRAFT_VERSION_IDENTIFIER
+                != flowam_actions.DRAFT_VERSION_IDENTIFIER
             ):
                 action_instances.append(
                     {
@@ -199,7 +196,7 @@ class HoudiniActions(HookBaseClass):
 
         return action_instances
 
-    def execute_multiple_actions(self, actions, **kwargs):
+    def execute_multiple_actions(self, actions):
         """
         Executes the specified action on a list of items.
 
@@ -228,9 +225,9 @@ class HoudiniActions(HookBaseClass):
             name = single_action["name"]
             sg_publish_data = single_action["sg_publish_data"]
             params = single_action["params"]
-            self.execute_action(name, params, sg_publish_data, **kwargs)
+            self.execute_action(name, params, sg_publish_data)
 
-    def execute_action(self, name, params, sg_publish_data, **kwargs):
+    def execute_action(self, name, params, sg_publish_data):
         """
         Execute a given action. The data sent to this be method will
         represent one of the actions enumerated by the generate_actions method.
@@ -249,27 +246,26 @@ class HoudiniActions(HookBaseClass):
         # -----------------------
         # FlowAM specific actions
         # -----------------------
-        enable_flowam = app.get_setting("enable_flowam", False)
-        if enable_flowam:
-            am_base_obj = kwargs.get("am_base_obj")
+        if self.parent.context.flow_project_id:
+            flowam_actions = app.flowam.FlowAMActions()
 
             if name == "open":
-                am_base_obj._do_open(sg_publish_data)
+                flowam_actions._do_open(sg_publish_data)
 
             if name == "reference_copy_link":
-                am_base_obj._create_reference_copy_link(sg_publish_data)
+                flowam_actions._create_reference_copy_link(sg_publish_data)
 
             if name == "discard_draft":
-                am_base_obj._discard_draft(sg_publish_data)
+                flowam_actions._discard_draft(sg_publish_data)
 
             if name == "build_new_scene":
-                am_base_obj._build_new_scene(sg_publish_data)
+                flowam_actions._build_new_scene(sg_publish_data)
 
             if name == "build_new_template":
-                am_base_obj._build_new_template(sg_publish_data)
+                flowam_actions._build_new_template(sg_publish_data)
 
             if name == "download":
-                am_base_obj._download_asset_revision(sg_publish_data)
+                flowam_actions._download_asset_revision(sg_publish_data)
 
             return
 

@@ -12,8 +12,12 @@ from __future__ import annotations  # needed for Houdini support
 
 import sgtk
 from sgtk.platform.qt import QtGui
+from sgtk.flowam.create import CreateMode
+from tank_vendor.flow_integration_sdk.exceptions import FlowError
+from tank_vendor.flow_integration_sdk.objects import FlowProject
 
-from .medm.template_queries import get_template_pipeline_steps, get_templates
+from .flowam.template_queries import get_template_pipeline_steps, get_templates
+from .flowam.create import get_template_source_path
 from .ui.build_asset_dialog import Ui_BuildAssetDialog
 
 # Toolkit logger
@@ -53,16 +57,10 @@ class BuildAssetDialog(QtGui.QDialog):
         """
         super().__init__(parent)
 
-        _flow = sgtk.platform.import_framework("tk-framework-flowam", "flow")
-        _FlowError = _flow.FlowError
-        _Project = _flow.data.Project
-        self._CreateMode = _flow.asset_management.CreateMode
-        self._get_template_source_path = _flow.asset_management.get_template_source_path
-
         # Query the project entity
         try:
-            self.project = _Project(project_id)
-        except _FlowError as exc:
+            self.project = FlowProject(project_id)
+        except FlowError as exc:
             raise ValueError(f"Project not found: {project_id}") from exc
 
         self.build = None
@@ -85,9 +83,9 @@ class BuildAssetDialog(QtGui.QDialog):
         # Populate combo box from options list
         self.ui.build_mode_combo_box.addItems(
             [
-                self._CreateMode.NEW.value,
-                self._CreateMode.CURRENT.value,
-                self._CreateMode.TEMPLATE.value,
+                CreateMode.NEW.value,
+                CreateMode.CURRENT.value,
+                CreateMode.TEMPLATE.value,
             ]
         )
 
@@ -143,7 +141,7 @@ class BuildAssetDialog(QtGui.QDialog):
         Args:
             text (str): The new build option selected.
         """
-        is_template_mode = self._CreateMode(text) == self._CreateMode.TEMPLATE
+        is_template_mode = CreateMode(text) == CreateMode.TEMPLATE
 
         self.setUpdatesEnabled(False)
         self.ui.templateWidget.setVisible(is_template_mode)
@@ -191,14 +189,14 @@ class BuildAssetDialog(QtGui.QDialog):
         Returns:
             None.
         """
-        self.build = self._CreateMode(self.ui.build_mode_combo_box.currentText())
+        self.build = CreateMode(self.ui.build_mode_combo_box.currentText())
 
-        if self.build == self._CreateMode.TEMPLATE:
+        if self.build == CreateMode.TEMPLATE:
             self.step = self.ui.pipeline_step_combo_box.currentText()
             self.template = self.ui.templates_combo_box.currentText()
             if self.template and self.template in self.templates:
                 template = self.templates[self.template]
-                self.template_source_path = self._get_template_source_path(template)
+                self.template_source_path = get_template_source_path(template)
         else:
             self.step = None
             self.template = None

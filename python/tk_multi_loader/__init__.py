@@ -8,6 +8,7 @@
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
+from . import flowam  # noqa: F401
 from .api import LoaderManager  # noqa: F401
 from .open_publish_form import open_publish_browser  # noqa: F401
 

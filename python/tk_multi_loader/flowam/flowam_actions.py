@@ -428,12 +428,12 @@ class FlowAMActions:
             msg = "\n".join(msg_lines)
             QtGui.QMessageBox.information(None, "Download Result", msg)
 
-    def is_local_draft_by_revision(revision_id: str) -> bool:
+    def is_local_draft_by_revision(self, revision_id: str) -> bool:
         """
         Helper method to determine if a given draft id represents a local draft.
 
-        :param draft_id: Id that uniquely identifies a draft within local sandbox.
-        :returns: True if the given draft id represents a local draft, False otherwise.
+        :param revision_id: Id that uniquely identifies a revision within local sandbox.
+        :returns: True if the given revision id represents a local draft, False otherwise.
         """
         draft_id = sandbox.get_draft_id(revision_id)
         return sandbox.is_local_draft(draft_id)

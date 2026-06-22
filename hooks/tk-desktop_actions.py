@@ -265,27 +265,23 @@ class DesktopActions(HookBaseClass):
         # NOTE: the context should be either a Task or a Project
         entity_ctx = engine.tank.context_from_entity(entity_type, entity_id)
 
-        # Get Publisher app from engine
-        publisher_app = engine.apps.get("tk-multi-publish2")
-        if not publisher_app:
-            # Publisher not configured
-            available_apps = list(engine.apps.keys())
+        # Launch Publisher via its registered engine command callback.
+        for cmd_settings in engine.commands.values():
+            if cmd_settings.get("properties", {}).get("app") is None:
+                continue
+            if cmd_settings["properties"]["app"].name == "tk-multi-publish2":
+                publisher_app = cmd_settings["properties"]["app"]
+                single_file_mode = (
+                    action_name == "publish"
+                    and publisher_app.context.flow_project_id is not None
+                )
+                publisher_app.import_module("tk_multi_publish2").show_dialog(
+                    publisher_app, single_file_mode=single_file_mode
+                )
+                break
+        else:
             raise TankError(
                 "Could not find Publisher app (tk-multi-publish2)!\n\n"
-                f"Available apps in current engine: {available_apps}\n\n"
-                "Please ensure tk-multi-publish2 is configured in:\n"
-                "env/includes/desktop/project.yml under 'desktop.project: apps:'\n\n"
-            )
-
-        try:
-            # Set context and launch Publisher using the pre-imported module
-            publisher_app._set_context(entity_ctx)
-
-            # For republish action, restrict publisher to single file mode
-            single_file_mode = action_name == "publish"
-            publisher_app.show_publish_dialog(single_file_mode=single_file_mode)
-        except Exception as e:
-            raise TankError(
-                f"Failed to launch Publisher: {e}\n\n"
-                f"The Publisher app was found but failed to start."
+                "Please ensure tk-multi-publish2 is configured in "
+                "env/includes/desktop/project.yml under 'desktop.project: apps:'"
             )

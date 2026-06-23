@@ -130,7 +130,7 @@ class MayaActions(HookBaseClass):
         # -----------------------
         # FlowAM specific actions
         # -----------------------
-        if self.parent.context.flow_project_id:
+        if app.context.flow_project_id and sgtk.platform.current_engine().flow_host:
             flowam_actions = app.flowam.FlowAMActions()
 
             if (
@@ -294,7 +294,7 @@ class MayaActions(HookBaseClass):
         # -----------------------
         # FlowAM specific actions
         # -----------------------
-        if self.parent.context.flow_project_id:
+        if app.context.flow_project_id and sgtk.platform.current_engine().flow_host:
             flowam_actions = app.flowam.FlowAMActions()
 
             if name == "reference_am":

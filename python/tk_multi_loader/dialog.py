@@ -170,7 +170,8 @@ class AppDialog(QtGui.QWidget):
         self._medm_cache = None
         self._medm_thumbnail_service = None
         self._medm_history_model = None
-        if sgtk.platform.current_bundle().context.flow_project_id:
+        _engine = sgtk.platform.current_engine()
+        if _engine.context.flow_project_id and _engine.flow_host:
             self._medm_cache = MedmSharedCache()
             self._medm_thumbnail_service = MedmThumbnailService(self._medm_cache, self)
 
@@ -374,13 +375,14 @@ class AppDialog(QtGui.QWidget):
 
         # Set up filtering
         app = sgtk.platform.current_bundle()
+        engine = sgtk.platform.current_engine()
         if app.get_setting("use_legacy_published_file_type_filter", False):
             # Hide the Filter menu button.
             # The legacy filter functionality is always set up, since the filter menu still
             # requires some of that functionality.
             self._filter_menu = None
             self.ui.filter_menu_btn.hide()
-        elif app.context.flow_project_id:
+        elif engine.context.flow_project_id and engine.flow_host:
             # Disable filter menu for Flow Asset Management mode - it expects ShotgunModel data
             self._filter_menu = None
             self.ui.filter_menu_btn.hide()
@@ -426,7 +428,7 @@ class AppDialog(QtGui.QWidget):
         self._load_entity_presets()
 
         # Set up the FlowAM tree panel when Flow Asset Management is enabled
-        if app.context.flow_project_id:
+        if engine.context.flow_project_id and engine.flow_host:
             self._setup_medm_tree_panel()
 
         #################################################

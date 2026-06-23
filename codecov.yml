@@ -1,7 +1,7 @@
 ignore:
   # flowam and other files not covered by unit tests
   - "**python/tk_multi_loader/flowam/*"
-  - "**python/tk_multi_loader2/build_asset_dialog.py*"
-  - "**python/tk_multi_loader2/build_template_dialog.py*"
-  - "**python/tk_multi_loader2/ui/build_asset_dialog.py*"
-  - "**python/tk_multi_loader2/ui/build_template_dialog.py*"
+  - "**python/tk_multi_loader/build_asset_dialog.py*"
+  - "**python/tk_multi_loader/build_template_dialog.py*"
+  - "**python/tk_multi_loader/ui/build_asset_dialog.py*"
+  - "**python/tk_multi_loader/ui/build_template_dialog.py*"

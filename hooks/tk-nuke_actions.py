@@ -114,9 +114,7 @@ class NukeActions(HookBaseClass):
         # -----------------------
         # FlowAM specific actions
         # -----------------------
-        if hasattr(app.context, "flow_project_id") and hasattr(
-            sgtk.platform.current_engine(), "flow_host"
-        ):
+        if app.flowam_available:
             flowam_actions = app.flowam.FlowAMActions()
 
             if "build_new_script" in actions:
@@ -258,8 +256,7 @@ class NukeActions(HookBaseClass):
         # -----------------------
         # FlowAM specific actions
         # -----------------------
-        use_medm_data = app.get_setting("use_medm_data", False)
-        if use_medm_data:
+        if app.flowam_available:
             flowam_actions = app.flowam.FlowAMActions()
 
             if name == "build_new_script":

@@ -163,10 +163,7 @@ class AppDialog(QtGui.QWidget):
         self._medm_cache = None
         self._medm_thumbnail_service = None
         self._medm_history_model = None
-        _engine = sgtk.platform.current_engine()
-        if hasattr(_engine.context, "flow_project_id") and hasattr(
-            _engine, "flow_host"
-        ):
+        if self.flowam_available:
             from .flowam import (
                 MedmSharedCache,
                 MedmThumbnailService,
@@ -376,16 +373,13 @@ class AppDialog(QtGui.QWidget):
 
         # Set up filtering
         app = sgtk.platform.current_bundle()
-        engine = sgtk.platform.current_engine()
         if app.get_setting("use_legacy_published_file_type_filter", False):
             # Hide the Filter menu button.
             # The legacy filter functionality is always set up, since the filter menu still
             # requires some of that functionality.
             self._filter_menu = None
             self.ui.filter_menu_btn.hide()
-        elif hasattr(engine.context, "flow_project_id") and hasattr(
-            engine, "flow_host"
-        ):
+        elif self.flowam_available:
             # Disable filter menu for Flow Asset Management mode - it expects ShotgunModel data
             self._filter_menu = None
             self.ui.filter_menu_btn.hide()
@@ -431,7 +425,7 @@ class AppDialog(QtGui.QWidget):
         self._load_entity_presets()
 
         # Set up the FlowAM tree panel when Flow Asset Management is enabled
-        if hasattr(engine.context, "flow_project_id") and hasattr(engine, "flow_host"):
+        if self.flowam_available:
             self._setup_medm_tree_panel()
 
         #################################################
@@ -444,6 +438,20 @@ class AppDialog(QtGui.QWidget):
 
         # initialize proxy model with published file types filter set from the config
         self._apply_type_filters_on_publishes()
+
+    @property
+    def flowam_available(self) -> bool:
+        """
+        Returns True if FlowAM integration is available in the running core.
+
+        :returns: True if FlowAM integration is available, False otherwise
+        :rtype: bool
+        """
+        _engine = sgtk.platform.current_engine()
+        return (
+            getattr(_engine.context, "flow_project_id", None) is not None
+            and getattr(_engine, "flow_host", None) is not None
+        )
 
     def _welcome_msg(self):
         """

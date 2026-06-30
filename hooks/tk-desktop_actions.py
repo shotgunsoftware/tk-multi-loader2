@@ -76,9 +76,7 @@ class DesktopActions(HookBaseClass):
 
         action_instances = []
 
-        if hasattr(app.context, "flow_project_id") and hasattr(
-            sgtk.platform.current_engine(), "flow_host"
-        ):
+        if app.flowam_available:
             flowam_actions = app.flowam.FlowAMActions()
 
             if "download" in actions and sg_publish_data.get("type") == "PublishedFile":

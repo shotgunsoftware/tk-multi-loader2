@@ -33,7 +33,7 @@ try:
     from .thumbnail_service import MedmThumbnailService
 except ImportError as exc:
     logger.error(
-        "tk-desktop: There was an error importing the 'flowam' module.\n"
+        "tk-multi-loader2: There was an error importing the 'flowam' module.\n"
         "This is likely due to Flow AM features being unavailable in the "
         "current version of tk-core - i.e. it is missing the Flow Integration SDK "
         "('tank_vendor.flow_integration_sdk' / 'tank.flowam').\n"

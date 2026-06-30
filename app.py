@@ -100,6 +100,19 @@ class MultiLoader(sgtk.platform.Application):
         return self._manager_class(bundle or self)
 
     @property
+    def flowam_available(self) -> bool:
+        """
+        Returns True if FlowAM integration is available in the running core.
+
+        :returns: True if FlowAM integration is available, False otherwise
+        :rtype: bool
+        """
+        return (
+            getattr(self.context, "flow_project_id", None) is not None
+            and getattr(sgtk.platform.current_engine(), "flow_host", None) is not None
+        )
+
+    @property
     def flowam(self) -> ModuleType:
         """
         Access to the FlowAM integration module for this app. This module provides

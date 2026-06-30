@@ -103,7 +103,9 @@ class HoudiniActions(HookBaseClass):
         # -----------------------
         # FlowAM specific actions
         # -----------------------
-        if app.context.flow_project_id and sgtk.platform.current_engine().flow_host:
+        if hasattr(app.context, "flow_project_id") and hasattr(
+            sgtk.platform.current_engine(), "flow_host"
+        ):
             flowam_actions = app.flowam.FlowAMActions()
 
             if "open" in actions and sg_publish_data.get("type") == "PublishedFile":
@@ -246,7 +248,7 @@ class HoudiniActions(HookBaseClass):
         # -----------------------
         # FlowAM specific actions
         # -----------------------
-        if app.context.flow_project_id and app.flow_host:
+        if hasattr(app.context, "flow_project_id") and hasattr(app, "flow_host"):
             flowam_actions = app.flowam.FlowAMActions()
 
             if name == "open":

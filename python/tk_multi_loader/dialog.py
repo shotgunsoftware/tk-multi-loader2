@@ -26,13 +26,6 @@ from .delegate_publish_list import SgPublishListDelegate
 from .delegate_publish_thumb import SgPublishThumbDelegate
 from .framework_qtwidgets import ShotgunFilterMenu
 from .loader_action_manager import LoaderActionManager
-from .flowam import (
-    MedmEntityModel,
-    MedmLatestPublishModel,
-    MedmPublishHistoryModel,
-    MedmSharedCache,
-    MedmThumbnailService,
-)
 from .model_entity import SgEntityModel
 from .model_hierarchy import SgHierarchyModel
 from .model_latestpublish import SgLatestPublishModel
@@ -171,7 +164,15 @@ class AppDialog(QtGui.QWidget):
         self._medm_thumbnail_service = None
         self._medm_history_model = None
         _engine = sgtk.platform.current_engine()
-        if _engine.context.flow_project_id and _engine.flow_host:
+        if hasattr(_engine.context, "flow_project_id") and hasattr(
+            _engine, "flow_host"
+        ):
+            from .flowam import (
+                MedmSharedCache,
+                MedmThumbnailService,
+                MedmPublishHistoryModel,
+            )
+
             self._medm_cache = MedmSharedCache()
             self._medm_thumbnail_service = MedmThumbnailService(self._medm_cache, self)
 
@@ -382,7 +383,9 @@ class AppDialog(QtGui.QWidget):
             # requires some of that functionality.
             self._filter_menu = None
             self.ui.filter_menu_btn.hide()
-        elif engine.context.flow_project_id and engine.flow_host:
+        elif hasattr(engine.context, "flow_project_id") and hasattr(
+            engine, "flow_host"
+        ):
             # Disable filter menu for Flow Asset Management mode - it expects ShotgunModel data
             self._filter_menu = None
             self.ui.filter_menu_btn.hide()
@@ -428,7 +431,7 @@ class AppDialog(QtGui.QWidget):
         self._load_entity_presets()
 
         # Set up the FlowAM tree panel when Flow Asset Management is enabled
-        if engine.context.flow_project_id and engine.flow_host:
+        if hasattr(engine.context, "flow_project_id") and hasattr(engine, "flow_host"):
             self._setup_medm_tree_panel()
 
         #################################################
@@ -2445,6 +2448,8 @@ class AppDialog(QtGui.QWidget):
         Set up the FlowAM tree view panel as the left-most panel in the splitter.
         This panel shows the Flow Asset Management hierarchy.
         """
+        from .flowam import MedmEntityModel, MedmLatestPublishModel
+
         medm_panel = QtGui.QWidget()
         medm_layout = QtGui.QVBoxLayout(medm_panel)
         medm_layout.setContentsMargins(0, 0, 0, 0)

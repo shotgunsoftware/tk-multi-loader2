@@ -337,6 +337,38 @@ class MayaActions(HookBaseClass):
         if name == "image_plane":
             self._create_image_plane(path, sg_publish_data)
 
+    def action_mappings(self) -> dict:
+        """
+        Returns the action mappings for the loader app.
+
+        :returns: Dictionary of action mappings.
+        """
+        app = self.parent
+        if app.flowam_available:
+            return {
+                "All": ["reference_copy_link", "download"],
+                "Maya Workfile": ["reference_am", "open", "discard_draft"],
+                "Alembic": ["reference_am"],
+                "Template": ["open"],
+            }
+
+        return {}
+
+    def entity_mappings(self) -> dict:
+        """
+        Returns the entity mappings for the loader app.
+
+        :returns: Dictionary of entity mappings.
+        """
+        app = self.parent
+        if app.flowam_available:
+            return {
+                "Project": ["create_generic_asset"],
+                "Task": ["create_generic_asset"],
+            }
+
+        return {}
+
     ##############################################################################################################
     # helper methods which can be subclassed in custom hooks to fine tune the behaviour of things
 

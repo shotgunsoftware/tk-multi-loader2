@@ -281,6 +281,36 @@ class HoudiniActions(HookBaseClass):
         if name == "file_cop":
             self._file_cop(path, sg_publish_data)
 
+    def action_mappings(self) -> dict:
+        """
+        Returns the action mappings for the loader app.
+
+        :returns: Dictionary of action mappings.
+        """
+        app = self.parent
+        if app.flowam_available:
+            return {
+                "All": ["reference_copy_link"],
+                "Houdini Workfile": ["open", "discard_draft"],
+            }
+
+        return {}
+
+    def entity_mappings(self) -> dict:
+        """
+        Returns the entity mappings for the loader app.
+
+        :returns: Dictionary of entity mappings.
+        """
+        app = self.parent
+        if app.flowam_available:
+            return {
+                "Project": ["create_generic_asset"],
+                "Task": ["create_generic_asset"],
+            }
+
+        return {}
+
     ##############################################################################################################
     # helper methods which can be subclassed in custom hooks to fine tune the behaviour of things
 

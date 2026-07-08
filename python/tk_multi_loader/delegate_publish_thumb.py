@@ -9,10 +9,15 @@
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import sgtk
-import datetime
-from sgtk.platform.qt import QtCore, QtGui
+from sgtk.platform.qt import QtCore
+
 from .model_latestpublish import SgLatestPublishModel
-from .utils import ResizeEventFilter
+from .constants import DRAFT_VERSION_IDENTIFIER
+from .utils import create_fields_display_html
+from .ui.widget_publish_thumb import Ui_PublishThumbWidget
+from .delegate_publish import PublishWidget, PublishDelegate
+
+from . import model_item_data
 
 # import the shotgun_model and view modules from the shotgun utils framework
 shotgun_model = sgtk.platform.import_framework(
@@ -22,10 +27,6 @@ shotgun_globals = sgtk.platform.import_framework(
     "tk-framework-shotgunutils", "shotgun_globals"
 )
 shotgun_view = sgtk.platform.import_framework("tk-framework-qtwidgets", "views")
-
-from .ui.widget_publish_thumb import Ui_PublishThumbWidget
-from .delegate_publish import PublishWidget, PublishDelegate
-from . import model_item_data
 
 
 class PublishThumbWidget(PublishWidget):
@@ -69,6 +70,17 @@ class SgPublishThumbDelegate(PublishDelegate):
     Delegate which 'glues up' the Thumb widget with a QT View.
     """
 
+    def __init__(self, *args, **kwargs):
+        """
+        Initialize the delegate and load app settings.
+        """
+        super(SgPublishThumbDelegate, self).__init__(*args, **kwargs)
+
+        self._app = sgtk.platform.current_bundle()
+        self._thumbnail_entity_fields = self._app.get_setting(
+            "entity_fields_middle_panel_thumbnail", {}
+        )
+
     def _create_widget(self, parent):
         """
         Widget factory as required by base class. The base class will call this
@@ -86,30 +98,44 @@ class SgPublishThumbDelegate(PublishDelegate):
         :param widget: Qt widget created by the delegate for rendering.
         """
 
-        # Extract the Shotgun data and field value from the model index.
         sg_data, field_value = model_item_data.get_item_data(model_index)
 
         header_text = ""
         details_text = ""
+        entity_type = sg_data.get("type") if sg_data else None
 
         if (
             isinstance(field_value, dict)
             and "name" in field_value
             and "type" in field_value
         ):
-            # intermediate node with entity link
             header_text = field_value["name"]
             details_text = shotgun_globals.get_type_display_name(field_value["type"])
 
+            intermediate_entity_type = field_value.get("type")
+            configured_fields = self._thumbnail_entity_fields.get(
+                intermediate_entity_type, []
+            )
+            try:
+                additional_fields_html = create_fields_display_html(
+                    configured_fields, field_value, max_chars_per_line=40, max_lines=2
+                )
+                if additional_fields_html:
+                    details_text += "<br/>" + additional_fields_html
+            except Exception as exc:
+                self._app.logger.warning(
+                    "Unable to render configured fields for %s entity in thumbnail view. Error: %s",
+                    intermediate_entity_type,
+                    exc,
+                    exc_info=True,
+                )
+
         elif isinstance(field_value, list):
-            # this is a list of some sort. Loop over all elements and extract a comma separated list.
             formatted_values = []
             if len(field_value) == 0:
-                # no items in list
                 formatted_values.append("No Value")
             for v in field_value:
                 if isinstance(v, dict) and "name" in v and "type" in v:
-                    # This is a link field
                     if v.get("name"):
                         formatted_values.append(v.get("name"))
                 else:
@@ -118,12 +144,25 @@ class SgPublishThumbDelegate(PublishDelegate):
             header_text = ", ".join(formatted_values)
 
         elif sg_data:
-            # this is a leaf node
             header_text = field_value
-            details_text = shotgun_globals.get_type_display_name(sg_data["type"])
+            details_text = shotgun_globals.get_type_display_name(entity_type)
+
+            configured_fields = self._thumbnail_entity_fields.get(entity_type, [])
+            try:
+                additional_fields_html = create_fields_display_html(
+                    configured_fields, sg_data, max_chars_per_line=40, max_lines=2
+                )
+                if additional_fields_html:
+                    details_text += "<br/>" + additional_fields_html
+            except Exception as exc:
+                self._app.logger.warning(
+                    "Unable to render configured fields for %s entity in thumbnail view. Error: %s",
+                    entity_type,
+                    exc,
+                    exc_info=True,
+                )
 
         else:
-            # other value (e.g. intermediary non-entity link node like sg_asset_type)
             header_text = field_value
 
         widget.set_text(header_text, details_text)
@@ -136,90 +175,31 @@ class SgPublishThumbDelegate(PublishDelegate):
         :param widget: Qt widget created by the delegate for rendering.
         """
 
-        # this is a publish!
         sg_data = shotgun_model.get_sg_data(model_index)
+        entity_type = sg_data.get("type") if sg_data else None
+
+        header_text_fields = ["name", "version_number", "task"]
+        configured_fields = self._thumbnail_entity_fields.get(entity_type, [])
 
         header_text = ""
         details_text = ""
 
-        # example data:
-
-        # {'code': 'aaa_00010_F004_C003_0228F8_v000.%04d.dpx',
-        #  'created_at': 1425378837.0,
-        #  'created_by': {'id': 42, 'name': 'Manne Ohrstrom', 'type': 'HumanUser'},
-        #  'created_by.HumanUser.image': 'https://...',
-        #  'description': 'testing testing, 1,2,3',
-        #  'entity': {'id': 1660, 'name': 'aaa_00010', 'type': 'Shot'},
-        #  'id': 1340,
-        #  'image': 'https:...',
-        #  'name': 'aaa_00010, F004_C003_0228F8',
-        #  'path': {'content_type': 'image/dpx',
-        #           'id': 24116,
-        #           'link_type': 'local',
-        #           'local_path': '/mnt/projects...',
-        #           'local_path_linux': '/mnt/projects...',
-        #           'local_path_mac': '/mnt/projects...',
-        #           'local_path_windows': 'z:\\mnt\\projects...',
-        #           'local_storage': {'id': 4,
-        #                             'name': 'primary',
-        #                             'type': 'LocalStorage'},
-        #           'name': 'aaa_00010_F004_C003_0228F8_v000.%04d.dpx',
-        #           'type': 'Attachment',
-        #           'url': 'file:///mnt/projects...'},
-        #  'project': {'id': 289, 'name': 'Climp', 'type': 'Project'},
-        #  'published_file_type': {'id': 53,
-        #                          'name': 'Flame Render',
-        #                          'type': 'PublishedFileType'},
-        #  'task': None,
-        #  'task.Task.content': None,
-        #  'task.Task.due_date': None,
-        #  'task.Task.sg_status_list': None,
-        #  'task_uniqueness': False,
-        #  'type': 'PublishedFile',
-        #  'version': {'id': 6697,
-        #              'name': 'aaa_00010_F004_C003_0228F8_v000',
-        #              'type': 'Version'},
-        #  'version.Version.sg_status_list': 'rev',
-        #  'version_number': 2}
-
-        # get the name (lighting v3)
         name_str = "Unnamed"
         if sg_data.get("name"):
             name_str = sg_data.get("name")
 
-        if sg_data.get("version_number"):
-            name_str += " v%s" % sg_data.get("version_number")
+        version_number = sg_data.get("version_number")
+        if version_number == DRAFT_VERSION_IDENTIFIER:
+            name_str += " [DRAFT]"
+        elif version_number:
+            name_str += " v%s" % version_number
 
-        # now we are tracking whether this item has a unique task/name/type combo
-        # or not via the specially injected task_uniqueness boolean.
-        # If this is true, that means that this is the only item in the listing
-        # with this name/type combo, and we can render its display name on two
-        # lines, name first and then type, e.g.:
-        # MyScene, v3
-        # Maya Render
-        #
-        # However, there can be multiple *different* tasks which have the same
-        # name/type combo - in this case, we want to display the task name too
-        # since this is what differentiates the data. In that case we display it:
-        # MyScene, v3 (Layout)
-        # Maya Render
-        #
         if sg_data.get("task_uniqueness") == False and sg_data.get("task") is not None:
             name_str += " (%s)" % sg_data["task"]["name"]
 
-        # make this the title of the card
         header_text = name_str
 
-        # check if we are in "deep mode". In that case, display the entity link info
-        # on the thumb card. Otherwise, display the type.
         if self._sub_items_mode:
-
-            # display this publish in sub items node
-            # in this case we want to display the following two lines
-            # main_body v3
-            # Shot AAA001
-
-            # get the name of the associated entity
             entity_link = sg_data.get("entity")
             if entity_link is None:
                 details_text = "Unlinked"
@@ -230,12 +210,28 @@ class SgPublishThumbDelegate(PublishDelegate):
                 details_text = "%s %s" % (entity_link_type, entity_link["name"])
 
         else:
-            # std publish - render with a name and a publish type
-            # main_body v3
-            # Render
-            details_text = shotgun_model.get_sanitized_data(
+            base_type = shotgun_model.get_sanitized_data(
                 model_index, SgLatestPublishModel.PUBLISH_TYPE_NAME_ROLE
             )
+            details_text = base_type
+
+            try:
+                additional_fields_html = create_fields_display_html(
+                    configured_fields,
+                    sg_data,
+                    filter_fields=header_text_fields,
+                    max_chars_per_line=40,
+                    max_lines=2,
+                )
+                if additional_fields_html:
+                    details_text += "<br/>" + additional_fields_html
+            except Exception as exc:
+                self._app.logger.warning(
+                    "Unable to render configured fields for %s publish in thumbnail view. Error: %s",
+                    entity_type,
+                    exc,
+                    exc_info=True,
+                )
 
         widget.set_text(header_text, details_text)
 
@@ -246,6 +242,5 @@ class SgPublishThumbDelegate(PublishDelegate):
         :param style_options: QT style options
         :param model_index: Model item to operate on
         """
-        # base the size of each element off the icon size property of the view
         scale_factor = self._view.iconSize().width()
         return PublishThumbWidget.calculate_size(scale_factor)

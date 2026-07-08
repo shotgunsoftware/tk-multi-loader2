@@ -14,7 +14,9 @@ Hook that loads defines all the available actions, broken down by publish type.
 
 import os
 import re
+
 import sgtk
+from tank_vendor.flow_integration_sdk.sandbox import is_new_asset
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
@@ -98,6 +100,100 @@ class HoudiniActions(HookBaseClass):
                 }
             )
 
+        # -----------------------
+        # FlowAM specific actions
+        # -----------------------
+        if app.flowam_available:
+            flowam_actions = app.flowam.FlowAMActions()
+
+            if "open" in actions and sg_publish_data.get("type") == "PublishedFile":
+                if (
+                    flowam_actions.is_local_draft_by_revision(
+                        sg_publish_data.get("sg_flow_revision_id")
+                    )
+                    or sg_publish_data.get(
+                        "version_number", flowam_actions.DRAFT_VERSION_IDENTIFIER
+                    )
+                    > flowam_actions.DRAFT_VERSION_IDENTIFIER
+                ):
+                    action_instances.append(
+                        {
+                            "name": "open",
+                            "params": None,
+                            "caption": "Open",
+                            "description": "This will open the item into the current scene.",
+                            "multi_select": False,
+                        }
+                    )
+
+            if "download" in actions and sg_publish_data.get("type") == "PublishedFile":
+                version_number = sg_publish_data.get("version_number")
+
+                if (
+                    version_number is not None
+                    and version_number != flowam_actions.DRAFT_VERSION_IDENTIFIER
+                ):
+                    action_instances.append(
+                        {
+                            "name": "download",
+                            "params": "Download 'params'",
+                            "caption": "Download",
+                            "description": "Downloads the published file to a user specified location.",
+                        }
+                    )
+
+            if "discard_draft" in actions:
+                draft_id = sg_publish_data.get("sg_flow_revision_id")
+
+                if flowam_actions.is_local_draft_by_revision(
+                    sg_publish_data.get("sg_flow_revision_id")
+                ) and is_new_asset(draft_id):
+                    action_instances.append(
+                        {
+                            "name": "discard_draft",
+                            "params": None,
+                            "caption": "Discard Draft",
+                            "description": "This will discard the local draft for this publish.",
+                        }
+                    )
+
+            if (
+                "reference_copy_link" in actions
+                and sg_publish_data.get(
+                    "version_number", flowam_actions.DRAFT_VERSION_IDENTIFIER
+                )
+                != flowam_actions.DRAFT_VERSION_IDENTIFIER
+            ):
+                action_instances.append(
+                    {
+                        "name": "reference_copy_link",
+                        "params": None,
+                        "caption": "Copy Reference Link",
+                        "description": "This will copy the reference as a string to the clipboard",
+                        "multi_select": False,
+                    }
+                )
+
+            if "build_new_scene" in actions:
+                action_instances.append(
+                    {
+                        "name": "build_new_scene",
+                        "params": None,
+                        "caption": "Build New Scene",
+                        "description": "This will create a new scene in the current project.",
+                    }
+                )
+
+            if "build_new_template" in actions:
+                action_instances.append(
+                    {
+                        "name": "build_new_template",
+                        "params": None,
+                        "caption": "Build New Template",
+                        "description": "This will create a new template scene in the current project.",
+                    }
+                )
+
         return action_instances
 
     def execute_multiple_actions(self, actions):
@@ -147,6 +243,32 @@ class HoudiniActions(HookBaseClass):
             "Parameters: %s. Publish Data: %s" % (name, params, sg_publish_data)
         )
 
+        # -----------------------
+        # FlowAM specific actions
+        # -----------------------
+        if app.flowam_available:
+            flowam_actions = app.flowam.FlowAMActions()
+
+            if name == "open":
+                flowam_actions._do_open(sg_publish_data)
+
+            if name == "reference_copy_link":
+                flowam_actions._create_reference_copy_link(sg_publish_data)
+
+            if name == "discard_draft":
+                flowam_actions._discard_draft(sg_publish_data)
+
+            if name == "build_new_scene":
+                flowam_actions._build_new_scene(sg_publish_data)
+
+            if name == "build_new_template":
+                flowam_actions._build_new_template(sg_publish_data)
+
+            if name == "download":
+                flowam_actions._download_asset_revision(sg_publish_data)
+
+            return
+
         # resolve path
         path = self.get_publish_path(sg_publish_data)
 
@@ -158,6 +280,37 @@ class HoudiniActions(HookBaseClass):
 
         if name == "file_cop":
             self._file_cop(path, sg_publish_data)
+
+    def action_mappings(self) -> dict:
+        """
+        Returns the action mappings for the loader app.
+
+        :returns: Dictionary of action mappings.
+        """
+        app = self.parent
+        if app.flowam_available:
+            return {
+                "All": ["reference_copy_link", "download"],
+                "Houdini Workfile": ["open", "reference_copy_link", "discard_draft"],
+                "Template": ["open", "download"],
+            }
+
+        return {}
+
+    def entity_mappings(self) -> dict:
+        """
+        Returns the entity mappings for the loader app.
+
+        :returns: Dictionary of entity mappings.
+        """
+        app = self.parent
+        if app.flowam_available:
+            return {
+                "Project": ["build_new_template"],
+                "Task": ["build_new_scene"],
+            }
+
+        return {}
 
     ##############################################################################################################
     # helper methods which can be subclassed in custom hooks to fine tune the behaviour of things

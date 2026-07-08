@@ -98,6 +98,39 @@ configuration:
         default_value_tk-flame:
             Shot: [load_batch, create_batch]
 
+    entity_fields_middle_panel_list:
+        type: dict
+        description: "Additional fields to display for each entity type in the middle panel
+                     list view, beyond the default fields that are already shown. Keys are
+                     entity types (e.g. 'PublishedFile', 'Shot', 'Asset') and values are
+                     lists of field names to display."
+        default_value: {}
+        allows_empty: true
+
+    entity_fields_middle_panel_thumbnail:
+        type: dict
+        description: "Additional fields to display for each entity type in the middle panel
+                     thumbnail view, beyond the default fields that are already shown. Keys
+                     are entity types and values are lists of field names to display."
+        default_value: {}
+        allows_empty: true
+
+    entity_fields_detail_panel:
+        type: dict
+        description: "Fields to display for each entity type in detail panel view. Keys are
+                     entity types (e.g. 'PublishedFile', 'Shot', 'Asset') and values are
+                     lists of field names to display."
+        default_value: {}
+        allows_empty: true
+
+    flow_am_internal_fields:
+        type: dict
+        description: "Extra Flow AM fields loaded for internal logic or workflow purposes
+                     (not for display). Available during model initialisation and accessible
+                     throughout the app, but not shown in the UI."
+        default_value: {}
+        allows_empty: true
+
     entities:
         default_value:
             - caption: Project

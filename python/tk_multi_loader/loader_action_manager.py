@@ -210,6 +210,9 @@ class LoaderActionManager(ActionManager):
 
         return qt_actions
 
+    def get_actions_for_entity(self, sg_data):
+        return self._loader_manager.get_actions_for_entity(sg_data)
+
     ########################################################################################
     # callbacks
 

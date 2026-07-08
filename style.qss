@@ -15,3 +15,34 @@ QWidget {
     font-family: "Open Sans";
     font-style: "Regular";
 }
+
+#history_view {
+    background: transparent;
+    border: none;
+}
+
+PublishHistoryWidget > #box {
+    background-color: rgba(255, 255, 255, 25);
+    border-radius: 4px;
+    border: none;
+}
+
+#details_header {
+    padding-left: 15px;
+}
+
+#details_button {
+    font-weight: 600;
+    font-size: 14px;
+    color: #FFFFFF;
+    border: none;
+}
+
+#details_button:active {
+    background: transparent;
+}
+
+#details {
+    background: #2A2A2A;
+    border-radius: 10px;
+}

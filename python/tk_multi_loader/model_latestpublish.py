@@ -270,12 +270,33 @@ class SgLatestPublishModel(ShotgunModel):
         app = sgtk.platform.current_bundle()
         publish_entity_type = sgtk.util.get_published_file_entity_type(app.tank)
 
+        # Get configured fields from app settings
+        list_fields = app.get_setting("entity_fields_middle_panel_list", {}).get(
+            publish_entity_type, []
+        )
+        thumb_fields = app.get_setting("entity_fields_middle_panel_thumbnail", {}).get(
+            publish_entity_type, []
+        )
+        flow_am_internal_fields = app.get_setting("flow_am_internal_fields", {}).get(
+            publish_entity_type, []
+        )
+        constant_middle_panel_fields = constants.ENTITY_TYPE_MIDDLE_PANEL_FIELDS.get(
+            publish_entity_type, []
+        )
+
         if publish_entity_type == "PublishedFile":
             self._publish_type_field = "published_file_type"
         else:
             self._publish_type_field = "tank_type"
 
-        publish_fields = [self._publish_type_field] + constants.PUBLISHED_FILES_FIELDS
+        publish_fields = [self._publish_type_field] + list(
+            set(
+                constant_middle_panel_fields
+                + list_fields
+                + thumb_fields
+                + flow_am_internal_fields
+            )
+        )
 
         # first add our folders to the model
         # make gc happy by keeping handle to all items

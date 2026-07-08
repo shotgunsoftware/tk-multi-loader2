@@ -1,0 +1,10 @@
+ignore:
+  # flowam and other files not covered by unit tests
+  - "**python/tk_multi_loader/flowam/*"
+  - "**python/tk_multi_loader/build_asset_dialog.py*"
+  - "**python/tk_multi_loader/build_template_dialog.py*"
+  - "**python/tk_multi_loader/ui/build_asset_dialog.py*"
+  - "**python/tk_multi_loader/ui/build_template_dialog.py*"
+  - "**python/tk_multi_loader/model_hierarchy.py"
+  - "**python/tk_multi_loader/delegate_publish_list.py"
+  - "**python/tk_multi_loader/delegate_publish_thumb.py"

@@ -12,10 +12,9 @@
 Hook that loads defines all the available actions, broken down by publish type.
 """
 
+import glob
 import os
 import re
-import glob
-import sys
 
 import sgtk
 
@@ -112,6 +111,98 @@ class NukeActions(HookBaseClass):
                 }
             )
 
+        # -----------------------
+        # FlowAM specific actions
+        # -----------------------
+        if app.flowam_available:
+            flowam_actions = app.flowam.FlowAMActions()
+
+            if "build_new_script" in actions:
+                action_instances.append(
+                    {
+                        "name": "build_new_script",
+                        "params": None,
+                        "caption": "Build New Script",
+                        "description": "This will create a new script in the current project.",
+                    }
+                )
+            if "build_new_template" in actions:
+                action_instances.append(
+                    {
+                        "name": "build_new_template",
+                        "params": None,
+                        "caption": "Build New Template",
+                        "description": "This will create a new template script in the current project.",
+                    }
+                )
+            if "open" in actions and sg_publish_data.get("type") == "PublishedFile":
+                # Show open action for:
+                # 1. Local drafts (version_number == -1 and is_local_draft)
+                # 2. Published revisions (version_number > -1)
+                if (
+                    flowam_actions.is_local_draft_by_revision(
+                        sg_publish_data.get("sg_flow_revision_id")
+                    )
+                    or sg_publish_data.get(
+                        "version_number", flowam_actions.DRAFT_VERSION_IDENTIFIER
+                    )
+                    > flowam_actions.DRAFT_VERSION_IDENTIFIER
+                ):
+                    action_instances.append(
+                        {
+                            "name": "open",
+                            "params": None,
+                            "caption": "Open",
+                            "description": "This will open the item into the current script.",
+                        }
+                    )
+
+            if (
+                "discard_draft" in actions
+                and flowam_actions.is_local_draft_by_revision(
+                    sg_publish_data.get("sg_flow_revision_id")
+                )
+            ):
+                action_instances.append(
+                    {
+                        "name": "discard_draft",
+                        "params": None,
+                        "caption": "Discard Draft",
+                        "description": "This will discard the local draft.",
+                    }
+                )
+            if (
+                "reference_copy_link" in actions
+                and sg_publish_data.get(
+                    "version_number", flowam_actions.DRAFT_VERSION_IDENTIFIER
+                )
+                != flowam_actions.DRAFT_VERSION_IDENTIFIER
+            ):
+                action_instances.append(
+                    {
+                        "name": "reference_copy_link",
+                        "params": None,
+                        "caption": "Copy Reference Link",
+                        "description": "This will copy the reference link as a string to the clipboard.",
+                        "multi_select": False,
+                    }
+                )
+            if (
+                "create_read_node" in actions
+                and sg_publish_data.get(
+                    "version_number", flowam_actions.DRAFT_VERSION_IDENTIFIER
+                )
+                != flowam_actions.DRAFT_VERSION_IDENTIFIER
+            ):
+                action_instances.append(
+                    {
+                        "name": "create_read_node",
+                        "params": None,
+                        "caption": "Create Read Node",
+                        "description": "This will load the item into the current script as a new Read node.",
+                    }
+                )
+
         return action_instances
 
     def execute_multiple_actions(self, actions):
@@ -162,6 +253,32 @@ class NukeActions(HookBaseClass):
             "Parameters: %s. Publish Data: %s" % (name, params, sg_publish_data)
         )
 
+        # -----------------------
+        # FlowAM specific actions
+        # -----------------------
+        if app.flowam_available:
+            flowam_actions = app.flowam.FlowAMActions()
+
+            if name == "build_new_script":
+                flowam_actions._build_new_scene(sg_publish_data)
+
+            if name == "build_new_template":
+                flowam_actions._build_new_template(sg_publish_data)
+
+            if name == "open":
+                flowam_actions._do_open(sg_publish_data)
+
+            if name == "discard_draft":
+                flowam_actions._discard_draft(sg_publish_data)
+
+            if name == "reference_copy_link":
+                flowam_actions._create_reference_copy_link(sg_publish_data)
+
+            if name == "create_read_node":
+                flowam_actions._create_reference(sg_publish_data)
+
+            return
+
         # resolve path - forward slashes on all platforms in Nuke
         path = self.get_publish_path(sg_publish_data).replace(os.path.sep, "/")
 
@@ -176,6 +293,53 @@ class NukeActions(HookBaseClass):
 
         if name == "clip_import":
             self._import_clip(path, sg_publish_data)
+
+    def action_mappings(self) -> dict:
+        """
+        Returns the action mappings for the loader app.
+
+        :returns: Dictionary of action mappings.
+        """
+        app = self.parent
+        if app.flowam_available:
+            return {
+                "All": ["reference_copy_link", "download"],
+                "Nuke Workfile": [
+                    "open",
+                    "discard_draft",
+                    "reference_copy_link",
+                    "download",
+                ],
+                "Generic Workfile": ["reference_copy_link", "create_read_node"],
+                "File Sequence": ["reference_copy_link", "create_read_node"],
+                "Template": ["open", "download"],
+                "Alembic Cache": [],
+                "Flame Render": ["create_read_node"],
+                "Flame Quicktime": ["create_read_node"],
+                "Image": ["create_read_node"],
+                "Movie": ["create_read_node"],
+                "NukeStudio Project": ["open_project"],
+                "Photoshop Image": ["create_read_node"],
+                "Rendered Image": ["create_read_node"],
+                "Texture": ["create_read_node"],
+            }
+
+        return {}
+
+    def entity_mappings(self) -> dict:
+        """
+        Returns the entity mappings for the loader app.
+
+        :returns: Dictionary of entity mappings.
+        """
+        app = self.parent
+        if app.flowam_available:
+            return {
+                "Project": ["build_new_template"],
+                "Task": ["build_new_scene"],
+            }
+
+        return {}
 
     ##############################################################################################################
     # helper methods which can be subclassed in custom hooks to fine tune the behavior of things
@@ -197,11 +361,7 @@ class NukeActions(HookBaseClass):
             )
 
         import hiero
-        from hiero.core import (
-            BinItem,
-            MediaSource,
-            Clip,
-        )
+        from hiero.core import BinItem, Clip, MediaSource
 
         if not hiero.core.projects():
             raise Exception("An active project must exist to import clips into.")

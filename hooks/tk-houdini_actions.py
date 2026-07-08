@@ -292,6 +292,7 @@ class HoudiniActions(HookBaseClass):
             return {
                 "All": ["reference_copy_link", "download"],
                 "Houdini Workfile": ["open", "discard_draft"],
+                "Template": ["open", "download"],
             }
 
         return {}

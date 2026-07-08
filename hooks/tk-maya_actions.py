@@ -348,7 +348,7 @@ class MayaActions(HookBaseClass):
             return {
                 "All": ["reference_copy_link", "download"],
                 "Maya Workfile": ["reference_am", "open", "discard_draft"],
-                "Template": ["open"],
+                "Template": ["open", "download"],
             }
 
         return {}

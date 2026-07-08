@@ -307,7 +307,7 @@ class NukeActions(HookBaseClass):
                 "Nuke Workfile": ["open", "discard_draft"],
                 "Generic Workfile": ["reference_copy_link", "create_read_node"],
                 "File Sequence": ["reference_copy_link", "create_read_node"],
-                "Template": ["open"],
+                "Template": ["open", "download"],
                 "Alembic Cache": [],
                 "Flame Render": ["create_read_node"],
                 "Flame Quicktime": ["create_read_node"],

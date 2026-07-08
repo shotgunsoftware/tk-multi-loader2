@@ -217,10 +217,11 @@ class DesktopActions(HookBaseClass):
         app = self.parent
         if app.flowam_available:
             return {
+                "All": ["download"],
                 "Maya Workfile": ["download", "reference_copy_link"],
                 "Nuke Workfile": ["download", "reference_copy_link"],
                 "Houdini Workfile": ["download", "reference_copy_link"],
-                "All": ["download", "publish", "reference_copy_link"],
+                "Generic Workfile": ["download", "reference_copy_link", "publish"],
             }
 
         return {}

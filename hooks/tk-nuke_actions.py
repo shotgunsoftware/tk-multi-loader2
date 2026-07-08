@@ -303,7 +303,7 @@ class NukeActions(HookBaseClass):
         app = self.parent
         if app.flowam_available:
             return {
-                "All": ["reference_copy_link"],
+                "All": ["reference_copy_link", "download"],
                 "Nuke Workfile": ["open", "discard_draft"],
                 "Generic Workfile": ["reference_copy_link", "create_read_node"],
                 "File Sequence": ["reference_copy_link", "create_read_node"],
@@ -330,8 +330,8 @@ class NukeActions(HookBaseClass):
         app = self.parent
         if app.flowam_available:
             return {
-                "Project": ["create_generic_asset"],
-                "Task": ["create_generic_asset"],
+                "Project": ["build_new_template"],
+                "Task": ["build_new_scene"],
             }
 
         return {}

@@ -348,7 +348,6 @@ class MayaActions(HookBaseClass):
             return {
                 "All": ["reference_copy_link", "download"],
                 "Maya Workfile": ["reference_am", "open", "discard_draft"],
-                "Alembic": ["reference_am"],
                 "Template": ["open"],
             }
 
@@ -363,8 +362,8 @@ class MayaActions(HookBaseClass):
         app = self.parent
         if app.flowam_available:
             return {
-                "Project": ["create_generic_asset"],
-                "Task": ["create_generic_asset"],
+                "Project": ["build_new_template"],
+                "Task": ["build_new_scene"],
             }
 
         return {}

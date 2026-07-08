@@ -290,7 +290,7 @@ class HoudiniActions(HookBaseClass):
         app = self.parent
         if app.flowam_available:
             return {
-                "All": ["reference_copy_link"],
+                "All": ["reference_copy_link", "download"],
                 "Houdini Workfile": ["open", "discard_draft"],
             }
 
@@ -305,8 +305,8 @@ class HoudiniActions(HookBaseClass):
         app = self.parent
         if app.flowam_available:
             return {
-                "Project": ["create_generic_asset"],
-                "Task": ["create_generic_asset"],
+                "Project": ["build_new_template"],
+                "Task": ["build_new_scene"],
             }
 
         return {}

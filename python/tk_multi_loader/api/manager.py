@@ -96,6 +96,13 @@ class LoaderManager(object):
 
         # check if we have logic configured to handle this publish type.
         mappings = self._bundle.get_setting("action_mappings")
+        try:
+            mappings = {
+                **mappings,
+                **self._bundle.execute_hook_method("actions_hook", "action_mappings"),
+            }
+        except TankError:
+            pass
         if not mappings:
             return []
         # returns a structure on the form
@@ -285,6 +292,13 @@ class LoaderManager(object):
 
         # check if we have logic configured to handle this publish type.
         mappings = self._bundle.get_setting("entity_mappings")
+        try:
+            mappings = {
+                **mappings,
+                **self._bundle.execute_hook_method("actions_hook", "entity_mappings"),
+            }
+        except TankError:
+            pass
         if not mappings:
             return []
 

@@ -294,6 +294,53 @@ class NukeActions(HookBaseClass):
         if name == "clip_import":
             self._import_clip(path, sg_publish_data)
 
+    def action_mappings(self) -> dict:
+        """
+        Returns the action mappings for the loader app.
+
+        :returns: Dictionary of action mappings.
+        """
+        app = self.parent
+        if app.flowam_available:
+            return {
+                "All": ["reference_copy_link", "download"],
+                "Nuke Workfile": [
+                    "open",
+                    "discard_draft",
+                    "reference_copy_link",
+                    "download",
+                ],
+                "Generic Workfile": ["reference_copy_link", "create_read_node"],
+                "File Sequence": ["reference_copy_link", "create_read_node"],
+                "Template": ["open", "download"],
+                "Alembic Cache": [],
+                "Flame Render": ["create_read_node"],
+                "Flame Quicktime": ["create_read_node"],
+                "Image": ["create_read_node"],
+                "Movie": ["create_read_node"],
+                "NukeStudio Project": ["open_project"],
+                "Photoshop Image": ["create_read_node"],
+                "Rendered Image": ["create_read_node"],
+                "Texture": ["create_read_node"],
+            }
+
+        return {}
+
+    def entity_mappings(self) -> dict:
+        """
+        Returns the entity mappings for the loader app.
+
+        :returns: Dictionary of entity mappings.
+        """
+        app = self.parent
+        if app.flowam_available:
+            return {
+                "Project": ["build_new_template"],
+                "Task": ["build_new_scene"],
+            }
+
+        return {}
+
     ##############################################################################################################
     # helper methods which can be subclassed in custom hooks to fine tune the behavior of things
 

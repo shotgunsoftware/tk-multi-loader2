@@ -208,6 +208,42 @@ class DesktopActions(HookBaseClass):
         elif name == "download":
             flowam_actions._download_asset_revision(sg_publish_data)
 
+    def action_mappings(self) -> dict:
+        """
+        Returns the action mappings for the loader app.
+
+        :returns: Dictionary of action mappings.
+        """
+        app = self.parent
+        if app.flowam_available:
+            return {
+                "All": ["download"],
+                "Maya Workfile": ["download", "reference_copy_link"],
+                "Nuke Workfile": ["download", "reference_copy_link"],
+                "Houdini Workfile": ["download", "reference_copy_link"],
+                "Generic Workfile": ["download", "reference_copy_link", "publish"],
+            }
+
+        return {}
+
+    def entity_mappings(self) -> dict:
+        """
+        Returns the entity mappings for the loader app.
+
+        :returns: Dictionary of entity mappings.
+        """
+        app = self.parent
+        if app.flowam_available:
+            return {
+                "Project": ["create_generic_asset"],
+                "Task": ["create_generic_asset"],
+            }
+
+        return {}
+
+    ##############################################################################################################
+    # helper methods which can be subclassed in custom hooks to fine tune the behavior of things
+
     def _launch_publisher(self, action_name: str, sg_publish_data: dict) -> None:
         """
         Launches the publisher app in the context of the specified entity (task or project).

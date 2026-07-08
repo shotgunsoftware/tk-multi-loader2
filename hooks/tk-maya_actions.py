@@ -347,7 +347,13 @@ class MayaActions(HookBaseClass):
         if app.flowam_available:
             return {
                 "All": ["reference_copy_link", "download"],
-                "Maya Workfile": ["reference_am", "open", "discard_draft"],
+                "Maya Workfile": [
+                    "reference_am",
+                    "open",
+                    "discard_draft",
+                    "reference_copy_link",
+                    "download",
+                ],
                 "Template": ["open", "download"],
             }
 

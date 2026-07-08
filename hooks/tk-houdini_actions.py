@@ -291,7 +291,7 @@ class HoudiniActions(HookBaseClass):
         if app.flowam_available:
             return {
                 "All": ["reference_copy_link", "download"],
-                "Houdini Workfile": ["open", "discard_draft"],
+                "Houdini Workfile": ["open", "reference_copy_link", "discard_draft"],
                 "Template": ["open", "download"],
             }
 

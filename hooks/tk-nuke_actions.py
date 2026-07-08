@@ -304,7 +304,12 @@ class NukeActions(HookBaseClass):
         if app.flowam_available:
             return {
                 "All": ["reference_copy_link", "download"],
-                "Nuke Workfile": ["open", "discard_draft", "reference_copy_link", "download"],
+                "Nuke Workfile": [
+                    "open",
+                    "discard_draft",
+                    "reference_copy_link",
+                    "download",
+                ],
                 "Generic Workfile": ["reference_copy_link", "create_read_node"],
                 "File Sequence": ["reference_copy_link", "create_read_node"],
                 "Template": ["open", "download"],

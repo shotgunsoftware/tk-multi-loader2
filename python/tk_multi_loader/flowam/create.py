@@ -54,8 +54,6 @@ class CreateInputs(flowam_utils.BaseInputs):
     sg_pipeline_step: str
     #: The AM project under which the asset should be added.
     am_project_id: str
-    #: The name of the current SG task.
-    sg_task_name: str = ""
     #: Description of asset.
     description: str = ""
     #: Determines which initial source file to use to create the asset.
@@ -101,10 +99,6 @@ class CreateInputs(flowam_utils.BaseInputs):
             raise exceptions.CreateAssetError(data=self.asdict(), details=msg)
         if self.create_mode == create.CreateMode.GENERIC and not self.source_path:
             msg = "No source path provided for generic asset."
-            raise exceptions.CreateAssetError(data=self.asdict(), details=msg)
-        # If pipeline step is provided, we expect task_name to be provided as well
-        if self.sg_pipeline_step and not self.sg_task_name:
-            msg = "Incomplete sg context provided. Must provide sg_task_name."
             raise exceptions.CreateAssetError(data=self.asdict(), details=msg)
         # prep_scene_callback is only applicable when create_mode is NEW or TEMPLATE
         if (
@@ -283,14 +277,6 @@ def in_dcc_context() -> bool:
     return engine.name != "tk-desktop"
 
 
-def _has_workfile_type(parent: objects.FlowAsset, type_id: str) -> bool:
-    """Return True if parent asset contains a child of given type."""
-
-    if parent.find_children(type_id=type_id):
-        return True
-    return False
-
-
 def _create_dcc_workfile_asset(
     parent: objects.FlowAsset, inputs: CreateInputs
 ) -> sandbox.NewDraftInfo:
@@ -313,15 +299,9 @@ def _create_dcc_workfile_asset(
     workfile_type = flow_host().WORKFILE_TYPE
     type_id = schema.get_schema_id(workfile_type)
 
-    # Only allow one workfile of DCC type under parent
-    if _has_workfile_type(parent, type_id):
-        msg = f'A workfile of type "{workfile_type}" has already been created '
-        msg += f'under pipeline step "{parent.name}". Please open the asset from '
-        msg += "the Loader app to publish another revision of this asset."
-        raise exceptions.CreateAssetError(data=inputs.asdict(), details=msg)
-
-    # By convention asset name will be the sg entity name
-    name = inputs.sg_entity_name
+    # By convention asset name will be the sg entity name + workfile type
+    abbr_type = workfile_type.split(".")[-1].upper()
+    name = f"{inputs.sg_entity_name} - {abbr_type}"
 
     # Prepare the source file and save to temporary location
     # By convention the source file will be named after the asset

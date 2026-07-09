@@ -37,3 +37,10 @@ nosetests.xml
 
 # Ideavim
 .idea
+
+# IDEs and Editors
+*.swo
+*.swp
+*.swm
+*~
+

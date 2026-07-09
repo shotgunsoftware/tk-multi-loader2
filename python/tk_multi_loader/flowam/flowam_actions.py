@@ -167,7 +167,6 @@ class FlowAMActions:
             sg_pipeline_step=(task.get("step") or {}).get(
                 "name", ""
             ),  # Layout, Animation, etc.
-            sg_task_name=sg_publish_data["content"],
             am_project_id=flow_am_id,
             create_mode=dialog.build,
             source_path=template_path,

@@ -15,6 +15,8 @@ Loader models and actions, backed by Flow Asset Management (FlowAM) instead
 of the ShotGrid REST API.
 """
 
+# flake8: noqa
+
 import sgtk
 
 logger = sgtk.platform.get_logger(__name__)

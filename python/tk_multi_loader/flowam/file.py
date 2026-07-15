@@ -170,3 +170,142 @@ def open_draft(draft_id: str):
     # Open file
     engine.log_info(f"Opening file: {draft_path}")
     engine.flow_host.open_file(draft_path)
+
+
+def checkout_revision(
+    revision_id: str, force: bool = False
+) -> sandbox.CheckoutDraftInfo | None:
+    """Check out the given asset revision/version into sandbox.
+    If the version is already checked out, offer an overwrite.
+    If a different version of the same asset is already checkout out, offer an overwrite.
+
+    Args:
+        revision_id: Id of a published AM asset revision. This can also be a version id.
+        force: If True, force a re-checkout even if an existing draft is found.
+
+    Returns:
+        CheckoutDraftInfo object or None if operation was cancelled.
+
+    Raises:
+        FlowError
+    """
+    engine = sgtk.platform.current_engine()
+
+    if objects.FlowVersion.is_version_id(revision_id):
+        revision = objects.FlowVersion(revision_id).revision
+    else:
+        revision = objects.FlowRevision.get_revision(revision_id)
+
+    try:
+        draft_info = sandbox.checkout_revision(
+            revision._revision, component_purpose=globals.SOURCE_PURPOSE, force=force
+        )
+    except exceptions.DraftExistsError:
+        draft_info = _handle_existing_draft(revision)
+        if draft_info is None:
+            # Operation was cancelled so exit
+            return None
+
+    # Open checked out draft file
+    if engine.flow_host:
+        draft_path = draft_info.source_path
+        engine.log_info(f"Opening draft path: {draft_path}")
+        engine.flow_host.open_file(draft_path)
+
+    return draft_info
+
+
+def _handle_existing_draft(
+    revision: objects.FlowRevision,
+) -> sandbox.CheckoutDraftInfo | None:
+    """Called during a checkout operation when an existing draft is detected
+    to handle the situation as safely as possible. If host class is available,
+    pop-up a dialog to ask the user what to do, otherwise output an informative
+    message and cancel the operation.
+
+    NOTE: We are only concerned with versions here and not the granularity of
+          revisions. This is because we are assuming that binaries and dependencies
+          (i.e. components and uses relationships) cannot change between revisions
+          of the same version. Therefore, checking out any given revision of a version
+          should be sufficient for ensuring that we fetch and copy the correct binaries.
+
+    Returns CheckoutDraftInfo object if successful, or None if operation is cancelled.
+    """
+    engine = sgtk.platform.current_engine()
+
+    draft_id = sandbox.get_draft_id(revision.id)
+    try:
+        draft_info = sandbox.read_draft_info(draft_id)
+        checkout_version = draft_info.version
+        checkout_revision = draft_info.revision
+    except exceptions.InvalidDraftError:
+        # This indicates that the draft is corrupted
+        checkout_version = None
+
+    title = "Existing draft detected"
+    if checkout_version is None:
+        # Warning to user with options to
+        # 0 - overwrite existing draft
+        # 1 - cancel
+        msg = "There is an existing draft which is corrupted. "
+        msg += "Would you like to overwrite this with a fresh checkout?"
+        options = ["New checkout", "Cancel"]
+
+        action_idx = engine.flow_host.dialog(
+            title=title,
+            msg=msg,
+            buttons=options,
+            default=1,  # cancel by default
+            no_ui_option=1,  # cancel when no dialog can be launched
+        )
+        action = options[action_idx]
+
+    elif checkout_version == revision.version_number:
+        # Warning to user with options to
+        # 0 - overwrite existing draft
+        # 1 - proceed with existing draft
+        msg = "This version is already checked out in sandbox. "
+        msg += "Would you like to overwrite this with a fresh checkout?"
+        options = ["New checkout", "Use original checkout"]
+
+        action_idx = engine.flow_host.dialog(
+            title=title,
+            msg=msg,
+            buttons=options,
+            default=1,  # use original by default
+            no_ui_option=1,  # use original when no dialog can be launched
+        )
+        action = options[action_idx]
+
+    else:
+        # Warning to user with options to
+        # 1 - overwrite existing draft
+        # 2 - cancel
+        msg = f"An existing checkout already exists of version {checkout_version} "
+        msg += f"(r{checkout_revision}) of this asset. Would you like to overwite "
+        msg += f"this with a checkout of version {revision.version_number} "
+        msg += f"(r{revision.revision_number})?"
+        options = ["New checkout", "Cancel"]
+
+        action_idx = engine.flow_host.dialog(
+            title=title,
+            msg=msg,
+            buttons=options,
+            default=1,  # cancel by default
+            no_ui_option=1,  # cancel when no dialog can be launched
+        )
+        action = options[action_idx]
+
+    if action == "New checkout":
+        # Force a new checkout
+        return sandbox.checkout_revision(
+            revision._revision, component_purpose=globals.SOURCE_PURPOSE, force=True
+        )
+    elif action == "Use original checkout":
+        msg = f"Using original draft of version {checkout_version} "
+        msg += f"(r{checkout_revision})."
+        engine.log_info(msg)
+        return draft_info
+    else:
+        engine.log_warning("Checkout operation cancelled.")
+        return None

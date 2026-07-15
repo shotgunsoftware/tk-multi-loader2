@@ -26,7 +26,7 @@ from .create import (
     create_dcc_workfile,
     create_template_workfile,
 )
-from .file import open_draft, download_revision
+from .file import open_draft, download_revision, checkout_revision
 from .reference import reference_revision, copy_reference_link
 
 
@@ -68,7 +68,7 @@ class FlowAMActions:
             open_draft(flow_revision_id)
         elif version_number > DRAFT_VERSION_IDENTIFIER:
             # Checkout the revision to the local sandbox
-            sandbox.checkout_revision(flow_revision_id)
+            checkout_revision(flow_revision_id)
         else:
             raise TankError(
                 f"Cannot open item {sg_publish_data['name']} with version number {version_number}. "

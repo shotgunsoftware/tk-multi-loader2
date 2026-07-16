@@ -233,7 +233,7 @@ def _handle_existing_draft(
     """
     engine = sgtk.platform.current_engine()
 
-    draft_id = sandbox.get_draft_id(revision.id)
+    draft_id = sandbox.get_draft_id(revision.asset_id)
     try:
         draft_info = sandbox.read_draft_info(draft_id)
         checkout_version = draft_info.version

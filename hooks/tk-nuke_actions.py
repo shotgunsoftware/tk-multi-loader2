@@ -275,7 +275,7 @@ class NukeActions(HookBaseClass):
                 flowam_actions._create_reference_copy_link(sg_publish_data)
 
             if name == "create_read_node":
-                flowam_actions._create_reference(sg_publish_data)
+                flowam_actions._create_reference_am(sg_publish_data)
 
             return
 

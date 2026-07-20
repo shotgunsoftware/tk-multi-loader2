@@ -303,7 +303,6 @@ class DesktopActions(HookBaseClass):
                     # Existing flowam asset revision - target identified by am_revision_id only, no FPT context needed.
                     publisher_app.import_module("tk_multi_publish2").show_dialog(
                         publisher_app,
-                        context=None,
                         root_item_properties={"am_revision_id": revision_id},
                         single_file_mode=single_file_mode,
                     )
@@ -312,7 +311,6 @@ class DesktopActions(HookBaseClass):
                     publisher_app.import_module("tk_multi_publish2").show_dialog(
                         publisher_app,
                         context=entity_ctx,
-                        root_item_properties=None,
                         single_file_mode=single_file_mode,
                     )
                 break

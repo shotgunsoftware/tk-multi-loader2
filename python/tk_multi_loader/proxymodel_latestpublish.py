@@ -77,27 +77,26 @@ class SgLatestPublishProxyModel(FilterItemProxyModel):
         if not base_model_accepts:
             return False
 
-        if self._valid_type_ids is None:
-            # accept all!
-            return True
-
         model = self.sourceModel()
 
         current_item = model.invisibleRootItem().child(
             source_row
         )  # assume non-tree structure
 
-        # first analyze any search filtering
+        # Apply search filtering first, regardless of type filter state.
         if self._search_filter:
-
-            # there is a search filter entered
             field_data = shotgun_model.get_sanitized_data(
                 current_item, SgLatestPublishModel.SEARCHABLE_NAME
             )
-
+            if not field_data:
+                return False
             if self._search_filter.lower() not in field_data.lower():
                 # item text is not matching search filter
                 return False
+
+        if self._valid_type_ids is None:
+            # No type filter active - accept all items.
+            return True
 
         # now check if folders should be shown
         is_folder = current_item.data(SgLatestPublishModel.IS_FOLDER_ROLE)

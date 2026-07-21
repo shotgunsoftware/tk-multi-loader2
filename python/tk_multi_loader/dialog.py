@@ -383,6 +383,11 @@ class AppDialog(QtGui.QWidget):
             # Disable filter menu for Flow Asset Management mode - it expects ShotgunModel data
             self._filter_menu = None
             self.ui.filter_menu_btn.hide()
+            # Also hide the legacy filter widgets
+            self.ui.publish_type_list.hide()
+            self.ui.publish_type_filter_title.hide()
+            self.ui.check_all.hide()
+            self.ui.check_none.hide()
         else:
             # Hide the legacy filter widgets
             self.ui.publish_type_list.hide()

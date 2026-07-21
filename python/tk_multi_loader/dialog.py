@@ -1915,6 +1915,11 @@ class AppDialog(QtGui.QWidget):
         :param position: The position where the menu should be displayed.
         """
         view = self.sender()
+
+        # Do not show the context menu when right-clicking on an empty area.
+        if not view.indexAt(position).isValid():
+            return
+
         menu = QtGui.QMenu(view)
 
         for action in view.actions():
@@ -2020,6 +2025,10 @@ class AppDialog(QtGui.QWidget):
         # ---------------------------------------------------------------
 
         view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        try:
+            view.customContextMenuRequested.disconnect(self._popup_menu)
+        except RuntimeError:
+            pass
         view.customContextMenuRequested.connect(self._popup_menu)
 
     def _get_entity_root(self, root):

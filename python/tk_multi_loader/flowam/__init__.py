@@ -33,6 +33,7 @@ try:
         get_templates,
     )
     from .thumbnail_service import MedmThumbnailService
+    from .variant_selector_widget import VariantSelectorWidget
 except ImportError as exc:
     logger.error(
         "tk-multi-loader2: There was an error importing the 'flowam' module.\n"

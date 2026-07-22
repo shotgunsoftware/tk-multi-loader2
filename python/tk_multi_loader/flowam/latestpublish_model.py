@@ -61,6 +61,9 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         QtCore.Qt.UserRole + 202
     )  # Stores DraftInfo for draft rows (shared with history model)
 
+    # Stores {set_name: [(variant_name, asset_id)]} for variant container cards.
+    VARIANT_SETS_ROLE = QtCore.Qt.UserRole + 203
+
     # Signals
     loadingStarted = QtCore.Signal()
     loadingFinished = QtCore.Signal()
@@ -197,6 +200,33 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
 
         self._app.log_debug(f"FlowAM: Asset extracted: {asset.name}")
 
+        # ------------------------------------------------------------------
+        # Variant container check.
+        # If the selected asset owns component.variantSet components it is a
+        # logical container grouping alternative representations (e.g. maya /
+        # alembic).  In that case we show the container itself as a single
+        # center-panel card and store variant metadata on it; the variant cell
+        # child assets are NOT shown as separate cards.
+        # ------------------------------------------------------------------
+        try:
+            variant_sets = asset.get_variant_sets()
+        except Exception as _e:
+            # Schema not registered on this hub or network error – treat as
+            # a plain (non-variant) asset.
+            self._app.log_debug(
+                f"FlowAM: Could not read variant sets for '{asset.name}': {_e}"
+            )
+            variant_sets = {}
+
+        if variant_sets:
+            self._app.log_debug(
+                f"FlowAM: '{asset.name}' is a variant container "
+                f"({list(variant_sets.keys())})"
+            )
+            self._populate_variant_container(asset, variant_sets)
+            # Publish-type count is updated inside the helper above.
+            return
+
         children_asset_sg_dicts = self._fetch_asset_children(asset)
 
         # If the selected asset has no (non-structural) children it may itself
@@ -293,6 +323,79 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
             f"FlowAM: center panel now has {self.rowCount()} items "
             f"({draft_count} draft(s), {published_count} published)"
         )
+
+        sg_publish_type_counts = self._calculate_sg_publish_type_counts()
+        self._publish_type_model.set_active_types(sg_publish_type_counts)
+
+    def _populate_variant_container(
+        self,
+        asset: objects.FlowAsset,
+        variant_sets: dict[str, list[tuple[str, str]]],
+    ) -> None:
+        """Show *asset* as a single center-panel card for a variant container.
+
+        The card carries two extra keys in its sg_data:
+
+        * ``_variant_sets``: the raw variant-sets dict
+          ``{set_name: [(variant_name, asset_id)]}``
+        * ``_variant_sg_dicts``: pre-built sg_data dicts keyed by *asset_id*,
+          one per variant cell.  These are used by the details panel to
+          populate the actions menu when the user picks a variant.
+
+        :param asset: The container :class:`FlowAsset`.
+        :param variant_sets: Mapping returned by :meth:`ComponentMixin.get_variant_sets`.
+        """
+        # Collect every unique variant-cell asset_id across all sets.
+        all_variant_asset_ids: set[str] = set()
+        for variants in variant_sets.values():
+            for _vname, asset_id in variants:
+                if asset_id:
+                    all_variant_asset_ids.add(asset_id)
+
+        # Fetch the variant cell FlowAsset objects (best-effort; use cache).
+        variant_sg_dicts: dict[str, dict[str, Any]] = {}
+        try:
+            if asset.id in self._cache.children:
+                child_assets = self._cache.children[asset.id]
+            else:
+                child_assets = list(asset.iterate_children())
+                self._cache.children[asset.id] = child_assets
+
+            for child in child_assets:
+                if child.id in all_variant_asset_ids:
+                    try:
+                        variant_sg_dicts[child.id] = self._asset_to_sg_dict(child)
+                    except Exception as _e:
+                        self._app.log_debug(
+                            f"FlowAM: Could not build sg_dict for variant cell "
+                            f"'{child.name}': {_e}"
+                        )
+        except Exception as _e:
+            self._app.log_warning(
+                f"FlowAM: Could not fetch variant cell children for "
+                f"'{asset.name}': {_e}"
+            )
+
+        # Build the container card.
+        sg_dict = self._asset_to_sg_dict(asset)
+        sg_dict["_variant_sets"] = variant_sets
+        sg_dict["_variant_sg_dicts"] = variant_sg_dicts
+
+        # Use the first variant cell child's revision as the container thumbnail.
+        # Going through child_assets directly avoids any risk of the asset ID
+        # format in variant component properties not matching child.id exactly.
+        first_variant_child = next(
+            (child for child in child_assets if child.id in all_variant_asset_ids),
+            None,
+        )
+        # Fallback: if the ID lookup found nothing (format mismatch), take the
+        # first child regardless so SOME thumbnail is shown.
+        if first_variant_child is None and child_assets:
+            first_variant_child = child_assets[0]
+        if first_variant_child:
+            sg_dict["_thumbnail_revision_id"] = first_variant_child.revision_id
+
+        self._add_sg_dict_as_qt_item(sg_dict)
 
         sg_publish_type_counts = self._calculate_sg_publish_type_counts()
         self._publish_type_model.set_active_types(sg_publish_type_counts)

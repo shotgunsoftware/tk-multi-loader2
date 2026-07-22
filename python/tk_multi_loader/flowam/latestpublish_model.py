@@ -339,7 +339,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         * ``_variant_sets``: the raw variant-sets dict
           ``{set_name: [(variant_name, asset_id)]}`` read from the asset's
           ``component.variantSet`` components.
-        * ``_variant_sg_dicts``: sg_data dicts built here for each variant cell,
+        * ``_variant_data_dicts``: sg_data dicts built here for each variant cell,
           keyed by *asset_id*.  The details panel uses these to populate the
           actions menu when the user picks a variant from the selector.
 
@@ -354,14 +354,14 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
                     all_variant_asset_ids.add(variant_set_asset_id)
 
         # Fetch the variant cell FlowAsset objects (best-effort; use cache).
-        variant_sg_dicts: dict[str, dict[str, Any]] = {}
+        variant_data_dicts: dict[str, dict[str, Any]] = {}
         try:
             child_assets = self._get_cached_children(asset)
 
             for child in child_assets:
                 if child.id in all_variant_asset_ids:
                     try:
-                        variant_sg_dicts[child.id] = self._asset_to_sg_dict(child)
+                        variant_data_dicts[child.id] = self._asset_to_sg_dict(child)
                     except Exception as _e:
                         self._app.log_debug(
                             f"FlowAM: Could not build sg_dict for variant cell "
@@ -376,7 +376,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         # Build the container card.
         sg_dict = self._asset_to_sg_dict(asset)
         sg_dict["_variant_sets"] = variant_sets
-        sg_dict["_variant_sg_dicts"] = variant_sg_dicts
+        sg_dict["_variant_data_dicts"] = variant_data_dicts
 
         # Use the first variant cell child's revision as the container thumbnail.
         # Going through child_assets directly avoids any risk of the asset ID

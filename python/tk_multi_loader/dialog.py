@@ -1146,8 +1146,8 @@ class AppDialog(QtGui.QWidget):
                 # the actions menu through the currently selected variant.
                 # ----------------------------------------------------------
                 variant_sets = sg_item.get("_variant_sets") if sg_item else None
-                variant_sg_dicts = (
-                    sg_item.get("_variant_sg_dicts", {}) if sg_item else {}
+                variant_data_dicts = (
+                    sg_item.get("_variant_data_dicts", {}) if sg_item else {}
                 )
 
                 # Tear down any previous variant selector.
@@ -1168,7 +1168,7 @@ class AppDialog(QtGui.QWidget):
                     # When the user picks a different variant, refresh the
                     # actions menu for that variant.
                     selector.selection_changed.connect(
-                        lambda _set_name, _variant_name, asset_id, variant_set_dicts=variant_sg_dicts: (
+                        lambda _set_name, _variant_name, asset_id, variant_set_dicts=variant_data_dicts: (
                             self._update_actions_for_variant(
                                 asset_id, variant_set_dicts
                             )
@@ -1181,13 +1181,13 @@ class AppDialog(QtGui.QWidget):
                         self._medm_history_model.clear()
                     self._update_history_view_height()
 
-                    # Seed the actions menu and history with the first option of
-                    # the first set so the panel is immediately usable.
-                    first_set_variants = next(iter(variant_sets.values()), [])
-                    if first_set_variants:
-                        _first_asset_id = first_set_variants[0][1]
+                    # Seed the actions menu and history with the widget's current
+                    # (default) selection so the panel is immediately usable.
+                    first_set_name = next(iter(variant_sets))
+                    default_asset_id = selector.get_selected_asset_id(first_set_name)
+                    if default_asset_id:
                         self._update_actions_for_variant(
-                            _first_asset_id, variant_sg_dicts
+                            default_asset_id, variant_data_dicts
                         )
                 else:
                     # Normal (non-variant) publish: restore history view and
@@ -1366,7 +1366,7 @@ class AppDialog(QtGui.QWidget):
     def _update_actions_for_variant(
         self,
         asset_id: str,
-        variant_sg_dicts: dict,
+        variant_data_dicts: dict,
     ) -> None:
         """Rebuild the details-panel action menu and history for the selected variant cell.
 
@@ -1375,9 +1375,9 @@ class AppDialog(QtGui.QWidget):
         selection in :class:`~flowam.variant_selector_widget.VariantSelectorWidget`.
 
         :param asset_id: Asset id of the selected variant cell.
-        :param variant_sg_dicts: Pre-built sg_data dicts keyed by asset_id.
+        :param variant_data_dicts: Pre-built sg_data dicts keyed by asset_id.
         """
-        sg_dict = variant_sg_dicts.get(asset_id)
+        sg_dict = variant_data_dicts.get(asset_id)
         if not sg_dict:
             self.ui.detail_actions_btn.setVisible(False)
             return

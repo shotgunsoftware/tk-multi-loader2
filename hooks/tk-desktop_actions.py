@@ -303,15 +303,15 @@ class DesktopActions(HookBaseClass):
                     # Existing flowam asset revision - target identified by am_revision_id only, no FPT context needed.
                     publisher_app.import_module("tk_multi_publish2").show_dialog(
                         publisher_app,
-                        root_item_properties={"am_revision_id": revision_id},
                         single_file_mode=single_file_mode,
+                        root_item_properties={"am_revision_id": revision_id},
                     )
                 else:
                     # New flowam asset - pass FPT context for pre-fill and MEDM hierarchy placement.
                     publisher_app.import_module("tk_multi_publish2").show_dialog(
                         publisher_app,
-                        context=entity_ctx,
                         single_file_mode=single_file_mode,
+                        context=entity_ctx,
                     )
                 break
         else:

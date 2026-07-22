@@ -334,13 +334,14 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
     ) -> None:
         """Show *asset* as a single center-panel card for a variant container.
 
-        The card carries two extra keys in its sg_data:
+        Builds the container's sg_data dict and attaches two extra keys:
 
         * ``_variant_sets``: the raw variant-sets dict
-          ``{set_name: [(variant_name, asset_id)]}``
-        * ``_variant_sg_dicts``: pre-built sg_data dicts keyed by *asset_id*,
-          one per variant cell.  These are used by the details panel to
-          populate the actions menu when the user picks a variant.
+          ``{set_name: [(variant_name, asset_id)]}`` read from the asset's
+          ``component.variantSet`` components.
+        * ``_variant_sg_dicts``: sg_data dicts built here for each variant cell,
+          keyed by *asset_id*.  The details panel uses these to populate the
+          actions menu when the user picks a variant from the selector.
 
         :param asset: The container :class:`FlowAsset`.
         :param variant_sets: Mapping returned by :meth:`ComponentMixin.get_variant_sets`.
@@ -348,18 +349,14 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         # Collect every unique variant-cell asset_id across all sets.
         all_variant_asset_ids: set[str] = set()
         for variants in variant_sets.values():
-            for _vname, asset_id in variants:
-                if asset_id:
-                    all_variant_asset_ids.add(asset_id)
+            for _variant_set_name, variant_set_asset_id in variants:
+                if variant_set_asset_id:
+                    all_variant_asset_ids.add(variant_set_asset_id)
 
         # Fetch the variant cell FlowAsset objects (best-effort; use cache).
         variant_sg_dicts: dict[str, dict[str, Any]] = {}
         try:
-            if asset.id in self._cache.children:
-                child_assets = self._cache.children[asset.id]
-            else:
-                child_assets = list(asset.iterate_children())
-                self._cache.children[asset.id] = child_assets
+            child_assets = self._get_cached_children(asset)
 
             for child in child_assets:
                 if child.id in all_variant_asset_ids:
@@ -435,11 +432,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         children_asset_sg_dicts = []
 
         try:
-            if asset.id in self._cache.children:
-                child_assets = self._cache.children[asset.id]
-            else:
-                child_assets = list(asset.iterate_children())
-                self._cache.children[asset.id] = child_assets
+            child_assets = self._get_cached_children(asset)
 
             for child_asset in child_assets:
                 if _is_structural_asset_util(child_asset):
@@ -639,6 +632,20 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
 
     def _resolve_publish_type(self, medm_type_id_str: str) -> tuple:
         return resolve_publish_type(medm_type_id_str, self._cache, self._app)
+
+    def _get_cached_children(self, asset: objects.FlowAsset) -> list[objects.FlowAsset]:
+        """Return the direct children of *asset*, using the shared cache.
+
+        Populates :attr:`MedmSharedCache.children` on the first call so that
+        subsequent requests (e.g. from :class:`MedmEntityModel`) never issue a
+        duplicate API round-trip.
+
+        :param asset: The :class:`FlowAsset` whose children are needed.
+        :returns: List of direct child :class:`FlowAsset` objects.
+        """
+        if asset.id not in self._cache.children:
+            self._cache.children[asset.id] = list(asset.iterate_children())
+        return self._cache.children[asset.id]
 
     def _add_sg_dict_as_qt_item(self, sg_item: dict[str, Any]) -> None:
         """

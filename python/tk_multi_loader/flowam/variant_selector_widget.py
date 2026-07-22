@@ -8,12 +8,6 @@
 # agreement to the Shotgun Software Inc. License Agreement included in this
 # distribution package. See LICENSE.
 
-"""Variant selector widget for FlowAM variant container assets.
-
-Displayed in the details panel when a container asset carrying
-``component.variantSet`` components is selected in the center panel.
-"""
-
 from __future__ import annotations
 
 from typing import Dict, List, Optional, Tuple
@@ -30,11 +24,6 @@ class VariantSelectorWidget(QtGui.QWidget):
     Each row shows the set name as a label and a :class:`QComboBox` listing
     the available variant options.  Selecting a different option emits
     :attr:`selection_changed`.
-
-    :param variant_sets: Mapping of ``set_name -> [(variant_name, asset_id)]``.
-        Preserves the insertion order returned by
-        :meth:`~ComponentMixin.get_variant_sets`.
-    :param parent: Parent :class:`QWidget`.
     """
 
     # Emitted whenever the user changes a variant selection.
@@ -46,6 +35,12 @@ class VariantSelectorWidget(QtGui.QWidget):
         variant_sets: Dict[str, List[Tuple[str, str]]],
         parent: Optional[QtGui.QWidget] = None,
     ) -> None:
+        """
+        :param variant_sets: Mapping of ``set_name -> [(variant_name, asset_id)]``.
+            Preserves the insertion order returned by
+            :meth:`~ComponentMixin.get_variant_sets`.
+        :param parent: Parent :class:`QWidget`.
+        """
         super().__init__(parent)
 
         # set_name -> [(variant_name, asset_id), ...]
@@ -60,14 +55,23 @@ class VariantSelectorWidget(QtGui.QWidget):
     # ------------------------------------------------------------------
 
     def get_selected_asset_id(self, set_name: str) -> Optional[str]:
-        """Return the currently selected asset_id for *set_name*, or ``None``."""
+        """Return the currently selected asset_id for the given set.
+
+        :param set_name: The variant set name to query.
+        :returns: The ``asset_id`` of the currently selected option, or
+            ``None`` if *set_name* is not present.
+        """
         combo = self._combos.get(set_name)
         return combo.currentData() if combo else None
 
     def get_all_selections(self) -> Dict[str, Tuple[str, str]]:
-        """Return ``{set_name: (variant_name, asset_id)}`` for every set."""
+        """Return the current selection for every variant set.
+
+        :returns: Mapping of ``{set_name: (variant_name, asset_id)}``.
+        """
         return {
-            sn: (cb.currentText(), cb.currentData()) for sn, cb in self._combos.items()
+            set_name: (combo.currentText(), combo.currentData())
+            for set_name, combo in self._combos.items()
         }
 
     # ------------------------------------------------------------------
@@ -104,7 +108,9 @@ class VariantSelectorWidget(QtGui.QWidget):
 
             # Use a closure to capture the correct set_name per row
             combo.currentIndexChanged.connect(
-                lambda _idx, sn=set_name, cb=combo: self._on_combo_changed(sn, cb)
+                lambda _idx, set_name=set_name, combo=combo: self._on_combo_changed(
+                    set_name, combo
+                )
             )
 
             self._combos[set_name] = combo

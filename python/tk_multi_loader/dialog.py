@@ -1168,8 +1168,10 @@ class AppDialog(QtGui.QWidget):
                     # When the user picks a different variant, refresh the
                     # actions menu for that variant.
                     selector.selection_changed.connect(
-                        lambda sn, vn, aid, vsd=variant_sg_dicts: (
-                            self._update_actions_for_variant(aid, vsd)
+                        lambda _set_name, _variant_name, asset_id, variant_set_dicts=variant_sg_dicts: (
+                            self._update_actions_for_variant(
+                                asset_id, variant_set_dicts
+                            )
                         )
                     )
 

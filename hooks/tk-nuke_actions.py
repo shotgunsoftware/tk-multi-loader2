@@ -336,7 +336,7 @@ class NukeActions(HookBaseClass):
         if app.flowam_available:
             return {
                 "Project": ["build_new_template"],
-                "Task": ["build_new_scene"],
+                "Task": ["build_new_script"],
             }
 
         return {}

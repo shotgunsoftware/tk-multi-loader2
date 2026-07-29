@@ -109,6 +109,7 @@ class SgHierarchyModel(SimpleShotgunHierarchyModel):
             entity_fields = {"__all__": default_fields}
 
         # Load a hierarchy that leads to entities linked via "PublishedFile.entity".
+        self._root_entity = root_entity
         self.load_data(
             "PublishedFile.entity", root=root_entity, entity_fields=entity_fields
         )
@@ -121,6 +122,6 @@ class SgHierarchyModel(SimpleShotgunHierarchyModel):
 
         self.load_data(
             self._seed_entity_field,
-            entity=self._root_entity,
+            root=self._root_entity,
             entity_fields=self._entity_fields,
         )

@@ -93,6 +93,11 @@ class AppDialog(QtGui.QWidget):
         # FlowAM tree view - only created when FlowAM is enabled
         self._medm_tree_view = None
 
+        # Variant selector widget shown in the details panel when a FlowAM
+        # variant container asset is selected.  Created on first use and
+        # re-populated on every selection change.
+        self._medm_variant_selector = None
+
         # The loader app can be invoked from other applications with a custom
         # action manager as a File Open-like dialog. For these managers, we won't
         # be using the banner system.
@@ -135,6 +140,11 @@ class AppDialog(QtGui.QWidget):
         # the GC happy.
         self._dynamic_widgets = []
 
+        # Flag used to prevent re-entrant calls to _popup_menu.
+        # A spurious context menu event can be generated when a modal
+        # dialog opened from a menu action closes (e.g. Create New template).
+        self._popup_menu_active = False
+
         # maintain a special flag so that we can switch profile
         # tabs without triggering events
         self._disable_tab_event_handler = False
@@ -176,6 +186,12 @@ class AppDialog(QtGui.QWidget):
             # FlowAM history model for FlowAM publish items
             self._medm_history_model = MedmPublishHistoryModel(
                 self, self._task_manager, self._medm_cache, self._medm_thumbnail_service
+            )
+
+            # When a history item's thumbnail arrives asynchronously, re-apply
+            # it to details_image if that item is currently selected.
+            self._medm_history_model.dataChanged.connect(
+                self._on_history_item_data_changed
             )
 
         self._publish_history_model_overlay = ShotgunModelOverlayWidget(
@@ -383,6 +399,11 @@ class AppDialog(QtGui.QWidget):
             # Disable filter menu for Flow Asset Management mode - it expects ShotgunModel data
             self._filter_menu = None
             self.ui.filter_menu_btn.hide()
+            # Also hide the legacy filter widgets
+            self.ui.publish_type_list.hide()
+            self.ui.publish_type_filter_title.hide()
+            self.ui.check_all.hide()
+            self.ui.check_none.hide()
         else:
             # Hide the legacy filter widgets
             self.ui.publish_type_list.hide()
@@ -1130,26 +1151,69 @@ class AppDialog(QtGui.QWidget):
 
                 sg_item = item.get_sg_data()
 
-                required_fields = ["name", "type", "version_number"]
-                optional_fields = [
-                    "entity",
-                    "task",
-                    "version.Version.sg_status_list",
-                ]
-                all_fields = list(
-                    dict.fromkeys(required_fields + optional_fields + configured_fields)
+                # ----------------------------------------------------------
+                # FlowAM variant container: show variant selectors and route
+                # the actions menu through the currently selected variant.
+                # ----------------------------------------------------------
+                variant_sets = sg_item.get("_variant_sets") if sg_item else None
+                variant_data_dicts = (
+                    sg_item.get("_variant_data_dicts", {}) if sg_item else {}
                 )
 
-                actions = self._action_manager.get_actions_for_publish(
-                    sg_item, self._action_manager.UI_AREA_DETAILS
-                )
-                if len(actions) == 0:
-                    self.ui.detail_actions_btn.setVisible(False)
+                # Tear down any previous variant selector.
+                if self._medm_variant_selector is not None:
+                    self._medm_variant_selector.setParent(None)
+                    self._medm_variant_selector.deleteLater()
+                    self._medm_variant_selector = None
+
+                if variant_sets and self.flowam_available:
+                    from .flowam.variant_selector_widget import VariantSelectorWidget
+
+                    selector = VariantSelectorWidget(
+                        variant_sets, self.ui.details_widget
+                    )
+                    self._medm_variant_selector = selector
+                    self.ui.details_widget.layout().addWidget(selector)
+
+                    # When the user picks a different variant, refresh the
+                    # actions menu for that variant.
+                    selector.selection_changed.connect(
+                        lambda _set_name, _variant_name, asset_id, variant_set_dicts=variant_data_dicts: (
+                            self._update_actions_for_variant(
+                                asset_id, variant_set_dicts
+                            )
+                        )
+                    )
+
+                    # Clear stale history before seeding with the first variant.
+                    self._publish_history_model.clear()
+                    if self._medm_history_model is not None:
+                        self._medm_history_model.clear()
+                    self._update_history_view_height()
+
+                    # Seed the actions menu and history with the widget's current
+                    # (default) selection so the panel is immediately usable.
+                    first_set_name = next(iter(variant_sets))
+                    default_asset_id = selector.get_selected_asset_id(first_set_name)
+                    if default_asset_id:
+                        self._update_actions_for_variant(
+                            default_asset_id, variant_data_dicts
+                        )
                 else:
-                    self._details_action_menu.clear()
-                    for a in actions:
-                        self._dynamic_widgets.append(a)
-                        self._details_action_menu.addAction(a)
+                    # Normal (non-variant) publish: restore history view and
+                    # build the actions menu from the item's own sg_data.
+                    self.ui.history_view.setEnabled(True)
+
+                    actions = self._action_manager.get_actions_for_publish(
+                        sg_item, self._action_manager.UI_AREA_DETAILS
+                    )
+                    if len(actions) == 0:
+                        self.ui.detail_actions_btn.setVisible(False)
+                    else:
+                        self._details_action_menu.clear()
+                        for a in actions:
+                            self._dynamic_widgets.append(a)
+                            self._details_action_menu.addAction(a)
 
                 if sg_item.get("version"):
                     sg_url = sgtk.platform.current_bundle().shotgun.base_url
@@ -1160,6 +1224,16 @@ class AppDialog(QtGui.QWidget):
                     self._current_version_detail_playback_url = url
                 else:
                     self._current_version_detail_playback_url = None
+
+                required_fields = ["name", "type", "version_number"]
+                optional_fields = [
+                    "entity",
+                    "task",
+                    "version.Version.sg_status_list",
+                ]
+                all_fields = list(
+                    dict.fromkeys(required_fields + optional_fields + configured_fields)
+                )
 
                 msg = ""
                 type_str = shotgun_model.get_sanitized_data(
@@ -1190,21 +1264,158 @@ class AppDialog(QtGui.QWidget):
                 sg_data = item.get_sg_data()
 
                 # Route to the correct history model.
+                # FlowAM variant containers have already cleared history above;
+                # skip re-loading it here.
                 # FlowAM data is identified by _medm_asset or _medm_draft keys.
-                if self._medm_history_model is not None and (
-                    sg_data.get("_medm_asset") is not None
-                    or sg_data.get("_medm_draft") is not None
-                ):
-                    self._publish_history_proxy.setSourceModel(self._medm_history_model)
-                    self._medm_history_model.load_data(sg_data)
-                else:
-                    self._publish_history_proxy.setSourceModel(
-                        self._publish_history_model
-                    )
-                    self._publish_history_model.load_data(sg_data)
-                self._update_history_view_height()
+                if not variant_sets:
+                    if self._medm_history_model is not None and (
+                        sg_data.get("_medm_asset") is not None
+                        or sg_data.get("_medm_draft") is not None
+                    ):
+                        self._publish_history_proxy.setSourceModel(
+                            self._medm_history_model
+                        )
+                        self._medm_history_model.load_data(sg_data)
+                    else:
+                        self._publish_history_proxy.setSourceModel(
+                            self._publish_history_model
+                        )
+                        self._publish_history_model.load_data(sg_data)
+                    self._update_history_view_height()
 
             self.ui.details_header.updateGeometry()
+
+    def _on_history_item_data_changed(
+        self,
+        top_left: "QtCore.QModelIndex",
+        bottom_right: "QtCore.QModelIndex",
+        roles: list,
+    ) -> None:
+        """Re-apply the details thumbnail when an async thumbnail load completes
+        for the currently selected item in the history view."""
+        sel_indexes = self.ui.history_view.selectionModel().selectedIndexes()
+        if not sel_indexes:
+            return
+
+        proxy_index = sel_indexes[0]
+        source_index = self._publish_history_proxy.mapToSource(proxy_index)
+        if not source_index.isValid():
+            return
+
+        # Only act when the changed region covers the selected row and the
+        # active source model is the FlowAM history model.
+        if self._publish_history_proxy.sourceModel() is not self._medm_history_model:
+            return
+        if not (top_left.row() <= source_index.row() <= bottom_right.row()):
+            return
+
+        item = self._medm_history_model.itemFromIndex(source_index)
+        if item is None:
+            return
+
+        publish_thumb = item.data(SgPublishHistoryModel.PUBLISH_THUMB_ROLE)
+        if (
+            publish_thumb
+            and isinstance(publish_thumb, QtGui.QPixmap)
+            and not publish_thumb.isNull()
+        ):
+            target_size = self.ui.details_image.size()
+            scaled = publish_thumb.scaled(
+                target_size,
+                QtCore.Qt.KeepAspectRatio,
+                QtCore.Qt.SmoothTransformation,
+            )
+            self.ui.details_image.setPixmap(scaled)
+            self.ui.details_image.setScaledContents(False)
+
+    def _on_publish_item_data_changed(
+        self,
+        top_left: "QtCore.QModelIndex",
+        bottom_right: "QtCore.QModelIndex",
+        roles: list,
+    ) -> None:
+        """Re-apply the details thumbnail when the selected center-panel
+        card's thumbnail arrives asynchronously."""
+        # Only act when the FlowAM publish model is the active source.
+        # Firing while the SG model is active would read the wrong context
+        # and potentially overwrite the details_image with a stale icon.
+        if self._publish_proxy_model.sourceModel() is not self._medm_publish_model:
+            return
+
+        sel_indexes = self.ui.publish_view.selectionModel().selectedIndexes()
+        if not sel_indexes:
+            return
+
+        proxy_index = sel_indexes[0]
+        source_index = self._publish_proxy_model.mapToSource(proxy_index)
+        if not source_index.isValid():
+            return
+
+        if not (top_left.row() <= source_index.row() <= bottom_right.row()):
+            return
+
+        source_model = self._publish_proxy_model.sourceModel()
+        item = source_model.itemFromIndex(source_index)
+        if item is None:
+            return
+
+        # Update the top-right details_image from the item's icon
+        icon = item.icon()
+        if not icon.isNull():
+            pixmap = icon.pixmap(512)
+            if not pixmap.isNull():
+                target_size = self.ui.details_image.size()
+                scaled = pixmap.scaled(
+                    target_size,
+                    QtCore.Qt.KeepAspectRatio,
+                    QtCore.Qt.SmoothTransformation,
+                )
+                self.ui.details_image.setPixmap(scaled)
+                self.ui.details_image.setScaledContents(False)
+
+    def _update_actions_for_variant(
+        self,
+        asset_id: str,
+        variant_data_dicts: dict,
+    ) -> None:
+        """Rebuild the details-panel action menu and history for the selected variant cell.
+
+        Called both when the details panel first renders a variant container
+        (to seed the default option) and whenever the user changes a variant
+        selection in :class:`~flowam.variant_selector_widget.VariantSelectorWidget`.
+
+        :param asset_id: Asset id of the selected variant cell.
+        :param variant_data_dicts: Pre-built sg_data dicts keyed by asset_id.
+        """
+        sg_dict = variant_data_dicts.get(asset_id)
+        if not sg_dict:
+            self.ui.detail_actions_btn.setVisible(False)
+            return
+
+        # Actions menu
+        actions = self._action_manager.get_actions_for_publish(
+            sg_dict, self._action_manager.UI_AREA_DETAILS
+        )
+        self._details_action_menu.clear()
+        if actions:
+            for a in actions:
+                self._dynamic_widgets.append(a)
+                self._details_action_menu.addAction(a)
+            self.ui.detail_actions_btn.setVisible(True)
+        else:
+            self.ui.detail_actions_btn.setVisible(False)
+
+        # Version history for the selected variant cell
+        if self._medm_history_model is not None and (
+            sg_dict.get("_medm_asset") is not None
+            or sg_dict.get("_medm_draft") is not None
+        ):
+            self._publish_history_proxy.setSourceModel(self._medm_history_model)
+            self._medm_history_model.load_data(sg_dict)
+        else:
+            self._publish_history_proxy.setSourceModel(self._publish_history_model)
+            self._publish_history_model.load_data(sg_dict)
+        self._update_history_view_height()
 
     def _on_detail_version_playback(self):
         """
@@ -1909,13 +2120,38 @@ class AppDialog(QtGui.QWidget):
 
         :param position: The position where the menu should be displayed.
         """
+        # Guard against re-entrant calls. When an action opens a modal dialog,
+        # closing that dialog can cause Qt to deliver a spurious context menu
+        # event (e.g. a replayed WM_CONTEXTMENU on Windows). Without this guard
+        # the menu would re-appear as soon as the dialog is dismissed.
+        if self._popup_menu_active:
+            return
+
         view = self.sender()
-        menu = QtGui.QMenu(view)
 
-        for action in view.actions():
-            menu.addAction(action)
+        # Do not show the context menu when right-clicking on an empty area.
+        if not view.indexAt(position).isValid():
+            return
 
-        menu.exec_(view.viewport().mapToGlobal(position))
+        self._popup_menu_active = True
+        try:
+            menu = QtGui.QMenu(view)
+
+            for action in view.actions():
+                menu.addAction(action)
+
+            menu.exec_(view.viewport().mapToGlobal(position))
+        finally:
+            # Defer the flag reset so the guard stays active for one additional
+            # event-loop iteration. This discards any spurious ContextMenu event
+            # that was queued during the menu or dialog execution (e.g. an async
+            # file-open triggered by an action that eventually generates a
+            # WM_CONTEXTMENU message for the parent window).
+            QtCore.QTimer.singleShot(0, self._clear_popup_menu_flag)
+
+    def _clear_popup_menu_flag(self):
+        """Reset the popup menu active flag after pending events are processed."""
+        self._popup_menu_active = False
 
     def _set_contextual_menu(
         self, sg_data: dict, field_value: Any, view: Any, model: Any
@@ -2015,6 +2251,10 @@ class AppDialog(QtGui.QWidget):
         # ---------------------------------------------------------------
 
         view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        try:
+            view.customContextMenuRequested.disconnect(self._popup_menu)
+        except RuntimeError:
+            pass
         view.customContextMenuRequested.connect(self._popup_menu)
 
     def _get_entity_root(self, root):
@@ -2499,6 +2739,9 @@ class AppDialog(QtGui.QWidget):
             self._medm_cache,
             self._medm_thumbnail_service,
         )
+
+        # Re-apply the center-panel details thumbnail when it arrives async.
+        self._medm_publish_model.dataChanged.connect(self._on_publish_item_data_changed)
 
         self._medm_tree_view.selectionModel().selectionChanged.connect(
             self._on_medm_tree_selection_changed

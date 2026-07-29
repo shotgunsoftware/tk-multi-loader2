@@ -140,6 +140,11 @@ class AppDialog(QtGui.QWidget):
         # the GC happy.
         self._dynamic_widgets = []
 
+        # Flag used to prevent re-entrant calls to _popup_menu.
+        # A spurious context menu event can be generated when a modal
+        # dialog opened from a menu action closes (e.g. Create New template).
+        self._popup_menu_active = False
+
         # maintain a special flag so that we can switch profile
         # tabs without triggering events
         self._disable_tab_event_handler = False
@@ -2115,13 +2120,38 @@ class AppDialog(QtGui.QWidget):
 
         :param position: The position where the menu should be displayed.
         """
+        # Guard against re-entrant calls. When an action opens a modal dialog,
+        # closing that dialog can cause Qt to deliver a spurious context menu
+        # event (e.g. a replayed WM_CONTEXTMENU on Windows). Without this guard
+        # the menu would re-appear as soon as the dialog is dismissed.
+        if self._popup_menu_active:
+            return
+
         view = self.sender()
-        menu = QtGui.QMenu(view)
 
-        for action in view.actions():
-            menu.addAction(action)
+        # Do not show the context menu when right-clicking on an empty area.
+        if not view.indexAt(position).isValid():
+            return
 
-        menu.exec_(view.viewport().mapToGlobal(position))
+        self._popup_menu_active = True
+        try:
+            menu = QtGui.QMenu(view)
+
+            for action in view.actions():
+                menu.addAction(action)
+
+            menu.exec_(view.viewport().mapToGlobal(position))
+        finally:
+            # Defer the flag reset so the guard stays active for one additional
+            # event-loop iteration. This discards any spurious ContextMenu event
+            # that was queued during the menu or dialog execution (e.g. an async
+            # file-open triggered by an action that eventually generates a
+            # WM_CONTEXTMENU message for the parent window).
+            QtCore.QTimer.singleShot(0, self._clear_popup_menu_flag)
+
+    def _clear_popup_menu_flag(self):
+        """Reset the popup menu active flag after pending events are processed."""
+        self._popup_menu_active = False
 
     def _set_contextual_menu(
         self, sg_data: dict, field_value: Any, view: Any, model: Any
@@ -2221,6 +2251,10 @@ class AppDialog(QtGui.QWidget):
         # ---------------------------------------------------------------
 
         view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        try:
+            view.customContextMenuRequested.disconnect(self._popup_menu)
+        except RuntimeError:
+            pass
         view.customContextMenuRequested.connect(self._popup_menu)
 
     def _get_entity_root(self, root):

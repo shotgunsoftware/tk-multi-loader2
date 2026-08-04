@@ -181,7 +181,7 @@ def get_template_source_path(template: objects.FlowAsset) -> str:
         Full path to template file in blob storage.
     """
     revision = template.get_latest_revision()
-    revision.fetch(component_purpose=globals.SOURCE_PURPOSE)
+    revision.fetch(component_purpose=globals.SOURCE_PURPOSE, fetch_dependencies=True)
     return revision.get_storage_component_path(component_purpose=globals.SOURCE_PURPOSE)
 
 

@@ -164,6 +164,7 @@ class MayaActions(HookBaseClass):
                     and sg_publish_data.get("version_number")
                     != flowam_actions.DRAFT_VERSION_IDENTIFIER
                 )
+                and not flowam_actions.is_container_asset(sg_publish_data.get("_medm_asset"))
             ):
                 action_instances.append(
                     {
@@ -211,6 +212,7 @@ class MayaActions(HookBaseClass):
                     "version_number", flowam_actions.DRAFT_VERSION_IDENTIFIER
                 )
                 != flowam_actions.DRAFT_VERSION_IDENTIFIER
+                and not flowam_actions.is_container_asset(sg_publish_data.get("_medm_asset"))
             ):
                 action_instances.append(
                     {
@@ -316,6 +318,7 @@ class MayaActions(HookBaseClass):
                 flowam_actions._build_new_template(sg_publish_data)
 
             if name == "download":
+                print("@@@@@", sg_publish_data.get("_medm_asset"))
                 flowam_actions._download_asset_revision(sg_publish_data)
 
             return

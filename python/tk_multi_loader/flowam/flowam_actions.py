@@ -14,8 +14,8 @@ import functools
 import sgtk
 from sgtk import TankError
 from sgtk.platform.qt import QtGui
-from sgtk.flowam.create import CreateMode
-from tank_vendor.flow_integration_sdk import sandbox, exceptions
+from sgtk.flowam.create import CreateMode, CONTAINER_TYPE
+from tank_vendor.flow_integration_sdk import sandbox, exceptions, objects, schema
 
 from ..build_asset_dialog import BuildAssetDialog
 from ..build_template_dialog import BuildTemplateDialog
@@ -26,7 +26,12 @@ from .create import (
     create_dcc_workfile,
     create_template_workfile,
 )
-from .file import open_draft, download_revision, checkout_revision
+from .file import (
+    DownloadRevisionError,
+    open_draft,
+    download_revision,
+    checkout_revision,
+)
 from .reference import reference_revision, copy_reference_link
 
 
@@ -402,6 +407,21 @@ class FlowAMActions:
         engine = sgtk.platform.current_engine()
         return engine._get_dialog_parent()
 
+    def is_container_asset(self, asset: objects.FlowAsset) -> bool:
+        """
+        Determine if the given FlowAsset is a container asset.
+
+        :param asset: The FlowAsset to check.
+        :returns: True if the asset is a container, False otherwise.
+        """
+        if (
+            asset.find_component(type_id=schema.get_schema_id(CONTAINER_TYPE))
+            is not None
+        ):
+            return True
+
+        return False
+
     def _download_asset_revision(self, sg_publish_data: dict) -> None:
         """
         Download the given PublishedFile revision to the location specified.
@@ -416,7 +436,17 @@ class FlowAMActions:
             )
             raise TankError("No Revision ID found for this item {}.".format(item_id))
 
-        result = download_revision(flow_revision_id)
+        try:
+            result = download_revision(flow_revision_id)
+        except DownloadRevisionError as exc:
+            if 'Component of purpose "source" does not exist on revision.' in str(exc):
+                QtGui.QMessageBox.warning(
+                    None,
+                    "Warning",
+                    "This asset has no binaries to download.",
+                )
+                return
+            raise
 
         # Notify the user about the download result
         if result:

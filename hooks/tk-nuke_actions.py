@@ -177,6 +177,9 @@ class NukeActions(HookBaseClass):
                     "version_number", flowam_actions.DRAFT_VERSION_IDENTIFIER
                 )
                 != flowam_actions.DRAFT_VERSION_IDENTIFIER
+                and not flowam_actions.is_container_asset(
+                    sg_publish_data.get("_medm_asset")
+                )
             ):
                 action_instances.append(
                     {

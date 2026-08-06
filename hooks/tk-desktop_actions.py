@@ -79,7 +79,11 @@ class DesktopActions(HookBaseClass):
         if app.flowam_available:
             flowam_actions = app.flowam.FlowAMActions()
 
-            if "download" in actions and sg_publish_data.get("type") == "PublishedFile":
+            if (
+                "download" in actions
+                and sg_publish_data.get("type") == "PublishedFile"
+                and not flowam_actions.is_root_asset(sg_publish_data.get("_medm_asset"))
+            ):
                 version_number = sg_publish_data.get("version_number")
 
                 if (
@@ -126,6 +130,7 @@ class DesktopActions(HookBaseClass):
                     "version_number", flowam_actions.DRAFT_VERSION_IDENTIFIER
                 )
                 > flowam_actions.DRAFT_VERSION_IDENTIFIER
+                and not flowam_actions.is_root_asset(sg_publish_data.get("_medm_asset"))
             ):
                 action_instances.append(
                     {

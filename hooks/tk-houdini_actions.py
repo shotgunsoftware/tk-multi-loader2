@@ -129,7 +129,7 @@ class HoudiniActions(HookBaseClass):
             if (
                 "download" in actions
                 and sg_publish_data.get("type") == "PublishedFile"
-                and not flowam_actions.is_container_asset(
+                and not flowam_actions.is_root_asset(
                     sg_publish_data.get("_medm_asset")
                 )
             ):
@@ -169,7 +169,7 @@ class HoudiniActions(HookBaseClass):
                     "version_number", flowam_actions.DRAFT_VERSION_IDENTIFIER
                 )
                 != flowam_actions.DRAFT_VERSION_IDENTIFIER
-                and not flowam_actions.is_container_asset(
+                and not flowam_actions.is_root_asset(
                     sg_publish_data.get("_medm_asset")
                 )
             ):

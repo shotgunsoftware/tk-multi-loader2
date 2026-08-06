@@ -407,20 +407,14 @@ class FlowAMActions:
         engine = sgtk.platform.current_engine()
         return engine._get_dialog_parent()
 
-    def is_container_asset(self, asset: objects.FlowAsset) -> bool:
+    def is_root_asset(self, asset: objects.FlowAsset) -> bool:
         """
-        Determine if the given FlowAsset is a container asset.
+        Determine if the given FlowAsset is a root asset.
 
         :param asset: The FlowAsset to check.
-        :returns: True if the asset is a container, False otherwise.
+        :returns: True if the asset is a root asset, False otherwise.
         """
-        if (
-            asset.find_component(type_id=schema.get_schema_id(CONTAINER_TYPE))
-            is not None
-        ):
-            return True
-
-        return False
+        return bool(asset.find_component(type_id=schema.get_schema_id(CONTAINER_TYPE)))
 
     def _download_asset_revision(self, sg_publish_data: dict) -> None:
         """

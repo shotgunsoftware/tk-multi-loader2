@@ -15,6 +15,8 @@ Loader models and actions, backed by Flow Asset Management (FlowAM) instead
 of the ShotGrid REST API.
 """
 
+# flake8: noqa
+
 import sgtk
 
 logger = sgtk.platform.get_logger(__name__)
@@ -31,6 +33,7 @@ try:
         get_templates,
     )
     from .thumbnail_service import MedmThumbnailService
+    from .variant_selector_widget import VariantSelectorWidget
 except ImportError as exc:
     logger.error(
         "tk-multi-loader2: There was an error importing the 'flowam' module.\n"

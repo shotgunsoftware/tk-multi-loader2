@@ -164,9 +164,7 @@ class MayaActions(HookBaseClass):
                     and sg_publish_data.get("version_number")
                     != flowam_actions.DRAFT_VERSION_IDENTIFIER
                 )
-                and not flowam_actions.is_root_asset(
-                    sg_publish_data.get("_medm_asset")
-                )
+                and not flowam_actions.is_root_asset(sg_publish_data.get("_medm_asset"))
             ):
                 action_instances.append(
                     {
@@ -214,9 +212,7 @@ class MayaActions(HookBaseClass):
                     "version_number", flowam_actions.DRAFT_VERSION_IDENTIFIER
                 )
                 != flowam_actions.DRAFT_VERSION_IDENTIFIER
-                and not flowam_actions.is_root_asset(
-                    sg_publish_data.get("_medm_asset")
-                )
+                and not flowam_actions.is_root_asset(sg_publish_data.get("_medm_asset"))
             ):
                 action_instances.append(
                     {

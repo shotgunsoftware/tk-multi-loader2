@@ -13,9 +13,9 @@ import functools
 
 import sgtk
 from sgtk import TankError
+from sgtk.flowam.create import CONTAINER_TYPE, CreateMode
 from sgtk.platform.qt import QtGui
-from sgtk.flowam.create import CreateMode, CONTAINER_TYPE
-from tank_vendor.flow_integration_sdk import sandbox, exceptions, objects, schema
+from tank_vendor.flow_integration_sdk import exceptions, objects, sandbox, schema
 
 from ..build_asset_dialog import BuildAssetDialog
 from ..build_template_dialog import BuildTemplateDialog
@@ -28,11 +28,11 @@ from .create import (
 )
 from .file import (
     DownloadRevisionError,
-    open_draft,
-    download_revision,
     checkout_revision,
+    download_revision,
+    open_draft,
 )
-from .reference import reference_revision, copy_reference_link
+from .reference import copy_reference_link, reference_revision
 
 
 class FlowAMActions:

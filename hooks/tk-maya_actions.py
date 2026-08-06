@@ -322,7 +322,6 @@ class MayaActions(HookBaseClass):
                 flowam_actions._build_new_template(sg_publish_data)
 
             if name == "download":
-                print("@@@@@", sg_publish_data.get("_medm_asset"))
                 flowam_actions._download_asset_revision(sg_publish_data)
 
             return

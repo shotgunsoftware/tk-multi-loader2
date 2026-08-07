@@ -62,7 +62,7 @@ def reference_revision(revision_id: str) -> str:
         raise CreateReferenceError(input_id=revision_id, details=msg) from exc
 
     # Fetch source component of revision
-    revision.fetch(component_purpose=globals.SOURCE_PURPOSE)
+    revision.fetch(component_purpose=globals.SOURCE_PURPOSE, fetch_dependencies=True)
 
     # Get path to source path of revision in local storage
     file_path = revision.get_storage_component_path(
@@ -121,7 +121,7 @@ def copy_reference_link(revision_id: str) -> str:
         raise CreateReferenceError(input_id=revision_id, details=msg) from exc
 
     # Fetch source component of revision
-    revision.fetch(component_purpose=globals.SOURCE_PURPOSE)
+    revision.fetch(component_purpose=globals.SOURCE_PURPOSE, fetch_dependencies=True)
 
     # Get path to source path of revision in local storage
     file_path = revision.get_storage_component_path(

@@ -12,7 +12,6 @@
 Hook that loads defines all the available actions, broken down by publish type.
 """
 
-import os
 from typing import Any
 
 import sgtk
@@ -286,23 +285,6 @@ class DesktopActions(HookBaseClass):
         else:
             raise TankError(f"Invalid entity type for publish: {entity_type}.")
 
-        # Use different env var naming for project-level vs task-level contexts
-        if task_id is not None:
-            revision_id_env_var = f"TK_FLOWAM_REVISION_ID_{task_id}"
-        else:
-            # For project-level contexts, use project ID
-            project_id = entity_id
-            revision_id_env_var = f"TK_FLOWAM_REVISION_ID_PROJECT_{project_id}"
-
-        if action_name == "publish":
-            revision_id = sg_publish_data.get("sg_flow_revision_id")
-            os.environ[revision_id_env_var] = revision_id
-        else:
-            # Clear possible previously existing publish states from an unfinished publish
-            # (Finished publishes should clear this value)
-            if revision_id_env_var in os.environ:
-                os.environ.pop(revision_id_env_var)
-
         # NOTE: the context should be either a Task or a Project
         entity_ctx = engine.tank.context_from_entity(entity_type, entity_id)
 
@@ -312,13 +294,25 @@ class DesktopActions(HookBaseClass):
                 continue
             if cmd_settings["properties"]["app"].name == "tk-multi-publish2":
                 publisher_app = cmd_settings["properties"]["app"]
+                revision_id = sg_publish_data.get("sg_flow_revision_id")
                 single_file_mode = (
                     action_name == "publish"
                     and publisher_app.context.flow_project_id is not None
                 )
-                publisher_app.import_module("tk_multi_publish2").show_dialog(
-                    publisher_app, single_file_mode=single_file_mode
-                )
+                if revision_id:
+                    # Existing flowam asset revision - target identified by am_revision_id only, no FPT context needed.
+                    publisher_app.import_module("tk_multi_publish2").show_dialog(
+                        publisher_app,
+                        single_file_mode=single_file_mode,
+                        root_item_properties={"am_revision_id": revision_id},
+                    )
+                else:
+                    # New flowam asset - pass FPT context for pre-fill and MEDM hierarchy placement.
+                    publisher_app.import_module("tk_multi_publish2").show_dialog(
+                        publisher_app,
+                        single_file_mode=single_file_mode,
+                        context=entity_ctx,
+                    )
                 break
         else:
             raise TankError(

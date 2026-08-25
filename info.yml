@@ -144,7 +144,9 @@ configuration:
                      from this mapping have no upstream requirement and are never validated.
                      Only Maya scenes are checked, so this setting has no effect in other
                      DCCs."
-        default_value: {}
+        default_value:
+            Rig: Model
+            Texture: Model
         allows_empty: true
 
     entities:

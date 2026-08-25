@@ -131,6 +131,18 @@ configuration:
         default_value: {}
         allows_empty: true
 
+    pipeline_step_dependencies:
+        type: dict
+        description: "Maps a pipeline step to the upstream pipeline step whose workfile must
+                     be published before a new scene is built for it. Keys and values are
+                     Flow Production Tracking Step names, for example
+                     {Rigging: Model, Surfacing: Model}. Used by the Flow Asset Management
+                     'Build New Scene' action to warn the artist when the upstream step has
+                     nothing published to reference yet. Steps absent from this mapping have
+                     no upstream requirement and are never validated."
+        default_value: {}
+        allows_empty: true
+
     entities:
         default_value:
             - caption: Project

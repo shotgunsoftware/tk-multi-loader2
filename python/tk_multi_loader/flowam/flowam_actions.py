@@ -33,6 +33,7 @@ from .file import (
     open_draft,
 )
 from .reference import copy_reference_link, reference_revision
+from .step_validation import find_unpublished_upstream_step
 
 
 class FlowAMActions:
@@ -178,6 +179,13 @@ class FlowAMActions:
             prep_scene_callback=functools.partial(self._prep_scene, sg_publish_data),
         )
 
+        if not self._confirm_upstream_step_published(create_inputs):
+            self._app.log_info(
+                "Build new scene cancelled: the previous pipeline step has not "
+                "been published."
+            )
+            return
+
         try:
             asset = create_dcc_workfile(create_inputs)
             self._app.log_debug(f"Created a DCC workfile asset: {asset}")
@@ -189,6 +197,53 @@ class FlowAMActions:
                 "Error",
                 str(exc),
             )
+
+    def _confirm_upstream_step_published(self, create_inputs: CreateInputs) -> bool:
+        """
+        Warn the artist when the previous pipeline step has nothing published yet.
+
+        The upstream publish is what gets referenced into the new scene, so
+        building without it leaves an empty scene. The artist is given the choice
+        to continue regardless.
+
+        :param create_inputs: Inputs describing the scene about to be built.
+        :returns: True when the build should go ahead.
+        """
+        host = getattr(sgtk.platform.current_engine(), "flow_host", None)
+        workfile_type = getattr(host, "WORKFILE_TYPE", "")
+        if not workfile_type:
+            # Outside a supported DCC host there is no workfile type to check.
+            return True
+
+        upstream_step = find_unpublished_upstream_step(
+            am_project_id=create_inputs.am_project_id,
+            sg_entity_name=create_inputs.sg_entity_name,
+            sg_entity_type=create_inputs.sg_entity_type,
+            sg_pipeline_step=create_inputs.sg_pipeline_step,
+            step_dependencies=self._app.get_setting("pipeline_step_dependencies", {}),
+            workfile_type=workfile_type,
+        )
+        if not upstream_step:
+            return True
+
+        message = (
+            f'The "{upstream_step}" step has no published scene for '
+            f'"{create_inputs.sg_entity_name}" yet, so there is nothing to '
+            f'reference into a new "{create_inputs.sg_pipeline_step}" scene.'
+            "\n\nBuild an empty scene anyway?"
+        )
+        self._app.log_warning(message)
+
+        response = QtGui.QMessageBox.warning(
+            self._get_dialog_parent(),
+            "Previous step not published",
+            message,
+            buttons=QtGui.QMessageBox.StandardButtons(
+                QtGui.QMessageBox.StandardButton.Yes
+                | QtGui.QMessageBox.StandardButton.Cancel
+            ),
+        )
+        return response == QtGui.QMessageBox.StandardButton.Yes
 
     def _prep_scene(self, sg_publish_data: dict) -> None:
         """

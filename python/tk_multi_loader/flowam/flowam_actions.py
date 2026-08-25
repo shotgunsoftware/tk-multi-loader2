@@ -19,7 +19,7 @@ from tank_vendor.flow_integration_sdk import exceptions, objects, sandbox, schem
 
 from ..build_asset_dialog import BuildAssetDialog
 from ..build_template_dialog import BuildTemplateDialog
-from ..constants import DRAFT_VERSION_IDENTIFIER
+from ..constants import DRAFT_VERSION_IDENTIFIER, MAYA_WORKFILE_TYPE
 from .create import (
     CreateInputs,
     CreateTemplateInputs,
@@ -206,13 +206,17 @@ class FlowAMActions:
         building without it leaves an empty scene. The artist is given the choice
         to continue regardless.
 
+        Only the Maya scene publish is in scope. Nuke and Houdini reach this
+        method through their own build actions, but a downstream step references
+        the Maya scene rather than the current host's workfile type, so those
+        hosts are left alone.
+
         :param create_inputs: Inputs describing the scene about to be built.
         :returns: True when the build should go ahead.
         """
         host = getattr(sgtk.platform.current_engine(), "flow_host", None)
         workfile_type = getattr(host, "WORKFILE_TYPE", "")
-        if not workfile_type:
-            # Outside a supported DCC host there is no workfile type to check.
+        if workfile_type != MAYA_WORKFILE_TYPE:
             return True
 
         upstream_step = find_unpublished_upstream_step(

@@ -139,7 +139,8 @@ configuration:
                      {Rigging: Model, Surfacing: Model}. Used by the Flow Asset Management
                      'Build New Scene' action to warn the artist when the upstream step has
                      nothing published to reference yet. Steps absent from this mapping have
-                     no upstream requirement and are never validated."
+                     no upstream requirement and are never validated. Only Maya scenes are
+                     checked, so this setting has no effect in other DCCs."
         default_value: {}
         allows_empty: true
 

@@ -124,21 +124,13 @@ def has_published_workfile(
         return True
 
     try:
-        node = objects.FlowProject(am_project_id)
-        # Walk down to the "root asset" grouping the workfiles of this step:
-        # Assets/<entity>/<step>/<entity>. See get_or_create_workfile_parent()
-        # in tk-core's tank/flowam/create.py for the hierarchy this mirrors.
-        for name in (
-            root_folder_name,
-            sg_entity_name,
-            pipeline_step,
-            sg_entity_name,
-        ):
-            node = node.find_child(name)
-            if node is None:
-                return False
-
-        return bool(node.find_children(type_id=workfile_type_id))
+        workfile = _find_workfile_asset(
+            am_project_id=am_project_id,
+            root_folder_name=root_folder_name,
+            sg_entity_name=sg_entity_name,
+            pipeline_step=pipeline_step,
+            workfile_type_id=workfile_type_id,
+        )
     except exceptions.FlowError as exc:
         logger.warning(
             f'Could not verify whether pipeline step "{pipeline_step}" has a '
@@ -146,6 +138,99 @@ def has_published_workfile(
             f"proceed. ({exc})"
         )
         return True
+
+    return workfile is not None
+
+
+def find_upstream_workfile(
+    am_project_id: str,
+    sg_entity_type: str,
+    sg_entity_name: str,
+    sg_pipeline_step: str,
+    workfile_type: str,
+    step_dependencies: Dict[str, str],
+) -> Optional[objects.FlowAsset]:
+    """Return the upstream step's published workfile asset for the entity.
+
+    This is the referencing counterpart of
+    :func:`find_unpublished_upstream_step`. Where that helper answers "should we
+    warn?", this one answers "what should we reference?". Every unresolved case -
+    no configured upstream, an unsupported entity type, an unresolved workfile
+    schema id, nothing published, or a Flow AM query error - yields ``None`` so
+    the caller simply skips referencing rather than surfacing an error while
+    building a scene.
+
+    :param am_project_id: Id of the Flow AM project holding the asset.
+    :param sg_entity_type: FPTR entity type of the asset, e.g. ``"Asset"``.
+    :param sg_entity_name: FPTR entity name of the asset.
+    :param sg_pipeline_step: Step the new scene is being built for.
+    :param workfile_type: Schema type name of the workfile to reference.
+    :param step_dependencies: Mapping of step name to upstream step name.
+    :returns: The upstream workfile ``FlowAsset``, or ``None``.
+    """
+    upstream_step = get_upstream_step(sg_pipeline_step, step_dependencies)
+    if not upstream_step:
+        return None
+
+    root_folder_name = _get_root_folder_name(sg_entity_type)
+    if not root_folder_name:
+        return None
+
+    workfile_type_id = schema.get_schema_id(workfile_type)
+    if not workfile_type_id:
+        logger.warning(
+            f'Could not resolve the schema id for workfile type "{workfile_type}". '
+            f'Skipping referencing of pipeline step "{upstream_step}".'
+        )
+        return None
+
+    try:
+        return _find_workfile_asset(
+            am_project_id=am_project_id,
+            root_folder_name=root_folder_name,
+            sg_entity_name=sg_entity_name,
+            pipeline_step=upstream_step,
+            workfile_type_id=workfile_type_id,
+        )
+    except exceptions.FlowError as exc:
+        logger.warning(
+            f'Could not resolve a published workfile for pipeline step '
+            f'"{upstream_step}" of "{sg_entity_name}". Skipping referencing. ({exc})'
+        )
+        return None
+
+
+def _find_workfile_asset(
+    am_project_id: str,
+    root_folder_name: str,
+    sg_entity_name: str,
+    pipeline_step: str,
+    workfile_type_id: str,
+) -> Optional[objects.FlowAsset]:
+    """Return the workfile asset published under *pipeline_step* for the entity.
+
+    Walks down to the "root asset" that groups the workfiles of a step -
+    ``<root_folder>/<entity>/<step>/<entity>`` - and returns its first
+    workfile-typed child. See ``get_or_create_workfile_parent()`` in tk-core's
+    ``tank/flowam/create.py`` for the hierarchy this mirrors.
+
+    :param am_project_id: Id of the Flow AM project holding the asset.
+    :param root_folder_name: Name of the project's top-level folder.
+    :param sg_entity_name: FPTR entity name of the asset.
+    :param pipeline_step: Step to look under.
+    :param workfile_type_id: Resolved schema id of the workfile type.
+    :returns: The workfile ``FlowAsset``, or ``None`` when the hierarchy is
+        incomplete or the step has no published workfile.
+    :raises exceptions.FlowError: If a Flow AM query fails.
+    """
+    node = objects.FlowProject(am_project_id)
+    for name in (root_folder_name, sg_entity_name, pipeline_step, sg_entity_name):
+        node = node.find_child(name)
+        if node is None:
+            return None
+
+    workfiles = node.find_children(type_id=workfile_type_id)
+    return workfiles[0] if workfiles else None
 
 
 def _get_root_folder_name(sg_entity_type: str) -> Optional[str]:

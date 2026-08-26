@@ -89,6 +89,70 @@ def reference_revision(revision_id: str) -> str:
     return depdata.file_path
 
 
+def reference_published_workfile(revision_id: str) -> str:
+    """Reference a published workfile's source into the current scene.
+
+    Intended for the "Build New Scene" flow, where a downstream step's fresh
+    scene should open with the upstream step's published output already
+    referenced in. It intentionally mirrors :func:`reference_revision` but omits
+    its ``flow_draft_id`` guard: at build time the scene is brand new and has no
+    asset/draft context yet, which is exactly the state that guard rejects.
+
+    Args:
+        revision_id: The id of the asset revision to be referenced.
+                     This can also be a version id.
+
+    Returns:
+        File path of referenced file.
+
+    Raises:
+        CreateReferenceError
+    """
+    engine = sgtk.platform.current_engine()
+
+    if not hasattr(engine.flow_host, "create_reference"):
+        msg = "Referencing is not supported in current execution."
+        raise CreateReferenceError(input_id=revision_id, details=msg)
+
+    try:
+        if objects.FlowVersion.is_version_id(revision_id):
+            input_type = "version"
+            revision = objects.FlowVersion(revision_id).revision
+        else:
+            input_type = "revision"
+            revision = objects.FlowRevision.get_revision(revision_id)
+    except exceptions.FlowError as exc:
+        msg = f"Could not retrieve {input_type} object."
+        raise CreateReferenceError(input_id=revision_id, details=msg) from exc
+
+    # Fetch source component of revision
+    revision.fetch(component_purpose=globals.SOURCE_PURPOSE, fetch_dependencies=True)
+
+    # Get path to source path of revision in local storage
+    file_path = revision.get_storage_component_path(
+        component_purpose=globals.SOURCE_PURPOSE
+    )
+    if file_path is None:
+        msg = "Revision does not have a source component to be referenced."
+        raise CreateReferenceError(input_id=revision_id, details=msg)
+    file_seq_comp = revision.find_component(
+        type_id=schema.get_schema_id(globals.FILE_SEQ_TYPE)
+    )
+    if not file_seq_comp and not os.path.exists(file_path):
+        msg = f"Source file does not exist in storage: {file_path}. "
+        msg += "Fetching the revision was not successful!"
+        raise CreateReferenceError(input_id=revision_id, details=msg)
+    elif file_seq_comp:
+        # Return a file path with embedded frame padding
+        file_path = utils.cleanpath(
+            revision.get_storage_dir(), file_seq_comp.properties["fileFormat"]
+        )
+
+    # Create reference
+    depdata = engine.flow_host.create_reference(file_path, namespace=revision.name)
+    return depdata.file_path
+
+
 def copy_reference_link(revision_id: str) -> str:
     """Copy the reference link (file path) to the source component
     the of given revision to application clipboard.

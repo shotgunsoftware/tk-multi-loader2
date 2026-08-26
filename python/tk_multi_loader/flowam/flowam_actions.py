@@ -32,8 +32,12 @@ from .file import (
     download_revision,
     open_draft,
 )
-from .reference import copy_reference_link, reference_revision
-from .step_validation import find_unpublished_upstream_step
+from .reference import (
+    copy_reference_link,
+    reference_published_workfile,
+    reference_revision,
+)
+from .step_validation import find_unpublished_upstream_step, find_upstream_workfile
 
 
 class FlowAMActions:
@@ -176,7 +180,11 @@ class FlowAMActions:
             am_project_id=flow_am_id,
             create_mode=dialog.build,
             source_path=template_path,
-            prep_scene_callback=functools.partial(self._prep_scene, sg_publish_data),
+        )
+        # Bound after construction so the callback can reference create_inputs
+        # (which needs the fully built object to resolve the upstream scene).
+        create_inputs.prep_scene_callback = functools.partial(
+            self._prepare_build_scene, create_inputs, sg_publish_data
         )
 
         if not self._confirm_upstream_step_published(create_inputs):
@@ -263,6 +271,77 @@ class FlowAMActions:
         )
         # TDs can override this method to add custom scene prep logic
         pass
+
+    def _prepare_build_scene(
+        self, create_inputs: CreateInputs, sg_publish_data: dict
+    ) -> None:
+        """
+        Prep callback run while a new scene is being built.
+
+        This fires after the host has created/loaded the scene and before it is
+        saved into the draft, which is exactly when the upstream reference must
+        exist so it gets baked into the built scene. Standard referencing runs
+        first, then the TD-overridable prep hook.
+
+        :param create_inputs: Inputs describing the scene being built.
+        :param sg_publish_data: FPTR data dictionary for the task being built from.
+        """
+        self._reference_upstream_step(create_inputs)
+        self._prep_scene(sg_publish_data)
+
+    def _reference_upstream_step(self, create_inputs: CreateInputs) -> None:
+        """
+        Reference the previous pipeline step's published Maya scene into the
+        scene being built.
+
+        This is the referencing counterpart of
+        `_confirm_upstream_step_published`. It is a no-op unless the current host
+        is Maya (only the Maya scene publish is referenced) and the upstream step
+        actually has a published workfile. When nothing is published - for
+        instance when the artist chose to build an empty scene from that warning
+        - there is simply nothing to reference.
+
+        A referencing failure is surfaced as a warning but never aborts the
+        build: the artist still gets their new scene, just without the reference.
+
+        :param create_inputs: Inputs describing the scene being built.
+        """
+        host = getattr(sgtk.platform.current_engine(), "flow_host", None)
+        workfile_type = getattr(host, "WORKFILE_TYPE", "")
+        if workfile_type != MAYA_WORKFILE_TYPE:
+            return
+
+        workfile = find_upstream_workfile(
+            am_project_id=create_inputs.am_project_id,
+            sg_entity_type=create_inputs.sg_entity_type,
+            sg_entity_name=create_inputs.sg_entity_name,
+            sg_pipeline_step=create_inputs.sg_pipeline_step,
+            workfile_type=workfile_type,
+            step_dependencies=self._app.get_setting("pipeline_step_dependencies", {}),
+        )
+        if workfile is None:
+            return
+
+        try:
+            file_path = reference_published_workfile(workfile.revision_id)
+        except exceptions.FlowError as exc:
+            message = (
+                f"Could not reference the previous step's published scene for "
+                f'"{create_inputs.sg_entity_name}". The new scene was built '
+                f"without it. ({exc})"
+            )
+            self._app.log_error(message)
+            QtGui.QMessageBox.warning(
+                self._get_dialog_parent(),
+                "Reference failed",
+                message,
+            )
+            return
+
+        self._app.log_info(
+            f"Referenced the previous step's published scene into the new "
+            f'"{create_inputs.sg_pipeline_step}" scene: {file_path}'
+        )
 
     def _discard_draft(self, sg_publish_data: dict) -> None:
         """

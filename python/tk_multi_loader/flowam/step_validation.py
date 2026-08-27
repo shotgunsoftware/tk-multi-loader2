@@ -194,7 +194,7 @@ def find_upstream_workfile(
         )
     except exceptions.FlowError as exc:
         logger.warning(
-            f'Could not resolve a published workfile for pipeline step '
+            f"Could not resolve a published workfile for pipeline step "
             f'"{upstream_step}" of "{sg_entity_name}". Skipping referencing. ({exc})'
         )
         return None

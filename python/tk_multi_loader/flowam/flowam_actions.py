@@ -32,11 +32,7 @@ from .file import (
     download_revision,
     open_draft,
 )
-from .reference import (
-    copy_reference_link,
-    reference_published_workfile,
-    reference_revision,
-)
+from .reference import copy_reference_link, reference_revision
 from .step_validation import find_unpublished_upstream_step, find_upstream_workfile
 
 
@@ -323,7 +319,9 @@ class FlowAMActions:
             return
 
         try:
-            file_path = reference_published_workfile(workfile.revision_id)
+            file_path = reference_revision(
+                workfile.revision_id, require_asset_context=False
+            )
         except exceptions.FlowError as exc:
             message = (
                 f"Could not reference the previous step's published scene for "

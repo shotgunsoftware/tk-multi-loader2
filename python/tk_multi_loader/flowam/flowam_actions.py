@@ -238,16 +238,18 @@ class FlowAMActions:
         )
         self._app.log_warning(message)
 
-        response = QtGui.QMessageBox.warning(
-            self._get_dialog_parent(),
+        if not host:
+            return True
+
+        response = host.dialog(
             "Previous step not published",
             message,
-            buttons=QtGui.QMessageBox.StandardButtons(
-                QtGui.QMessageBox.StandardButton.Yes
-                | QtGui.QMessageBox.StandardButton.Cancel
-            ),
+            buttons=["Build empty scene", "Cancel"],
+            default=1,
+            cancel=1,
+            no_ui_option=1,
         )
-        return response == QtGui.QMessageBox.StandardButton.Yes
+        return response == 0
 
     def _prep_scene(self, sg_publish_data: dict) -> None:
         """

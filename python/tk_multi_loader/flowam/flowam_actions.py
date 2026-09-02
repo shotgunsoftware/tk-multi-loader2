@@ -33,7 +33,11 @@ from .file import (
     open_draft,
 )
 from .reference import copy_reference_link, reference_revision
-from .step_validation import find_unpublished_upstream_step, find_upstream_workfile
+from .step_validation import (
+    find_unpublished_upstream_step,
+    find_workfile_asset,
+    get_upstream_step,
+)
 
 
 class FlowAMActions:
@@ -307,14 +311,27 @@ class FlowAMActions:
         if workfile_type != MAYA_WORKFILE_TYPE:
             return
 
-        workfile = find_upstream_workfile(
-            am_project_id=create_inputs.am_project_id,
-            sg_entity_type=create_inputs.sg_entity_type,
-            sg_entity_name=create_inputs.sg_entity_name,
-            sg_pipeline_step=create_inputs.sg_pipeline_step,
-            workfile_type=workfile_type,
-            step_dependencies=self._app.get_setting("pipeline_step_dependencies", {}),
+        upstream_step = get_upstream_step(
+            create_inputs.sg_pipeline_step,
+            self._app.get_setting("pipeline_step_dependencies", {}),
         )
+        if not upstream_step:
+            return
+
+        try:
+            workfile = find_workfile_asset(
+                am_project_id=create_inputs.am_project_id,
+                sg_entity_type=create_inputs.sg_entity_type,
+                sg_entity_name=create_inputs.sg_entity_name,
+                pipeline_step=upstream_step,
+                workfile_type=workfile_type,
+            )
+        except exceptions.FlowError as exc:
+            self._app.log_warning(
+                f"Could not resolve a published workfile for pipeline step "
+                f'"{upstream_step}". Building without a reference. ({exc})'
+            )
+            return
         if workfile is None:
             return
 

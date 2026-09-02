@@ -210,54 +210,47 @@ def test_flow_am_error_allows_build(monkeypatch, flow_am):
     assert find_unpublished() is None
 
 
-def find_upstream(step="Surfacing", entity_type="Asset", dependencies=None):
-    """Call the referencing resolver with the common set of arguments."""
-    return step_validation.find_upstream_workfile(
+def find_workfile(step="Model", entity_type="Asset"):
+    """Call the single workfile resolver with the common set of arguments."""
+    return step_validation.find_workfile_asset(
         am_project_id="am-project-1",
         sg_entity_type=entity_type,
         sg_entity_name=ENTITY_NAME,
-        sg_pipeline_step=step,
+        pipeline_step=step,
         workfile_type=MAYA_TYPE,
-        step_dependencies=(
-            {"Surfacing": "Model"} if dependencies is None else dependencies
-        ),
     )
 
 
-def test_find_upstream_workfile_returns_published_asset(flow_am):
-    """The upstream step's published workfile asset is returned for referencing."""
+def test_find_workfile_asset_returns_published_asset(flow_am):
+    """The step's published workfile asset is returned for referencing."""
     flow_am(build_project({"Model": True}))
-    workfile = find_upstream()
+    workfile = find_workfile()
     assert workfile is not None
     assert workfile.revision_id == "rev-Model"
 
 
-def test_find_upstream_workfile_none_when_unpublished(flow_am):
-    """Nothing to reference when the upstream step has no publish."""
+def test_find_workfile_asset_none_when_unpublished(flow_am):
+    """The step folder existing is not proof of a publish."""
     flow_am(build_project({"Model": False}))
-    assert find_upstream() is None
+    assert find_workfile() is None
 
 
-def test_find_upstream_workfile_none_without_configured_upstream(flow_am):
-    """Steps absent from the mapping resolve no reference."""
+def test_find_workfile_asset_raises_for_unsupported_entity(flow_am):
+    """An entity type with no Flow AM folder cannot be checked."""
     flow_am(build_project({"Model": True}))
-    assert find_upstream(dependencies={}) is None
+    with pytest.raises(step_validation.exceptions.FlowError):
+        find_workfile(entity_type="CustomEntity01")
 
 
-def test_find_upstream_workfile_none_for_unsupported_entity(flow_am):
-    """An entity type with no Flow AM folder resolves no reference."""
-    flow_am(build_project({"Model": True}))
-    assert find_upstream(entity_type="CustomEntity01") is None
-
-
-def test_find_upstream_workfile_none_when_type_unresolved(flow_am):
-    """An unresolved schema id would match every child, so skip referencing."""
+def test_find_workfile_asset_raises_when_type_unresolved(flow_am):
+    """An unresolved schema id would match every child, so refuse the query."""
     flow_am(build_project({"Model": True}), resolve_type_id=False)
-    assert find_upstream() is None
+    with pytest.raises(step_validation.exceptions.FlowError):
+        find_workfile()
 
 
-def test_find_upstream_workfile_none_on_flow_am_error(monkeypatch, flow_am):
-    """A Flow AM outage skips referencing rather than surfacing an error."""
+def test_find_workfile_asset_propagates_flow_am_error(monkeypatch, flow_am):
+    """A Flow AM query error surfaces so callers can tell it from 'not found'."""
 
     def raise_error(_project_id):
         raise step_validation.exceptions.FlowError("simulated Flow AM outage")
@@ -266,4 +259,5 @@ def test_find_upstream_workfile_none_on_flow_am_error(monkeypatch, flow_am):
     monkeypatch.setattr(
         step_validation, "objects", types.SimpleNamespace(FlowProject=raise_error)
     )
-    assert find_upstream() is None
+    with pytest.raises(step_validation.exceptions.FlowError):
+        find_workfile()

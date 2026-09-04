@@ -311,9 +311,18 @@ class FlowAMActions:
                 f'"{upstream_step}". Building without a reference. ({exc})'
             )
             return
+
+        # Nothing published upstream, so there is nothing to reference. No warning
+        # here on purpose: the artist was already warned before the build in
+        # _confirm_upstream_step_published() (the "Build an empty scene anyway?"
+        # prompt) and chose to proceed. Adding a DEBUG log here is enough.
         if workfile is None:
+            self._app.log_debug("No published workfile found for upstream step.")
             return
 
+        # Referencing an asset is normally only allowed once an asset is open in
+        # the DCC. Here we are still in the middle of creating one, so the scene
+        # is not yet a "complete" asset context - bypass that rule for the build.
         try:
             file_path = reference_revision(
                 workfile.revision_id, require_asset_context=False

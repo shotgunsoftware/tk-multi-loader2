@@ -110,7 +110,7 @@ class CreateInputs(flowam_utils.BaseInputs):
             if "entity_type" not in self.sg_pipeline_step:
                 msg = msg % "entity_type"
                 raise exceptions.CreateAssetError(data=self.asdict(), details=msg)
-            
+
             if not self.sg_entity:
                 msg = "Incomplete sg context provided. Must provide sg_entity."
                 raise exceptions.CreateAssetError(data=self.asdict(), details=msg)
@@ -321,7 +321,7 @@ def _create_dcc_workfile_asset(
     type_id = schema.get_schema_id(workfile_type)
 
     # By convention asset name will be the sg entity name + workfile type
-    sg_entity_name = inputs.sg_entity['name']
+    sg_entity_name = inputs.sg_entity["name"]
     abbr_type = workfile_type.split(".")[-1].upper()
     name = f"{sg_entity_name} - {abbr_type}"
 

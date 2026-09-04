@@ -161,17 +161,22 @@ class FlowAMActions:
             self._app.shotgun.find_one(
                 "Task",
                 filters=[["id", "is", sg_publish_data["id"]]],
-                fields=["step", "content"],
+                fields=[
+                    "step",
+                    "step.Step.entity_type",
+                    "content",
+                ],
             )
             or {}
         )
+        if task["step"]:
+            # Add entity type directly into the step object so it can be
+            # passed into CreateInputs in one piece.
+            task["step"]["entity_type"] = task["step.Step.entity_type"]
 
         create_inputs = CreateInputs(
-            sg_entity_type=sg_publish_data["entity"]["type"],  # Asset, Shot, etc.
-            sg_entity_name=sg_publish_data["entity"]["name"],
-            sg_pipeline_step=(task.get("step") or {}).get(
-                "name", ""
-            ),  # Layout, Animation, etc.
+            sg_entity=sg_publish_data["entity"],
+            sg_pipeline_step=task.get("step") or {},
             am_project_id=flow_am_id,
             create_mode=dialog.build,
             source_path=template_path,

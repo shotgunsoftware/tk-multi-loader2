@@ -45,13 +45,12 @@ class CreateInputs(flowam_utils.BaseInputs):
     passed easily between helper functions.
     """
 
-    #: Entity type of SG asset.
-    sg_entity_type: str
-    #: Name of the SG asset.
-    #: This will be used for the AM asset name (both the container and workfile).
-    sg_entity_name: str
-    #: The name/code of the SG pipeline step associated with the current task context.
-    sg_pipeline_step: str
+    #: SG entity object (returned as a dict from SG API)
+    #: Should minimally contain keys: type, name, id
+    sg_entity: dict
+    #: SG step object (returned as a dict from SG API)
+    #: Should minimally contain keys: name, entity_type
+    sg_pipeline_step: dict
     #: The AM project under which the asset should be added.
     am_project_id: str
     #: Description of asset.
@@ -86,13 +85,35 @@ class CreateInputs(flowam_utils.BaseInputs):
             CreateAssetError
         """
 
-        # If sg entity name is provided, we also expect an entity type and pipeline step
-        if self.sg_entity_name and not self.sg_entity_type:
-            msg = "Incomplete sg context provided. Must provide sg_entity_type."
-            raise exceptions.CreateAssetError(data=self.asdict(), details=msg)
-        if self.sg_entity_name and not self.sg_pipeline_step:
-            msg = "Incomplete sg context provided. Must provide sg_pipeline_step."
-            raise exceptions.CreateAssetError(data=self.asdict(), details=msg)
+        # Ensure sg_entity contains required keys and pipeline step is provided
+        if self.sg_entity:
+            msg = "Incomplete sg_entity dict provided. '%s' key is required."
+            if "name" not in self.sg_entity:
+                msg = msg % "name"
+                raise exceptions.CreateAssetError(data=self.asdict(), details=msg)
+            elif "id" not in self.sg_entity:
+                msg = msg % "id"
+                raise exceptions.CreateAssetError(data=self.asdict(), details=msg)
+            elif "type" not in self.sg_entity:
+                msg = msg % "type"
+                raise exceptions.CreateAssetError(data=self.asdict(), details=msg)
+
+            if not self.sg_pipeline_step:
+                msg = "Incomplete sg context provided. Must provide sg_pipeline_step."
+                raise exceptions.CreateAssetError(data=self.asdict(), details=msg)
+        # Ensure sg_pipeline_step contains required keys and entity is provided
+        if self.sg_pipeline_step:
+            msg = "Incomplete sg_pipeline_step dict provided. '%s' key is required."
+            if "name" not in self.sg_pipeline_step:
+                msg = msg % "name"
+                raise exceptions.CreateAssetError(data=self.asdict(), details=msg)
+            if "entity_type" not in self.sg_pipeline_step:
+                msg = msg % "entity_type"
+                raise exceptions.CreateAssetError(data=self.asdict(), details=msg)
+            
+            if not self.sg_entity:
+                msg = "Incomplete sg context provided. Must provide sg_entity."
+                raise exceptions.CreateAssetError(data=self.asdict(), details=msg)
         # If create mode is TEMPLATE or GENERIC, we need a source path
         if self.create_mode == create.CreateMode.TEMPLATE and not self.source_path:
             msg = "No template source path provided."
@@ -187,7 +208,7 @@ def create_dcc_workfile(inputs: CreateInputs) -> sandbox.NewDraftInfo:
     See documentation for CreateInputs for expected inputs.
 
     .. note:: Inputs can be passed in as a CreateInputs object assigned to the keyword
-              argument _inputs_ or as a set of individual parameters. (e.g. sg_entity_name="my_name")
+              argument _inputs_ or as a set of individual parameters. (e.g. am_project_id=<project id>)
 
     Returns:
         A NewDraftInfo object containing all pertinent information about
@@ -205,7 +226,7 @@ def create_dcc_workfile(inputs: CreateInputs) -> sandbox.NewDraftInfo:
         raise exceptions.CreateAssetError(data=inputs.asdict(), details=msg)
 
     # Create any necessary hierarchy above current asset
-    parent = create.create_asset_hierarchy(inputs)
+    parent = create.create_federated_hierarchy(inputs)
 
     # Create the workfile asset in sandbox
     draft_info = _create_dcc_workfile_asset(parent, inputs)
@@ -227,7 +248,7 @@ def create_template_workfile(inputs: CreateTemplateInputs) -> sandbox.NewDraftIn
     See documentation for CreateTemplateInputs for expected inputs.
 
     .. note:: Inputs can be passed in as a CreateTemplateInputs object assigned to the keyword
-              argument _inputs_ or as a set of individual parameters. (e.g. sg_entity_name="my_name")
+              argument _inputs_ or as a set of individual parameters. (e.g. am_project_id=<project id>)
 
     Returns:
         A NewDraftInfo object containing all pertinent information about
@@ -300,8 +321,9 @@ def _create_dcc_workfile_asset(
     type_id = schema.get_schema_id(workfile_type)
 
     # By convention asset name will be the sg entity name + workfile type
+    sg_entity_name = inputs.sg_entity['name']
     abbr_type = workfile_type.split(".")[-1].upper()
-    name = f"{inputs.sg_entity_name} - {abbr_type}"
+    name = f"{sg_entity_name} - {abbr_type}"
 
     # Prepare the source file and save to temporary location
     # By convention the source file will be named after the asset
@@ -337,7 +359,7 @@ def _create_dcc_workfile_asset(
 
         # Create a new asset in sandbox with a unique draft id
         app.log_info(
-            f'Creating a workfile asset of type "{workfile_type}" for sg entity "{inputs.sg_entity_name}" in sandbox...'
+            f'Creating a workfile asset of type "{workfile_type}" for sg entity "{sg_entity_name}" in sandbox...'
         )
         desc = inputs.description
         return sandbox.create_asset_in_sandbox(
@@ -394,7 +416,7 @@ def _create_template_hierarchy(inputs: CreateTemplateInputs) -> objects.FlowAsse
     if not folder:
         app.log_info(f'Creating "{create.TEMPLATE_FOLDER}" folder...')
         desc = "Folder for template assets."
-        folder = publish.publish_new_asset(
+        medm_asset = publish.publish_new_asset(
             name=create.TEMPLATE_FOLDER,
             parent_id=project.id,
             components=flowam_utils.create_components_for_publish(
@@ -402,6 +424,7 @@ def _create_template_hierarchy(inputs: CreateTemplateInputs) -> objects.FlowAsse
             ),
             description=desc,
         )
+        folder = objects.FlowAsset(medm_asset)
 
     # Create pipeline step if necessary
     # If a pipeline step asset associated with sg pipeline step doesn't exist, create it
@@ -409,13 +432,14 @@ def _create_template_hierarchy(inputs: CreateTemplateInputs) -> objects.FlowAsse
     if not pipeline_step:
         app.log_info(f'Creating pipeline step asset for "{sg_pipeline_step}"...')
         pipeline_step_type_id = schema.get_schema_id(create.PIPELINE_STEP_TYPE)
-        pipeline_step = publish.publish_new_asset(
+        medm_asset = publish.publish_new_asset(
             name=sg_pipeline_step,
             parent_id=folder.id,
             components=flowam_utils.create_components_for_publish(
                 type_ids=[pipeline_step_type_id],
             ),
         )
+        pipeline_step = objects.FlowAsset(medm_asset)
 
     return pipeline_step
 

@@ -230,7 +230,19 @@ class MayaActions(HookBaseClass):
                         "name": "build_new_scene",
                         "params": None,
                         "caption": "Build New Scene",
-                        "description": "This will create a new scene in the current project.",
+                        "description": (
+                            "<nobr>Create a new Maya scene for this task in the "
+                            "current Flow AM project.</nobr><br><br>"
+                            "When this task's pipeline step depends on an upstream "
+                            "step - configured through the "
+                            "<b>pipeline_step_dependencies</b> setting (for "
+                            "example Rig and Texture depend on Model) - the "
+                            "upstream step's published Maya scene is automatically "
+                            "referenced into the new scene.<br><br>"
+                            "If that upstream step has not been published yet, you "
+                            "are warned and can still choose to build an empty "
+                            "scene."
+                        ),
                     }
                 )
 

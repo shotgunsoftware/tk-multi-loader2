@@ -33,7 +33,11 @@ from .file import (
     open_draft,
 )
 from .reference import copy_reference_link, reference_revision
-from .step_validation import find_unpublished_upstream_step
+from .step_validation import (
+    find_unpublished_upstream_step,
+    find_workfile_asset,
+    get_upstream_step,
+)
 
 
 class FlowAMActions:
@@ -253,16 +257,91 @@ class FlowAMActions:
 
     def _prep_scene(self, sg_publish_data: dict) -> None:
         """
-        Let clients run set-up scripts when building a new scene/asset.
+        Default scene-prep opinion for a freshly built scene: reference the
+        previous pipeline step's published Maya scene into it.
 
-        :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
+        Runs from ``create_dcc_workfile()``'s ``prep_scene_callback`` - after the
+        host has created/loaded the scene and before it is saved into the draft -
+        so the reference is baked into the built scene. It is a no-op unless the
+        host is Maya (only the Maya scene publish is referenced) and the upstream
+        step has a published workfile. When nothing is published - for instance
+        when the artist chose to build an empty scene from the publish warning -
+        there is simply nothing to reference.
+
+        A referencing failure is surfaced as a warning but never aborts the
+        build: the artist still gets their new scene, just without the reference.
+
+        TDs can override this method to change or replace this default behavior.
+
+        :param sg_publish_data: FPTR Task data the new scene is built from.
         """
+        host = getattr(sgtk.platform.current_engine(), "flow_host", None)
+        workfile_type = getattr(host, "WORKFILE_TYPE", "")
+        if workfile_type != MAYA_WORKFILE_TYPE:
+            return
+
+        entity = sg_publish_data.get("entity") or {}
+        task = (
+            self._app.shotgun.find_one(
+                "Task",
+                filters=[["id", "is", sg_publish_data["id"]]],
+                fields=["step"],
+            )
+            or {}
+        )
+        pipeline_step = (task.get("step") or {}).get("name", "")
+        upstream_step = get_upstream_step(
+            pipeline_step,
+            self._app.get_setting("pipeline_step_dependencies", {}),
+        )
+        if not upstream_step:
+            return
+
+        try:
+            workfile = find_workfile_asset(
+                am_project_id=self._get_flowam_id(),
+                sg_entity_type=entity.get("type", ""),
+                sg_entity_name=entity.get("name", ""),
+                pipeline_step=upstream_step,
+                workfile_type=workfile_type,
+            )
+        except exceptions.FlowError as exc:
+            self._app.log_warning(
+                f"Could not resolve a published workfile for pipeline step "
+                f'"{upstream_step}". Building without a reference. ({exc})'
+            )
+            return
+
+        # Nothing published upstream, so there is nothing to reference. No warning
+        # here on purpose: the artist was already warned before the build in
+        # _confirm_upstream_step_published() (the "Build an empty scene anyway?"
+        # prompt) and chose to proceed. Adding a DEBUG log here is enough.
+        if workfile is None:
+            self._app.log_debug("No published workfile found for upstream step.")
+            return
+
+        # Referencing an asset is normally only allowed once an asset is open in
+        # the DCC. Here we are still in the middle of creating one, so the scene
+        # is not yet a "complete" asset context - bypass that rule for the build.
+        try:
+            file_path = reference_revision(
+                workfile.revision_id, require_asset_context=False
+            )
+        except exceptions.FlowError as exc:
+            message = (
+                f"Could not reference the previous step's published scene for "
+                f'"{entity.get("name", "")}". The new scene was built without '
+                f"it. ({exc})"
+            )
+            self._app.log_error(message)
+            if host:
+                host.dialog("Reference failed", message, buttons=["OK"])
+            return
 
         self._app.log_info(
-            f"prep_scene() called with sg_publish_data: {sg_publish_data}"
+            f"Referenced the previous step's published scene into the new "
+            f'"{pipeline_step}" scene: {file_path}'
         )
-        # TDs can override this method to add custom scene prep logic
-        pass
 
     def _discard_draft(self, sg_publish_data: dict) -> None:
         """

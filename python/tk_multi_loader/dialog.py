@@ -2410,7 +2410,8 @@ class AppDialog(QtGui.QWidget):
         # once we have typed a couple of characters
         if pattern and len(pattern) >= constants.TREE_SEARCH_TRIGGER_LENGTH:
             # indicate with a blue border that a search is active
-            tree_view.setStyleSheet("""
+            tree_view.setStyleSheet(
+                """
                 QTreeView {{
                     border-width: 3px;
                     border-style: solid;
@@ -2419,7 +2420,10 @@ class AppDialog(QtGui.QWidget):
                 QTreeView::item {{
                     padding: 6px;
                 }}
-                """.format(highlight=self.palette().highlight().color().name()))
+                """.format(
+                    highlight=self.palette().highlight().color().name()
+                )
+            )
             # expand all nodes in the tree
             tree_view.expandAll()
         else:
@@ -2535,7 +2539,7 @@ class AppDialog(QtGui.QWidget):
         is selected, prepare the publish area UI.
         """
         from .flowam import FlowEntityModel
-        
+
         # clear selection. If we don't clear the model at this point,
         # the selection model will attempt to pair up with the model is
         # data is being loaded in, resulting in many many events
@@ -2721,9 +2725,9 @@ class AppDialog(QtGui.QWidget):
 
         self.ui.entity_breadcrumbs.setText("<big>%s</big>" % breadcrumbs)
 
-    #------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
     # FLOW INTEGRATION FUNCTIONALITY
-    #------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
     def _setup_medm_tree_panel(self) -> None:
         """
         Set up the FlowAM tree view panel as the left-most panel in the splitter.
@@ -2828,7 +2832,6 @@ class AppDialog(QtGui.QWidget):
             self._publish_proxy_model.invalidateFilter()
         else:
             app.log_warning("FlowAM: Could not get item from index")
-
 
     def _setup_flow_model(self, hierarchy_paths):
         """

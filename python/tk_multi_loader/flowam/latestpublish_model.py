@@ -411,6 +411,10 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         if asset:
             return asset
 
+        fed_data = item.data(self.FED_ROLE)
+        if fed_data.asset:
+            return asset
+
         asset_data = item.data(QtCore.Qt.UserRole + 1)
         return asset_data
 

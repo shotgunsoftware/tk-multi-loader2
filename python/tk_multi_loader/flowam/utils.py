@@ -20,7 +20,7 @@ import os
 from typing import Any, Dict, Optional, Tuple
 
 from tank_vendor.flow_integration_sdk import globals, schema
-from sgtk.flowam.create import CONTAINER_TYPE, PIPELINE_STEP_TYPE
+from sgtk.flowam.create import PIPELINE_STEP_TYPE
 
 from ..constants import DRAFT_VERSION_IDENTIFIER
 
@@ -33,28 +33,19 @@ def is_structural_asset(asset: Any) -> bool:
     the following hold:
 
     * its type IDs include the built-in ``FOLDER_TYPE_ID``; **or**
-    * it carries a ``CONTAINER_TYPE`` or ``PIPELINE_STEP_TYPE`` component
-      (schema-registered organisational node types).
-
-    All framework calls are wrapped in a broad ``except`` so that a transient
-    schema error never surfaces as a visible crash; the safe default is
-    ``False`` (treat the asset as publishable).
+    * it carries a ``PIPELINE_STEP_TYPE``, deliverable, or dynamic enum value
+      type component (schema-registered organisational node types).
 
     :param asset: FlowAM ``Asset`` object to test.
     :returns: ``True`` if the asset is a structural container.
     """
-    try:
-        type_ids = set(getattr(asset, "type_ids", None) or [])
-        if globals.FOLDER_TYPE_ID in type_ids:
-            return True
-
-        structural_types = (CONTAINER_TYPE, PIPELINE_STEP_TYPE)
-        return any(
-            asset.find_component(type_id=schema.get_schema_id(ct))
-            for ct in structural_types
-        )
-    except Exception:
-        return False
+    structural_types = (
+        globals.FOLDER_TYPE_ID,
+        schema.get_schema_id("type.deliverable"),
+        schema.get_schema_id(PIPELINE_STEP_TYPE),
+        schema.get_schema_id("type.dynamicEnumValue"),
+    )
+    return any(asset.find_component(type_id=ct) for ct in structural_types)
 
 
 def get_draft_created_at(draft_info: Any) -> Optional[float]:

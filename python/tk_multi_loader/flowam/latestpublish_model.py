@@ -29,6 +29,16 @@ from .thumbnail_service import MedmThumbnailService
 from .utils import build_draft_sg_dict
 from .utils import is_structural_asset as _is_structural_asset_util
 from .utils import resolve_publish_type
+from .qt_roles import (
+    ASSET_ROLE,
+    DRAFT_ROLE,
+    FED_ROLE,
+    IS_FOLDER_ROLE,
+    PUBLISH_TYPE_NAME_ROLE,
+    SEARCHABLE_NAME,
+    SG_DATA_ROLE,
+    TYPE_ID_ROLE,
+)
 
 
 class MedmLatestPublishModel(QtGui.QStandardItemModel):
@@ -43,26 +53,6 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
     # get_drafts(draft_type="new").  A real asset.id is always a UUID/storage
     # key string; this double-underscore key cannot collide with a real ID.
     _NEW_DRAFTS_CACHE_KEY = "__new_asset_drafts__"
-
-    # Custom roles - matching the original model's interface
-    TYPE_ID_ROLE = QtCore.Qt.UserRole + 101
-    IS_FOLDER_ROLE = QtCore.Qt.UserRole + 102
-    ASSOCIATED_TREE_VIEW_ITEM_ROLE = QtCore.Qt.UserRole + 103
-    PUBLISH_TYPE_NAME_ROLE = QtCore.Qt.UserRole + 104
-    SEARCHABLE_NAME = QtCore.Qt.UserRole + 105
-
-    # Additional FlowAM-specific roles
-    SG_DATA_ROLE = QtCore.Qt.UserRole + 1  # To maintain compatibility with ShotgunModel
-    SG_ASSOCIATED_FIELD_ROLE = QtCore.Qt.UserRole + 2
-    ASSET_ROLE = (
-        QtCore.Qt.UserRole + 200
-    )  # Stores FlowAM Asset object (shared with all FlowAM models)
-    DRAFT_ROLE = (
-        QtCore.Qt.UserRole + 202
-    )  # Stores DraftInfo for draft rows (shared with history model)
-
-    # Stores {set_name: [(variant_name, asset_id)]} for variant container cards.
-    VARIANT_SETS_ROLE = QtCore.Qt.UserRole + 203
 
     # Signals
     loadingStarted = QtCore.Signal()
@@ -193,206 +183,31 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         if selected_item is None:
             return
 
+        # Get medm asset associated with selected item
         asset = self._extract_asset_from_tree_item(selected_item)
-        if asset is None:
-            self._app.log_warning("FlowAM: Could not extract asset from selected item")
-            return
 
-        self._app.log_debug(f"FlowAM: Asset extracted: {asset.name}")
+        # Get list of child assets under selected item
+        # Assume here that next tier of tree has already been fetched
+        children_assets = self._extract_children_from_tree_item(selected_item)
 
-        # ------------------------------------------------------------------
-        # Variant container check.
-        # If the selected asset owns component.variantSet components it is a
-        # logical container grouping alternative representations (e.g. maya /
-        # alembic).  In that case we show the container itself as a single
-        # center-panel card and store variant metadata on it; the variant cell
-        # child assets are NOT shown as separate cards.
-        # ------------------------------------------------------------------
-        try:
-            variant_sets = asset.get_variant_sets()
-        except Exception as _e:
-            # Schema not registered on this hub or network error – treat as
-            # a plain (non-variant) asset.
-            self._app.log_debug(
-                f"FlowAM: Could not read variant sets for '{asset.name}': {_e}"
-            )
-            variant_sets = {}
-
-        if variant_sets:
-            self._app.log_debug(
-                f"FlowAM: '{asset.name}' is a variant container "
-                f"({list(variant_sets.keys())})"
-            )
-            self._populate_variant_container(asset, variant_sets)
-            # Publish-type count is updated inside the helper above.
-            return
-
-        children_asset_sg_dicts = self._fetch_asset_children(asset)
-
-        # If the selected asset has no (non-structural) children it may itself
-        # be the publishable leaf.  Only fall back to showing it directly when
-        # the asset is NOT a structural container.
-        leaf_asset_fallback = None
-        if not children_asset_sg_dicts and not _is_structural_asset_util(asset):
-            try:
-                children_asset_sg_dicts = [self._asset_to_sg_dict(asset)]
-            except Exception as e:
-                self._app.log_warning(
-                    f"FlowAM: Could not convert leaf asset '{asset.name}' to sg_dict: {e}"
-                )
-                # Keep a reference to the raw asset so we can still fetch its
-                # drafts below.
-                leaf_asset_fallback = asset
-
-        self._app.log_debug(
-            f"FlowAM: Fetched {len(children_asset_sg_dicts)} latest version dicts from children"
-        )
-
-        assets_for_draft_lookup = [
-            sg_dict.get("_medm_asset") for sg_dict in children_asset_sg_dicts
-        ]
-        assets_for_draft_lookup = [a for a in assets_for_draft_lookup if a is not None]
-        if not assets_for_draft_lookup and leaf_asset_fallback is not None:
-            assets_for_draft_lookup = [leaf_asset_fallback]
-
-        # --- Pass 1: collect draft cards per asset ----------------------------
-        drafts_by_asset_id: dict[str, list] = {}
-        for child_asset in assets_for_draft_lookup:
-            try:
-                if child_asset.id in self._cache.drafts:
-                    raw_drafts = self._cache.drafts[child_asset.id]
-                else:
-                    raw_drafts = sandbox.get_asset_drafts(child_asset.id)
-                    self._cache.drafts[child_asset.id] = raw_drafts
-            except Exception as e:
-                self._app.log_debug(
-                    f"FlowAM: Could not fetch drafts for '{child_asset.name}': {e}"
-                )
-                continue
-
-            draft_dicts = []
-            for draft_info in raw_drafts:
-                try:
-                    draft_dicts.append(self._draft_to_sg_dict(draft_info, child_asset))
-                    self._app.log_debug(
-                        f"FlowAM: Found draft '{getattr(draft_info, 'name', '?')}' "
-                        f"for asset '{child_asset.name}'"
-                    )
-                except Exception as e:
-                    self._app.log_warning(
-                        f"FlowAM: Could not convert draft '{getattr(draft_info, 'name', '?')}' "
-                        f"for '{child_asset.name}': {e}"
-                    )
-
-            if draft_dicts:
-                drafts_by_asset_id[child_asset.id] = draft_dicts
-
-        # --- Pass 2: populate the center panel --------------------------------
-        #   - Asset has a draft  -> show only the draft card(s).
-        #   - Asset has no draft -> show its latest published version card.
-        draft_count = 0
-        published_count = 0
-
-        for sg_dict in children_asset_sg_dicts:
-            medm_asset = sg_dict.get("_medm_asset")
-            asset_id = medm_asset.id if medm_asset is not None else None
-
-            if asset_id is not None and asset_id in drafts_by_asset_id:
-                for draft_sg_dict in drafts_by_asset_id[asset_id]:
-                    self._add_sg_dict_as_qt_item(draft_sg_dict)
-                    draft_count += 1
-            else:
+        # Build publish info dictionaries for each child that
+        # does not serve a container/folder-like purpose and then
+        # add it as an asset card in middle panel
+        for child_asset in children_assets:
+            if not _is_structural_asset_util(child_asset):
+                sg_dict = self._asset_to_sg_dict(child_asset)
+                # For each child, check if there is variant data
+                # and add that info to dictionary if applicable
+                self._add_variant_data(sg_dict, child_asset)
                 self._add_sg_dict_as_qt_item(sg_dict)
-                published_count += 1
 
-        # Surface drafts for the leaf-fallback asset.
-        if (
-            leaf_asset_fallback is not None
-            and leaf_asset_fallback.id in drafts_by_asset_id
-        ):
-            for draft_sg_dict in drafts_by_asset_id[leaf_asset_fallback.id]:
+        # Now look for any new drafts that may be in the sandbox
+        # under with current asset as parent
+        if asset:
+            new_drafts = self._get_new_drafts_under_asset(asset)
+            for draft_info in new_drafts:
+                draft_sg_dict = self._draft_to_sg_dict(draft_info)
                 self._add_sg_dict_as_qt_item(draft_sg_dict)
-                draft_count += 1
-
-        # --- Pass 3: surface NewDraftInfo entries for unpublished child assets
-        for new_draft_sg_dict in self._fetch_new_draft_items_for_parent(asset.id):
-            self._add_sg_dict_as_qt_item(new_draft_sg_dict)
-            draft_count += 1
-
-        self._app.log_debug(
-            f"FlowAM: center panel now has {self.rowCount()} items "
-            f"({draft_count} draft(s), {published_count} published)"
-        )
-
-        sg_publish_type_counts = self._calculate_sg_publish_type_counts()
-        self._publish_type_model.set_active_types(sg_publish_type_counts)
-
-    def _populate_variant_container(
-        self,
-        asset: objects.FlowAsset,
-        variant_sets: dict[str, list[tuple[str, str]]],
-    ) -> None:
-        """Show *asset* as a single center-panel card for a variant container.
-
-        Builds the container's sg_data dict and attaches two extra keys:
-
-        * ``_variant_sets``: the raw variant-sets dict
-          ``{set_name: [(variant_name, asset_id)]}`` read from the asset's
-          ``component.variantSet`` components.
-        * ``_variant_data_dicts``: sg_data dicts built here for each variant cell,
-          keyed by *asset_id*.  The details panel uses these to populate the
-          actions menu when the user picks a variant from the selector.
-
-        :param asset: The container :class:`FlowAsset`.
-        :param variant_sets: Mapping returned by :meth:`ComponentMixin.get_variant_sets`.
-        """
-        # Collect every unique variant-cell asset_id across all sets.
-        all_variant_asset_ids: set[str] = set()
-        for variants in variant_sets.values():
-            for _variant_set_name, variant_set_asset_id in variants:
-                if variant_set_asset_id:
-                    all_variant_asset_ids.add(variant_set_asset_id)
-
-        # Fetch the variant cell FlowAsset objects (best-effort; use cache).
-        variant_data_dicts: dict[str, dict[str, Any]] = {}
-        try:
-            child_assets = self._get_cached_children(asset)
-
-            for child in child_assets:
-                if child.id in all_variant_asset_ids:
-                    try:
-                        variant_data_dicts[child.id] = self._asset_to_sg_dict(child)
-                    except Exception as _e:
-                        self._app.log_debug(
-                            f"FlowAM: Could not build sg_dict for variant cell "
-                            f"'{child.name}': {_e}"
-                        )
-        except Exception as _e:
-            self._app.log_warning(
-                f"FlowAM: Could not fetch variant cell children for "
-                f"'{asset.name}': {_e}"
-            )
-
-        # Build the container card.
-        sg_dict = self._asset_to_sg_dict(asset)
-        sg_dict["_variant_sets"] = variant_sets
-        sg_dict["_variant_data_dicts"] = variant_data_dicts
-
-        # Use the first variant cell child's revision as the container thumbnail.
-        # Going through child_assets directly avoids any risk of the asset ID
-        # format in variant component properties not matching child.id exactly.
-        first_variant_child = next(
-            (child for child in child_assets if child.id in all_variant_asset_ids),
-            None,
-        )
-        # Fallback: if the ID lookup found nothing (format mismatch), take the
-        # first child regardless so SOME thumbnail is shown.
-        if first_variant_child is None and child_assets:
-            first_variant_child = child_assets[0]
-        if first_variant_child:
-            sg_dict["_thumbnail_revision_id"] = first_variant_child.revision_id
-
-        self._add_sg_dict_as_qt_item(sg_dict)
 
         sg_publish_type_counts = self._calculate_sg_publish_type_counts()
         self._publish_type_model.set_active_types(sg_publish_type_counts)
@@ -406,64 +221,117 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         :param item: The QStandardItem from the entity tree (left panel)
         :returns: FlowAM Asset object or None if not found
         """
-        # Both MedmEntityModel and MedmLatestPublishModel use ASSET_ROLE = Qt.UserRole + 200
-        asset = item.data(self.ASSET_ROLE)
-        if asset:
-            return asset
+        fed_data = item.data(FED_ROLE)
+        if fed_data and fed_data.asset:
+            return fed_data.asset
 
-        fed_data = item.data(self.FED_ROLE)
-        if fed_data.asset:
+        asset = item.data(ASSET_ROLE)
+        if asset:
             return asset
 
         asset_data = item.data(QtCore.Qt.UserRole + 1)
         return asset_data
 
-    def _fetch_asset_children(self, asset: objects.FlowAsset) -> list[dict[str, Any]]:
+    def _extract_children_from_tree_item(
+        self, item: QtGui.QStandardItem
+    ) -> list[objects.FlowAsset]:
         """
-        Fetch all non-structural child assets and convert to sg_data dicts.
+        Extract the list of child FlowAssets from a tree view QStandardItem.
+        NOTE: This should be called after the children for the item has been loaded.
 
-        Structural containers (folders, pipeline steps, container types) are
-        filtered out here because they belong only in the left-hand tree, not
-        in the center panel publish list.
-
-        The shared ``cache.children`` dict is consulted first so that selecting
-        a tree node never duplicates an API call that was already made when the
-        node was expanded by :class:`MedmEntityModel` (or vice-versa).
-
-        :param asset: The selected FlowAM Asset in FlowAM treeview
-        :returns: List of sg_data dictionaries representing each non-structural child asset
+        :param item: The QStandardItem from the entity tree (left panel)
+        :returns: List of FlowAM Asset objects
         """
-        children_asset_sg_dicts = []
+        fed_data = item.data(FED_ROLE)
+        children = []
+        if fed_data:
+            children.extend([c.asset for c in fed_data.children if c.asset])
 
+        asset = self._extract_asset_from_tree_item(item)
+        if asset and asset.id in self._cache.children:
+            children.extend(self._cache.children[asset.id])
+
+        return children
+
+    def _add_variant_data(self, sg_dict: dict, asset: objects.FlowAsset):
+        """Add variant data to the publish info dictionary of a variant container.
+        These assets will be displayed as a single center-panel card with variant info
+        appearing in the Details panel.
+
+        Attaches two extra keys to the container's sg_data dict:
+
+        * ``_variant_sets``: the raw variant-sets dict
+          ``{set_name: [(variant_name, asset_id)]}`` read from the asset's
+          ``component.variantSet`` components.
+        * ``_variant_data_dicts``: sg_data dicts built here for each variant cell,
+          keyed by *asset_id*.  The details panel uses these to populate the
+          actions menu when the user picks a variant from the selector.
+
+        :param sg_dict: Dictionary sg data to be used for publish info.
+                        Variant data will be appended to this if applicable.
+        :param asset: FlowAsset object whose variants will be introspected.
+        """
+        # ------------------------------------------------------------------
+        # Variant container check.
+        # If the asset owns component.variantSet components it is a
+        # logical container grouping alternative representations (e.g. maya /
+        # alembic).  In that case we show the container itself as a single
+        # center-panel card and store variant metadata on it.
+        # ------------------------------------------------------------------
+        variant_sets = {}
         try:
-            child_assets = self._get_cached_children(asset)
+            variant_sets = asset.get_variant_sets()
+        except Exception as _e:
+            # Schema not registered on this hub or network error – treat as
+            # a plain (non-variant) asset.
+            self._app.log_debug(
+                f"FlowAM: Could not read variant sets for '{asset.name}': {_e}"
+            )
+        if not variant_sets:
+            return
 
-            for child_asset in child_assets:
-                if _is_structural_asset_util(child_asset):
-                    self._app.log_debug(
-                        f"FlowAM: Skipping structural asset '{child_asset.name}' from center panel"
-                    )
-                    continue
-                try:
-                    asset_dict = self._asset_to_sg_dict(child_asset)
-                    children_asset_sg_dicts.append(asset_dict)
-                    self._app.log_debug(
-                        f"FlowAM: Added asset '{child_asset.name}' with latest version "
-                        f"v{child_asset.version_number}"
-                    )
-                except Exception as e:
-                    self._app.log_warning(
-                        f"FlowAM: Error processing child asset '{child_asset.name}': {e}"
-                    )
-                    continue
+        # Collect every unique variant-cell asset_id across all sets.
+        # Variant sets are returned as:
+        #   { variant set name:  [ (variant name, variant id) ] }
+        all_variant_asset_ids: set[str] = set()
+        first_variant_id = first_variant = None
+        for variant_list in variant_sets.values():
+            for variant_name, variant_id in variant_list:
+                all_variant_asset_ids.add(variant_id)
+                if not first_variant_id:
+                    first_variant_id = variant_id
 
-        except Exception as e:
-            self._app.log_warning(f"FlowAM: Error fetching asset children: {e}")
+        # Fetch the variant cell FlowAsset objects (best-effort; use cache).
+        variant_data_dicts: dict[str, dict[str, Any]] = {}
 
-        self._app.log_debug(
-            f"FlowAM: Loaded {len(children_asset_sg_dicts)} children assets for asset '{asset.name}'"
-        )
-        return children_asset_sg_dicts
+        for variant_id in all_variant_asset_ids:
+            variant_asset = objects.FlowAsset(variant_id)
+            try:
+                variant_data_dicts[variant_id] = self._asset_to_sg_dict(variant_asset)
+            except Exception as _e:
+                self._app.log_debug(
+                    f"FlowAM: Could not build sg_dict for variant cell "
+                    f"'{variant_id}': {_e}"
+                )
+            if variant_id == first_variant_id:
+                first_variant = variant_asset
+
+        sg_dict["_variant_sets"] = variant_sets
+        sg_dict["_variant_data_dicts"] = variant_data_dicts
+
+        # Use the first variant cell child's revision as the container thumbnail.
+        if first_variant:
+            sg_dict["_thumbnail_revision_id"] = first_variant.revision_id
+
+    def _get_new_drafts_under_asset(
+        self, asset: objects.FlowAsset
+    ) -> list[sandbox.DraftInfo]:
+        """
+        Given an asset, return any drafts for new assets created under
+        this asset.
+        """
+        new_drafts = sandbox.get_drafts(draft_type="new")
+        return [d for d in new_drafts if d.parent_id == asset.id]
 
     def _asset_to_sg_dict(self, asset: objects.FlowAsset) -> dict[str, Any]:
         """
@@ -670,17 +538,17 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         """
         qt_item = QtGui.QStandardItem(sg_item.get("code", "Unnamed"))
 
-        qt_item.setData(sg_item, self.SG_DATA_ROLE)
-        qt_item.setData(sg_item.get("code", ""), self.SEARCHABLE_NAME)
-        qt_item.setData(False, self.IS_FOLDER_ROLE)
+        qt_item.setData(sg_item, SG_DATA_ROLE)
+        qt_item.setData(sg_item.get("code", ""), SEARCHABLE_NAME)
+        qt_item.setData(False, IS_FOLDER_ROLE)
         pft = sg_item.get("published_file_type") or {}
-        qt_item.setData(pft.get("id"), self.TYPE_ID_ROLE)
-        qt_item.setData(pft.get("name"), self.PUBLISH_TYPE_NAME_ROLE)
+        qt_item.setData(pft.get("id"), TYPE_ID_ROLE)
+        qt_item.setData(pft.get("name"), PUBLISH_TYPE_NAME_ROLE)
 
         if "_medm_asset" in sg_item:
-            qt_item.setData(sg_item["_medm_asset"], self.ASSET_ROLE)
+            qt_item.setData(sg_item["_medm_asset"], ASSET_ROLE)
         if "_medm_draft" in sg_item:
-            qt_item.setData(sg_item["_medm_draft"], self.DRAFT_ROLE)
+            qt_item.setData(sg_item["_medm_draft"], DRAFT_ROLE)
 
         qt_item.setEditable(False)
         qt_item.setIcon(self._publish_icon)
@@ -692,7 +560,7 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
         self._set_tooltip(qt_item, sg_item)
 
         def get_sg_data():
-            return qt_item.data(self.SG_DATA_ROLE)
+            return qt_item.data(SG_DATA_ROLE)
 
         qt_item.get_sg_data = get_sg_data
 
@@ -768,8 +636,8 @@ class MedmLatestPublishModel(QtGui.QStandardItemModel):
 
         for row in range(self.rowCount()):
             item = self.item(row, 0)
-            if item and not item.data(self.IS_FOLDER_ROLE):
-                sg_publish_type_id = item.data(self.TYPE_ID_ROLE)
+            if item and not item.data(IS_FOLDER_ROLE):
+                sg_publish_type_id = item.data(TYPE_ID_ROLE)
                 if sg_publish_type_id is not None:
                     sg_publish_type_aggregates[sg_publish_type_id] += 1
 

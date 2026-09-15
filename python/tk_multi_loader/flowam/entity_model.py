@@ -27,11 +27,15 @@ from typing import Optional
 
 import sgtk
 from sgtk.platform.qt import QtCore, QtGui
-from tank_vendor.flow_integration_sdk import globals, objects, exceptions, schema
-from sgtk.flowam.create import PIPELINE_STEP_TYPE
+from tank_vendor.flow_integration_sdk import objects
 
 from .shared_cache import MedmSharedCache
 from .utils import is_structural_asset as _is_structural_asset_util
+from .qt_roles import (
+    ASSET_ROLE,
+    CHILDREN_LOADED_ROLE,
+    SG_DATA_ROLE,
+)
 
 
 class MedmEntityModel(QtGui.QStandardItemModel):
@@ -42,16 +46,6 @@ class MedmEntityModel(QtGui.QStandardItemModel):
     Uses lazy loading: only the project's immediate children are fetched at
     startup.  Deeper levels are fetched when the user expands a node.
     """
-
-    # Custom roles - matching ShotgunModel interface
-    SG_DATA_ROLE = QtCore.Qt.UserRole + 1
-    SG_ASSOCIATED_FIELD_ROLE = QtCore.Qt.UserRole + 2
-    ASSET_ROLE = (
-        QtCore.Qt.UserRole + 200
-    )  # Stores FlowAM Asset object (shared with all FlowAM models)
-
-    # Lazy-loading bookkeeping role: True once children have been fetched for a node.
-    CHILDREN_LOADED_ROLE = QtCore.Qt.UserRole + 201
 
     # Signals - required for ShotgunModelOverlayWidget compatibility
     cache_loaded = QtCore.Signal()
@@ -90,11 +84,6 @@ class MedmEntityModel(QtGui.QStandardItemModel):
         self._folder_icon = QtGui.QIcon(QtGui.QPixmap(":/res/icon_Folder.png"))
         self._binary_icon = QtGui.QIcon(QtGui.QPixmap(":/res/icon_Asset_dark.png"))
 
-        # Lazily resolved set of structural type IDs (folder, pipeline step).
-        # Assets matching any of these are always shown in the tree;
-        # others are only shown when they have structural descendants.
-        self._structural_type_ids: Optional[set] = None
-
         self._project = None
         self._initialize_project()
 
@@ -119,7 +108,7 @@ class MedmEntityModel(QtGui.QStandardItemModel):
         item = self.itemFromIndex(parent)
         if item is None:
             return False
-        if item.data(self.CHILDREN_LOADED_ROLE):
+        if item.data(CHILDREN_LOADED_ROLE):
             return item.rowCount() > 0
         # Not yet loaded -> assume children exist (shows the expand arrow)
         return True
@@ -131,14 +120,14 @@ class MedmEntityModel(QtGui.QStandardItemModel):
         item = self.itemFromIndex(parent)
         if item is None:
             return False
-        return not item.data(self.CHILDREN_LOADED_ROLE)
+        return not item.data(CHILDREN_LOADED_ROLE)
 
     def fetchMore(self, parent: QtCore.QModelIndex) -> None:
         """Load the immediate children of *parent* from the FlowAM API (or cache)."""
         if not parent.isValid():
             return
         item = self.itemFromIndex(parent)
-        if item is None or item.data(self.CHILDREN_LOADED_ROLE):
+        if item is None or item.data(CHILDREN_LOADED_ROLE):
             return
         self._load_children_for_item(item)
 
@@ -191,7 +180,7 @@ class MedmEntityModel(QtGui.QStandardItemModel):
             for row in range(parent.rowCount() if parent else self.rowCount()):
                 item = parent.child(row) if parent else self.item(row)
                 if item:
-                    sg_data = item.data(self.SG_DATA_ROLE)
+                    sg_data = item.data(SG_DATA_ROLE)
                     if sg_data and sg_data.get("id") == entity_id:
                         return item
                     found = search_item(item)
@@ -200,20 +189,6 @@ class MedmEntityModel(QtGui.QStandardItemModel):
             return None
 
         return search_item(None)
-
-    def get_cached_children(self, asset: objects.FlowAsset) -> list[objects.FlowAsset]:
-        """
-        Return child :class:`FlowAsset` objects for *asset*.
-
-        Uses the internal cache when available; otherwise fetches from the FlowAM
-        API and stores the result.  This is the single entry-point that both
-        the tree's ``fetchMore`` and :class:`MedmLatestPublishModel` use, so
-        that a drill-down never fetches the same level twice.
-
-        :param asset: Parent FlowAM Asset whose children are needed.
-        :returns: List of child FlowAsset objects (may be empty).
-        """
-        return self._fetch_and_cache_children(asset)
 
     # -------------------------------------------------------------------------
     # Private utility methods - Internal implementation details
@@ -236,43 +211,6 @@ class MedmEntityModel(QtGui.QStandardItemModel):
                 "Entity tree will not be loaded."
             )
             self._project = None
-
-    def _get_structural_type_ids(self) -> set:
-        """
-        Return the set of type-ID strings that are always shown in the tree
-        regardless of whether they have children.
-
-        The set is resolved once and cached on the instance.  It contains:
-        - ``FOLDER_TYPE_ID``  - Autodesk built-in type, available as a constant.
-        - pipeline-step - schema-registered type whose ID varies per collection
-          and is resolved via ``flow_module.schema.get_schema_id``.
-
-        Template and generic-workfile types are intentionally excluded: they
-        are publishable leaf assets that belong in the centre panel, not in
-        the tree.
-
-        On any error (e.g. framework not ready) an empty set is returned so
-        that the tree still loads without crashing.
-        """
-        if self._structural_type_ids is not None:
-            return self._structural_type_ids
-
-        try:
-            folder_id = globals.FOLDER_TYPE_ID
-            pipeline_step_id = schema.get_schema_id(PIPELINE_STEP_TYPE)
-
-            self._structural_type_ids = {folder_id, pipeline_step_id}
-            self._app.log_debug(
-                f"FlowAM Entity: structural type IDs = {self._structural_type_ids}"
-            )
-        except exceptions.FlowError as e:
-            self._app.log_warning(
-                f"FlowAM Entity: could not resolve structural type IDs ({e}); "
-                "non-structural assets without structural descendants will be hidden."
-            )
-            self._structural_type_ids = set()
-
-        return self._structural_type_ids
 
     def _is_tree_node(self, asset: objects.FlowAsset) -> bool:
         """
@@ -372,7 +310,7 @@ class MedmEntityModel(QtGui.QStandardItemModel):
         asset_item = QtGui.QStandardItem(asset.name)
         asset_item.setEditable(False)
 
-        asset_item.setData(asset, self.ASSET_ROLE)
+        asset_item.setData(asset, ASSET_ROLE)
 
         sg_data = {
             "type": asset.__class__.__name__,
@@ -380,10 +318,10 @@ class MedmEntityModel(QtGui.QStandardItemModel):
             "name": asset.name,
             "code": asset.name,
         }
-        asset_item.setData(sg_data, self.SG_DATA_ROLE)
+        asset_item.setData(sg_data, SG_DATA_ROLE)
 
         # Mark children as not-yet-loaded so canFetchMore/hasChildren work.
-        asset_item.setData(False, self.CHILDREN_LOADED_ROLE)
+        asset_item.setData(False, CHILDREN_LOADED_ROLE)
 
         asset_item.setIcon(self._icon_for_asset(asset))
 
@@ -406,9 +344,9 @@ class MedmEntityModel(QtGui.QStandardItemModel):
         """
         # Mark loaded FIRST to prevent re-entrant fetchMore calls triggered by
         # appendRow -> rowsInserted -> canFetchMore check on the same parent.
-        item.setData(True, self.CHILDREN_LOADED_ROLE)
+        item.setData(True, CHILDREN_LOADED_ROLE)
 
-        asset = item.data(self.ASSET_ROLE)
+        asset = item.data(ASSET_ROLE)
         if asset is None:
             return
 

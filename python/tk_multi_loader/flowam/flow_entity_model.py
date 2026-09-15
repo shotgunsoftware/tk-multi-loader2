@@ -22,16 +22,22 @@ requested by both the tree and the center-panel publish model.
 
 from __future__ import annotations
 
+import traceback
 from typing import Optional
 
 import sgtk
 from sgtk.platform.qt import QtCore, QtGui
-from tank_vendor.flow_integration_sdk import globals, objects, exceptions, schema
-from sgtk.flowam.create import PIPELINE_STEP_TYPE
+from tank_vendor.flow_integration_sdk import globals, objects, schema
 from sgtk.flowam.fd_generate_hierarchy import get_tree_root, TreeItem as FedTreeItem
 
 from .shared_cache import MedmSharedCache
 from .utils import is_structural_asset as _is_structural_asset_util
+from .qt_roles import (
+    ASSET_ROLE,
+    CHILDREN_LOADED_ROLE,
+    FED_ROLE,
+    SG_DATA_ROLE,
+)
 
 
 class FlowEntityModel(QtGui.QStandardItemModel):
@@ -43,17 +49,6 @@ class FlowEntityModel(QtGui.QStandardItemModel):
     level of hierarchy tokens are fetched at startup.
     Deeper levels are fetched when the user expands a node.
     """
-
-    # Custom roles - matching ShotgunModel interface
-    SG_DATA_ROLE = QtCore.Qt.UserRole + 1
-    SG_ASSOCIATED_FIELD_ROLE = QtCore.Qt.UserRole + 2
-    # Stores FlowAM Asset object (shared with all FlowAM models)
-    ASSET_ROLE = QtCore.Qt.UserRole + 200
-    # Stores federated FPT/MEDM data
-    FED_ROLE = QtCore.Qt.UserRole + 202
-
-    # Lazy-loading bookkeeping role: True once children have been fetched for a node.
-    CHILDREN_LOADED_ROLE = QtCore.Qt.UserRole + 201
 
     # Signals - required for ShotgunModelOverlayWidget compatibility
     cache_loaded = QtCore.Signal()
@@ -105,11 +100,6 @@ class FlowEntityModel(QtGui.QStandardItemModel):
             "shot": QtGui.QIcon(QtGui.QPixmap(":/res/icon_Shot_dark.png")),
         }
 
-        # Lazily resolved set of structural type IDs (folder, pipeline step).
-        # Assets matching any of these are always shown in the tree;
-        # others are only shown when they have structural descendants.
-        self._structural_type_ids: Optional[set] = None
-
         self._project = None
         self._initialize_project()
 
@@ -119,7 +109,7 @@ class FlowEntityModel(QtGui.QStandardItemModel):
 
         # Defer loading to allow UI to set up first (shows spinner)
         self.data_refreshing.emit()
-        QtCore.QTimer.singleShot(100, self._load_medm_assets)
+        QtCore.QTimer.singleShot(100, self._load_flow_assets)
 
     # -------------------------------------------------------------------------
     # Qt virtual overrides - lazy loading protocol
@@ -138,7 +128,7 @@ class FlowEntityModel(QtGui.QStandardItemModel):
         item = self.itemFromIndex(parent)
         if item is None:
             return False
-        if item.data(self.CHILDREN_LOADED_ROLE):
+        if item.data(CHILDREN_LOADED_ROLE):
             return item.rowCount() > 0
         # Not yet loaded -> assume children exist (shows the expand arrow)
         return True
@@ -150,14 +140,14 @@ class FlowEntityModel(QtGui.QStandardItemModel):
         item = self.itemFromIndex(parent)
         if item is None:
             return False
-        return not item.data(self.CHILDREN_LOADED_ROLE)
+        return not item.data(CHILDREN_LOADED_ROLE)
 
     def fetchMore(self, parent: QtCore.QModelIndex) -> None:
         """Load the immediate children of *parent* from the FlowAM API (or cache)."""
         if not parent.isValid():
             return
         item = self.itemFromIndex(parent)
-        if item is None or item.data(self.CHILDREN_LOADED_ROLE):
+        if item is None or item.data(CHILDREN_LOADED_ROLE):
             return
         self._load_children_for_item(item)
 
@@ -174,7 +164,7 @@ class FlowEntityModel(QtGui.QStandardItemModel):
         self.clear()
         self._cache.clear_on_hard_refresh()
         self.data_refreshing.emit()
-        QtCore.QTimer.singleShot(100, self._load_medm_assets)
+        QtCore.QTimer.singleShot(100, self._load_flow_assets)
 
     def hard_refresh(self) -> None:
         """Hard refresh (same as async_refresh for this simple model)."""
@@ -210,8 +200,12 @@ class FlowEntityModel(QtGui.QStandardItemModel):
             for row in range(parent.rowCount() if parent else self.rowCount()):
                 item = parent.child(row) if parent else self.item(row)
                 if item:
-                    sg_data = item.data(self.SG_DATA_ROLE)
-                    if sg_data and sg_data.get("id") == entity_id:
+                    sg_data = item.data(SG_DATA_ROLE)
+                    if (
+                        sg_data
+                        and sg_data.get("id") == entity_id
+                        and sg_data.get("type") == entity_type
+                    ):
                         return item
                     found = search_item(item)
                     if found:
@@ -219,20 +213,6 @@ class FlowEntityModel(QtGui.QStandardItemModel):
             return None
 
         return search_item(None)
-
-    def get_cached_children(self, asset: objects.FlowAsset) -> list[objects.FlowAsset]:
-        """
-        Return child :class:`FlowAsset` objects for *asset*.
-
-        Uses the internal cache when available; otherwise fetches from the FlowAM
-        API and stores the result.  This is the single entry-point that both
-        the tree's ``fetchMore`` and :class:`MedmLatestPublishModel` use, so
-        that a drill-down never fetches the same level twice.
-
-        :param asset: Parent FlowAM Asset whose children are needed.
-        :returns: List of child FlowAsset objects (may be empty).
-        """
-        return self._fetch_and_cache_children(asset)
 
     @staticmethod
     def get_item_data(item: QtGui.QStandardItem) -> tuple[dict, str]:
@@ -243,7 +223,7 @@ class FlowEntityModel(QtGui.QStandardItemModel):
             - The SG_DATA dictionary stored on the item
             - The name of the SG entity if applicable, otherwise the display text of the item
         """
-        sg_data = item.data(FlowEntityModel.SG_DATA_ROLE)
+        sg_data = item.data(SG_DATA_ROLE)
         if sg_data and sg_data.get("type") and sg_data.get("id"):
             # Real entity - external id component resolved
             field_value = sg_data.get("name")
@@ -266,7 +246,7 @@ class FlowEntityModel(QtGui.QStandardItemModel):
             try:
                 r, g, b = eval(color)
                 pixmap.fill(QtGui.QColor(r, g, b))
-            except:
+            except ValueError:
                 pixmap.fill(QtGui.QColor(color))
             icon = QtGui.QIcon(pixmap)
             self._icons[color] = icon
@@ -289,43 +269,6 @@ class FlowEntityModel(QtGui.QStandardItemModel):
                 "Entity tree will not be loaded."
             )
             self._project = None
-
-    def _get_structural_type_ids(self) -> set:
-        """
-        Return the set of type-ID strings that are always shown in the tree
-        regardless of whether they have children.
-
-        The set is resolved once and cached on the instance.  It contains:
-        - ``FOLDER_TYPE_ID``  - Autodesk built-in type, available as a constant.
-        - pipeline-step - schema-registered type whose ID varies per collection
-          and is resolved via ``flow_module.schema.get_schema_id``.
-
-        Template and generic-workfile types are intentionally excluded: they
-        are publishable leaf assets that belong in the centre panel, not in
-        the tree.
-
-        On any error (e.g. framework not ready) an empty set is returned so
-        that the tree still loads without crashing.
-        """
-        if self._structural_type_ids is not None:
-            return self._structural_type_ids
-
-        try:
-            folder_id = globals.FOLDER_TYPE_ID
-            pipeline_step_id = schema.get_schema_id(PIPELINE_STEP_TYPE)
-
-            self._structural_type_ids = {folder_id, pipeline_step_id}
-            self._app.log_debug(
-                f"FlowAM Entity: structural type IDs = {self._structural_type_ids}"
-            )
-        except exceptions.FlowError as e:
-            self._app.log_warning(
-                f"FlowAM Entity: could not resolve structural type IDs ({e}); "
-                "non-structural assets without structural descendants will be hidden."
-            )
-            self._structural_type_ids = set()
-
-        return self._structural_type_ids
 
     def _is_tree_node(self, asset: objects.FlowAsset) -> bool:
         """
@@ -374,7 +317,7 @@ class FlowEntityModel(QtGui.QStandardItemModel):
             else self._icons["binary"]
         )
 
-    def _load_medm_assets(self) -> None:
+    def _load_flow_assets(self) -> None:
         """
         Load the first level of FlowAM assets (project's immediate children).
         Called asynchronously after a short delay to show the loading spinner.
@@ -411,9 +354,7 @@ class FlowEntityModel(QtGui.QStandardItemModel):
 
             # Also include any children contained by project that are not explictly
             # associated with FPT data
-            q_filter = f"components.typeId!='{schema.get_schema_id(globals.FOR_DELIVERABLE_TYPE)}';"
-            q_filter += f"components.typeId!='{schema.get_schema_id(globals.FOR_PIPELINE_STEP_TYPE)}'"
-            extra_children = self._project.search_children(q_filter)
+            extra_children = self._query_children(self._project)
             count = 0
             for child in extra_children:
                 if self._is_tree_node(child):
@@ -429,11 +370,36 @@ class FlowEntityModel(QtGui.QStandardItemModel):
 
         except Exception as e:
             self._app.log_error(f"Failed to load Flow Hierarchy data: {e}")
-            import traceback
-
-            traceback.print_exc()
             self._app.log_debug(traceback.format_exc())
             self.data_refresh_fail.emit(str(e))
+
+    def _query_children(
+        self, parent: objects.FlowAsset | objects.FlowProject
+    ) -> list[objects.FlowAsset]:
+        """
+        Return children of given medm entity based purely on containership
+        (not federated data).
+        """
+        # Must filter out any assets that are linked to federated data.
+        # These will be presented within the federated data tree so we don't want them
+        # to be redundantly presented via normal containership relationships.
+        dynamic_enum_value_type = "type.dynamicEnumValue"
+        episode_type = "type.deliverable.episode"
+        sequence_type = "type.deliverable.sequence"
+        q_filter = f"components.typeId!='{schema.get_schema_id(globals.FOR_DELIVERABLE_TYPE)}';"
+        q_filter += f"components.typeId!='{schema.get_schema_id(globals.FOR_PIPELINE_STEP_TYPE)}';"
+        # This is temporary while using scaffolded projects
+        q_filter += (
+            f"components.typeId!='{schema.get_schema_id(dynamic_enum_value_type)}';"
+        )
+        q_filter += f"components.typeId!='{schema.get_schema_id(globals.DELIVERABLE_ASSET_TYPE)}';"
+        q_filter += f"components.typeId!='{schema.get_schema_id(globals.DELIVERABLE_SHOT_TYPE)}';"
+        q_filter += f"components.typeId!='{schema.get_schema_id(episode_type)}';"
+        q_filter += f"components.typeId!='{schema.get_schema_id(sequence_type)}';"
+        q_filter += (
+            f"components.typeId!='{schema.get_schema_id(globals.PIPELINE_STEP_TYPE)}'"
+        )
+        return parent.search_children(q_filter)
 
     def _get_sg_data(self, data: objects.FlowAsset | FedTreeItem) -> dict:
         """Return SG data dictionary gleaned from MEDM asset."""
@@ -484,13 +450,13 @@ class FlowEntityModel(QtGui.QStandardItemModel):
         ui_item = QtGui.QStandardItem(data.label if fed_data else asset.name)
         ui_item.setEditable(False)
 
-        ui_item.setData(data, self.FED_ROLE if fed_data else self.ASSET_ROLE)
+        ui_item.setData(data, FED_ROLE if fed_data else ASSET_ROLE)
 
         sg_data = self._get_sg_data(data)
-        ui_item.setData(sg_data, self.SG_DATA_ROLE)
+        ui_item.setData(sg_data, SG_DATA_ROLE)
 
         # Mark children as not-yet-loaded so canFetchMore/hasChildren work.
-        ui_item.setData(False, self.CHILDREN_LOADED_ROLE)
+        ui_item.setData(False, CHILDREN_LOADED_ROLE)
 
         # Determine icon to be used
         icon = None
@@ -515,7 +481,9 @@ class FlowEntityModel(QtGui.QStandardItemModel):
 
         return ui_item
 
-    def _load_children_for_item(self, item: QtGui.QStandardItem) -> None:
+    def _load_children_for_item(
+        self, item: QtGui.QStandardItem, refresh: bool = False
+    ) -> None:
         """
         Fetch the immediate children of *item* and add them to the tree.
 
@@ -524,42 +492,65 @@ class FlowEntityModel(QtGui.QStandardItemModel):
         cannot re-enter ``fetchMore`` for the same item.
 
         :param item: The tree item whose children should be loaded.
+        :param refresh: If True, re-query children. Otherwise skip load if children
+                        were previously loaded.
         """
-        # Mark loaded FIRST to prevent re-entrant fetchMore calls triggered by
-        # appendRow -> rowsInserted -> canFetchMore check on the same parent.
-        item.setData(True, self.CHILDREN_LOADED_ROLE)
-
-        data_item = item.data(self.FED_ROLE)
-        if data_item:
-            if not data_item.children:
-                data_item.get_children()
-            children = data_item.children
-            # tree_children = [c for c in children if c.asset and self._is_tree_node(c.asset)]
-            for child in children:
-                self._add_ui_item(child, item)
-            self._app.log_debug(
-                f"FlowAM: Loaded {len(children)} children for '{data_item.label}' "
-                f"(non-structural leaf children hidden from tree)"
-            )
+        if item.data(CHILDREN_LOADED_ROLE) and not refresh:
             return
 
-        asset = item.data(self.ASSET_ROLE)
+        # Mark loaded FIRST to prevent re-entrant fetchMore calls triggered by
+        # appendRow -> rowsInserted -> canFetchMore check on the same parent.
+        item.setData(True, CHILDREN_LOADED_ROLE)
+
+        # If the item contains federated data, use the federated data item
+        # to get list of children, using the cached list if it exists.
+        data_item = item.data(FED_ROLE)
+        asset = None
+        count = 0
+        if data_item:
+            # NOTE: this is not 100% redundancy proof as we will end up re-querying
+            #       if the original query result was empty
+            if not data_item.children:
+                try:
+                    data_item.get_children()
+                except Exception as e:
+                    msg = f"Flow Hierarhcy: Could not query federated data for item: {data_item.label}: {e}"
+                    self._app.log_error(msg)
+            count = len(data_item.children)
+            tree_children = [
+                c
+                for c in data_item.children
+                if not c.asset or self._is_tree_node(c.asset)
+            ]
+            # For now, all federated items are added to tree
+            for child in tree_children:
+                self._add_ui_item(child, item)
+            asset = data_item.asset
+
+        # For federated items, an asset may be associated with the item
+        # Otherwise, check if there is an asset directly stored on the ui item
+        # If no asset association exists on this item, we have nothing more to do
+        if asset is None:
+            asset = item.data(ASSET_ROLE)
         if asset is None:
             return
 
+        # Now also include the children via the normal "contains" relationship in medm
         try:
             children = self._fetch_and_cache_children(asset)
+            count += len(children)
+            # Only show items in tree that fit certain criteria
             tree_children = [c for c in children if self._is_tree_node(c)]
             for child_asset in tree_children:
                 self._add_ui_item(child_asset, item)
-            self._app.log_debug(
-                f"FlowAM: Loaded {len(tree_children)}/{len(children)} children for '{asset.name}' "
-                f"(non-structural leaf children hidden from tree)"
-            )
         except Exception as e:
-            self._app.log_debug(
-                f"FlowAM: Could not get children for '{asset.name}': {e}"
-            )
+            msg = f"Flow Hierarchy: Could not query children for asset '{asset.name}': {e}"
+            self._app.log_error(msg)
+
+        self._app.log_debug(
+            f"Flow Hierarchy: Loaded {count} children for '{item.text()}' "
+            f"(non-structural leaf children hidden from tree)"
+        )
 
     def _fetch_and_cache_children(
         self, asset: objects.FlowAsset
@@ -572,6 +563,6 @@ class FlowEntityModel(QtGui.QStandardItemModel):
         if asset.id in self._cache.children:
             return self._cache.children[asset.id]
 
-        children = list(asset.iterate_children())
+        children = self._query_children(asset)
         self._cache.children[asset.id] = children
         return children

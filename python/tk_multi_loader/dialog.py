@@ -13,7 +13,6 @@ from typing import Any, Optional
 
 import os
 from functools import partial
-from typing import Any
 
 import sgtk
 from sgtk import TankError
@@ -2560,6 +2559,11 @@ class AppDialog(QtGui.QWidget):
                 return
             self._publish_proxy_model.setSourceModel(self._medm_publish_model)
             self._publish_proxy_model.set_filter_by_type_ids(None, True)
+            # Before attempting to load the publish data,
+            # first ensure we've queried the next tier of children in the tree
+            # (This will not incur any work if children have already been
+            # loaded before.)
+            model._load_children_for_item(item)
             self._medm_publish_model.load_data(item)
             self._publish_proxy_model.invalidateFilter()
             return
@@ -2841,7 +2845,7 @@ class AppDialog(QtGui.QWidget):
                                 Flow project tree.
         :return: Created `(model, proxy model)`.
         """
-        from .flowam import FlowEntityModel, MedmLatestPublishModel
+        from .flowam import FlowEntityModel
 
         # Construct the hierarchy model and load a hierarchy that leads
         # to entities that are linked via the "PublishedFile.entity" field.
@@ -2871,63 +2875,6 @@ class AppDialog(QtGui.QWidget):
         model.data_refreshed.connect(self._hierarchy_refreshed)
 
         return (model, proxy_model)
-
-    def _on_flow_item_selected(self) -> None:
-        """
-        Called when selection changes in the federated Flow tree view. Updates the
-        publish view to show publishes for the selected Flow entity.
-        """
-        from .flowam.flow_entity_model import FlowEntityModel
-
-        app = sgtk.platform.current_bundle()
-        selected_item = self._get_selected_entity()
-
-        # Clear all classic entity tree selections to avoid conflicts
-        for preset in self._entity_presets.values():
-            if preset.name != self._current_entity_preset:
-                preset.view.selectionModel().clearSelection()
-        if self._medm_tree_view is not None:
-            self._medm_tree_view.selectionModel().clearSelection()
-            self._publish_proxy_model.setSourceModel(self._publish_model)
-
-        # when an item in the treeview is selected, the child
-        # nodes are displayed in the main view, so make sure
-        # they are loaded.
-        model = self._entity_presets[self._current_entity_preset].model
-        view = self._entity_presets[self._current_entity_preset].view
-        if selected_item and model.canFetchMore(selected_item.index()):
-            model.fetchMore(selected_item.index())
-
-        # notify history
-        self._add_history_record(self._current_entity_preset, selected_item)
-
-        # tell details panel to clear itself
-        self._setup_details_panel([])
-
-        # [Flow AM] Regenerate contextual menu
-        if selected_item is not None:
-            sg_data, field_value = FlowEntityModel.get_item_data(selected_item)
-            self._set_contextual_menu(sg_data, field_value, view, model)
-        else:
-            # No item selected, set contextual menu with None data
-            self._set_contextual_menu(None, None, view, model)
-
-        if not selected_item:
-            self._publish_proxy_model.setSourceModel(self._publish_model)
-            self._publish_model.load_data(None, [], False, [])
-            return
-
-        # Switch to FlowAM publish model (assuming publish model is preconstructed)
-        self._publish_proxy_model.setSourceModel(self._medm_publish_model)
-
-        # Clear type filters - FlowAM items don't use SG publish types
-        self._publish_proxy_model.set_filter_by_type_ids(None, True)
-
-        # Load publishes for the selected FlowAM asset
-        self._medm_publish_model.load_data(selected_item)
-
-        # Re-evaluate all proxy filter items
-        self._publish_proxy_model.invalidateFilter()
 
 
 ################################################################################################

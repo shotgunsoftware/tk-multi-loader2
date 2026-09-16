@@ -89,8 +89,10 @@ class AppDialog(QtGui.QWidget):
         # Hold a reference to the current animation to prevent GC mid-run
         self._current_animation = None
 
-        # FlowAM tree view - only created when FlowAM is enabled
+        # FlowAM tree view - only created when FlowAM is enabled and "medm_tree_view" setting is on
         self._medm_tree_view = None
+        # Medm publish model is used by all Medm/Flow views
+        self._medm_publish_model = None
 
         # Variant selector widget shown in the details panel when a FlowAM
         # variant container asset is selected.  Created on first use and
@@ -445,7 +447,8 @@ class AppDialog(QtGui.QWidget):
         self._load_entity_presets()
 
         # Set up the FlowAM tree panel when Flow Asset Management is enabled
-        if self.flowam_available:
+        medm_view_enabled = app.get_setting("medm_tree_view", False)
+        if self.flowam_available and medm_view_enabled:
             self._setup_medm_tree_panel()
 
         #################################################
@@ -2773,16 +2776,19 @@ class AppDialog(QtGui.QWidget):
 
         # Both models share _medm_cache so tree expansion and publish
         # loading never duplicate API calls.
-        self._medm_publish_model = MedmLatestPublishModel(
-            self,
-            self._publish_type_model,
-            self._task_manager,
-            self._medm_cache,
-            self._medm_thumbnail_service,
-        )
+        if self._medm_publish_model is None:
+            self._medm_publish_model = MedmLatestPublishModel(
+                self,
+                self._publish_type_model,
+                self._task_manager,
+                self._medm_cache,
+                self._medm_thumbnail_service,
+            )
 
-        # Re-apply the center-panel details thumbnail when it arrives async.
-        self._medm_publish_model.dataChanged.connect(self._on_publish_item_data_changed)
+            # Re-apply the center-panel details thumbnail when it arrives async.
+            self._medm_publish_model.dataChanged.connect(
+                self._on_publish_item_data_changed
+            )
 
         self._medm_tree_view.selectionModel().selectionChanged.connect(
             self._on_medm_tree_selection_changed
@@ -2845,7 +2851,7 @@ class AppDialog(QtGui.QWidget):
                                 Flow project tree.
         :return: Created `(model, proxy model)`.
         """
-        from .flowam import FlowEntityModel
+        from .flowam import FlowEntityModel, MedmLatestPublishModel
 
         # Construct the hierarchy model and load a hierarchy that leads
         # to entities that are linked via the "PublishedFile.entity" field.
@@ -2859,7 +2865,21 @@ class AppDialog(QtGui.QWidget):
             self._medm_cache,
         )
 
-        # TODO: initialize medm publish model here if medm view is not enabled
+        # Both models share _medm_cache so tree expansion and publish
+        # loading never duplicate API calls.
+        if self._medm_publish_model is None:
+            self._medm_publish_model = MedmLatestPublishModel(
+                self,
+                self._publish_type_model,
+                self._task_manager,
+                self._medm_cache,
+                self._medm_thumbnail_service,
+            )
+
+            # Re-apply the center-panel details thumbnail when it arrives async.
+            self._medm_publish_model.dataChanged.connect(
+                self._on_publish_item_data_changed
+            )
 
         # Create a proxy model.
         proxy_model = QtGui.QSortFilterProxyModel(self)

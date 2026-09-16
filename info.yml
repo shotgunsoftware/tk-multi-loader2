@@ -175,6 +175,11 @@ configuration:
         allows_empty: True
         default_value: []
 
+    medm_tree_view:
+        type: bool
+        description: "Add an additional panel on the left side of the Loader UI
+                      displaying MEDM data in pure form - via containership relationships."
+        default_value: False
 
 # this app works in all engines - it does not contain
 # any host application specific commands

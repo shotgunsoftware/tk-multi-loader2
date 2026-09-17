@@ -15,8 +15,8 @@ from __future__ import annotations
 from typing import Optional
 
 import sgtk
-from sgtk.flowam.create import PIPELINE_STEP_TYPE, TEMPLATE_FOLDER, TEMPLATE_TYPE
-from tank_vendor.flow_integration_sdk import objects, schema
+from sgtk.flowam.create import TEMPLATE_FOLDER, TEMPLATE_TYPE
+from tank_vendor.flow_integration_sdk import globals, objects, schema
 
 logger = sgtk.platform.get_logger(__name__)
 
@@ -33,8 +33,7 @@ def get_template_pipeline_steps(
     template_folder = project.find_child(TEMPLATE_FOLDER)
     if not template_folder:
         return []
-    pipeline_step_type_id = schema.get_schema_id(PIPELINE_STEP_TYPE)
-    return template_folder.find_children(type_id=pipeline_step_type_id)
+    return template_folder.find_children(type_id=globals.FOLDER_TYPE_ID)
 
 
 def get_templates(pipeline_step: objects.FlowAsset) -> list[objects.FlowAsset]:

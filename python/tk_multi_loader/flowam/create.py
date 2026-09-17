@@ -426,17 +426,16 @@ def _create_template_hierarchy(inputs: CreateTemplateInputs) -> objects.FlowAsse
         )
         folder = objects.FlowAsset(medm_asset)
 
-    # Create pipeline step if necessary
-    # If a pipeline step asset associated with sg pipeline step doesn't exist, create it
+    # Create pipeline step folder if necessary
+    # If a pipeline step folder associated with sg pipeline step doesn't exist, create it
     pipeline_step = folder.find_child(sg_pipeline_step)
     if not pipeline_step:
-        app.log_info(f'Creating pipeline step asset for "{sg_pipeline_step}"...')
-        pipeline_step_type_id = schema.get_schema_id(create.PIPELINE_STEP_TYPE)
+        app.log_info(f'Creating pipeline step folder for "{sg_pipeline_step}"...')
         medm_asset = publish.publish_new_asset(
             name=sg_pipeline_step,
             parent_id=folder.id,
             components=flowam_utils.create_components_for_publish(
-                type_ids=[pipeline_step_type_id],
+                type_ids=[globals.FOLDER_TYPE_ID],
             ),
         )
         pipeline_step = objects.FlowAsset(medm_asset)

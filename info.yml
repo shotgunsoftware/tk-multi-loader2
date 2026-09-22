@@ -33,6 +33,18 @@ configuration:
                      Published File Types). The legacy Published File Type filter widget
                      cannot be used in combination with the Filter menu.
 
+    restrict_flowam_actions_by_context:
+        type: bool
+        default_value: false
+        description: Only relevant when the FlowAM integration is available. When set to
+                     True, the draft-introducing FlowAM actions (Build New Scene, Build New
+                     Template, open/checkout, discard draft, download) are only offered when
+                     the current context is at project level (no entity selected). At an
+                     asset/shot context only the reference actions are offered. This is used
+                     by advanced configs where the Loader cannot switch the Toolkit context
+                     to a checked-out draft, which would otherwise leave the engine context
+                     stale. Leave False (the default) to always offer all FlowAM actions.
+
     # hooks
     actions_hook:
         type: hook

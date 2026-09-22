@@ -320,13 +320,8 @@ class FlowAMActions:
             self._app.log_debug("No published workfile found for upstream step.")
             return
 
-        # Referencing an asset is normally only allowed once an asset is open in
-        # the DCC. Here we are still in the middle of creating one, so the scene
-        # is not yet a "complete" asset context - bypass that rule for the build.
         try:
-            file_path = reference_revision(
-                workfile.revision_id, require_asset_context=False
-            )
+            file_path = reference_revision(workfile.revision_id)
         except exceptions.FlowError as exc:
             message = (
                 f"Could not reference the previous step's published scene for "

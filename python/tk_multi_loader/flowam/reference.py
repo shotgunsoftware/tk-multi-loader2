@@ -45,11 +45,6 @@ def reference_revision(revision_id: str) -> str:
         msg = "Referencing is not supported in current execution."
         raise CreateReferenceError(input_id=revision_id, details=msg)
 
-    # We will disallow referencing into a non-asset scene
-    if engine.context.flow_draft_id is None:
-        msg = "Please open an asset from the loader before doing a reference operation."
-        raise CreateReferenceError(input_id=revision_id, details=msg)
-
     try:
         if objects.FlowVersion.is_version_id(revision_id):
             input_type = "version"

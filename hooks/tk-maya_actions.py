@@ -133,8 +133,25 @@ class MayaActions(HookBaseClass):
         if app.flowam_available:
             flowam_actions = app.flowam.FlowAMActions()
 
+            # Draft-introducing FlowAM actions (open/checkout, build new scene,
+            # build new template, discard draft, download) open or create a draft
+            # but cannot switch the Toolkit context to the checked-out asset. At an
+            # asset/task context this leaves the engine context stale and a
+            # subsequent publish fails ("No draft associated with the current
+            # context"). When restrict_flowam_actions_by_context is set (advanced
+            # config), only offer those actions at project-level context; the
+            # reference actions are always offered. Default False -> unchanged for
+            # configs that don't set it (e.g. tk-config-basic).
+            restrict_by_context = app.get_setting(
+                "restrict_flowam_actions_by_context", False
+            )
+            allow_draft_actions = (not restrict_by_context) or (
+                app.context.entity is None
+            )
+
             if (
-                "open" in actions
+                allow_draft_actions
+                and "open" in actions
                 and sg_publish_data.get("type") == "PublishedFile"
                 and (
                     flowam_actions.is_local_draft_by_revision(
@@ -157,7 +174,8 @@ class MayaActions(HookBaseClass):
                 )
 
             if (
-                "download" in actions
+                allow_draft_actions
+                and "download" in actions
                 and sg_publish_data.get("type") == "PublishedFile"
                 and (
                     sg_publish_data.get("version_number") is not None
@@ -175,7 +193,7 @@ class MayaActions(HookBaseClass):
                     }
                 )
 
-            if "discard_draft" in actions:
+            if allow_draft_actions and "discard_draft" in actions:
                 draft_id = sg_publish_data.get("sg_flow_revision_id")
 
                 if flowam_actions.is_local_draft_by_revision(
@@ -224,7 +242,7 @@ class MayaActions(HookBaseClass):
                     }
                 )
 
-            if "build_new_scene" in actions:
+            if allow_draft_actions and "build_new_scene" in actions:
                 action_instances.append(
                     {
                         "name": "build_new_scene",
@@ -234,7 +252,7 @@ class MayaActions(HookBaseClass):
                     }
                 )
 
-            if "build_new_template" in actions:
+            if allow_draft_actions and "build_new_template" in actions:
                 action_instances.append(
                     {
                         "name": "build_new_template",
@@ -298,6 +316,27 @@ class MayaActions(HookBaseClass):
         # -----------------------
         if app.flowam_available:
             flowam_actions = app.flowam.FlowAMActions()
+
+            # Guard the draft-introducing actions against being invoked outside
+            # project-level context when restrict_flowam_actions_by_context is set.
+            # generate_actions already hides them, but this protects against stale
+            # UI or direct programmatic calls. Reference actions are never gated.
+            draft_actions = {
+                "open",
+                "discard_draft",
+                "build_new_scene",
+                "build_new_template",
+                "download",
+            }
+            if (
+                name in draft_actions
+                and app.get_setting("restrict_flowam_actions_by_context", False)
+                and app.context.entity is not None
+            ):
+                raise sgtk.TankError(
+                    "The '%s' action is only available at project-level context "
+                    "for FlowAM in this configuration." % name
+                )
 
             if name == "reference_am":
                 flowam_actions._create_reference_am(sg_publish_data)

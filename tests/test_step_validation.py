@@ -47,9 +47,10 @@ MAYA_TYPE_ID = "schema-id-maya-workfile"
 class StubWorkfile:
     """Stand-in for a workfile asset carrying a single schema type."""
 
-    def __init__(self, name, type_id):
+    def __init__(self, name, type_id, revision_id="rev-1"):
         self.name = name
         self.type_id = type_id
+        self.revision_id = revision_id
 
 
 class StubNode:
@@ -79,7 +80,13 @@ def build_project(steps, root_folder="Assets", entity_name=ENTITY_NAME):
     step_nodes = []
     for step_name, is_published in steps.items():
         workfiles = (
-            [StubWorkfile(f"{entity_name} - MAYA", MAYA_TYPE_ID)]
+            [
+                StubWorkfile(
+                    f"{entity_name} - MAYA",
+                    MAYA_TYPE_ID,
+                    revision_id=f"rev-{step_name}",
+                )
+            ]
             if is_published
             else []
         )
@@ -201,3 +208,56 @@ def test_flow_am_error_allows_build(monkeypatch, flow_am):
         step_validation, "objects", types.SimpleNamespace(FlowProject=raise_error)
     )
     assert find_unpublished() is None
+
+
+def find_workfile(step="Model", entity_type="Asset"):
+    """Call the single workfile resolver with the common set of arguments."""
+    return step_validation.find_workfile_asset(
+        am_project_id="am-project-1",
+        sg_entity_type=entity_type,
+        sg_entity_name=ENTITY_NAME,
+        pipeline_step=step,
+        workfile_type=MAYA_TYPE,
+    )
+
+
+def test_find_workfile_asset_returns_published_asset(flow_am):
+    """The step's published workfile asset is returned for referencing."""
+    flow_am(build_project({"Model": True}))
+    workfile = find_workfile()
+    assert workfile is not None
+    assert workfile.revision_id == "rev-Model"
+
+
+def test_find_workfile_asset_none_when_unpublished(flow_am):
+    """The step folder existing is not proof of a publish."""
+    flow_am(build_project({"Model": False}))
+    assert find_workfile() is None
+
+
+def test_find_workfile_asset_raises_for_unsupported_entity(flow_am):
+    """An entity type with no Flow AM folder cannot be checked."""
+    flow_am(build_project({"Model": True}))
+    with pytest.raises(step_validation.exceptions.FlowError):
+        find_workfile(entity_type="CustomEntity01")
+
+
+def test_find_workfile_asset_raises_when_type_unresolved(flow_am):
+    """An unresolved schema id would match every child, so refuse the query."""
+    flow_am(build_project({"Model": True}), resolve_type_id=False)
+    with pytest.raises(step_validation.exceptions.FlowError):
+        find_workfile()
+
+
+def test_find_workfile_asset_propagates_flow_am_error(monkeypatch, flow_am):
+    """A Flow AM query error surfaces so callers can tell it from 'not found'."""
+
+    def raise_error(_project_id):
+        raise step_validation.exceptions.FlowError("simulated Flow AM outage")
+
+    flow_am(build_project({"Model": True}))
+    monkeypatch.setattr(
+        step_validation, "objects", types.SimpleNamespace(FlowProject=raise_error)
+    )
+    with pytest.raises(step_validation.exceptions.FlowError):
+        find_workfile()

@@ -2245,6 +2245,12 @@ class AppDialog(QtGui.QWidget):
                 )
 
             action = QtGui.QAction(entity_action["caption"], view)
+            description = entity_action.get("description")
+            if description:
+                # QMenu does not show action tooltips on its own, so drive it
+                # from the hovered signal like the built-in actions above.
+                action.setToolTip(description)
+                action.hovered.connect(partial(action_hovered, action))
             action.triggered.connect(partial(on_action_click, act=entity_action))
             view.addAction(action)
             self._dynamic_widgets.append(action)

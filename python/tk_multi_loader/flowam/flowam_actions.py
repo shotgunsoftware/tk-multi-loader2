@@ -363,7 +363,7 @@ class FlowAMActions:
         :returns: The Flow AM project ID or None if not found.
         """
         parent_window = self._get_dialog_parent()
-        flow_am_id = self._app.context.project.get("sg_flow_am_id")
+        flow_am_id = self._app.context.flow_project_id
         if not flow_am_id:
             project = self._app.shotgun.find_one(
                 "Project",

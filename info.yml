@@ -38,7 +38,7 @@ configuration:
         default_value: false
         description: Only relevant when the FlowAM integration is available. When set to
                      True, the draft-introducing FlowAM actions (Build New Scene, Build New
-                     Template, open/checkout, discard draft, download) are only offered when
+                     Template, open/checkout, discard draft) are only offered when
                      the current context is at project level (no entity selected). At an
                      asset/shot context only the reference actions are offered. This is used
                      by advanced configs where the Loader cannot switch the Toolkit context

@@ -134,7 +134,7 @@ class MayaActions(HookBaseClass):
             flowam_actions = app.flowam.FlowAMActions()
 
             # Draft-introducing FlowAM actions (open/checkout, build new scene,
-            # build new template, discard draft, download) open or create a draft
+            # build new template, discard draft) open or create a draft
             # but cannot switch the Toolkit context to the checked-out asset. At an
             # asset/task context this leaves the engine context stale and a
             # subsequent publish fails ("No draft associated with the current
@@ -174,8 +174,7 @@ class MayaActions(HookBaseClass):
                 )
 
             if (
-                allow_draft_actions
-                and "download" in actions
+                "download" in actions
                 and sg_publish_data.get("type") == "PublishedFile"
                 and (
                     sg_publish_data.get("version_number") is not None
@@ -328,27 +327,6 @@ class MayaActions(HookBaseClass):
         # -----------------------
         if app.flowam_available:
             flowam_actions = app.flowam.FlowAMActions()
-
-            # Guard the draft-introducing actions against being invoked outside
-            # project-level context when restrict_flowam_actions_by_context is set.
-            # generate_actions already hides them, but this protects against stale
-            # UI or direct programmatic calls. Reference actions are never gated.
-            draft_actions = {
-                "open",
-                "discard_draft",
-                "build_new_scene",
-                "build_new_template",
-                "download",
-            }
-            if (
-                name in draft_actions
-                and app.get_setting("restrict_flowam_actions_by_context", False)
-                and app.context.entity is not None
-            ):
-                raise sgtk.TankError(
-                    "The '%s' action is only available at project-level context "
-                    "for FlowAM in this configuration." % name
-                )
 
             if name == "reference_am":
                 flowam_actions._create_reference_am(sg_publish_data)

@@ -20,7 +20,6 @@ import os
 from typing import Any, Dict, Optional, Tuple
 
 from tank_vendor.flow_integration_sdk import globals, schema
-from sgtk.flowam.create import PIPELINE_STEP_TYPE
 
 from ..constants import DRAFT_VERSION_IDENTIFIER
 
@@ -33,7 +32,7 @@ def is_structural_asset(asset: Any) -> bool:
     the following hold:
 
     * its type IDs include the built-in ``FOLDER_TYPE_ID``; **or**
-    * it carries a ``PIPELINE_STEP_TYPE``, deliverable, or dynamic enum value
+    * it carries a pipeline step, deliverable, or dynamic enum value
       type component (schema-registered organisational node types).
 
     :param asset: FlowAM ``Asset`` object to test.
@@ -41,9 +40,9 @@ def is_structural_asset(asset: Any) -> bool:
     """
     structural_types = (
         globals.FOLDER_TYPE_ID,
-        schema.get_schema_id("type.deliverable"),
-        schema.get_schema_id(PIPELINE_STEP_TYPE),
-        schema.get_schema_id("type.dynamicEnumValue"),
+        globals.DELIVERABLE_TYPE_ID,
+        globals.PIPELINE_STEP_TYPE_ID,
+        globals.DYNAMIC_ENUM_VALUE_TYPE_ID,
     )
     return any(asset.find_component(type_id=ct) for ct in structural_types)
 

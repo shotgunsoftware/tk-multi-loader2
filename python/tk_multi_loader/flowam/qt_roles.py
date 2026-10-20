@@ -12,7 +12,6 @@
 
 from sgtk.platform.qt import QtCore
 
-
 # Roles used by ShotgunModel interface
 # ------------------------------------
 

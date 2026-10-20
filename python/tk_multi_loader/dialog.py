@@ -2412,8 +2412,7 @@ class AppDialog(QtGui.QWidget):
         # once we have typed a couple of characters
         if pattern and len(pattern) >= constants.TREE_SEARCH_TRIGGER_LENGTH:
             # indicate with a blue border that a search is active
-            tree_view.setStyleSheet(
-                """
+            tree_view.setStyleSheet("""
                 QTreeView {{
                     border-width: 3px;
                     border-style: solid;
@@ -2422,10 +2421,7 @@ class AppDialog(QtGui.QWidget):
                 QTreeView::item {{
                     padding: 6px;
                 }}
-                """.format(
-                    highlight=self.palette().highlight().color().name()
-                )
-            )
+                """.format(highlight=self.palette().highlight().color().name()))
             # expand all nodes in the tree
             tree_view.expandAll()
         else:

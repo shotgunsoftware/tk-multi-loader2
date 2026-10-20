@@ -27,7 +27,7 @@ from typing import Optional
 
 import sgtk
 from sgtk.platform.qt import QtCore, QtGui
-from tank_vendor.flow_integration_sdk import globals, objects, schema
+from tank_vendor.flow_integration_sdk import globals, objects, schema, sandbox
 from sgtk.flowam.fd_generate_hierarchy import get_tree_root, TreeItem as FedTreeItem
 
 from .shared_cache import MedmSharedCache
@@ -297,7 +297,13 @@ class FlowEntityModel(QtGui.QStandardItemModel):
         # children.  Results are cached so each asset is fetched from the
         # API at most once.
         children = self._fetch_and_cache_children(asset)
-        return len(children) > 0
+        if len(children) > 0:
+            return True
+
+        # Check if there are new unpublished assets under this parent
+        new_drafts = sandbox.get_drafts(draft_type="new")
+        new_draft_children = [d for d in new_drafts if d.parent_id == asset.id]
+        return len(new_draft_children) > 0
 
     def _icon_for_asset(self, asset: objects.FlowAsset) -> QtGui.QIcon:
         """
@@ -383,22 +389,8 @@ class FlowEntityModel(QtGui.QStandardItemModel):
         # Must filter out any assets that are linked to federated data.
         # These will be presented within the federated data tree so we don't want them
         # to be redundantly presented via normal containership relationships.
-        dynamic_enum_value_type = "type.dynamicEnumValue"
-        episode_type = "type.deliverable.episode"
-        sequence_type = "type.deliverable.sequence"
-        q_filter = f"components.typeId!='{schema.get_schema_id(globals.FOR_DELIVERABLE_TYPE)}';"
+        q_filter = f"components.typeId!='{globals.FOR_DELIVERABLE_TYPE_ID}';"
         q_filter += f"components.typeId!='{schema.get_schema_id(globals.FOR_PIPELINE_STEP_TYPE)}';"
-        # This is temporary while using scaffolded projects
-        q_filter += (
-            f"components.typeId!='{schema.get_schema_id(dynamic_enum_value_type)}';"
-        )
-        q_filter += f"components.typeId!='{schema.get_schema_id(globals.DELIVERABLE_ASSET_TYPE)}';"
-        q_filter += f"components.typeId!='{schema.get_schema_id(globals.DELIVERABLE_SHOT_TYPE)}';"
-        q_filter += f"components.typeId!='{schema.get_schema_id(episode_type)}';"
-        q_filter += f"components.typeId!='{schema.get_schema_id(sequence_type)}';"
-        q_filter += (
-            f"components.typeId!='{schema.get_schema_id(globals.PIPELINE_STEP_TYPE)}'"
-        )
         return parent.search_children(q_filter)
 
     def _get_sg_data(self, data: objects.FlowAsset | FedTreeItem) -> dict:
@@ -514,7 +506,7 @@ class FlowEntityModel(QtGui.QStandardItemModel):
                 try:
                     data_item.get_children()
                 except Exception as e:
-                    msg = f"Flow Hierarhcy: Could not query federated data for item: {data_item.label}: {e}"
+                    msg = f"Flow Hierarchy: Could not query federated data for item: {data_item.label}: {e}"
                     self._app.log_error(msg)
             count = len(data_item.children)
             tree_children = [

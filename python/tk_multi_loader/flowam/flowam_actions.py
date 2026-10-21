@@ -143,6 +143,9 @@ class FlowAMActions:
     def _on_build_scene_dialog_accepted(
         self, dialog: BuildAssetDialog, sg_publish_data: dict
     ) -> None:
+
+        context = sgtk.platform.current_engine().context
+
         if not dialog.build:
             message = "Not enough data from the build dialog."
             self._app.log_warning(message)
@@ -178,6 +181,7 @@ class FlowAMActions:
             sg_entity=sg_publish_data["entity"],
             sg_pipeline_step=task.get("step") or {},
             am_project_id=flow_am_id,
+            federated=context.flow_federated_project,
             create_mode=dialog.build,
             source_path=template_path,
             prep_scene_callback=functools.partial(self._prep_scene, sg_publish_data),

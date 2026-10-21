@@ -53,6 +53,8 @@ class CreateInputs(flowam_utils.BaseInputs):
     sg_pipeline_step: dict
     #: The AM project under which the asset should be added.
     am_project_id: str
+    #: Project is Flow-FPT federated
+    federated: bool = False
     #: Description of asset.
     description: str = ""
     #: Determines which initial source file to use to create the asset.
@@ -108,6 +110,9 @@ class CreateInputs(flowam_utils.BaseInputs):
                 msg = msg % "name"
                 raise exceptions.CreateAssetError(data=self.asdict(), details=msg)
             if "entity_type" not in self.sg_pipeline_step:
+                msg = msg % "entity_type"
+                raise exceptions.CreateAssetError(data=self.asdict(), details=msg)
+            if "id" not in self.sg_pipeline_step:
                 msg = msg % "entity_type"
                 raise exceptions.CreateAssetError(data=self.asdict(), details=msg)
 
@@ -226,7 +231,10 @@ def create_dcc_workfile(inputs: CreateInputs) -> sandbox.NewDraftInfo:
         raise exceptions.CreateAssetError(data=inputs.asdict(), details=msg)
 
     # Create any necessary hierarchy above current asset
-    parent = create.create_federated_hierarchy(inputs)
+    if inputs.federated:
+        parent = create.create_federated_hierarchy(inputs)
+    else:
+        parent = create.create_default_hierarchy(inputs)
 
     # Create the workfile asset in sandbox
     draft_info = _create_dcc_workfile_asset(parent, inputs)

@@ -328,6 +328,8 @@ class FlowEntityModel(QtGui.QStandardItemModel):
         Load the first level of FlowAM assets (project's immediate children).
         Called asynchronously after a short delay to show the loading spinner.
         """
+        context = sgtk.platform.current_engine().context
+
         if self._project is None:
             self._app.log_warning(
                 "FlowAM Entity: Cannot load assets - project not initialized"
@@ -345,15 +347,16 @@ class FlowEntityModel(QtGui.QStandardItemModel):
             # and the tokenized hierarchy path provided.
 
             # There may be multiple hierarchy paths provided.
-            # If that's the case, merge all generated trees under the same root node.
+            # Merge all generated trees under the same root node.
             # The root of each tree will be the same and represent the MEDM project.
-            for hierarchy_path in self._hierarchy_paths:
-                root = get_tree_root(self._project.id, hierarchy_path)
-                root.get_children()  # populate just top-level children
-                if not self._data_tree:
-                    self._data_tree = root
-                    continue
-                self._data_tree.children.extend(root.children)
+            # Only add federated hierarchy branches to the tree root if we are in
+            # a federated project.
+            self._data_tree = get_tree_root(self._project.id, "")  # create project root
+            if context.flow_federated_project:
+                for hierarchy_path in self._hierarchy_paths:
+                    root = get_tree_root(self._project.id, hierarchy_path)
+                    root.get_children()  # populate just top-level children
+                    self._data_tree.children.extend(root.children)
 
             self._data_tree.icon = "project"
             ui_root = self._add_ui_item(self._data_tree)

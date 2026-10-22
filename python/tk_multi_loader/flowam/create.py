@@ -113,7 +113,7 @@ class CreateInputs(flowam_utils.BaseInputs):
                 msg = msg % "entity_type"
                 raise exceptions.CreateAssetError(data=self.asdict(), details=msg)
             if "id" not in self.sg_pipeline_step:
-                msg = msg % "entity_type"
+                msg = msg % "id"
                 raise exceptions.CreateAssetError(data=self.asdict(), details=msg)
 
             if not self.sg_entity:

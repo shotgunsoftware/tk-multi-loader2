@@ -103,3 +103,8 @@ TREE_SEARCH_TRIGGER_LENGTH = 2
 # FlowAM versions starts with 0 and FlowPT versions starts with 1.
 # This is used to identify a FlowAM draft version in the UI.
 DRAFT_VERSION_IDENTIFIER = -1
+
+# Schema type of the Maya workfile, mirroring FlowHost.WORKFILE_TYPE in tk-maya,
+# which this app cannot import. Only the Maya scene publish is validated when
+# building a new scene, so hosts building other workfile types skip that check.
+MAYA_WORKFILE_TYPE = "type.workfile.maya"

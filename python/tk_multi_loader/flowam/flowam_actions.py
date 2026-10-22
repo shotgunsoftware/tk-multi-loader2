@@ -19,7 +19,7 @@ from tank_vendor.flow_integration_sdk import exceptions, objects, sandbox, schem
 
 from ..build_asset_dialog import BuildAssetDialog
 from ..build_template_dialog import BuildTemplateDialog
-from ..constants import DRAFT_VERSION_IDENTIFIER
+from ..constants import DRAFT_VERSION_IDENTIFIER, MAYA_WORKFILE_TYPE
 from .create import (
     CreateInputs,
     CreateTemplateInputs,
@@ -33,6 +33,11 @@ from .file import (
     open_draft,
 )
 from .reference import copy_reference_link, reference_revision
+from .step_validation import (
+    find_unpublished_upstream_step,
+    find_workfile_asset,
+    get_upstream_step,
+)
 
 
 class FlowAMActions:
@@ -187,6 +192,13 @@ class FlowAMActions:
             prep_scene_callback=functools.partial(self._prep_scene, sg_publish_data),
         )
 
+        if not self._confirm_upstream_step_published(create_inputs):
+            self._app.log_info(
+                "Build new scene cancelled: the previous pipeline step has not "
+                "been published."
+            )
+            return
+
         try:
             asset = create_dcc_workfile(create_inputs)
             self._app.log_debug(f"Created a DCC workfile asset: {asset}")
@@ -199,18 +211,146 @@ class FlowAMActions:
                 str(exc),
             )
 
+    def _confirm_upstream_step_published(self, create_inputs: CreateInputs) -> bool:
+        """
+        Warn the artist when the previous pipeline step has nothing published yet.
+
+        The upstream publish is what gets referenced into the new scene, so
+        building without it leaves an empty scene. The artist is given the choice
+        to continue regardless.
+
+        Only the Maya scene publish is in scope. Nuke and Houdini reach this
+        method through their own build actions, but a downstream step references
+        the Maya scene rather than the current host's workfile type, so those
+        hosts are left alone.
+
+        :param create_inputs: Inputs describing the scene about to be built.
+        :returns: True when the build should go ahead.
+        """
+        host = getattr(sgtk.platform.current_engine(), "flow_host", None)
+        workfile_type = getattr(host, "WORKFILE_TYPE", "")
+        if workfile_type != MAYA_WORKFILE_TYPE:
+            return True
+
+        upstream_step = find_unpublished_upstream_step(
+            am_project_id=create_inputs.am_project_id,
+            sg_entity_name=create_inputs.sg_entity_name,
+            sg_entity_type=create_inputs.sg_entity_type,
+            sg_pipeline_step=create_inputs.sg_pipeline_step,
+            step_dependencies=self._app.get_setting("pipeline_step_dependencies", {}),
+            workfile_type=workfile_type,
+        )
+        if not upstream_step:
+            return True
+
+        message = (
+            f'The "{upstream_step}" step has no published scene for '
+            f'"{create_inputs.sg_entity_name}" yet, so there is nothing to '
+            f'reference into a new "{create_inputs.sg_pipeline_step}" scene.'
+            "\n\nBuild an empty scene anyway?"
+        )
+        self._app.log_warning(message)
+
+        if not host:
+            return True
+
+        response = host.dialog(
+            "Previous step not published",
+            message,
+            buttons=["Build empty scene", "Cancel"],
+            default=1,
+            cancel=1,
+            no_ui_option=1,
+        )
+        return response == 0
+
     def _prep_scene(self, sg_publish_data: dict) -> None:
         """
-        Let clients run set-up scripts when building a new scene/asset.
+        Default scene-prep opinion for a freshly built scene: reference the
+        previous pipeline step's published Maya scene into it.
 
-        :param sg_publish_data: Shotgun data dictionary with all the standard publish fields.
+        Runs from ``create_dcc_workfile()``'s ``prep_scene_callback`` - after the
+        host has created/loaded the scene and before it is saved into the draft -
+        so the reference is baked into the built scene. It is a no-op unless the
+        host is Maya (only the Maya scene publish is referenced) and the upstream
+        step has a published workfile. When nothing is published - for instance
+        when the artist chose to build an empty scene from the publish warning -
+        there is simply nothing to reference.
+
+        A referencing failure is surfaced as a warning but never aborts the
+        build: the artist still gets their new scene, just without the reference.
+
+        TDs can override this method to change or replace this default behavior.
+
+        :param sg_publish_data: FPTR Task data the new scene is built from.
         """
+        host = getattr(sgtk.platform.current_engine(), "flow_host", None)
+        workfile_type = getattr(host, "WORKFILE_TYPE", "")
+        if workfile_type != MAYA_WORKFILE_TYPE:
+            return
+
+        entity = sg_publish_data.get("entity") or {}
+        task = (
+            self._app.shotgun.find_one(
+                "Task",
+                filters=[["id", "is", sg_publish_data["id"]]],
+                fields=["step"],
+            )
+            or {}
+        )
+        pipeline_step = (task.get("step") or {}).get("name", "")
+        upstream_step = get_upstream_step(
+            pipeline_step,
+            self._app.get_setting("pipeline_step_dependencies", {}),
+        )
+        if not upstream_step:
+            return
+
+        try:
+            workfile = find_workfile_asset(
+                am_project_id=self._get_flowam_id(),
+                sg_entity_type=entity.get("type", ""),
+                sg_entity_name=entity.get("name", ""),
+                pipeline_step=upstream_step,
+                workfile_type=workfile_type,
+            )
+        except exceptions.FlowError as exc:
+            self._app.log_warning(
+                f"Could not resolve a published workfile for pipeline step "
+                f'"{upstream_step}". Building without a reference. ({exc})'
+            )
+            return
+
+        # Nothing published upstream, so there is nothing to reference. No warning
+        # here on purpose: the artist was already warned before the build in
+        # _confirm_upstream_step_published() (the "Build an empty scene anyway?"
+        # prompt) and chose to proceed. Adding a DEBUG log here is enough.
+        if workfile is None:
+            self._app.log_debug("No published workfile found for upstream step.")
+            return
+
+        # Referencing an asset is normally only allowed once an asset is open in
+        # the DCC. Here we are still in the middle of creating one, so the scene
+        # is not yet a "complete" asset context - bypass that rule for the build.
+        try:
+            file_path = reference_revision(
+                workfile.revision_id, require_asset_context=False
+            )
+        except exceptions.FlowError as exc:
+            message = (
+                f"Could not reference the previous step's published scene for "
+                f'"{entity.get("name", "")}". The new scene was built without '
+                f"it. ({exc})"
+            )
+            self._app.log_error(message)
+            if host:
+                host.dialog("Reference failed", message, buttons=["OK"])
+            return
 
         self._app.log_info(
-            f"prep_scene() called with sg_publish_data: {sg_publish_data}"
+            f"Referenced the previous step's published scene into the new "
+            f'"{pipeline_step}" scene: {file_path}'
         )
-        # TDs can override this method to add custom scene prep logic
-        pass
 
     def _discard_draft(self, sg_publish_data: dict) -> None:
         """

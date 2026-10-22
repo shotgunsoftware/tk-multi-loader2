@@ -26,12 +26,17 @@ class CreateReferenceError(exceptions.FlowError):
         super().__init__(f"Could not create reference to {input_id}.", *args, **kwargs)
 
 
-def reference_revision(revision_id: str) -> str:
+def reference_revision(revision_id: str, require_asset_context: bool = True) -> str:
     """Reference the source component of the given revision into the current scene.
 
     Args:
         revision_id: The id of the asset revision to be referenced.
                      This can also be a version id.
+        require_asset_context: When True (the default, used by the interactive
+                     reference action) referencing is only allowed from an open
+                     asset scene. Building a new scene sets this to False: the
+                     scene is freshly created and has no draft context yet, which
+                     is precisely the state the asset-context check rejects.
 
     Returns:
         File path of referenced file.
@@ -46,7 +51,7 @@ def reference_revision(revision_id: str) -> str:
         raise CreateReferenceError(input_id=revision_id, details=msg)
 
     # We will disallow referencing into a non-asset scene
-    if engine.context.flow_draft_id is None:
+    if require_asset_context and engine.context.flow_draft_id is None:
         msg = "Please open an asset from the loader before doing a reference operation."
         raise CreateReferenceError(input_id=revision_id, details=msg)
 

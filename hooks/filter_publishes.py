@@ -38,7 +38,5 @@ class FilterPublishes(Hook):
         """
         app = self.parent
 
-        app.log_info(">>> FilterPublishes hook!!!!")
-
         # the default implementation just returns the unfiltered list:
         return publishes

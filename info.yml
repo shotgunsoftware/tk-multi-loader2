@@ -179,7 +179,7 @@ configuration:
         type: bool
         description: "Add an additional panel on the left side of the Loader UI
                       displaying MEDM data in pure form - via containership relationships."
-        default_value: False
+        default_value: True
 
 # this app works in all engines - it does not contain
 # any host application specific commands

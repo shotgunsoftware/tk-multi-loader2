@@ -320,13 +320,8 @@ class FlowAMActions:
             self._app.log_debug("No published workfile found for upstream step.")
             return
 
-        # Referencing an asset is normally only allowed once an asset is open in
-        # the DCC. Here we are still in the middle of creating one, so the scene
-        # is not yet a "complete" asset context - bypass that rule for the build.
         try:
-            file_path = reference_revision(
-                workfile.revision_id, require_asset_context=False
-            )
+            file_path = reference_revision(workfile.revision_id)
         except exceptions.FlowError as exc:
             message = (
                 f"Could not reference the previous step's published scene for "
@@ -503,7 +498,7 @@ class FlowAMActions:
         :returns: The Flow AM project ID or None if not found.
         """
         parent_window = self._get_dialog_parent()
-        flow_am_id = self._app.context.project.get("sg_flow_am_id")
+        flow_am_id = self._app.context.flow_project_id
         if not flow_am_id:
             project = self._app.shotgun.find_one(
                 "Project",

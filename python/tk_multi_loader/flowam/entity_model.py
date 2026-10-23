@@ -372,6 +372,12 @@ class MedmEntityModel(QtGui.QStandardItemModel):
         first call and caching the result in the shared cache for subsequent
         lookups by any FlowAM model.
         """
+        # Ignore special mount point asset for federated projects
+        # We don't want to show its children as these would be federated assets
+        if asset.name == "External Service Mount Point":
+            self._cache.children[asset.id] = []
+            return []
+
         if asset.id in self._cache.children:
             return self._cache.children[asset.id]
 

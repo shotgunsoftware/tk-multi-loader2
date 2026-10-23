@@ -242,9 +242,10 @@ class FlowEntityModel(QtGui.QStandardItemModel):
 
         if icon is None:
             pixmap = QtGui.QPixmap(size, size)
-            # Interpret the color
+            # Interpret the color (will be of format "r, g, b")
             try:
-                r, g, b = eval(color)
+                rgb = color.split(",")
+                r, g, b = int(rgb[0]), int(rgb[1]), int(rgb[2])
                 pixmap.fill(QtGui.QColor(r, g, b))
             except ValueError:
                 pixmap.fill(QtGui.QColor(color))

@@ -27,6 +27,12 @@ from .. import utils
 from .shared_cache import MedmSharedCache
 from .thumbnail_service import MedmThumbnailService
 from .utils import build_draft_sg_dict, resolve_publish_type
+from .qt_roles import (
+    ASSET_ROLE,
+    DRAFT_ROLE,
+    SG_DATA_ROLE,
+    VERSION_ROLE,
+)
 
 
 class MedmPublishHistoryModel(QtGui.QStandardItemModel):
@@ -40,14 +46,6 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
     USER_THUMB_ROLE = QtCore.Qt.UserRole + 101
     PUBLISH_THUMB_ROLE = QtCore.Qt.UserRole + 102
     FULL_IMAGE_PATH_ROLE = QtCore.Qt.UserRole + 103
-
-    # FlowAM-specific roles
-    SG_DATA_ROLE = QtCore.Qt.UserRole + 1  # To maintain compatibility with ShotgunModel
-    ASSET_ROLE = (
-        QtCore.Qt.UserRole + 200
-    )  # Stores FlowAM Asset object (shared with all FlowAM models)
-    VERSION_ROLE = QtCore.Qt.UserRole + 201  # Stores FlowAM FlowVersion object
-    DRAFT_ROLE = QtCore.Qt.UserRole + 202  # Stores DraftInfo for draft rows
 
     # Signals for compatibility with ShotgunModelOverlayWidget
     cache_loaded = QtCore.Signal()
@@ -222,10 +220,10 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         qt_item.setEditable(False)
 
         sg_data = self._version_to_sg_dict(asset_version, asset)
-        qt_item.setData(sg_data, self.SG_DATA_ROLE)
+        qt_item.setData(sg_data, SG_DATA_ROLE)
 
-        qt_item.setData(asset, self.ASSET_ROLE)
-        qt_item.setData(asset_version, self.VERSION_ROLE)
+        qt_item.setData(asset, ASSET_ROLE)
+        qt_item.setData(asset_version, VERSION_ROLE)
 
         qt_item.setData(self._loading_icon, self.PUBLISH_THUMB_ROLE)
         thumb = utils.create_overlayed_user_publish_thumbnail(
@@ -238,7 +236,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
             self._resolve_and_download_thumbnail(qt_item, revision_id)
 
         def get_sg_data():
-            return qt_item.data(self.SG_DATA_ROLE)
+            return qt_item.data(SG_DATA_ROLE)
 
         qt_item.get_sg_data = get_sg_data
 
@@ -377,9 +375,9 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         qt_item.setEditable(False)
 
         sg_data = self._draft_to_sg_dict(draft_info, asset)
-        qt_item.setData(sg_data, self.SG_DATA_ROLE)
-        qt_item.setData(asset, self.ASSET_ROLE)
-        qt_item.setData(draft_info, self.DRAFT_ROLE)
+        qt_item.setData(sg_data, SG_DATA_ROLE)
+        qt_item.setData(asset, ASSET_ROLE)
+        qt_item.setData(draft_info, DRAFT_ROLE)
 
         qt_item.setData(self._loading_icon, self.PUBLISH_THUMB_ROLE)
         thumb = utils.create_overlayed_user_publish_thumbnail(
@@ -388,7 +386,7 @@ class MedmPublishHistoryModel(QtGui.QStandardItemModel):
         qt_item.setIcon(QtGui.QIcon(thumb))
 
         def get_sg_data():
-            return qt_item.data(self.SG_DATA_ROLE)
+            return qt_item.data(SG_DATA_ROLE)
 
         qt_item.get_sg_data = get_sg_data
 

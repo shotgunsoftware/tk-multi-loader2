@@ -1926,7 +1926,8 @@ class AppDialog(QtGui.QWidget):
             preset_name = setting_dict["caption"]
 
             # Ensure required settings are set for each view type
-            view_type = setting_dict.get("type")
+            # Set default type to "Query" to match original behaviour
+            view_type = setting_dict.get("type", "Query")
             if view_type == "Hierarchy":
                 key = "root"
                 if key not in setting_dict:
@@ -1944,10 +1945,6 @@ class AppDialog(QtGui.QWidget):
                     raise TankError(key_error_msg % (setting_dict, "hierarchy"))
                 sg_entity_type = "Project"
 
-            else:
-                # Flag invalid view type
-                raise TankError(value_error_msg % (setting_dict, "type", view_type))
-
             # get optional publish_filter setting
             # note: actual value in the yaml settings can be None,
             # that's why we cannot use setting_dict.get("publish_filters", [])
@@ -1962,6 +1959,8 @@ class AppDialog(QtGui.QWidget):
             elif view_type == "Query":
                 model, proxy_model = self._setup_query_model(app, setting_dict)
             elif view_type == "Flow Hierarchy":
+                if not self.flowam_available:
+                    continue  # don't create the tab at all if flowam isn't enabled
                 hierarchy_paths = setting_dict["hierarchy"]
                 model, proxy_model = self._setup_flow_model(hierarchy_paths)
 
@@ -2450,7 +2449,8 @@ class AppDialog(QtGui.QWidget):
         :param track_in_history: Hint to this method that the actions should be tracked in the
             history.
         """
-        from .flowam import FlowEntityModel
+        # NOTE: this might be None if tk-core has no 'flowam' module
+        FlowEntityModel = self._get_flow_entity_model()
 
         # qt returns unicode/qstring here so force to str
         curr_tab_name = shotgun_model.sanitize_qt(
@@ -2496,7 +2496,8 @@ class AppDialog(QtGui.QWidget):
         """
         Slot triggered when someone changes the selection in a treeview.
         """
-        from .flowam import FlowEntityModel
+        # NOTE: this might be None if tk-core has no 'flowam' module
+        FlowEntityModel = self._get_flow_entity_model()
 
         selected_item = self._get_selected_entity()
 
@@ -2542,7 +2543,8 @@ class AppDialog(QtGui.QWidget):
         Given an item from the treeview, or None if no item
         is selected, prepare the publish area UI.
         """
-        from .flowam import FlowEntityModel
+        # NOTE: this might be None if tk-core has no 'flowam' module
+        FlowEntityModel = self._get_flow_entity_model()
 
         # clear selection. If we don't clear the model at this point,
         # the selection model will attempt to pair up with the model is
@@ -2660,7 +2662,8 @@ class AppDialog(QtGui.QWidget):
         :param selected_item: Item currently selected in the tree view or
                               `None` when no selection has been made.
         """
-        from .flowam import FlowEntityModel
+        # NOTE: this might be None if tk-core has no 'flowam' module
+        FlowEntityModel = self._get_flow_entity_model()
 
         crumbs = []
         model = self._entity_presets[self._current_entity_preset].model
@@ -2898,6 +2901,16 @@ class AppDialog(QtGui.QWidget):
 
         return (model, proxy_model)
 
+    def _get_flow_entity_model(self) -> type | None:
+        """Attempt to import FlowEntityModel class.
+        Wrap this in a safe function in case tk-core is at an old version
+        that does not have the `flowam` module.
+        """
+        try:
+            from .flowam import FlowEntityModel
+            return FlowEntityModel
+        except ImportError:
+            return None
 
 ################################################################################################
 # Helper stuff

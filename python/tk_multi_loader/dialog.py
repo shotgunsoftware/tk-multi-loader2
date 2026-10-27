@@ -2908,9 +2908,11 @@ class AppDialog(QtGui.QWidget):
         """
         try:
             from .flowam import FlowEntityModel
+
             return FlowEntityModel
         except ImportError:
             return None
+
 
 ################################################################################################
 # Helper stuff

@@ -68,6 +68,11 @@ class AppDialog(QtGui.QWidget):
     # enum to control the mode of the main view
     MAIN_VIEW_LIST, MAIN_VIEW_THUMB = range(2)
 
+    # view types
+    FLOW_HIERARCHY_VIEW = "Flow Hierarchy"
+    HIERARCHY_VIEW = "Hierarchy"
+    QUERY_VIEW = "Query"
+
     # settings keys
     FILTER_MENU_STATE = "filter_menu_state"
     SPLITTER_STATE = "splitter_state"
@@ -1927,21 +1932,21 @@ class AppDialog(QtGui.QWidget):
             preset_name = setting_dict["caption"]
 
             # Ensure required settings are set for each view type
-            # Set default type to "Query" to match original behaviour
-            view_type = setting_dict.get("type", "Query")
-            if view_type == "Hierarchy":
+            # Set default type to QUERY_VIEW to match original behaviour
+            view_type = setting_dict.get("type", self.QUERY_VIEW)
+            if view_type == self.HIERARCHY_VIEW:
                 key = "root"
                 if key not in setting_dict:
                     raise TankError(key_error_msg % (setting_dict, key))
                 sg_entity_type = "Project"
 
-            elif view_type == "Query":
+            elif view_type == self.QUERY_VIEW:
                 for key in ("entity_type", "hierarchy", "filters"):
                     if key not in setting_dict:
                         raise TankError(key_error_msg % (setting_dict, key))
                 sg_entity_type = setting_dict["entity_type"]
 
-            elif view_type == "Flow Hierarchy":
+            elif view_type == self.FLOW_HIERARCHY_VIEW:
                 if "hierarchy" not in setting_dict:
                     raise TankError(key_error_msg % (setting_dict, "hierarchy"))
                 sg_entity_type = "Project"
@@ -1954,12 +1959,12 @@ class AppDialog(QtGui.QWidget):
                 publish_filters = []
 
             # Create the model.
-            if view_type == "Hierarchy":
+            if view_type == self.HIERARCHY_VIEW:
                 entity_root = self._get_entity_root(setting_dict["root"])
                 model, proxy_model = self._setup_hierarchy_model(app, entity_root)
-            elif view_type == "Query":
+            elif view_type == self.QUERY_VIEW:
                 model, proxy_model = self._setup_query_model(app, setting_dict)
-            elif view_type == "Flow Hierarchy":
+            elif view_type == self.FLOW_HIERARCHY_VIEW:
                 if not self.flowam_available:
                     continue  # don't create the tab at all if flowam isn't enabled
                 hierarchy_paths = setting_dict["hierarchy"]
@@ -1988,7 +1993,7 @@ class AppDialog(QtGui.QWidget):
             # Keep a handle to all the new Qt objects, otherwise the GC may not work.
             self._dynamic_widgets.extend([model, proxy_model, tab, layout, view])
 
-            if view_type == "Query":
+            if view_type == self.QUERY_VIEW:
 
                 # FIXME: We should probably remove all of this block in favor of something like. Doesn't quite
                 # work at the moment so I'm leaving it as a suggestion to a future reader.
@@ -2063,7 +2068,7 @@ class AppDialog(QtGui.QWidget):
                     [search_layout, search, clear_search, icon]
                 )
 
-            elif view_type == "Hierarchy":
+            elif view_type == self.HIERARCHY_VIEW:
                 search = shotgun_search_widget.HierarchicalSearchWidget(tab)
 
                 search.search_root = entity_root

@@ -8,3 +8,4 @@ ignore:
   - "**python/tk_multi_loader/model_hierarchy.py"
   - "**python/tk_multi_loader/delegate_publish_list.py"
   - "**python/tk_multi_loader/delegate_publish_thumb.py"
+  - "**python/tk_multi_loader/dialog.py"

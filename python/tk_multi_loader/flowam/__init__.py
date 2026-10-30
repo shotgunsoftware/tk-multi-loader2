@@ -23,6 +23,7 @@ logger = sgtk.platform.get_logger(__name__)
 
 try:
     from .entity_model import MedmEntityModel
+    from .flow_entity_model import FlowEntityModel
     from .flowam_actions import FlowAMActions
     from .latestpublish_model import MedmLatestPublishModel
     from .publishhistory_model import MedmPublishHistoryModel

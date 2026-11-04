@@ -8,12 +8,12 @@
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
+from __future__ import annotations  # needed for python 3.9 support
 
 from typing import Any, Optional
 
 import os
 from functools import partial
-from typing import Any
 
 import sgtk
 from sgtk import TankError
@@ -68,6 +68,11 @@ class AppDialog(QtGui.QWidget):
     # enum to control the mode of the main view
     MAIN_VIEW_LIST, MAIN_VIEW_THUMB = range(2)
 
+    # view types
+    FLOW_HIERARCHY_VIEW = "Flow Hierarchy"
+    HIERARCHY_VIEW = "Hierarchy"
+    QUERY_VIEW = "Query"
+
     # settings keys
     FILTER_MENU_STATE = "filter_menu_state"
     SPLITTER_STATE = "splitter_state"
@@ -90,8 +95,10 @@ class AppDialog(QtGui.QWidget):
         # Hold a reference to the current animation to prevent GC mid-run
         self._current_animation = None
 
-        # FlowAM tree view - only created when FlowAM is enabled
+        # FlowAM tree view - only created when FlowAM is enabled and "medm_tree_view" setting is on
         self._medm_tree_view = None
+        # Medm publish model is used by all Medm/Flow views
+        self._medm_publish_model = None
 
         # Variant selector widget shown in the details panel when a FlowAM
         # variant container asset is selected.  Created on first use and
@@ -446,7 +453,8 @@ class AppDialog(QtGui.QWidget):
         self._load_entity_presets()
 
         # Set up the FlowAM tree panel when Flow Asset Management is enabled
-        if self.flowam_available:
+        medm_view_enabled = app.get_setting("medm_tree_view", False)
+        if self.flowam_available and medm_view_enabled:
             self._setup_medm_tree_panel()
 
         #################################################
@@ -1521,7 +1529,7 @@ class AppDialog(QtGui.QWidget):
                     # entire project, no need to scan for other tabs.
                     found_hierarchy_preset = preset_index
                     break
-                else:
+                elif isinstance(preset.model, SgEntityModel):
                     # Check if there's a task associated with this
                     # context.If there is, let's check if it does match entity profile.
                     # this also avoids that the wrong tab gets selected.
@@ -1923,31 +1931,25 @@ class AppDialog(QtGui.QWidget):
 
             preset_name = setting_dict["caption"]
 
-            key = "type"
-            if key in setting_dict:
-                value = setting_dict[key]
-                if value not in ("Hierarchy", "Query"):
-                    raise TankError(value_error_msg % (setting_dict, key, value))
-                type_hierarchy = value == "Hierarchy"
-            else:
-                # When the type is not given, default to "Query".
-                type_hierarchy = False
-
-            if type_hierarchy:
-
+            # Ensure required settings are set for each view type
+            # Set default type to QUERY_VIEW to match original behaviour
+            view_type = setting_dict.get("type", self.QUERY_VIEW)
+            if view_type == self.HIERARCHY_VIEW:
                 key = "root"
                 if key not in setting_dict:
                     raise TankError(key_error_msg % (setting_dict, key))
-
                 sg_entity_type = "Project"
 
-            else:
-
+            elif view_type == self.QUERY_VIEW:
                 for key in ("entity_type", "hierarchy", "filters"):
                     if key not in setting_dict:
                         raise TankError(key_error_msg % (setting_dict, key))
-
                 sg_entity_type = setting_dict["entity_type"]
+
+            elif view_type == self.FLOW_HIERARCHY_VIEW:
+                if "hierarchy" not in setting_dict:
+                    raise TankError(key_error_msg % (setting_dict, "hierarchy"))
+                sg_entity_type = "Project"
 
             # get optional publish_filter setting
             # note: actual value in the yaml settings can be None,
@@ -1957,11 +1959,16 @@ class AppDialog(QtGui.QWidget):
                 publish_filters = []
 
             # Create the model.
-            if type_hierarchy:
+            if view_type == self.HIERARCHY_VIEW:
                 entity_root = self._get_entity_root(setting_dict["root"])
                 model, proxy_model = self._setup_hierarchy_model(app, entity_root)
-            else:
+            elif view_type == self.QUERY_VIEW:
                 model, proxy_model = self._setup_query_model(app, setting_dict)
+            elif view_type == self.FLOW_HIERARCHY_VIEW:
+                if not self.flowam_available:
+                    continue  # don't create the tab at all if flowam isn't enabled
+                hierarchy_paths = setting_dict["hierarchy"]
+                model, proxy_model = self._setup_flow_model(hierarchy_paths)
 
             # Add a new tab and its layout to the main tab bar.
             tab = QtGui.QWidget()
@@ -1986,7 +1993,7 @@ class AppDialog(QtGui.QWidget):
             # Keep a handle to all the new Qt objects, otherwise the GC may not work.
             self._dynamic_widgets.extend([model, proxy_model, tab, layout, view])
 
-            if not type_hierarchy:
+            if view_type == self.QUERY_VIEW:
 
                 # FIXME: We should probably remove all of this block in favor of something like. Doesn't quite
                 # work at the moment so I'm leaving it as a suggestion to a future reader.
@@ -2061,7 +2068,7 @@ class AppDialog(QtGui.QWidget):
                     [search_layout, search, clear_search, icon]
                 )
 
-            else:
+            elif view_type == self.HIERARCHY_VIEW:
                 search = shotgun_search_widget.HierarchicalSearchWidget(tab)
 
                 search.search_root = entity_root
@@ -2448,6 +2455,9 @@ class AppDialog(QtGui.QWidget):
         :param track_in_history: Hint to this method that the actions should be tracked in the
             history.
         """
+        # NOTE: this might be None if tk-core has no 'flowam' module
+        FlowEntityModel = self._get_flow_entity_model()
+
         # qt returns unicode/qstring here so force to str
         curr_tab_name = shotgun_model.sanitize_qt(
             self.ui.entity_preset_tabs.tabText(new_index)
@@ -2456,10 +2466,9 @@ class AppDialog(QtGui.QWidget):
         # and set up which our currently visible preset is
         self._current_entity_preset = curr_tab_name
 
-        # The hierarchy model cannot handle "Show items in subfolders" mode.
-        if isinstance(
-            self._entity_presets[self._current_entity_preset].model, SgHierarchyModel
-        ):
+        # The hierarchy and flow models cannot handle "Show items in subfolders" mode.
+        model = self._entity_presets[self._current_entity_preset].model
+        if isinstance(model, (FlowEntityModel, SgHierarchyModel)):
             self.ui.show_sub_items.hide()
         else:
             self.ui.show_sub_items.show()
@@ -2493,6 +2502,8 @@ class AppDialog(QtGui.QWidget):
         """
         Slot triggered when someone changes the selection in a treeview.
         """
+        # NOTE: this might be None if tk-core has no 'flowam' module
+        FlowEntityModel = self._get_flow_entity_model()
 
         selected_item = self._get_selected_entity()
 
@@ -2524,7 +2535,10 @@ class AppDialog(QtGui.QWidget):
 
         # [Flow AM] Regenerate contextual menu
         if selected_item is not None:
-            sg_data, field_value = model_item_data.get_item_data(selected_item)
+            if isinstance(model, FlowEntityModel):
+                sg_data, field_value = FlowEntityModel.get_item_data(selected_item)
+            else:
+                sg_data, field_value = model_item_data.get_item_data(selected_item)
             self._set_contextual_menu(sg_data, field_value, view, model)
         else:
             # No item selected, set contextual menu with None data
@@ -2535,11 +2549,37 @@ class AppDialog(QtGui.QWidget):
         Given an item from the treeview, or None if no item
         is selected, prepare the publish area UI.
         """
+        # NOTE: this might be None if tk-core has no 'flowam' module
+        FlowEntityModel = self._get_flow_entity_model()
 
         # clear selection. If we don't clear the model at this point,
         # the selection model will attempt to pair up with the model is
         # data is being loaded in, resulting in many many events
         self.ui.publish_view.selectionModel().clear()
+
+        model = self._entity_presets[self._current_entity_preset].model
+        if isinstance(model, FlowEntityModel):
+            # User may have selected "show sub items" checkbox prior to
+            # navigating to this tab - this incurs a stylesheet change
+            # Since we don't support this option in this view, clear the
+            # stylesheet so as not to create visual confusion
+            self.ui.publish_view.setStyleSheet("")
+            self._publish_thumb_delegate.set_sub_items_mode(False)
+            self._publish_list_delegate.set_sub_items_mode(False)
+            if not item:
+                self._publish_proxy_model.setSourceModel(self._publish_model)
+                self._publish_model.load_data(None, [], False, [])
+                return
+            self._publish_proxy_model.setSourceModel(self._medm_publish_model)
+            self._publish_proxy_model.set_filter_by_type_ids(None, True)
+            # Before attempting to load the publish data,
+            # first ensure we've queried the next tier of children in the tree
+            # (This will not incur any work if children have already been
+            # loaded before.)
+            model._load_children_for_item(item)
+            self._medm_publish_model.load_data(item)
+            self._publish_proxy_model.invalidateFilter()
+            return
 
         # Determine the child folders.
         child_folders = []
@@ -2628,8 +2668,11 @@ class AppDialog(QtGui.QWidget):
         :param selected_item: Item currently selected in the tree view or
                               `None` when no selection has been made.
         """
+        # NOTE: this might be None if tk-core has no 'flowam' module
+        FlowEntityModel = self._get_flow_entity_model()
 
         crumbs = []
+        model = self._entity_presets[self._current_entity_preset].model
 
         if selected_item:
 
@@ -2639,7 +2682,10 @@ class AppDialog(QtGui.QWidget):
             while tmp_item:
 
                 # Extract the Shotgun data and field value from the node item.
-                sg_data, field_value = model_item_data.get_item_data(tmp_item)
+                if isinstance(model, FlowEntityModel):
+                    sg_data, field_value = FlowEntityModel.get_item_data(tmp_item)
+                else:
+                    sg_data, field_value = model_item_data.get_item_data(tmp_item)
 
                 # now figure out the associated value and type for this node
 
@@ -2697,6 +2743,9 @@ class AppDialog(QtGui.QWidget):
 
         self.ui.entity_breadcrumbs.setText("<big>%s</big>" % breadcrumbs)
 
+    # ------------------------------------------------------------------------
+    # FLOW INTEGRATION FUNCTIONALITY
+    # ------------------------------------------------------------------------
     def _setup_medm_tree_panel(self) -> None:
         """
         Set up the FlowAM tree view panel as the left-most panel in the splitter.
@@ -2738,16 +2787,19 @@ class AppDialog(QtGui.QWidget):
 
         # Both models share _medm_cache so tree expansion and publish
         # loading never duplicate API calls.
-        self._medm_publish_model = MedmLatestPublishModel(
-            self,
-            self._publish_type_model,
-            self._task_manager,
-            self._medm_cache,
-            self._medm_thumbnail_service,
-        )
+        if self._medm_publish_model is None:
+            self._medm_publish_model = MedmLatestPublishModel(
+                self,
+                self._publish_type_model,
+                self._task_manager,
+                self._medm_cache,
+                self._medm_thumbnail_service,
+            )
 
-        # Re-apply the center-panel details thumbnail when it arrives async.
-        self._medm_publish_model.dataChanged.connect(self._on_publish_item_data_changed)
+            # Re-apply the center-panel details thumbnail when it arrives async.
+            self._medm_publish_model.dataChanged.connect(
+                self._on_publish_item_data_changed
+            )
 
         self._medm_tree_view.selectionModel().selectionChanged.connect(
             self._on_medm_tree_selection_changed
@@ -2801,6 +2853,71 @@ class AppDialog(QtGui.QWidget):
             self._publish_proxy_model.invalidateFilter()
         else:
             app.log_warning("FlowAM: Could not get item from index")
+
+    def _setup_flow_model(self, hierarchy_paths):
+        """
+        Create the model and proxy model required by a Flow Hierarchy type entity preset.
+
+        :param hierarchy_paths: Paths determining the sub-hierarchies to be displayed in
+                                Flow project tree.
+        :return: Created `(model, proxy model)`.
+        """
+        from .flowam import FlowEntityModel, MedmLatestPublishModel
+
+        # Construct the hierarchy model and load a hierarchy that leads
+        # to entities that are linked via the "PublishedFile.entity" field.
+        model = FlowEntityModel(
+            self,
+            None,
+            None,
+            None,
+            self._task_manager,
+            hierarchy_paths,
+            self._medm_cache,
+        )
+
+        # Both models share _medm_cache so tree expansion and publish
+        # loading never duplicate API calls.
+        if self._medm_publish_model is None:
+            self._medm_publish_model = MedmLatestPublishModel(
+                self,
+                self._publish_type_model,
+                self._task_manager,
+                self._medm_cache,
+                self._medm_thumbnail_service,
+            )
+
+            # Re-apply the center-panel details thumbnail when it arrives async.
+            self._medm_publish_model.dataChanged.connect(
+                self._on_publish_item_data_changed
+            )
+
+        # Create a proxy model.
+        proxy_model = QtGui.QSortFilterProxyModel(self)
+        proxy_model.setSourceModel(model)
+
+        # Impose and keep the sorting order on the default display role text.
+        proxy_model.sort(0)
+        proxy_model.setDynamicSortFilter(True)
+
+        # When clicking on a node, we fetch all the nodes under it so we can populate the
+        # right hand-side. Make sure we are notified when the child come back so we can load
+        # publishes for the current item.
+        model.data_refreshed.connect(self._hierarchy_refreshed)
+
+        return (model, proxy_model)
+
+    def _get_flow_entity_model(self) -> type | None:
+        """Attempt to import FlowEntityModel class.
+        Wrap this in a safe function in case tk-core is at an old version
+        that does not have the `flowam` module.
+        """
+        try:
+            from .flowam import FlowEntityModel
+
+            return FlowEntityModel
+        except ImportError:
+            return None
 
 
 ################################################################################################

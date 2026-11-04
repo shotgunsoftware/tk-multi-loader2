@@ -148,6 +148,9 @@ class FlowAMActions:
     def _on_build_scene_dialog_accepted(
         self, dialog: BuildAssetDialog, sg_publish_data: dict
     ) -> None:
+
+        context = sgtk.platform.current_engine().context
+
         if not dialog.build:
             message = "Not enough data from the build dialog."
             self._app.log_warning(message)
@@ -166,18 +169,24 @@ class FlowAMActions:
             self._app.shotgun.find_one(
                 "Task",
                 filters=[["id", "is", sg_publish_data["id"]]],
-                fields=["step", "content"],
+                fields=[
+                    "step",
+                    "step.Step.entity_type",
+                    "content",
+                ],
             )
             or {}
         )
+        if task["step"]:
+            # Add entity type directly into the step object so it can be
+            # passed into CreateInputs in one piece.
+            task["step"]["entity_type"] = task["step.Step.entity_type"]
 
         create_inputs = CreateInputs(
-            sg_entity_type=sg_publish_data["entity"]["type"],  # Asset, Shot, etc.
-            sg_entity_name=sg_publish_data["entity"]["name"],
-            sg_pipeline_step=(task.get("step") or {}).get(
-                "name", ""
-            ),  # Layout, Animation, etc.
+            sg_entity=sg_publish_data["entity"],
+            sg_pipeline_step=task.get("step") or {},
             am_project_id=flow_am_id,
+            federated=context.flow_federated_project,
             create_mode=dialog.build,
             source_path=template_path,
             prep_scene_callback=functools.partial(self._prep_scene, sg_publish_data),
@@ -223,11 +232,14 @@ class FlowAMActions:
         if workfile_type != MAYA_WORKFILE_TYPE:
             return True
 
+        sg_entity_name = create_inputs.sg_entity["name"]
+        sg_entity_type = create_inputs.sg_entity["type"]
+        sg_pipeline_step_name = create_inputs.sg_pipeline_step["name"]
         upstream_step = find_unpublished_upstream_step(
             am_project_id=create_inputs.am_project_id,
-            sg_entity_name=create_inputs.sg_entity_name,
-            sg_entity_type=create_inputs.sg_entity_type,
-            sg_pipeline_step=create_inputs.sg_pipeline_step,
+            sg_entity_name=sg_entity_name,
+            sg_entity_type=sg_entity_type,
+            sg_pipeline_step=sg_pipeline_step_name,
             step_dependencies=self._app.get_setting("pipeline_step_dependencies", {}),
             workfile_type=workfile_type,
         )
@@ -236,8 +248,8 @@ class FlowAMActions:
 
         message = (
             f'The "{upstream_step}" step has no published scene for '
-            f'"{create_inputs.sg_entity_name}" yet, so there is nothing to '
-            f'reference into a new "{create_inputs.sg_pipeline_step}" scene.'
+            f'"{sg_entity_name}" yet, so there is nothing to '
+            f'reference into a new "{sg_pipeline_step_name}" scene.'
             "\n\nBuild an empty scene anyway?"
         )
         self._app.log_warning(message)

@@ -27,7 +27,7 @@ from typing import Optional
 
 import sgtk
 from sgtk.platform.qt import QtCore, QtGui
-from tank_vendor.flow_integration_sdk import globals, objects, schema, sandbox
+from tank_vendor.flow_integration_sdk import globals, objects, query, schema, sandbox
 from sgtk.flowam.fd_generate_hierarchy import get_tree_root, TreeItem as FedTreeItem
 
 from .shared_cache import MedmSharedCache
@@ -393,9 +393,19 @@ class FlowEntityModel(QtGui.QStandardItemModel):
         # Must filter out any assets that are linked to federated data.
         # These will be presented within the federated data tree so we don't want them
         # to be redundantly presented via normal containership relationships.
-        q_filter = f"components.typeId!='{globals.FOR_DELIVERABLE_TYPE_ID}';"
-        q_filter += f"components.typeId!='{schema.get_schema_id(globals.FOR_PIPELINE_STEP_TYPE)}';"
-        return parent.search_children(q_filter)
+        # (Query for all versions of these types by searching with wildcards.)
+        # NOTE: we need to switch to using the AssetsByTraversal search for this
+        #       rather than AssetBySearch in order to support the wildcards in the filter.
+        #       However, there is an issue when attempting to call AssetsByTraversal on
+        #       federated assets where we get an 'operation not supported' error.
+        #       These errors appear in the output, but do not cause incorrect behaviour.
+        for_del_id = objects._get_schema_wildcard(globals.FOR_DELIVERABLE_TYPE_ID)
+        for_pipestep_id = objects._get_schema_wildcard(
+            globals.FOR_PIPELINE_STEP_TYPE_ID
+        )
+        q_filter = f"components.typeId=nlike='{for_del_id}';"
+        q_filter += f"components.typeId=nlike='{for_pipestep_id}'"
+        return query.medm_assets_by_traversal(start_id=parent.id, q_filter=q_filter)
 
     def _get_sg_data(self, data: objects.FlowAsset | FedTreeItem) -> dict:
         """Return SG data dictionary gleaned from MEDM asset."""
@@ -556,6 +566,12 @@ class FlowEntityModel(QtGui.QStandardItemModel):
         first call and caching the result in the shared cache for subsequent
         lookups by any FlowAM model.
         """
+        # Ignore special mount point asset for federated projects
+        # We don't want to show its children as these would be federated assets
+        if asset.name == "External Service Mount Point":
+            self._cache.children[asset.id] = []
+            return []
+
         if asset.id in self._cache.children:
             return self._cache.children[asset.id]
 

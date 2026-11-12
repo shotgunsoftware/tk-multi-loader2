@@ -2455,7 +2455,8 @@ class AppDialog(QtGui.QWidget):
         :param track_in_history: Hint to this method that the actions should be tracked in the
             history.
         """
-        # NOTE: this might be None if tk-core has no 'flowam' module
+        # NOTE: this is None if this is not a Flow AM project,
+        # or tk-core has no 'flowam' module
         FlowEntityModel = self._get_flow_entity_model()
 
         # qt returns unicode/qstring here so force to str
@@ -2468,7 +2469,10 @@ class AppDialog(QtGui.QWidget):
 
         # The hierarchy and flow models cannot handle "Show items in subfolders" mode.
         model = self._entity_presets[self._current_entity_preset].model
-        if isinstance(model, (FlowEntityModel, SgHierarchyModel)):
+        model_types = (SgHierarchyModel,)
+        if FlowEntityModel is not None:
+            model_types += (FlowEntityModel,)
+        if isinstance(model, model_types):
             self.ui.show_sub_items.hide()
         else:
             self.ui.show_sub_items.show()
@@ -2502,7 +2506,8 @@ class AppDialog(QtGui.QWidget):
         """
         Slot triggered when someone changes the selection in a treeview.
         """
-        # NOTE: this might be None if tk-core has no 'flowam' module
+        # NOTE: this is None if this is not a Flow AM project,
+        # or tk-core has no 'flowam' module
         FlowEntityModel = self._get_flow_entity_model()
 
         selected_item = self._get_selected_entity()
@@ -2535,7 +2540,7 @@ class AppDialog(QtGui.QWidget):
 
         # [Flow AM] Regenerate contextual menu
         if selected_item is not None:
-            if isinstance(model, FlowEntityModel):
+            if FlowEntityModel is not None and isinstance(model, FlowEntityModel):
                 sg_data, field_value = FlowEntityModel.get_item_data(selected_item)
             else:
                 sg_data, field_value = model_item_data.get_item_data(selected_item)
@@ -2549,7 +2554,8 @@ class AppDialog(QtGui.QWidget):
         Given an item from the treeview, or None if no item
         is selected, prepare the publish area UI.
         """
-        # NOTE: this might be None if tk-core has no 'flowam' module
+        # NOTE: this is None if this is not a Flow AM project,
+        # or tk-core has no 'flowam' module
         FlowEntityModel = self._get_flow_entity_model()
 
         # clear selection. If we don't clear the model at this point,
@@ -2558,7 +2564,7 @@ class AppDialog(QtGui.QWidget):
         self.ui.publish_view.selectionModel().clear()
 
         model = self._entity_presets[self._current_entity_preset].model
-        if isinstance(model, FlowEntityModel):
+        if FlowEntityModel is not None and isinstance(model, FlowEntityModel):
             # User may have selected "show sub items" checkbox prior to
             # navigating to this tab - this incurs a stylesheet change
             # Since we don't support this option in this view, clear the
@@ -2668,7 +2674,8 @@ class AppDialog(QtGui.QWidget):
         :param selected_item: Item currently selected in the tree view or
                               `None` when no selection has been made.
         """
-        # NOTE: this might be None if tk-core has no 'flowam' module
+        # NOTE: this is None if this is not a Flow AM project,
+        # or tk-core has no 'flowam' module
         FlowEntityModel = self._get_flow_entity_model()
 
         crumbs = []
@@ -2682,7 +2689,7 @@ class AppDialog(QtGui.QWidget):
             while tmp_item:
 
                 # Extract the Shotgun data and field value from the node item.
-                if isinstance(model, FlowEntityModel):
+                if FlowEntityModel is not None and isinstance(model, FlowEntityModel):
                     sg_data, field_value = FlowEntityModel.get_item_data(tmp_item)
                 else:
                     sg_data, field_value = model_item_data.get_item_data(tmp_item)
@@ -2862,7 +2869,8 @@ class AppDialog(QtGui.QWidget):
                                 Flow project tree.
         :return: Created `(model, proxy model)`.
         """
-        from .flowam import FlowEntityModel, MedmLatestPublishModel
+        from .flowam import MedmLatestPublishModel
+        from .flowam.flow_entity_model import FlowEntityModel
 
         # Construct the hierarchy model and load a hierarchy that leads
         # to entities that are linked via the "PublishedFile.entity" field.
@@ -2908,12 +2916,16 @@ class AppDialog(QtGui.QWidget):
         return (model, proxy_model)
 
     def _get_flow_entity_model(self) -> type | None:
-        """Attempt to import FlowEntityModel class.
-        Wrap this in a safe function in case tk-core is at an old version
-        that does not have the `flowam` module.
+        """Import FlowEntityModel class for Flow AM projects only.
+
+        :returns: The FlowEntityModel class, or None if this is not a Flow AM
+            project or tk-core is missing the `flowam` modules it depends on.
         """
+        if not self.flowam_available:
+            return None
+
         try:
-            from .flowam import FlowEntityModel
+            from .flowam.flow_entity_model import FlowEntityModel
 
             return FlowEntityModel
         except ImportError:

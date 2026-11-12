@@ -52,6 +52,16 @@ class ActionManager(QtCore.QObject):
         """
         return False
 
+    def get_actions_for_entity(self, sg_data):
+        """
+        Returns a list of actions for an entity. Returns nothing because we
+        don't want any entity actions presented in the open dialog.
+
+        :param sg_data: The data associated with this entity
+        :returns:       A list of actions that are available for this entity
+        """
+        return []
+
     def get_actions_for_folder(self, sg_data):
         """
         Returns a list of actions for a folder object.  Overrides the base
